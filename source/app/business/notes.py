@@ -26,7 +26,7 @@ from app.datamgmt.case.case_notes_db import get_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import NoteRevisions
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, User
 from app.schema.marshables import CaseNoteSchema
 from app.util import add_obj_history_entry
 
@@ -114,12 +114,15 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
             NoteRevisions.revision_number.desc()
         ).first()
         revision_number = 1 if latest_version is None else latest_version.revision_number + 1
+        no_changes = False
 
         if revision_number > 1:
             if latest_version.note_title == request_data.get('note_title') and latest_version.note_content == request_data.get('note_content'):
+                no_changes = True
                 app.logger.debug(f"Note {identifier} has not changed, skipping versioning")
+                print(f"Note {identifier} has not changed, skipping versioning")
 
-        else:
+        if not no_changes:
             note_version = NoteRevisions(
                 note_id=note.note_id,
                 revision_number=revision_number,
@@ -159,9 +162,7 @@ def list_note_revisions(identifier: int = None, case_identifier: int = None):
 
     :return: The note history.
     """
-
     try:
-
         note = get_note(identifier, caseid=case_identifier)
         if not note:
             raise BusinessProcessingError("Invalid note ID for this case")
@@ -169,14 +170,45 @@ def list_note_revisions(identifier: int = None, case_identifier: int = None):
         note_versions = NoteRevisions.query.with_entities(
             NoteRevisions.revision_number,
             NoteRevisions.revision_timestamp,
-            NoteRevisions.note_user
+            User.name.label('user_name')
+        ).join(
+            User, NoteRevisions.note_user == User.id
         ).order_by(
             NoteRevisions.revision_number.desc()
         ).filter(
-            NoteRevisions.note_id==identifier
+            NoteRevisions.note_id == identifier
         ).all()
 
         return note_versions
+
+    except ValidationError as e:
+        raise BusinessProcessingError('Data error', e.messages)
+
+    except Exception as e:
+        raise UnhandledBusinessError('Unexpected error server-side', str(e))
+
+
+def get_note_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
+    """
+    Get a note revision by its identifier and revision number.
+
+    :param identifier: The note identifier.
+    :param revision_number: The revision number.
+    :param case_identifier: The case identifier.
+
+    :return: The note revision.
+    """
+    try:
+        note = get_note(identifier, caseid=case_identifier)
+        if not note:
+            raise BusinessProcessingError("Invalid note ID for this case")
+
+        note_revision = NoteRevisions.query.filter(
+            NoteRevisions.note_id == identifier,
+            NoteRevisions.revision_number == revision_number
+        ).first()
+
+        return note_revision
 
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)

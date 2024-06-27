@@ -255,8 +255,13 @@ function setSharedLink(id) {
     window.history.replaceState({}, '', url);
 }
 
-async function load_note_revisions(id) {
-    get_request_api('/case/notes/' + id + '/revisions/list')
+async function load_note_revisions(_item) {
+
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
+
+    get_request_api('/case/notes/' + _item + '/revisions/list')
     .done((data) => {
         if (notify_auto_api(data, true)) {
             let revisions = data.data;
@@ -265,26 +270,66 @@ async function load_note_revisions(id) {
 
             revisions.forEach(function(revision) {
                 let listItem = $('<li></li>').addClass('list-group-item');
-                let link = $('<a></a>').attr('href', '#').text(formatTime(revision.timestamp));
+                let link = $('<a class="btn btn-sm btn-outline-dark float-right" href="#"><i class="fa-solid fa-clock-rotate-left" style="cursor: pointer;" title="Revert"></i> Revert</a>');
+                let link_preview = $('<a class="btn btn-sm btn-outline-dark float-right" href="#"><i class="fa-solid fa-eye" style="cursor: pointer;" title="Preview"></i> Preview</a>');
+                let user = $('<span></span>').text(`#${revision.revision_number} by ${revision.user_name} on ${formatTime(revision.revision_timestamp)}`);
+                listItem.append(user);
                 listItem.append(link);
+                listItem.append(link_preview);
+
                 revisionList.append(listItem);
 
                 link.on('click', function(e) {
                     e.preventDefault();
-                    get_request_api('/case/notes/' + id + '/revisions/' + revision.id)
+                    note_revision_revert(_item, revision.revision_number);
+                });
+
+                link_preview.on('click', function(e) {
+                    e.preventDefault();
+                    get_request_api('/case/notes/' + _item + '/revisions/' + revision.revision_number)
                     .done((data) => {
                         if (notify_auto_api(data, true)) {
                             let revision = data.data;
-                            $('#currentNoteTitle').text(revision.title);
-                            $('#currentNoteIDLabel').text(`#${revision.id} - ${revision.uuid}`);
-                            note_editor.setValue(revision.content, -1);
+                            $('#previewRevisionID').text(revision.revision_number);
+                            $('#notePreviewModalTitle').text(`#${revision.revision_number} - ${revision.note_title}`);
+                            let note_prev = get_new_ace_editor('notePreviewModalContent', 'note_content', 'targetDiv');
+                            note_prev.setValue(revision.note_content, -1);
+                            note_prev.setReadOnly(true);
+                            $('#notePreviewModal').modal('show');
                         }
                     });
                 });
+
+                $('#noteModificationHistoryModal').modal('show');
+
             });
         }
     });
+}
 
+function note_revision_revert(_item, _rev) {
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
+    let close_modal = false;
+    if (_rev === undefined || _rev === null) {
+        _rev = $('#previewRevisionID').text();
+        close_modal = true;
+    }
+
+    get_request_api('/case/notes/' + _item + '/revisions/' + _rev)
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            let revision = data.data;
+            $('#currentNoteTitle').text(revision.note_title);
+            note_editor.setValue(revision.note_content, -1);
+            if (close_modal) {
+                $('#notePreviewModal').modal('hide');
+            }
+            $('#noteModificationHistoryModal').modal('hide');
+            notify_success('Note reverted to revision #' + _rev + '. Save to apply changes.');
+        }
+    });
 }
 
 /* Fetch the edit modal with content from server */

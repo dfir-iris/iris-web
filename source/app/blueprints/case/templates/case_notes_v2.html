@@ -62,7 +62,7 @@
 							<small>
 								<i class="text-muted" id="currentNoteIDLabel"></i>
 								<i class="fa fa-cloud-upload-alt ml-2" title="Auto saving enabled"></i>
-								<a class="bg-transparent" data-toggle="modal" title="Modifications history" data-target="#noteModificationHistoryModal" ><i class="fa-solid fa-clock-rotate-left ml-2 mt-2" style="cursor: pointer;" title="Modifications history"></i></a>
+								<a class="bg-transparent" onclick="load_note_revisions()"><i class="fa-solid fa-clock-rotate-left ml-2 mt-2" style="cursor: pointer;" title="Modifications history"></i></a>
 							</small>
 
 						</div>
@@ -176,10 +176,10 @@
 	</div>
 
 	<div class="modal" id="noteModificationHistoryModal" tabindex="-1" role="dialog" aria-labelledby="moveFolderModalLabel" aria-hidden="true">
-		<div class="modal-dialog" role="document">
+		<div class="modal-dialog modal-lg" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h5 class="modal-title" >Modifications history</h5>
+					<h5 class="modal-title" >Note revisions</h5>
 					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
 						<span aria-hidden="true">&times;</span>
 					</button>
@@ -189,6 +189,33 @@
 						<div class="col">
 							<div id="revisionList">
 							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal bg-dark-gradient" id="notePreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog modal-xxl " role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" >Preview of revision <span id="previewRevisionID"></span></h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="row mt-2 mb-2">
+						<div class="col">
+							<h3 id="notePreviewModalTitle"></h3>
+							<div id="notePreviewModalContent">
+							</div>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col">
+							<button class="btn btn-light float-right" onclick="note_revision_revert();">Revert to this revision</button>
 						</div>
 					</div>
 				</div>

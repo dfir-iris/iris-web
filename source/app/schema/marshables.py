@@ -391,9 +391,8 @@ class CommentSchema(ma.SQLAlchemyAutoSchema):
 
 
 class CaseNoteRevisionSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing CaseNoteVersion objects.
-    """
-    user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    """Schema for serializing and deserializing CaseNoteVersion objects."""
+    user_name = fields.String()
 
     class Meta:
         model = NoteRevisions
