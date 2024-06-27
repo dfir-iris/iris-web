@@ -219,6 +219,7 @@ def case_upload_ioc(caseid):
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/cases/<int:caseid>/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_delete_ioc(cur_id, caseid):
@@ -229,6 +230,19 @@ def case_delete_ioc(cur_id, caseid):
 
     except BusinessProcessingError as e:
         return response_error(e.get_message())
+
+
+@case_ioc_rest_blueprint.route('/api/v2/cases/<int:caseid>/iocs/<int:cur_id>', methods=['DELETE'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def delete_case_ioc(cur_id, caseid):
+    try:
+
+        msg = delete(cur_id, caseid)
+        return response_created(msg)
+
+    except BusinessProcessingError as e:
+        return response_failed(e.get_message())
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])

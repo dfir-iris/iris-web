@@ -44,6 +44,13 @@ class RestApi:
         print(f'POST {url} {payload} => {response.status_code} {body}')
         return response
 
+    def delete(self, path, query_parameters=None):
+        url = self._build_url(path)
+        response = requests.delete(url, headers=self._headers, params=query_parameters)
+        body = response.json()
+        print(f'DELETE {url}  => {response.status_code} {body}')
+        return response
+
     def is_ready(self):
         try:
             requests.head(self._url)

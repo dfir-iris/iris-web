@@ -134,8 +134,25 @@ class TestsRest(TestCase):
     def test_get_ioc_with_missing_ioc_identifier_should_return_400(self):
         case = self._subject.create_case_deprecated()
         case_identifier = case['case_id']
+        self._subject.create_ioc_deprecated()
+        test = self._subject.get_iocs(None, case_identifier)
+        self.assertEqual('error', test['status'])
+
+    def test_delete_ioc_should_return_201(self):
+        case = self._subject.create_case_deprecated()
+        case_identifier = case['case_id']
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
+        self._subject.delete_iocs(current_identifier, case_identifier)
+        test = self._subject.get_iocs(current_identifier, case_identifier)
+        self.assertEqual('Invalid IOC ID for this case', test)
+
+    def test_delete_ioc_with_missing_ioc_identifier_should_return_400(self):
+        case = self._subject.create_case_deprecated()
+        case_identifier = case['case_id']
+        response = self._subject.create_ioc_deprecated()
+        current_identifier = response['ioc_id']
+        self._subject.delete_iocs(None, case_identifier)
         test = self._subject.get_iocs(current_identifier, case_identifier)
         self.assertEqual(current_identifier, test['ioc_id'])
 

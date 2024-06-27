@@ -147,3 +147,9 @@ class Iris:
 
     def get_iocs(self, current_identifier, case_identifier):
         return self._api.get(f'/api/v2/cases/{case_identifier}/iocs/{current_identifier}')
+
+    def delete_iocs_deprecated(self, current_identifier):
+        return self._api.delete(f'/case/ioc/delete/{current_identifier}')
+
+    def delete_iocs(self, current_identifier, case_identifier):
+        return self._api.delete(f'/api/v2/cases/{case_identifier}/iocs/{current_identifier}')
