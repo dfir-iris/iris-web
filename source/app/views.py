@@ -132,26 +132,22 @@ def load_user_from_request(request):
 
     # first, try to login using the api_key url arg
     api_key = request.args.get('api_key')
-    if api_key:
-        user = User.query.filter(
-            User.api_key == api_key,
-            User.active == True
-        ).first()
-        if user:
-            return user
 
     # next, try to login using Basic Auth
-    api_key = request.headers.get('Authorization')
-    if api_key:
-        api_key = api_key.replace('Bearer ', '', 1)
+    if not api_key:
+        api_key = request.headers.get('Authorization')
 
-        user = User.query.filter(
-            User.api_key == api_key,
-            User.active == True
-        ).first()
+    # next, try to login using Basic Auth from custom Header
+    if not api_key:
+        api_key = request.headers.get('X-IRIS-AUTH')
 
-        if user:
-            return user
+    if not api_key:
+        return None
 
-    # finally, return None if both methods did not login the user
-    return None
+    api_key = api_key.replace('Bearer ', '', 1)
+    user = User.query.filter(
+        User.api_key == api_key,
+        User.active == True
+    ).first()
+
+    return user
