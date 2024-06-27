@@ -117,7 +117,7 @@ class TestsRest(TestCase):
                                                               "ioc_tags": ""})
         self.assertEqual(201, response.status_code)
 
-    def test_create_ioc_with_missing_ioc_value_should_return_400(self):
+    def test_create_ioc_with_missing_value_should_return_400(self):
         case = self._subject.create_case_deprecated()
         case_identifier = case['case_id']
         response = self._subject.create_ioc(case_identifier, {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_description": "rewrw", "ioc_tags": ""})
@@ -155,9 +155,3 @@ class TestsRest(TestCase):
         self._subject.delete_iocs(None, case_identifier)
         test = self._subject.get_iocs(current_identifier, case_identifier)
         self.assertEqual(current_identifier, test['ioc_id'])
-
-    def test_create_ioc_with_missing_value_should_return_400(self):
-        case = self._subject.create_case_deprecated()
-        case_identifier = case['case_id']
-        response = self._subject.create_ioc(case_identifier, {'type_id': 1, 'tlp_id': 1})
-        self.assertEqual(400, response.status_code)
