@@ -156,3 +156,8 @@ class TestsRest(TestCase):
         test = self._subject.get_iocs(current_identifier, case_identifier)
         self.assertEqual(current_identifier, test['ioc_id'])
 
+    def test_create_ioc_with_missing_value_should_return_400(self):
+        case = self._subject.create_case_deprecated()
+        case_identifier = case['case_id']
+        response = self._subject.create_ioc(case_identifier, {'type_id': 1, 'tlp_id': 1})
+        self.assertEqual(400, response.status_code)
