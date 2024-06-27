@@ -10,5 +10,3 @@ cd source
 
 # install python dependencies
 pip install -r requirements.txt
-
-# run alembic migrations?
