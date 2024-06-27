@@ -73,7 +73,7 @@ function add_ioc() {
                     }
 
                     data['ioc_value'] = iocs_list[index];
-                    post_request_api('ioc/add', JSON.stringify(data), true, function () {
+                    post_request_api('iocs', JSON.stringify(data), true, function () {
                         $('#submit_new_ioc').text('Saving data..')
                             .attr("disabled", true)
                             .removeClass('bt-outline-success')
@@ -101,7 +101,7 @@ function add_ioc() {
             }
 
             else {
-                post_request_api('ioc/add', JSON.stringify(data), true, function () {
+                post_request_api('iocs', JSON.stringify(data), true, function () {
                         $('#submit_new_ioc').text('Saving data..')
                             .attr("disabled", true)
                             .removeClass('bt-outline-success')
