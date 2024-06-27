@@ -45,9 +45,9 @@ from app.datamgmt.case.case_notes_db import get_note
 from app.datamgmt.states import get_notes_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Notes, NoteVersions
+from app.models import Notes
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import CaseNoteDirectorySchema, CaseNoteVersionSchema
+from app.schema.marshables import CaseNoteDirectorySchema, CaseNoteRevisionSchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
 from app.util import ac_api_case_requires, ac_socket_requires, endpoint_deprecated, add_obj_history_entry
@@ -171,7 +171,7 @@ def case_note_save(cur_id, caseid):
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/revisions/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_note_list_history(cur_id, caseid):
-    note_version_sc = CaseNoteVersionSchema(many=True)
+    note_version_sc = CaseNoteRevisionSchema(many=True)
 
     try:
 

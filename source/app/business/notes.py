@@ -17,17 +17,16 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from datetime import datetime
 from flask_login import current_user
-
 from marshmallow import ValidationError
 
-from app import db
+from app import db, app
 from app.business.errors import BusinessProcessingError, UnhandledBusinessError
 from app.business.permissions import check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_notes_db import get_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import CaseAccessLevel, User
-from app.models import Notes, NoteVersions
+from app.models import NoteRevisions
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseNoteSchema
 from app.util import add_obj_history_entry
 
@@ -64,15 +63,15 @@ def create(request_json, case_identifier):
         db.session.add(note)
         db.session.flush()
 
-        note_version = NoteVersions(
+        note_revision = NoteRevisions(
             note_id=note.note_id,
-            version_number=1,
+            revision_number=1,
             note_title=note.note_title,
             note_content=note.note_content,
             note_user=note.note_user,
-            version_timestamp=datetime.utcnow()
+            revision_timestamp=datetime.utcnow()
         )
-        db.session.add(note_version)
+        db.session.add(note_revision)
 
         add_obj_history_entry(note, 'created note', commit=True)
         note = call_modules_hook('on_postload_note_create', data=note, caseid=case_identifier)
@@ -108,24 +107,29 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
         request_data = call_modules_hook('on_preload_note_update', data=request_json, caseid=case_identifier)
 
         latest_version = db.session.query(
-            NoteVersions
+            NoteRevisions
         ).filter_by(
             note_id=identifier
         ).order_by(
-            NoteVersions.version_number.desc()
+            NoteRevisions.revision_number.desc()
         ).first()
-        version_number = 1 if latest_version is None else latest_version.version_number + 1
+        revision_number = 1 if latest_version is None else latest_version.revision_number + 1
 
-        note_version = NoteVersions(
-            note_id=note.note_id,
-            version_number=version_number,
-            note_title=note.note_title,
-            note_content=note.note_content,
-            note_user=note.note_user,
-            version_timestamp=datetime.utcnow()
-        )
-        db.session.add(note_version)
-        db.session.commit()
+        if revision_number > 1:
+            if latest_version.note_title == request_data.get('note_title') and latest_version.note_content == request_data.get('note_content'):
+                app.logger.debug(f"Note {identifier} has not changed, skipping versioning")
+
+        else:
+            note_version = NoteRevisions(
+                note_id=note.note_id,
+                revision_number=revision_number,
+                note_title=note.note_title,
+                note_content=note.note_content,
+                note_user=note.note_user,
+                revision_timestamp=datetime.utcnow()
+            )
+            db.session.add(note_version)
+            db.session.commit()
 
         request_data['note_id'] = identifier
         addnote_schema.load(request_data, partial=True, instance=note)
@@ -162,14 +166,14 @@ def list_note_revisions(identifier: int = None, case_identifier: int = None):
         if not note:
             raise BusinessProcessingError("Invalid note ID for this case")
 
-        note_versions = NoteVersions.query.with_entities(
-            NoteVersions.version_number,
-            NoteVersions.version_timestamp,
-            NoteVersions.note_user
+        note_versions = NoteRevisions.query.with_entities(
+            NoteRevisions.revision_number,
+            NoteRevisions.revision_timestamp,
+            NoteRevisions.note_user
         ).order_by(
-            NoteVersions.version_number.desc()
+            NoteRevisions.revision_number.desc()
         ).filter(
-            NoteVersions.note_id==identifier
+            NoteRevisions.note_id==identifier
         ).all()
 
         return note_versions

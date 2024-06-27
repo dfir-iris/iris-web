@@ -541,19 +541,19 @@ class Notes(db.Model):
     user = relationship('User')
     case = relationship('Cases')
     directory = relationship('NoteDirectory', backref='notes')
-    versions = relationship('NoteVersions', back_populates='note', cascade="all, delete-orphan")
+    versions = relationship('NoteRevisions', back_populates='note', cascade="all, delete-orphan")
 
 
-class NoteVersions(db.Model):
-    __tablename__ = 'note_versions'
+class NoteRevisions(db.Model):
+    __tablename__ = 'note_revisions'
 
-    version_id = Column(BigInteger, primary_key=True)
+    revision_id = Column(BigInteger, primary_key=True)
     note_id = Column(BigInteger, ForeignKey('notes.note_id'), nullable=False)
-    version_number = Column(Integer, nullable=False)
+    revision_number = Column(Integer, nullable=False)
     note_title = Column(String(155))
     note_content = Column(Text)
     note_user = Column(ForeignKey('user.id'))
-    version_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    revision_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
 
     user = relationship('User')
     note = relationship('Notes', back_populates='versions')

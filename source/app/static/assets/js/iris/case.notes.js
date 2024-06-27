@@ -255,6 +255,38 @@ function setSharedLink(id) {
     window.history.replaceState({}, '', url);
 }
 
+async function load_note_revisions(id) {
+    get_request_api('/case/notes/' + id + '/revisions/list')
+    .done((data) => {
+        if (notify_auto_api(data, true)) {
+            let revisions = data.data;
+            let revisionList = $('#revisionList');
+            revisionList.empty();
+
+            revisions.forEach(function(revision) {
+                let listItem = $('<li></li>').addClass('list-group-item');
+                let link = $('<a></a>').attr('href', '#').text(formatTime(revision.timestamp));
+                listItem.append(link);
+                revisionList.append(listItem);
+
+                link.on('click', function(e) {
+                    e.preventDefault();
+                    get_request_api('/case/notes/' + id + '/revisions/' + revision.id)
+                    .done((data) => {
+                        if (notify_auto_api(data, true)) {
+                            let revision = data.data;
+                            $('#currentNoteTitle').text(revision.title);
+                            $('#currentNoteIDLabel').text(`#${revision.id} - ${revision.uuid}`);
+                            note_editor.setValue(revision.content, -1);
+                        }
+                    });
+                });
+            });
+        }
+    });
+
+}
+
 /* Fetch the edit modal with content from server */
 async function note_detail(id) {
 
@@ -299,15 +331,15 @@ async function note_detail(id) {
             previousNoteTitle = data.data.note_title;
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
-            let history_data = '';
-            for (let ent in data.data.modification_history) {
-                let entry = data.data.modification_history[ent];
-                let dateStr = formatTime(parseFloat(ent))
-                let i_t = $('<li></li>');
-                i_t.text(`${dateStr} - ${entry.user} ${entry.action}`);
-                history_data += i_t.prop('outerHTML');
-            }
-            $('#modalHistoryList').empty().append(history_data);
+            // let history_data = '';
+            // for (let ent in data.data.modification_history) {
+            //     let entry = data.data.modification_history[ent];
+            //     let dateStr = formatTime(parseFloat(ent))
+            //     let i_t = $('<li></li>');
+            //     i_t.text(`${dateStr} - ${entry.user} ${entry.action}`);
+            //     history_data += i_t.prop('outerHTML');
+            // }
+            // $('#modalHistoryList').empty().append(history_data);
 
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {

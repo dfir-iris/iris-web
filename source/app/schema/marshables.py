@@ -46,7 +46,7 @@ from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus, EvidenceTypes, CaseStatus, NoteDirectory
+    ReviewStatus, EvidenceTypes, CaseStatus, NoteDirectory, NoteRevisions
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -63,7 +63,6 @@ from app.models import Ioc
 from app.models import IocType
 from app.models import IrisModule
 from app.models import Notes
-from app.models import NoteVersions
 from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
@@ -391,13 +390,13 @@ class CommentSchema(ma.SQLAlchemyAutoSchema):
         unknown = EXCLUDE
 
 
-class CaseNoteVersionSchema(ma.SQLAlchemyAutoSchema):
+class CaseNoteRevisionSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseNoteVersion objects.
     """
     user = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
 
     class Meta:
-        model = NoteVersions
+        model = NoteRevisions
         load_instance = True
         include_fk = True
         unknown = EXCLUDE
