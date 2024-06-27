@@ -215,3 +215,38 @@ def get_note_revision(identifier: int = None, revision_number: int = None, case_
 
     except Exception as e:
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
+
+
+def delete_note_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
+    """
+    Delete a note revision by its identifier and revision number.
+
+    :param identifier: The note identifier.
+    :param revision_number: The revision number.
+    :param case_identifier: The case identifier.
+    """
+    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+
+    try:
+        note = get_note(identifier, caseid=case_identifier)
+        if not note:
+            raise BusinessProcessingError("Invalid note ID for this case")
+
+        note_revision = NoteRevisions.query.filter(
+            NoteRevisions.note_id == identifier,
+            NoteRevisions.revision_number == revision_number
+        ).first()
+
+        if not note_revision:
+            raise BusinessProcessingError("Invalid note revision number")
+
+        db.session.delete(note_revision)
+        db.session.commit()
+
+        track_activity(f"deleted note revision {revision_number} of note \"{note.note_title}\"", caseid=case_identifier)
+
+    except ValidationError as e:
+        raise BusinessProcessingError('Data error', e.messages)
+
+    except Exception as e:
+        raise UnhandledBusinessError('Unexpected error server-side', str(e))

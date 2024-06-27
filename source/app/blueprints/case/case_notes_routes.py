@@ -32,7 +32,7 @@ from sqlalchemy import or_, and_
 from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
 from app.business.errors import BusinessProcessingError, UnhandledBusinessError
-from app.business.notes import update, create, list_note_revisions, get_note_revision
+from app.business.notes import update, create, list_note_revisions, get_note_revision, delete_note_revision
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory, \
@@ -196,6 +196,22 @@ def case_note_revision(cur_id, revision_id, caseid):
                                          case_identifier=caseid)
 
         return response_success(f"ok", data=note_version_sc.dump(note_version))
+
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
+
+
+@case_notes_blueprint.route('/case/notes/<int:cur_id>/revisions/<int:revision_id>/delete', methods=['POST'])
+@ac_api_case_requires(CaseAccessLevel.full_access)
+def case_note_revision_delete(cur_id, revision_id, caseid):
+
+    try:
+
+        delete_note_revision(identifier=cur_id,
+                             revision_number=revision_id,
+                             case_identifier=caseid)
+
+        return response_success(f"Revision {revision_id} of note {cur_id} deleted")
 
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())

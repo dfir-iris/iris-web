@@ -270,10 +270,12 @@ async function load_note_revisions(_item) {
 
             revisions.forEach(function(revision) {
                 let listItem = $('<li></li>').addClass('list-group-item');
-                let link = $('<a class="btn btn-sm btn-outline-dark float-right" href="#"><i class="fa-solid fa-clock-rotate-left" style="cursor: pointer;" title="Revert"></i> Revert</a>');
-                let link_preview = $('<a class="btn btn-sm btn-outline-dark float-right" href="#"><i class="fa-solid fa-eye" style="cursor: pointer;" title="Preview"></i> Preview</a>');
+                let link = $('<a class="btn btn-sm btn-outline-dark float-right ml-1" href="#"><i class="fa-solid fa-clock-rotate-left" style="cursor: pointer;" title="Revert"></i> Revert</a>');
+                let link_preview = $('<a class="btn btn-sm btn-outline-dark float-right ml-1" href="#"><i class="fa-solid fa-eye" style="cursor: pointer;" title="Preview"></i> Preview</a>');
+                let link_delete = $('<a class="btn btn-sm btn-outline-danger float-right ml-1" href="#"><i class="fa-solid fa-trash" style="cursor: pointer;" title="Delete"></i></a>');
                 let user = $('<span></span>').text(`#${revision.revision_number} by ${revision.user_name} on ${formatTime(revision.revision_timestamp)}`);
                 listItem.append(user);
+                listItem.append(link_delete);
                 listItem.append(link);
                 listItem.append(link_preview);
 
@@ -282,6 +284,11 @@ async function load_note_revisions(_item) {
                 link.on('click', function(e) {
                     e.preventDefault();
                     note_revision_revert(_item, revision.revision_number);
+                });
+
+                link_delete.on('click', function(e) {
+                    e.preventDefault();
+                    note_revision_delete(_item, revision.revision_number);
                 });
 
                 link_preview.on('click', function(e) {
@@ -328,6 +335,35 @@ function note_revision_revert(_item, _rev) {
             }
             $('#noteModificationHistoryModal').modal('hide');
             notify_success('Note reverted to revision #' + _rev + '. Save to apply changes.');
+        }
+    });
+}
+
+function note_revision_delete(_item, _rev) {
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
+
+    let close_modal = false;
+    if (_rev === undefined || _rev === null) {
+        _rev = $('#previewRevisionID').text();
+        close_modal = true;
+    }
+
+    do_deletion_prompt("You are about to delete revision #" + _rev)
+    .then((doDelete) => {
+        if (doDelete) {
+            post_request_api('/case/notes/' + _item + '/revisions/' + _rev + '/delete')
+            .done((data) => {
+                if (notify_auto_api(data, false)) {
+                    load_note_revisions(_item);
+                }
+
+                if (close_modal) {
+                    $('#notePreviewModal').modal('hide');
+                }
+
+            });
         }
     });
 }
