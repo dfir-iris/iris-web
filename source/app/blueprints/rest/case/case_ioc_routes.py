@@ -232,7 +232,7 @@ def case_delete_ioc(cur_id, caseid):
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
-@endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/iocs/<int:cur_id>')
+@endpoint_deprecated('GET', '/api/v2/cases/<int:caseid>/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_view_ioc(cur_id, caseid):
