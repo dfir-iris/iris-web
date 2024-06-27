@@ -109,3 +109,17 @@ class TestsRest(TestCase):
         body = {}
         response = self._subject.post('/manage/settings/update', body)
         print(response)
+
+    def test_create_ioc_should_return_201(self):
+        case = self._subject.create_case_deprecated()
+        case_identifier = case['case_id']
+        response = self._subject.create_ioc(case_identifier, {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw",
+                                                              "ioc_tags": ""})
+        self.assertEqual(201, response.status_code)
+
+    def test_create_ioc_with_missing_value_should_return_400(self):
+        case = self._subject.create_case_deprecated()
+        case_identifier = case['case_id']
+        response = self._subject.create_ioc(case_identifier, {'type_id': 1, 'tlp_id': 1})
+        self.assertEqual(400, response.status_code)
+

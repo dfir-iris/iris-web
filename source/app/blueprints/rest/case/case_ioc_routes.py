@@ -27,7 +27,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.blueprints.rest.endpoints import endpoint_deprecated, response_created, response_failed
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
@@ -103,7 +103,7 @@ def deprecated_case_add_ioc(caseid):
     ioc_schema = IocSchema()
 
     try:
-        ioc, msg = create(request.get_json(), caseid)
+        ioc, msg = iocs_create(request.get_json(), caseid)
         return response_success(msg, data=ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -116,10 +116,10 @@ def case_add_ioc(caseid):
     ioc_schema = IocSchema()
 
     try:
-        ioc, msg = iocs_create(request.get_json(), caseid)
-        return response_success(msg, data=ioc_schema.dump(ioc))
+        ioc, _ = iocs_create(request.get_json(), caseid)
+        return response_created(ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
-        return response_error(e.get_message(), data=e.get_data())
+        return response_failed(e.get_message())
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/upload', methods=['POST'])
