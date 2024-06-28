@@ -292,9 +292,9 @@ function delete_ioc(ioc_id) {
     do_deletion_prompt("You are about to delete IOC #" + ioc_id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('/api/v2/cases/'+ get_caseid()+ '/iocs/' + ioc_id)
+            delete_request_api('/api/v2/cases/'+ get_caseid()+ '/iocs/' + ioc_id)
             .done((data, textStatus) => {
-                if (textStatus === 'success') {
+                if (textStatus == 'success') {
                     reload_iocs();
                     notify_success(textStatus);
                     $('#modal_add_ioc').modal('hide');
