@@ -827,6 +827,8 @@ def create_safe_alert_resolution_status():
                 resolution_status_description="The alert is not applicable")
     create_safe(db.session, AlertResolutionStatus, resolution_status_name='Unknown',
                 resolution_status_description="Unknown resolution status")
+    create_safe(db.session, AlertResolutionStatus, resolution_status_name='Legitimate',
+                resolution_status_description="The alert is acceptable and expected")
 
 
 def create_safe_case_states():
@@ -1660,7 +1662,7 @@ def create_safe_server_settings():
                     prevent_post_objects_repush=False,
                     password_policy_min_length="12", password_policy_upper_case=True,
                     password_policy_lower_case=True, password_policy_digit=True,
-                    password_policy_special_chars="")
+                    password_policy_special_chars="", enforce_mfa=app.config.get("MFA_ENABLED", False))
 
 
 def register_modules_pipelines():

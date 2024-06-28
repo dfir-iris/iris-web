@@ -15,9 +15,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import json
-
-# IMPORTS ------------------------------------------------
-
 from flask import Blueprint
 from flask import request
 from werkzeug import Response
@@ -25,7 +22,8 @@ from werkzeug import Response
 from app import app
 from app.datamgmt.manage.manage_tags_db import get_filtered_tags
 from app.schema.marshables import TagsSchema
-from app.util import ac_api_requires, AlchemyEncoder
+from app.util import ac_api_requires
+from app.util import AlchemyEncoder
 from app.util import response_success
 
 manage_tags_blueprint = Blueprint('manage_tags',
@@ -34,8 +32,8 @@ manage_tags_blueprint = Blueprint('manage_tags',
 
 
 @manage_tags_blueprint.route('/manage/tags/filter', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def manage_tags_filter(caseid) -> Response:
+@ac_api_requires()
+def manage_tags_filter() -> Response:
     """ Returns a list of tags, filtered by the given parameters.
 
     :param caseid: Case ID - Unused
@@ -77,8 +75,8 @@ def manage_tags_filter(caseid) -> Response:
 
 
 @manage_tags_blueprint.route('/manage/tags/suggest', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def manage_tags_suggest(caseid) -> Response:
+@ac_api_requires()
+def manage_tags_suggest() -> Response:
     tag_title = request.args.get('term', None, type=str)
     filtered_tags = get_filtered_tags(tag_title=tag_title,
                                       tag_namespace=None,

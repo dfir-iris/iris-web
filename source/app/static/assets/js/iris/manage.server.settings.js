@@ -5,6 +5,8 @@ function update_settings() {
     data_sent['password_policy_upper_case'] = $('#password_policy_upper_case').is(":checked");
     data_sent['password_policy_lower_case'] = $('#password_policy_lower_case').is(":checked");
     data_sent['password_policy_digit'] = $('#password_policy_digit').is(":checked");
+    data_sent['enforce_mfa'] = $('#enforce_mfa').is(":checked");
+    data_sent['password_policy_min_length'] = $('#password_policy_min_length').val().toString();
 
     post_request_api('/manage/settings/update', JSON.stringify(data_sent), true)
     .done((data) => {

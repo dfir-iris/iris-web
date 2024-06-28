@@ -70,6 +70,15 @@ class Iris:
     def get_api_version(self):
         return self._api.get('api/versions')
 
+    def create_alert(self):
+        body = {
+            'alert_title': 'alert title',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1
+        }
+        return self._api.post('/alerts/add', body)
+
     def create_asset(self):
         body = {
             'asset_type_id': '9',
@@ -77,11 +86,11 @@ class Iris:
         }
         return self._api.post('/case/assets/add', body)
 
-    def create_user(self):
+    def create_user(self, user_name):
         body = {
-            'user_name': 'aa',
-            'user_login': 'aa',
-            'user_email': 'aa@aa.eu',
+            'user_name': user_name,
+            'user_login': user_name,
+            'user_email': f'{user_name}@aa.eu',
             'user_password': 'aA.1234567890'
         }
         user = self._api.post('/manage/users/add', body)
@@ -102,6 +111,9 @@ class Iris:
 
     def get_cases(self):
         return self._api.get('/manage/cases/list')
+
+    def get_cases_filter(self):
+        return self._api.get('/manage/cases/filter')
 
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)

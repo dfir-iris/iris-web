@@ -99,6 +99,9 @@ function render_date(date, show_ms = false) {
 }
 
 function ellipsis_field_raw( data, cutoff, wordbreak ) {
+    if (data === undefined || data === null) {
+        return '';
+    }
 
     if (data.length <= cutoff) {
         return data;

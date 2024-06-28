@@ -240,7 +240,7 @@ function get_tasks() {
 
                 Table.columns.adjust().draw();
                 load_menu_mod_options('task', Table, delete_task);
-                $('[data-toggle="popover"]').popover();
+                //$('[data-toggle="popover"]').popover();
                 Table.responsive.recalc();
 
                 $(document)

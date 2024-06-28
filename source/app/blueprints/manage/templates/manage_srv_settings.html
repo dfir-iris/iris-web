@@ -42,13 +42,6 @@
                             </div>
                         </div>
                     </div>
-<!--                    <div class="row">-->
-<!--                        <div class="col-12">-->
-<!--                            <div class="float-right mt-4">-->
-<!--                                <button class="btn btn-outline-primary" id="check_updates" type="button" onclick="check_updates()">Check for updates</button>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
                 </div>
             </div>
         </div>
@@ -92,12 +85,6 @@
                                     </div>
                                     <h2 class="mt-4">Post-init Behavior</h2>
                                     <div class="col-12 mb-4">
-<!--                                        <div class="form-check">-->
-<!--                                            <label class="form-check-label">-->
-<!--                                                <input class="form-check-input" type="checkbox" id="enable_updates_check" name="enable_updates_check" {% if settings.enable_updates_check %}checked{% endif %}>-->
-<!--                                                <span class="form-check-sign">Enable automatic daily check for updates</span>-->
-<!--                                            </label>-->
-<!--                                        </div>-->
                                         <div class="form-check">
                                             <label class="form-check-label">
                                                 <input class="form-check-input" type="checkbox" id="prevent_post_mod_repush" name="prevent_post_mod_repush" {% if settings.prevent_post_mod_repush %}checked{% endif %}>
@@ -121,7 +108,7 @@
                                                         Minimum Password Length
                                                     </span>
                                                 </div>
-                                                <input class="form-control" name="password_policy_min_length" placeholder="12" type="number" value="{{ settings.password_policy_min_length }}">
+                                                <input class="form-control" id="password_policy_min_length" name="password_policy_min_length" placeholder="12" type="number" value="{{ settings.password_policy_min_length }}">
                                             </div>
                                         </div>
                                         <div class="col-8">
@@ -153,6 +140,18 @@
                                                 <label class="form-check-label">
                                                     <input class="form-check-input" type="checkbox" id="password_policy_digit" name="password_policy_digit" {% if settings.password_policy_digit %}checked{% endif %}>
                                                     <span class="form-check-sign">Must include digits</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <h2 class="mt-4">Multi-Factor Authentication</h2>
+                                    <p>If set, requires all users of the platform to register and use MFA.</p>
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <label class="form-check-label">
+                                                    <input class="form-check-input" type="checkbox" id="enforce_mfa" name="enforce_mfa" {% if settings.enforce_mfa %}checked{% endif %}>
+                                                    <span class="form-check-sign">Enforce MFA for all users</span>
                                                 </label>
                                             </div>
                                         </div>

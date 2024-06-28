@@ -243,7 +243,7 @@ def case_edit_task(cur_id, caseid):
         task = call_modules_hook('on_postload_task_update', data=task, caseid=caseid)
 
         if task:
-            track_activity(f"updated task \"{task.task_title}\" (status {task.task_status_id})",
+            track_activity(f"updated task \"{task.task_title}\" (status {task.status.status_name})",
                            caseid=caseid)
             return response_success("Task '{}' updated".format(task.task_title), data=task_schema.dump(task))
 

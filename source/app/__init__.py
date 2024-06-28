@@ -133,4 +133,5 @@ socket_io.on_namespace(alerts_namespace)
 def shutdown_session(exception=None):
     db.session.remove()
 
+
 from app import views

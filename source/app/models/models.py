@@ -54,6 +54,7 @@ class CaseStatus(enum.Enum):
     true_positive_with_impact = 0x2
     not_applicable = 0x3
     true_positive_without_impact = 0x4
+    legitimate = 0x5
 
 
 class ReviewStatusList:
@@ -540,6 +541,22 @@ class Notes(db.Model):
     user = relationship('User')
     case = relationship('Cases')
     directory = relationship('NoteDirectory', backref='notes')
+    versions = relationship('NoteRevisions', back_populates='note', cascade="all, delete-orphan")
+
+
+class NoteRevisions(db.Model):
+    __tablename__ = 'note_revisions'
+
+    revision_id = Column(BigInteger, primary_key=True)
+    note_id = Column(BigInteger, ForeignKey('notes.note_id'), nullable=False)
+    revision_number = Column(Integer, nullable=False)
+    note_title = Column(String(155))
+    note_content = Column(Text)
+    note_user = Column(ForeignKey('user.id'))
+    revision_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+    user = relationship('User')
+    note = relationship('Notes', back_populates='versions')
 
 
 class NoteDirectory(db.Model):
@@ -750,6 +767,7 @@ class ServerSettings(db.Model):
     password_policy_lower_case = Column(Boolean)
     password_policy_digit = Column(Boolean)
     password_policy_special_chars = Column(Text)
+    enforce_mfa = Column(Boolean)
 
 
 class Comments(db.Model):

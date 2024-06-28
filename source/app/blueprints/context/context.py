@@ -17,7 +17,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-# IMPORTS ------------------------------------------------
 from flask import redirect
 from flask import request
 from flask_login import current_user
@@ -25,7 +24,6 @@ from flask_login import current_user
 from app import app
 from app import cache
 from app import db
-from app.datamgmt.context.context_db import ctx_get_user_cases
 from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.authorization import Permissions
 from app.models.cases import Cases
@@ -34,7 +32,6 @@ from app.util import ac_api_requires
 from app.util import not_authenticated_redirection_url
 from app.util import response_success
 
-# CONTENT ------------------------------------------------
 ctx_blueprint = Blueprint(
     'context',
     __name__,
@@ -80,8 +77,8 @@ def has_updates():
 
 
 @ctx_blueprint.route('/context/search-cases', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def cases_context_search(caseid):
+@ac_api_requires()
+def cases_context_search():
     search = request.args.get('q')
 
     # Get all investigations not closed

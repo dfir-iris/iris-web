@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from functools import wraps
+
 from flask import request
 from flask_wtf import FlaskForm
 from flask import Blueprint
@@ -25,13 +26,17 @@ from flask_login import current_user
 from graphql_server.flask import GraphQLView
 from graphene import ObjectType
 from graphene import Schema
-from graphene import List
 from graphene import Float
+from graphene import Int
 from graphene import Field
+from graphene import String
 
+from graphene_sqlalchemy import SQLAlchemyConnectionField
+
+from app.datamgmt.manage.manage_cases_db import build_filter_case_query
 from app.util import is_user_authenticated
 from app.util import response_error
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
+
 from app.blueprints.graphql.cases import CaseObject
 from app.blueprints.graphql.iocs import IOCObject
 from app.blueprints.graphql.iocs import IOCCreate
@@ -42,20 +47,25 @@ from app.business.iocs import get_ioc_by_identifier
 from app.blueprints.graphql.cases import CaseCreate
 from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
+from app.blueprints.graphql.cases import CaseConnection
 
 
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
 
-    # starting with the conversion of '/manage/cases/filter'
-    cases = List(CaseObject, description='Retrieves cases')
+    cases = SQLAlchemyConnectionField(CaseConnection, classification_id=Float(), client_id=Float(), state_id=Int(),
+                                      owner_id=Float(), open_date=String(), name=String(), soc_id=String(),
+                                      severity_id=Int(), tags=String(), open_since=Int())
     case = Field(CaseObject, case_id=Float(), description='Retrieve a case by its identifier')
     ioc = Field(IOCObject, ioc_id=Float(), description='Retrieve an ioc by its identifier')
 
     @staticmethod
-    def resolve_cases(root, info):
-        # TODO add all parameters to filter
-        return get_filtered_cases(current_user.id)
+    def resolve_cases(root, info, classification_id=None, client_id=None, state_id=None, owner_id=None, open_date=None, name=None, soc_id=None,
+                      severity_id=None, tags=None, open_since=None, **kwargs):
+        return build_filter_case_query(current_user.id, start_open_date=open_date, end_open_date=None, case_customer_id=client_id, case_ids=None,
+                                       case_name=name, case_description=None, case_classification_id=classification_id, case_owner_id=owner_id,
+                                       case_opening_user_id=None, case_severity_id=severity_id, case_state_id=state_id, case_soc_id=soc_id,
+                                       case_tags=tags, case_open_since=open_since)
 
     @staticmethod
     def resolve_case(root, info, case_id):

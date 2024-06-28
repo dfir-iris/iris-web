@@ -20,6 +20,7 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
+from app.business.users import _reset_user_mfa
 from app.iris_engine.access_control.utils import ac_recompute_all_users_effective_ac
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.access_control.utils import ac_trace_effective_user_permissions
@@ -49,7 +50,7 @@ def manage_ac_index(caseid, url_redir):
 
 @manage_ac_blueprint.route('/manage/access-control/recompute-effective-users-ac', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
-def manage_ac_compute_effective_all_ac(caseid):
+def manage_ac_compute_effective_all_ac():
 
     ac_recompute_all_users_effective_ac()
 
@@ -58,16 +59,26 @@ def manage_ac_compute_effective_all_ac(caseid):
 
 @manage_ac_blueprint.route('/manage/access-control/recompute-effective-user-ac/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
-def manage_ac_compute_effective_ac(cur_id, caseid):
+def manage_ac_compute_effective_ac(cur_id):
 
     ac_recompute_effective_ac(cur_id)
 
     return response_success('Updated')
 
 
+@manage_ac_blueprint.route('/manage/access-control/reset-mfa/<int:cur_id>', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def manage_ac_reset_mfa(cur_id):
+
+    _reset_user_mfa(cur_id)
+
+    return response_success('Updated')
+
+
+
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
-def manage_ac_audit_user(cur_id, caseid):
+def manage_ac_audit_user(cur_id):
     user_audit = {
         'access_audit': ac_trace_user_effective_cases_access_2(cur_id),
         'permissions_audit': ac_trace_effective_user_permissions(cur_id)
@@ -78,7 +89,7 @@ def manage_ac_audit_user(cur_id, caseid):
 
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>/modal', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
-def manage_ac_audit_user_modal(cur_id, caseid):
+def manage_ac_audit_user_modal(cur_id):
     access_audit = ac_trace_user_effective_cases_access_2(cur_id)
     permissions_audit = ac_trace_effective_user_permissions(cur_id)
 
@@ -91,5 +102,3 @@ def manage_ac_audit_users_page(caseid, url_redir):
     form = FlaskForm()
 
     return render_template("manage_user_audit.html", form=form)
-
-

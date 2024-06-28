@@ -23,7 +23,7 @@ The last and fallback option is the config.ini. Within the project there is a `c
 A few configs are environment variables only:
 
 - `IRIS_WORKER` - Specifies if the process is the worker
-- `DOCKERIZED` - Should be set if running in docker, also loads the other config.ini
+- `DOCKERIZED` - Is set when running in docker, also loads the other config.ini
 
 ## Configuration options
 

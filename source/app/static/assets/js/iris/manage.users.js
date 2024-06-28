@@ -159,6 +159,18 @@ function refresh_user_ac(user_id) {
     });
 }
 
+function reset_user_mfa(user_id) {
+    let users_refresh_mfa_btn = $('#users_refresh_mfa_btn');
+    let ori_txt = users_refresh_mfa_btn.text();
+    users_refresh_mfa_btn.text('Resetting..');
+    get_request_api('/manage/access-control/reset-mfa/' + user_id)
+    .done((data) => {
+        notify_auto_api(data);
+    }).always(() => {
+        users_refresh_mfa_btn.text(ori_txt);
+    });
+}
+
 function renew_api_for_user(user_id) {
     var ori_txt = $('#users_renew_api_btn').text();
     $('#users_renew_api_btn').text('Renewing..');

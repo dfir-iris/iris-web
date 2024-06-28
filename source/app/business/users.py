@@ -15,29 +15,21 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import app
+from app import db
+from app.business.errors import BusinessProcessingError
+from app.datamgmt.manage.manage_users_db import get_user, get_active_user
 
 
-class BusinessProcessingError(Exception):
+def _reset_user_mfa(user_id: int = None):
+    """
+    Resets a user MFA by setting to none its MFA token
+    """
+    user = get_active_user(user_id=user_id)
+    if user is None:
+        raise BusinessProcessingError(f'User with id {user_id} is not found')
 
-    def __init__(self, message, data=None):
-        self._message = message
-        self._data = data
+    user.mfa_secrets = None
+    user.mfa_setup_complete = False
 
-    def get_message(self):
-        return self._message
+    db.session.commit()
 
-    def get_data(self):
-        return self._data
-
-
-class UnhandledBusinessError(BusinessProcessingError):
-    def __init__(self, message, data=None):
-        self._message = message
-        self._data = data
-        app.logger.exception(message)
-        app.logger.exception(data)
-
-
-class PermissionDeniedError(Exception):
-    pass

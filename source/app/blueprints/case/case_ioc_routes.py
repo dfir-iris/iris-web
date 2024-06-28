@@ -248,7 +248,10 @@ def case_add_ioc_modal(caseid):
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_ioc(cur_id, caseid):
     try:
-        delete(cur_id, caseid)
+
+        msg = delete(cur_id, caseid)
+        return response_success(msg=msg)
+
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
