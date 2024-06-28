@@ -27,8 +27,6 @@ from werkzeug import Response
 from werkzeug.utils import secure_filename
 
 from app import db
-from app.blueprints.rest.endpoints import response_created
-from app.blueprints.rest.endpoints import response_failed
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
@@ -261,18 +259,6 @@ def api_add_case():
         return response_success(msg, data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
-
-
-@manage_cases_rest_blueprint.route('/api/v2/cases', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
-def create_case():
-    case_schema = CaseSchema()
-
-    try:
-        case, _ = create(request.get_json())
-        return response_created(case_schema.dump(case))
-    except BusinessProcessingError as e:
-        return response_failed(e.get_message())
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/list', methods=['GET'])

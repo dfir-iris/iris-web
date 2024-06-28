@@ -29,6 +29,10 @@ from sqlalchemy import desc
 from app import app
 from app import db
 from app import socket_io
+from app.blueprints.rest.endpoints import response_created
+from app.blueprints.rest.endpoints import response_failed
+from app.business.cases import cases_create
+from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
@@ -46,6 +50,7 @@ from app.models import CaseStatus
 from app.models import ReviewStatusList
 from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
+from app.models.authorization import Permissions
 from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema
 from app.schema.marshables import CaseSchema
@@ -335,3 +340,14 @@ def case_review(caseid):
 
     return response_success("Case review updated", data=CaseSchema().dump(case))
 
+
+@case_rest_blueprint.route('/api/v2/cases', methods=['POST'])
+@ac_api_requires(Permissions.standard_user)
+def create_case():
+    case_schema = CaseSchema()
+
+    try:
+        case, _ = cases_create(request.get_json())
+        return response_created(case_schema.dump(case))
+    except BusinessProcessingError as e:
+        return response_failed(e.get_message())
