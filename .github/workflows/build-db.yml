@@ -16,6 +16,10 @@ jobs:
   build-db:
     runs-on: ubuntu-latest
 
+    permissions:
+      packages: write
+      contents: read
+
     steps:
       - run: |
           echo "The job was automatically triggered by a ${{ github.event_name }} event."
