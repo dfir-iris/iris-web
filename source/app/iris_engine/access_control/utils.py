@@ -309,6 +309,10 @@ def ac_fast_check_user_has_case_access(user_id, cid, access_level):
     if ac_flag_match_mask(ucea[0], CaseAccessLevel.deny_all.value):
         return None
 
+    # TODO do we really want to do this?
+    #      as it is coded now, as soon as the user has one of the required
+    #      access level, the action is allowed
+    #      don't we rather want the user to have all required permissions?
     for acl in access_level:
         if ac_flag_match_mask(ucea[0], acl.value):
             return ucea[0]
