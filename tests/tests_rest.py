@@ -83,3 +83,14 @@ class TestsRest(TestCase):
     def test_get_iocs_should_not_fail(self):
         response = self._subject.get('/case/ioc/list')
         self.assertEqual('success', response['status'])
+
+    def test_create_case_template_should_not_be_forbidden_to_administrator(self):
+        query_parameters = {
+            'cid': 1
+        }
+        body = {
+            'case_template_json': '{"name": "Template name"}',
+        }
+        response = self._subject.post('/manage/case-templates/add', body, query_parameters=query_parameters)
+        # TODO should really be 201 here
+        self.assertEqual(200, response.status_code)

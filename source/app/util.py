@@ -229,6 +229,7 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
         return _handle_exception(e, request_data)
 
 
+# TODO remove 3rd return value: always True
 def _set_caseid_from_current_user():
     redir = False
     if current_user.ctx_case is None:
@@ -255,7 +256,6 @@ def log_exception_and_error(e):
 def _handle_no_cid_required(no_cid_required):
     if no_cid_required:
         js_d = request.get_json(silent=True)
-        caseid = None
 
         try:
 
@@ -318,7 +318,7 @@ def get_case_access(request_data, access_level, from_api=False, no_cid_required=
         return redir, ctmp, has_access
 
     eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
-    if eaccess_level is None and access_level != []:
+    if eaccess_level is None and access_level:
         update_denied_case(caseid, from_api)
         return redir, caseid, False
 
