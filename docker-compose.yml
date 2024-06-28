@@ -26,7 +26,7 @@ services:
 
   db:
     container_name: iriswebapp_db
-    image: ${DB_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp-db}:${DB_IMAGE_TAG:-latest}
+    image: ${DB_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_db}:${DB_IMAGE_TAG:-latest}
     restart: always
     # Used for debugging purposes, should be deleted for production
     ports:
@@ -43,7 +43,7 @@ services:
       - db_data:/var/lib/postgresql/data
 
   app:
-    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_db}:${APP_IMAGE_TAG:-latest}
+    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-latest}
     container_name: iriswebapp_app
     command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
     volumes:
