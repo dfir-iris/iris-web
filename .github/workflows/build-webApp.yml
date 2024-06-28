@@ -13,8 +13,12 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build-db:
+  build-webapp:
     runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+      contents: read
 
     steps:
       - run: |
@@ -45,7 +49,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.actor }}/iriswebapp_app
+          images: ${{ env.REGISTRY }}/dfir-iris/iriswebapp_app
 
       - name: Build and push
         uses: docker/build-push-action@v5
