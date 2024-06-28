@@ -217,7 +217,8 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
             js_d = request_data.get_json()
 
         if not js_d:
-            return _set_caseid_from_current_user()
+            redir, caseid = _set_caseid_from_current_user()
+            return redir, caseid, True
 
         caseid = js_d.get('cid')
         request_data.json.pop('cid')
@@ -226,26 +227,22 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
 
     except Exception as e:
         print(request_data.url)
-        return _handle_exception(e, request_data)
+        cookie_session = request_data.cookies.get('session')
+        if not cookie_session:
+            redir, caseid = _set_caseid_from_current_user()
+            return redir, caseid, True
+
+        log_exception_and_error(e)
+        return True, 0, False
 
 
-# TODO remove 3rd return value: always True
 def _set_caseid_from_current_user():
     redir = False
     if current_user.ctx_case is None:
         redir = True
         current_user.ctx_case = 1
     caseid = current_user.ctx_case
-    return redir, caseid, True
-
-
-def _handle_exception(e, request_data):
-    cookie_session = request_data.cookies.get('session')
-    if not cookie_session:
-        return _set_caseid_from_current_user()
-
-    log_exception_and_error(e)
-    return True, 0, False
+    return redir, caseid
 
 
 def log_exception_and_error(e):
