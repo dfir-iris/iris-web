@@ -306,7 +306,7 @@ def datastore_view_file(cur_id: int, caseid: int):
         return response_error(f'File {dsf.file_local_name} does not exists on the server. '
                               f'Update or delete virtual entry')
 
-    resp = send_file(dsf.file_local_name, as_attachment=True,
+    resp = send_file(dsf.file_local_name, as_attachment=False,
                      download_name=destination_name)
 
     track_activity(f"File \"{destination_name}\" downloaded", caseid=caseid, display_in_ui=False)

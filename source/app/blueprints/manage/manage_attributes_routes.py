@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import json
 from flask import Blueprint
 from flask import redirect
@@ -36,9 +35,7 @@ from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
 
-manage_attributes_blueprint = Blueprint('manage_attributes',
-                                          __name__,
-                                          template_folder='templates')
+manage_attributes_blueprint = Blueprint('manage_attributes', __name__, template_folder='templates')
 
 
 # CONTENT ------------------------------------------------
@@ -54,8 +51,8 @@ def manage_attributes(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/list')
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def list_attributes(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def list_attributes():
     # Get all attributes
     attributes = CustomAttribute.query.with_entities(
         CustomAttribute.attribute_id,
@@ -113,8 +110,8 @@ def attributes_preview(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def update_attribute(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def update_attribute(cur_id):
     if not request.is_json:
         return response_error("Invalid request")
 

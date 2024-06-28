@@ -142,6 +142,11 @@
                                     <button type="button" class="btn btn-dark mt-5 float-right"
                                     onclick="refresh_user_ac('{{ user.user_id }}');" id="users_refresh_ac_btn">Refresh access</button>
 
+                                    {% if server_settings.enforce_mfa %}
+                                    <button type="button" class="btn btn-dark mt-5 mr-2 float-right"
+                                    onclick="reset_user_mfa('{{ user.user_id }}');" id="users_reset_mfa_btn">Reset MFA</button>
+                                    {% endif %}
+
                                 {% else %}
 
                                     <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"

@@ -211,34 +211,34 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_caseid_from_request_data(request_data, no_cid_required):
+def _get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
-    redir = False
-    has_access = True
-    js_d = None
+    if caseid:
+        return False, caseid, True
 
-    if not caseid and not no_cid_required:
+    if no_cid_required:
+        return False, caseid, True
 
-        try:
+    try:
+        js_d = None
 
-            if request_data.content_type == 'application/json':
-                js_d = request_data.get_json()
+        if request_data.content_type == 'application/json':
+            js_d = request_data.get_json()
 
-            if js_d:
-                caseid = js_d.get('cid')
-                request_data.json.pop('cid')
+        if not js_d:
+            return _set_caseid_from_current_user()
 
-            else:
-                redir, caseid, has_access = set_caseid_from_current_user()
+        caseid = js_d.get('cid')
+        request_data.json.pop('cid')
 
-        except Exception as e:
-            print(request_data.url)
-            redir, caseid, has_access = handle_exception(e, request_data)
+        return False, caseid, True
 
-    return redir, caseid, has_access
+    except Exception as e:
+        print(request_data.url)
+        return _handle_exception(e, request_data)
 
 
-def set_caseid_from_current_user():
+def _set_caseid_from_current_user():
     redir = False
     if current_user.ctx_case is None:
         redir = True
@@ -247,10 +247,10 @@ def set_caseid_from_current_user():
     return redir, caseid, True
 
 
-def handle_exception(e, request_data):
+def _handle_exception(e, request_data):
     cookie_session = request_data.cookies.get('session')
     if not cookie_session:
-        return set_caseid_from_current_user()
+        return _set_caseid_from_current_user()
 
     log_exception_and_error(e)
     return True, 0, False
@@ -261,7 +261,7 @@ def log_exception_and_error(e):
     log.error(traceback.print_exc())
 
 
-def handle_no_cid_required(request, no_cid_required):
+def _handle_no_cid_required(no_cid_required):
     if no_cid_required:
         js_d = request.get_json(silent=True)
         caseid = None
@@ -276,11 +276,11 @@ def handle_no_cid_required(request, no_cid_required):
                 request.json.pop('cid')
 
         except Exception:
-            return False, None, False
+            return None, False
 
-        return False, caseid, True
+        return caseid, True
 
-    return False, None, False
+    return None, False
 
 
 def update_session(caseid, eaccess_level, from_api):
@@ -318,9 +318,10 @@ def update_denied_case(caseid, from_api):
 
 
 def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
-    redir, caseid, has_access = get_caseid_from_request_data(request_data, no_cid_required)
+    redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
-    redir, ctmp, has_access = handle_no_cid_required(request, no_cid_required)
+    ctmp, has_access = _handle_no_cid_required(no_cid_required)
+    redir = False
     if ctmp is not None:
         return redir, ctmp, has_access
 
@@ -487,6 +488,16 @@ def is_authentication_ldap():
     return app.config.get('AUTHENTICATION_TYPE') == "ldap"
 
 
+def regenerate_session():
+    user_data = session.get('user_data', {})
+
+    session.clear()
+
+    session['user_data'] = user_data
+
+    session.modified = True
+
+
 def api_login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):
@@ -578,6 +589,21 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
+def _user_has_required_permissions(permissions):
+    if not permissions:
+        return True
+
+    for permission in permissions:
+        # TODO do we really want to do this?
+        #      as it is coded now, as soon as the user has one of the required
+        #      permission, the action is allowed
+        #      don't we rather want the user to have all required permissions?
+        if session['permissions'] & permission.value:
+            return True
+
+    return False
+
+
 def ac_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
@@ -591,11 +617,7 @@ def ac_requires(*permissions, no_cid_required=False):
 
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                if permissions:
-                    for permission in permissions:
-                        if session['permissions'] & permission.value:
-                            return f(*args, **kwargs)
-
+                if not _user_has_required_permissions(permissions):
                     return ac_return_access_denied()
 
                 return f(*args, **kwargs)
@@ -671,7 +693,28 @@ def ac_requires_client_access():
     return inner_wrap
 
 
-def ac_api_requires(*permissions, no_cid_required=False):
+def ac_requires_case_identifier():
+    def decorate_with_requires_case_identifier(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            try:
+                redir, caseid, _ = get_case_access(request, [], from_api=True)
+            except Exception as e:
+                log.exception(e)
+                return response_error('Invalid data. Check server logs', status=500)
+
+            if not caseid and not redir:
+                return response_error('Invalid case ID', status=404)
+
+            kwargs.update({'caseid': caseid})
+
+            return f(*args, **kwargs)
+
+        return wrap
+    return decorate_with_requires_case_identifier
+
+
+def ac_api_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -687,30 +730,13 @@ def ac_api_requires(*permissions, no_cid_required=False):
             if not is_user_authenticated(request):
                 return response_error("Authentication required", status=401)
 
-            else:
-                try:
-                    redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
-                except Exception as e:
-                    log.exception(e)
-                    return response_error("Invalid data. Check server logs", status=500)
+            if 'permissions' not in session:
+                session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
-                if not (caseid or redir) and not no_cid_required:
-                    return response_error("Invalid case ID", status=404)
+            if not _user_has_required_permissions(permissions):
+                return response_error('Permission denied', status=403)
 
-                kwargs.update({"caseid": caseid})
-
-                if 'permissions' not in session:
-                    session['permissions'] = ac_get_effective_permissions_of_user(current_user)
-
-                if permissions:
-
-                    for permission in permissions:
-                        if session['permissions'] & permission.value:
-                            return f(*args, **kwargs)
-
-                    return response_error("Permission denied", status=403)
-
-                return f(*args, **kwargs)
+            return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
@@ -837,7 +863,8 @@ def str_to_bool(value):
     return value.lower() in ['true', '1', 'yes', 'y', 't']
 
 
-def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bool = False):
+def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bool = False,
+                    max_len: int = None, max_val: int = None, min_val: int = None):
     if input_var is None:
         if allow_none is False:
             raise marshmallow.ValidationError("Invalid data - non null expected",
@@ -846,6 +873,21 @@ def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bo
             return True
     
     if isinstance(input_var, type):
+        if max_len:
+            if len(input_var) > max_len:
+                raise marshmallow.ValidationError("Invalid data - max length exceeded",
+                                                field_name=field_name if field_name else "type")
+
+        if max_val:
+            if input_var > max_val:
+                raise marshmallow.ValidationError("Invalid data - max value exceeded",
+                                                field_name=field_name if field_name else "type")
+
+        if min_val:
+            if input_var < min_val:
+                raise marshmallow.ValidationError("Invalid data - min value exceeded",
+                                                field_name=field_name if field_name else "type")
+
         return True
     
     try:

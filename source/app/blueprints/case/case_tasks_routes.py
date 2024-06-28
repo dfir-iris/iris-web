@@ -171,7 +171,7 @@ def case_add_task(caseid):
         return response_error("Unable to create task for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
@@ -243,14 +243,14 @@ def case_edit_task(cur_id, caseid):
         task = call_modules_hook('on_postload_task_update', data=task, caseid=caseid)
 
         if task:
-            track_activity(f"updated task \"{task.task_title}\" (status {task.task_status_id})",
+            track_activity(f"updated task \"{task.task_title}\" (status {task.status.status_name})",
                            caseid=caseid)
             return response_success("Task '{}' updated".format(task.task_title), data=task_schema.dump(task))
 
         return response_error("Unable to update task for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])
@@ -330,7 +330,7 @@ def case_comment_task_add(cur_id, caseid):
         return response_success("Task commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+        return response_error(msg="Data error", data=e.normalized_messages())
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>', methods=['GET'])

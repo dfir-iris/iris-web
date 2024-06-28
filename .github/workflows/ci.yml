@@ -17,7 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 name: Continuous Integration
-on: push
+on: [push, pull_request]
 
 jobs:
 
@@ -36,7 +36,7 @@ jobs:
           #      or maybe the docker building phase should also be part of the tests 
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
-          docker-compose build
+          docker compose build
       - name: Run tests
         working-directory: tests
         run: |

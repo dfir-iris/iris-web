@@ -36,8 +36,6 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
-from app.datamgmt.case.case_iocs_db import check_ioc_type_id
-from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.datamgmt.case.case_iocs_db import delete_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comments
@@ -51,7 +49,6 @@ from app.datamgmt.case.case_iocs_db import get_tlps
 from app.datamgmt.case.case_iocs_db import get_tlps_dict
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_ioc_state
-from app.datamgmt.states import update_ioc_state
 from app.forms import ModalAddCaseAssetForm
 from app.forms import ModalAddCaseIOCForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -64,6 +61,10 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from app.business.iocs import create
+from app.business.iocs import update
+from app.business.iocs import delete
+from app.business.errors import BusinessProcessingError
 
 case_ioc_blueprint = Blueprint(
     'case_ioc',
@@ -126,40 +127,13 @@ def case_ioc_state(caseid):
 @case_ioc_blueprint.route('/case/ioc/add', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_ioc(caseid):
+    ioc_schema = IocSchema()
+
     try:
-        # validate before saving
-        add_ioc_schema = IocSchema()
-
-        request_data = call_modules_hook('on_preload_ioc_create', data=request.get_json(), caseid=caseid)
-
-        ioc = add_ioc_schema.load(request_data)
-
-        if not check_ioc_type_id(type_id=ioc.ioc_type_id):
-            return response_error("Not a valid IOC type")
-
-        ioc, existed = add_ioc(ioc=ioc,
-                               user_id=current_user.id,
-                               caseid=caseid
-                               )
-        link_existed = add_ioc_link(ioc.ioc_id, caseid)
-
-        if link_existed:
-            return response_success("IOC already exists and linked to this case", data=add_ioc_schema.dump(ioc))
-
-        if not link_existed:
-            ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
-
-        if ioc:
-            track_activity("added ioc \"{}\"".format(ioc.ioc_value), caseid=caseid)
-
-            msg = "IOC already existed in DB. Updated with info on DB." if existed else "IOC added"
-
-            return response_success(msg=msg, data=add_ioc_schema.dump(ioc))
-
-        return response_error("Unable to create IOC for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        ioc, msg = create(request.get_json(), caseid)
+        return response_success(msg, data=ioc_schema.dump(ioc))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
@@ -254,7 +228,7 @@ def case_upload_ioc(caseid):
         return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @case_ioc_blueprint.route('/case/ioc/add/modal', methods=['GET'])
@@ -273,20 +247,13 @@ def case_add_ioc_modal(caseid):
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_ioc(cur_id, caseid):
-    call_modules_hook('on_preload_ioc_delete', data=cur_id, caseid=caseid)
-    ioc = get_ioc(cur_id, caseid)
+    try:
 
-    if not ioc:
-        return response_error('Not a valid IOC for this case')
+        msg = delete(cur_id, caseid)
+        return response_success(msg=msg)
 
-    if not delete_ioc(ioc, caseid):
-        track_activity(f"unlinked IOC ID {ioc.ioc_value}", caseid=caseid)
-        return response_success(f"IOC {cur_id} unlinked")
-
-    call_modules_hook('on_postload_ioc_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"deleted IOC \"{ioc.ioc_value}\"", caseid=caseid)
-    return response_success(f"IOC {cur_id} deleted")
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
@@ -327,35 +294,13 @@ def case_view_ioc(cur_id, caseid):
 @case_ioc_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_update_ioc(cur_id, caseid):
+    ioc_schema = IocSchema()
+
     try:
-        ioc = get_ioc(cur_id, caseid)
-        if not ioc:
-            return response_error("Invalid IOC ID for this case")
-
-        request_data = call_modules_hook('on_preload_ioc_update', data=request.get_json(), caseid=caseid)
-
-        # validate before saving
-        ioc_schema = IocSchema()
-        request_data['ioc_id'] = cur_id
-        ioc_sc = ioc_schema.load(request_data, instance=ioc)
-        ioc_sc.user_id = current_user.id
-
-        if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
-            return response_error("Not a valid IOC type")
-
-        update_ioc_state(caseid=caseid)
-        db.session.commit()
-
-        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=caseid)
-
-        if ioc_sc:
-            track_activity(f"updated ioc \"{ioc_sc.ioc_value}\"", caseid=caseid)
-            return response_success(f"Updated ioc \"{ioc_sc.ioc_value}\"", data=ioc_schema.dump(ioc))
-
-        return response_error("Unable to update ioc for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        ioc, msg = update(cur_id, request.get_json(), caseid)
+        return response_success(msg, data=ioc_schema.dump(ioc))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/modal', methods=['GET'])
@@ -416,7 +361,7 @@ def case_comment_ioc_add(cur_id, caseid):
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
+        return response_error(msg="Data error", data=e.normalized_messages())
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])

@@ -22,8 +22,9 @@ import time
 from docker_compose import DockerCompose
 from rest_api import RestApi
 from server_timeout_error import ServerTimeoutError
+from user import User
 
-_API_URL = 'http://127.0.0.1:8000'
+API_URL = 'http://127.0.0.1:8000'
 _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
 _IRIS_PATH = Path('..')
 _TEST_DATA_PATH = Path('./data')
@@ -33,7 +34,8 @@ class Iris:
 
     def __init__(self):
         self._docker_compose = DockerCompose(_IRIS_PATH)
-        self._api = RestApi(_API_URL, _API_KEY)
+        self._api = RestApi(API_URL, _API_KEY)
+        self._administrator = User(API_URL, _API_KEY)
 
     def _wait(self, condition, attempts, sleep_duration=1):
         count = 0
@@ -68,12 +70,31 @@ class Iris:
     def get_api_version(self):
         return self._api.get('api/versions')
 
+    def create_alert(self):
+        body = {
+            'alert_title': 'alert title',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1
+        }
+        return self._api.post('/alerts/add', body)
+
     def create_asset(self):
         body = {
             'asset_type_id': '9',
             'asset_name': 'admin_laptop',
         }
         return self._api.post('/case/assets/add', body)
+
+    def create_user(self, user_name):
+        body = {
+            'user_name': user_name,
+            'user_login': user_name,
+            'user_email': f'{user_name}@aa.eu',
+            'user_password': 'aA.1234567890'
+        }
+        user = self._api.post('/manage/users/add', body)
+        return User(API_URL, user['data']['user_api_key'])
 
     def create_case(self):
         body = {
@@ -82,10 +103,17 @@ class Iris:
             'case_customer': 1,
             'case_soc_id': ''
         }
-        return self._api.post('/manage/cases/add', body)
+        response = self._api.post('/manage/cases/add', body)
+        return response['data']
 
     def update_case(self, case_identifier, data):
         return self._api.post(f'/manage/cases/update/{case_identifier}', data)
 
     def get_cases(self):
         return self._api.get('/manage/cases/list')
+
+    def get_cases_filter(self):
+        return self._api.get('/manage/cases/filter')
+
+    def execute_graphql_query(self, payload):
+        return self._administrator.execute_graphql_query(payload)

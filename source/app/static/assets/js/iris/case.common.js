@@ -16,6 +16,7 @@ function getSharedLink(){
     return null;
 }
 
+
 $(document).ready(function(){
     $(function(){
         var current = location.pathname;

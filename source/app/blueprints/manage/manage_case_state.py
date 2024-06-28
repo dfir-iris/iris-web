@@ -17,32 +17,36 @@
 import marshmallow
 from typing import Union
 
-from flask import Blueprint, Response, url_for, render_template, request
+from flask import Blueprint
+from flask import Response
+from flask import url_for
+from flask import render_template
+from flask import request
 from werkzeug.utils import redirect
 
 from app import db
-from app.datamgmt.manage.manage_case_state_db import get_case_states_list, \
-    get_case_state_by_id, get_cases_using_state
+from app.datamgmt.manage.manage_case_state_db import get_case_states_list
+from app.datamgmt.manage.manage_case_state_db import get_case_state_by_id
+from app.datamgmt.manage.manage_case_state_db import get_cases_using_state
 from app.forms import CaseStateForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseStateSchema
-from app.util import ac_api_requires, response_error, ac_requires
+from app.util import ac_api_requires
+from app.util import response_error
+from app.util import ac_requires
 from app.util import response_success
 
 manage_case_state_blueprint = Blueprint('manage_case_state',
-                                         __name__,
-                                         template_folder='templates')
+                                        __name__,
+                                        template_folder='templates')
 
 
 # CONTENT ------------------------------------------------
 @manage_case_state_blueprint.route('/manage/case-states/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def list_case_state(caseid: int) -> Response:
+@ac_api_requires()
+def list_case_state() -> Response:
     """Get the list of case state
-
-    Args:
-        caseid (int): case id
 
     Returns:
         Flask Response object
@@ -54,13 +58,12 @@ def list_case_state(caseid: int) -> Response:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/<int:state_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def get_case_state(state_id: int, caseid: int) -> Response:
+@ac_api_requires()
+def get_case_state(state_id: int) -> Response:
     """Get a case state
 
     Args:
         state_id (int): case state id
-        caseid (int): case id
 
     Returns:
         Flask Response object
@@ -106,13 +109,12 @@ def update_case_state_modal(state_id: int, caseid: int, url_redir: bool) -> Unio
 
 @manage_case_state_blueprint.route('/manage/case-states/update/<int:state_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def update_case_state(state_id: int, caseid: int) -> Response:
+@ac_api_requires(Permissions.server_administrator)
+def update_case_state(state_id: int) -> Response:
     """Update a case state
 
     Args:
         state_id (int): case state id
-        caseid (int): case id
 
     Returns:
         Flask Response object
@@ -134,11 +136,11 @@ def update_case_state(state_id: int, caseid: int) -> Response:
         ccls = ccl.load(request.get_json(), instance=case_state)
 
         if ccls:
-            track_activity(f"updated case state {ccls.state_id}", caseid=caseid)
+            track_activity(f"updated case state {ccls.state_id}")
             return response_success("Case state updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated", data=case_state)
 
@@ -165,12 +167,9 @@ def add_case_state_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def add_case_state(caseid: int) -> Response:
+@ac_api_requires(Permissions.server_administrator)
+def add_case_state() -> Response:
     """Add a case state
-
-    Args:
-        caseid (int): case id
 
     Returns:
         Flask Response object
@@ -188,24 +187,22 @@ def add_case_state(caseid: int) -> Response:
             db.session.add(ccls)
             db.session.commit()
 
-            track_activity(f"added case state {ccls.state_name}", caseid=caseid)
+            track_activity(f"added case state {ccls.state_name}")
             return response_success("Case state added", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing added", data=None)
 
 
-@manage_case_state_blueprint.route('/manage/case-states/delete/<int:state_id>',
-                                            methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def delete_case_state(state_id: int, caseid: int) -> Response:
+@manage_case_state_blueprint.route('/manage/case-states/delete/<int:state_id>', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def delete_case_state(state_id: int) -> Response:
     """Delete a case state
 
     Args:
         state_id (int): case state id
-        caseid (int): case id
 
     Returns:
         Flask Response object
@@ -225,5 +222,5 @@ def delete_case_state(state_id: int, caseid: int) -> Response:
     db.session.delete(case_state)
     db.session.commit()
 
-    track_activity(f"deleted case state {case_state.state_name}", caseid=caseid)
+    track_activity(f"deleted case state {case_state.state_name}")
     return response_success("Case state deleted")

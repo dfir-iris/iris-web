@@ -16,9 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import secrets
-
 import marshmallow
-# IMPORTS ------------------------------------------------
 import traceback
 from flask import Blueprint
 from flask import redirect
@@ -33,7 +31,9 @@ from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
-from app.datamgmt.manage.manage_users_db import add_case_access_to_user, update_user_customers, get_filtered_users
+from app.datamgmt.manage.manage_users_db import add_case_access_to_user
+from app.datamgmt.manage.manage_users_db import update_user_customers
+from app.datamgmt.manage.manage_users_db import get_filtered_users
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import delete_user
 from app.datamgmt.manage.manage_users_db import get_user
@@ -47,10 +47,13 @@ from app.datamgmt.manage.manage_users_db import remove_cases_access_from_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.forms import AddUserForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_current_user_has_permission
+from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
-from app.schema.marshables import UserSchema, BasicUserSchema, UserFullSchema
+from app.schema.marshables import UserSchema
+from app.schema.marshables import BasicUserSchema
+from app.schema.marshables import UserFullSchema
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import ac_requires
@@ -59,18 +62,14 @@ from app.util import response_error
 from app.util import response_success
 from app.iris_engine.demo_builder import protect_demo_mode_user
 
-manage_users_blueprint = Blueprint(
-    'manage_users',
-    __name__,
-    template_folder='templates'
-)
+manage_users_blueprint = Blueprint('manage_users', __name__, template_folder='templates')
 
 log = app.logger
 
 
 @manage_users_blueprint.route('/manage/users/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_users_list(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_users_list():
 
     users = get_users_list()
 
@@ -78,8 +77,8 @@ def manage_users_list(caseid):
 
 
 @manage_users_blueprint.route('/manage/users/filter', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_users_filter(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_users_filter():
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -140,8 +139,8 @@ def add_user_modal(caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def add_user(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def add_user():
     try:
 
         # validate before saving
@@ -162,18 +161,18 @@ def add_user(caseid):
         del udata['user_password']
 
         if cuser:
-            track_activity("created user {}".format(user.user), caseid=caseid,  ctx_less=True)
+            track_activity("created user {}".format(user.user),  ctx_less=True)
             return response_success("user created", data=udata)
 
         return response_error("Unable to create user for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def view_user(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def view_user(cur_id):
 
     user = get_user_details(user_id=cur_id)
 
@@ -224,17 +223,17 @@ def manage_user_group_modal(cur_id, caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/groups/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_user_group_(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_group_(cur_id):
 
     if not request.is_json:
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if not request.json.get('groups_membership'):
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if type(request.json.get('groups_membership')) is not list:
-        return response_error("Expected list of groups ID", status=400)
+        return response_error("Expected list of groups ID")
 
     user = get_user_details(cur_id)
     if not user:
@@ -243,7 +242,7 @@ def manage_user_group_(cur_id, caseid):
     update_user_groups(user_id=cur_id,
                        groups=request.json.get('groups_membership'))
 
-    track_activity(f"groups membership of user {cur_id} updated", caseid=caseid,  ctx_less=True)
+    track_activity(f"groups membership of user {cur_id} updated", ctx_less=True)
 
     return response_success("User groups updated", data=user)
 
@@ -266,26 +265,25 @@ def manage_user_customers_modal(cur_id, caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/customers/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_user_customers_(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_customers_(cur_id):
 
     if not request.is_json:
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if not request.json.get('customers_membership'):
-        return response_error("Invalid request", status=400)
+        return response_error("Invalid request")
 
     if type(request.json.get('customers_membership')) is not list:
-        return response_error("Expected list of customers ID", status=400)
+        return response_error("Expected list of customers ID")
 
     user = get_user_details(cur_id)
     if not user:
-        return response_error("Invalid user ID")
+        return response_error('Invalid user ID')
 
-    update_user_customers(user_id=cur_id,
-                          customers=request.json.get('customers_membership'))
+    update_user_customers(user_id=cur_id, customers=request.json.get('customers_membership'))
 
-    track_activity(f"customers membership of user {cur_id} updated", caseid=caseid,  ctx_less=True)
+    track_activity(f"customers membership of user {cur_id} updated", ctx_less=True)
 
     return response_success("User customers updated", data=user)
 
@@ -319,8 +317,8 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_user_cac_add_case(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_cac_add_case(cur_id):
 
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -347,7 +345,7 @@ def manage_user_cac_add_case(cur_id, caseid):
         return response_error(msg=logs)
 
     track_activity(f"case access level {data.get('access_level')} for case(s) {data.get('cases_list')} "
-                   f"set for user {user.user}", caseid=caseid,  ctx_less=True)
+                   f"set for user {user.user}", ctx_less=True)
 
     group = get_user_details(cur_id)
 
@@ -355,8 +353,8 @@ def manage_user_cac_add_case(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/cases-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_user_cac_delete_cases(cur_id,  caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_cac_delete_cases(cur_id):
 
     user = get_user(cur_id)
     if not user:
@@ -383,7 +381,7 @@ def manage_user_cac_delete_cases(cur_id,  caseid):
         return response_error(msg=str(e))
 
     if success:
-        track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}", caseid=caseid,
+        track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}",
                        ctx_less=True)
 
         user = get_user_details(cur_id)
@@ -394,8 +392,8 @@ def manage_user_cac_delete_cases(cur_id,  caseid):
 
 
 @manage_users_blueprint.route('/manage/users/<int:cur_id>/case-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_user_cac_delete_case(cur_id,  caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_cac_delete_case(cur_id):
 
     user = get_user(cur_id)
     if not user:
@@ -422,8 +420,7 @@ def manage_user_cac_delete_case(cur_id,  caseid):
         return response_error(msg=str(e))
 
     if success:
-        track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", caseid=caseid,
-                       ctx_less=True)
+        track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", ctx_less=True)
 
         user = get_user_details(cur_id)
 
@@ -433,8 +430,8 @@ def manage_user_cac_delete_case(cur_id,  caseid):
 
 
 @manage_users_blueprint.route('/manage/users/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def update_user_api(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def update_user_api(cur_id):
 
     try:
         user = get_user(cur_id)
@@ -442,7 +439,7 @@ def update_user_api(cur_id, caseid):
             return response_error("Invalid user ID for this case")
 
         if protect_demo_mode_user(user):
-            return ac_api_return_access_denied(caseid=caseid)
+            return ac_api_return_access_denied()
 
         # validate before saving
         user_schema = UserSchema()
@@ -454,25 +451,25 @@ def update_user_api(cur_id, caseid):
         db.session.commit()
 
         if cuser:
-            track_activity("updated user {}".format(user.user), caseid=caseid, ctx_less=True)
+            track_activity("updated user {}".format(user.user), ctx_less=True)
             return response_success("User updated", data=user_schema.dump(user))
 
         return response_error("Unable to update user for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
 
 @manage_users_blueprint.route('/manage/users/deactivate/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def deactivate_user_api(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def deactivate_user_api(cur_id):
 
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
 
     if protect_demo_mode_user(user):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     if current_user.id == cur_id:
         return response_error('We do not recommend deactivating yourself for obvious reasons')
@@ -481,53 +478,53 @@ def deactivate_user_api(cur_id, caseid):
     db.session.commit()
     user_schema = UserSchema()
 
-    track_activity(f"user {user.user} deactivated", caseid=caseid,  ctx_less=True)
+    track_activity(f"user {user.user} deactivated", ctx_less=True)
     return response_success("User deactivated", data=user_schema.dump(user))
 
 
 @manage_users_blueprint.route('/manage/users/activate/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def activate_user_api(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def activate_user_api(cur_id):
 
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
 
     if protect_demo_mode_user(user):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     user.active = True
     db.session.commit()
     user_schema = UserSchema()
 
-    track_activity(f"user {user.user} activated", caseid=caseid, ctx_less=True)
+    track_activity(f"user {user.user} activated", ctx_less=True)
     return response_success("User activated", data=user_schema.dump(user))
 
 
 @manage_users_blueprint.route('/manage/users/renew-api-key/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def renew_user_api_key(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def renew_user_api_key(cur_id):
 
     user = get_user(cur_id)
     if not user:
         return response_error("Invalid user ID for this case")
 
     if protect_demo_mode_user(user):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     user.api_key = secrets.token_urlsafe(nbytes=64)
     db.session.commit()
 
     user_schema = UserFullSchema()
 
-    track_activity(f"API key of user {user.user} renewed", caseid=caseid, ctx_less=True)
+    track_activity(f"API key of user {user.user} renewed", ctx_less=True)
     return response_success(f"API key of user {user.user} renewed", data=user_schema.dump(user))
 
 
 if is_authentication_local():
     @manage_users_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['POST'])
-    @ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-    def view_delete_user(cur_id, caseid):
+    @ac_api_requires(Permissions.server_administrator)
+    def view_delete_user(cur_id):
 
         try:
 
@@ -536,27 +533,27 @@ if is_authentication_local():
                 return response_error("Invalid user ID")
 
             if protect_demo_mode_user(user):
-                return ac_api_return_access_denied(caseid=caseid)
+                return ac_api_return_access_denied()
 
             if user.active is True:
-                track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid, ctx_less=True)
+                track_activity(message="tried to delete active user ID {}".format(cur_id), ctx_less=True)
                 return response_error("Cannot delete active user")
 
             delete_user(user.id)
 
-            track_activity(message="deleted user ID {}".format(cur_id), caseid=caseid, ctx_less=True)
+            track_activity(message="deleted user ID {}".format(cur_id), ctx_less=True)
             return response_success("Deleted user ID {}".format(cur_id))
 
         except Exception:
             db.session.rollback()
-            track_activity(message="tried to delete active user ID {}".format(cur_id), caseid=caseid,  ctx_less=True)
+            track_activity(message="tried to delete active user ID {}".format(cur_id), ctx_less=True)
             return response_error("Cannot delete active user")
 
 
 # Unrestricted section - non admin available
 @manage_users_blueprint.route('/manage/users/lookup/id/<int:cur_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def exists_user_restricted(cur_id, caseid):
+@ac_api_requires()
+def exists_user_restricted(cur_id):
 
     user = get_user(cur_id)
     if not user:
@@ -572,8 +569,8 @@ def exists_user_restricted(cur_id, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/lookup/login/<string:login>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def lookup_name_restricted(login, caseid):
+@ac_api_requires()
+def lookup_name_restricted(login):
     user = get_user_by_username(login)
     if not user:
         return response_error("Invalid login")
@@ -591,8 +588,8 @@ def lookup_name_restricted(login, caseid):
 
 
 @manage_users_blueprint.route('/manage/users/restricted/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def manage_users_list_restricted(caseid):
+@ac_api_requires()
+def manage_users_list_restricted():
 
     users = get_users_list_restricted()
 

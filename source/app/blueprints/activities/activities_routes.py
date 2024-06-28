@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import os
 from flask import Blueprint
 from flask import redirect
@@ -41,7 +40,6 @@ activities_blueprint = Blueprint(
 basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 
-# CONTENT ------------------------------------------------
 @activities_blueprint.route('/activities', methods=['GET'])
 @ac_requires(Permissions.activities_read, Permissions.all_activities_read)
 def activities_index(caseid: int, url_redir):
@@ -55,7 +53,7 @@ def activities_index(caseid: int, url_redir):
 
 @activities_blueprint.route('/activities/list', methods=['GET'])
 @ac_api_requires(Permissions.activities_read, Permissions.all_activities_read)
-def list_activities(caseid):
+def list_activities():
     # Get User activities from database
 
     user_activities = get_users_activities()
@@ -68,7 +66,7 @@ def list_activities(caseid):
 
 @activities_blueprint.route('/activities/list-all', methods=['GET'])
 @ac_api_requires(Permissions.all_activities_read)
-def list_all_activities(caseid):
+def list_all_activities():
     # Get User activities from database
 
     user_activities = get_all_users_activities()

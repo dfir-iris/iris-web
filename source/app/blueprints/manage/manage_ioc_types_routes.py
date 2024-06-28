@@ -43,16 +43,16 @@ manage_ioc_type_blueprint = Blueprint('manage_ioc_types',
 
 # CONTENT ------------------------------------------------
 @manage_ioc_type_blueprint.route('/manage/ioc-types/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def list_ioc_types(caseid):
+@ac_api_requires()
+def list_ioc_types():
     lstatus = get_ioc_types_list()
 
     return response_success("", data=lstatus)
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/<int:cur_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def get_ioc_type(cur_id, caseid):
+@ac_api_requires()
+def get_ioc_type(cur_id):
 
     ioc_type = IocType.query.filter(IocType.type_id == cur_id).first()
     if not ioc_type:
@@ -93,8 +93,8 @@ def add_ioc_modal(caseid, url_redir):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def add_ioc_type_api(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def add_ioc_type_api():
     if not request.is_json:
         return response_error("Invalid request")
 
@@ -107,16 +107,16 @@ def add_ioc_type_api(caseid):
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
-    track_activity("Added ioc type {ioc_type_name}".format(ioc_type_name=ioct_sc.type_name), caseid=caseid, ctx_less=True)
+    track_activity("Added ioc type {ioc_type_name}".format(ioc_type_name=ioct_sc.type_name), ctx_less=True)
     # Return the assets
     return response_success("Added successfully", data=ioct_sc)
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def remove_ioc_type(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def remove_ioc_type(cur_id):
 
     type_id = IocType.query.filter(
         IocType.type_id == cur_id
@@ -128,18 +128,17 @@ def remove_ioc_type(cur_id, caseid):
 
     if type_id:
         db.session.delete(type_id)
-        track_activity("Deleted ioc type ID {type_id}".format(type_id=cur_id), caseid=caseid, ctx_less=True)
+        track_activity("Deleted ioc type ID {type_id}".format(type_id=cur_id), ctx_less=True)
         return response_success("Deleted ioc type ID {type_id}".format(type_id=cur_id))
 
-    track_activity("Attempted to delete ioc type ID {type_id}, but was not found".format(type_id=cur_id),
-                    caseid=caseid, ctx_less=True)
+    track_activity(f'Attempted to delete ioc type ID {cur_id}, but was not found', ctx_less=True)
 
     return response_error("Attempted to delete ioc type ID {type_id}, but was not found".format(type_id=cur_id))
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def update_ioc(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def update_ioc(cur_id):
     if not request.is_json:
         return response_error("Invalid request")
 
@@ -154,25 +153,22 @@ def update_ioc(cur_id, caseid):
         ioct_sc = ioct_schema.load(request.get_json(), instance=ioc_type)
 
         if ioct_sc:
-            track_activity("updated ioc type type {}".format(ioct_sc.type_name), caseid=caseid)
+            track_activity("updated ioc type type {}".format(ioct_sc.type_name))
             return response_success("IOC type updated", ioct_sc)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated", data=ioc_type)
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
-def search_ioc_type(caseid):
+@ac_api_requires()
+def search_ioc_type():
     """Searches for IOC types in the database.
 
     This function searches for IOC types in the database with a name that contains the specified search term.
     It returns a JSON response containing the matching IOC types.
-
-    Args:
-        caseid: The ID of the case associated with the request.
 
     Returns:
         A JSON response containing the matching IOC types.

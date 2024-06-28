@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import json
 import os
 import pickle
@@ -76,7 +75,7 @@ def dim_index(caseid: int, url_redir):
 
 @dim_tasks_blueprint.route('/dim/hooks/options/<hook_type>/list', methods=['GET'])
 @ac_api_requires()
-def list_dim_hook_options_ioc(hook_type, caseid):
+def list_dim_hook_options_ioc(hook_type):
     mods_options = (IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,
         IrisHook.hook_name,
@@ -202,7 +201,7 @@ def dim_hooks_call(caseid):
 
 @dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])
 @ac_api_requires()
-def list_dim_tasks(count, caseid):
+def list_dim_tasks(count):
     tasks = CeleryTaskMeta.query.filter(
         ~ CeleryTaskMeta.name.like('app.iris_engine.updater.updater.%')
     ).order_by(desc(CeleryTaskMeta.date_done)).limit(count).all()

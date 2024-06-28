@@ -59,9 +59,6 @@ spec:
           command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
 
           env:
-                
-          - name: DOCKERIZED  # Setting Database name 
-            value: {{ .Values.irisapp.DOCKERIZED | quote }}
 
           - name: POSTGRES_USER  # Setting Database username 
             value: {{ .Values.irisapp.POSTGRES_USER| quote }}
@@ -72,20 +69,20 @@ spec:
           - name:  POSTGRES_ADMIN_USER # Setting Database admin user 
             value: {{ .Values.irisapp.POSTGRES_ADMIN_USER | quote }}
 
-          - name:  POSTGRES_ADMIN_PASSWORD # Setting Database admin password 
-            value: {{ .Values.irisapp.POSTGRES_ADMIN_PASSWORD | quote }}    
+          - name:  POSTGRES_ADMIN_PASSWORD # Setting Database admin password
+            value: {{ .Values.irisapp.POSTGRES_ADMIN_PASSWORD | quote }}
 
           - name:  POSTGRES_PORT # Setting Database port
-            value: {{ .Values.irisapp.POSTGRES_PORT | quote }}   
+            value: {{ .Values.irisapp.POSTGRES_PORT | quote }}
 
           - name:  POSTGRES_SERVER # Setting Database server
-            value: {{ .Values.irisapp.POSTGRES_SERVER | quote }}  
+            value: {{ .Values.irisapp.POSTGRES_SERVER | quote }}
 
           - name:  IRIS_SECRET_KEY 
             value: {{ .Values.irisapp.IRIS_SECRET_KEY | quote }}
 
           - name:  IRIS_SECURITY_PASSWORD_SALT 
-            value: {{ .Values.irisapp.IRIS_SECURITY_PASSWORD_SALT | quote }}         
+            value: {{ .Values.irisapp.IRIS_SECURITY_PASSWORD_SALT | quote }}
 
           - name:  DB_RETRY_COUNT
             value: {{ .Values.irisapp.DB_RETRY_COUNT | quote }}
@@ -127,10 +124,10 @@ spec:
               readOnly: true
       volumes:
         - name: iris-downloads
-          emptyDir: {}  
+          emptyDir: {}
         - name: user-templates
           emptyDir: {}
-        - name: server-data 
+        - name: server-data
           emptyDir: {}
         - name: iris-root-ca-cert
           secret:

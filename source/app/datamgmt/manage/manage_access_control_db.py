@@ -71,14 +71,16 @@ def manage_ac_audit_users_db():
 
 
 def check_ua_case_client(user_id: int, case_id: int) -> UserClient:
-    """Check if a user is part of a client
+    """Check if the user has access to the case, through the customer of the case
+       (in other words, check that the customer of the case is assigned to the user)
 
     Args:
-        user_id (int): User ID
-        case_id (int): Case ID
+        user_id (int): identifier of the user
+        case_id (int): identifier of the case
 
     Returns:
-        bool: True if the user is part of the client
+        UserClient: the user relationship with the customer of the case, if it is assigned to the user
+                    None otherwise
     """
     if ac_current_user_has_permission(Permissions.server_administrator):
         # Return a dummy object

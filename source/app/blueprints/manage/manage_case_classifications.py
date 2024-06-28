@@ -17,17 +17,24 @@
 import marshmallow
 from typing import Union
 
-from flask import Blueprint, Response, url_for, render_template, request
+from flask import Blueprint
+from flask import Response
+from flask import url_for
+from flask import render_template
+from flask import request
 from werkzeug.utils import redirect
 
 from app import db
-from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list, \
-    get_case_classification_by_id, search_classification_by_name
+from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
+from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
+from app.datamgmt.manage.manage_case_classifications_db import search_classification_by_name
 from app.forms import CaseClassificationForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseClassificationSchema
-from app.util import ac_api_requires, response_error, ac_requires
+from app.util import ac_api_requires
+from app.util import response_error
+from app.util import ac_requires
 from app.util import response_success
 
 manage_case_classification_blueprint = Blueprint('manage_case_classifications',
@@ -35,10 +42,9 @@ manage_case_classification_blueprint = Blueprint('manage_case_classifications',
                                                  template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @manage_case_classification_blueprint.route('/manage/case-classifications/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def list_case_classifications(caseid: int) -> Response:
+@ac_api_requires()
+def list_case_classifications() -> Response:
     """Get the list of case classifications
 
     Args:
@@ -54,8 +60,8 @@ def list_case_classifications(caseid: int) -> Response:
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/<int:classification_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def get_case_classification(classification_id: int, caseid: int) -> Response:
+@ac_api_requires()
+def get_case_classification(classification_id: int) -> Response:
     """Get a case classification
 
     Args:
@@ -107,8 +113,8 @@ def update_case_classification_modal(classification_id: int, caseid: int, url_re
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/update/<int:classification_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def update_case_classification(classification_id: int, caseid: int) -> Response:
+@ac_api_requires(Permissions.server_administrator)
+def update_case_classification(classification_id: int) -> Response:
     """Update a case classification
 
     Args:
@@ -132,11 +138,11 @@ def update_case_classification(classification_id: int, caseid: int) -> Response:
         ccls = ccl.load(request.get_json(), instance=case_classification)
 
         if ccls:
-            track_activity(f"updated case classification {ccls.id}", caseid=caseid)
+            track_activity(f"updated case classification {ccls.id}")
             return response_success("Case classification updated", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated", data=case_classification)
 
@@ -163,12 +169,9 @@ def add_case_classification_modal(caseid: int, url_redir: bool) -> Union[str, Re
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def add_case_classification(caseid: int) -> Response:
+@ac_api_requires(Permissions.server_administrator)
+def add_case_classification() -> Response:
     """Add a case classification
-
-    Args:
-        caseid (int): case id
 
     Returns:
         Flask Response object
@@ -186,19 +189,19 @@ def add_case_classification(caseid: int) -> Response:
             db.session.add(ccls)
             db.session.commit()
 
-            track_activity(f"added case classification {ccls.name}", caseid=caseid)
+            track_activity(f"added case classification {ccls.name}")
             return response_success("Case classification added", ccl.dump(ccls))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing added", data=None)
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/delete/<int:classification_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def delete_case_classification(classification_id: int, caseid: int) -> Response:
+@ac_api_requires(Permissions.server_administrator)
+def delete_case_classification(classification_id: int) -> Response:
     """Delete a case classification
 
     Args:
@@ -215,13 +218,13 @@ def delete_case_classification(classification_id: int, caseid: int) -> Response:
     db.session.delete(case_classification)
     db.session.commit()
 
-    track_activity(f"deleted case classification {case_classification.name}", caseid=caseid)
+    track_activity(f"deleted case classification {case_classification.name}")
     return response_success("Case classification deleted")
 
 
 @manage_case_classification_blueprint.route('/manage/case-classifications/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
-def search_alert_status(caseid):
+@ac_api_requires()
+def search_alert_status():
     if not request.is_json:
         return response_error("Invalid request")
 

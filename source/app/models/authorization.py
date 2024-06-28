@@ -1,8 +1,9 @@
 import enum
 import secrets
+import pyotp
 import uuid
 from flask_login import UserMixin
-from sqlalchemy import BigInteger
+from sqlalchemy import BigInteger, JSON
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -197,9 +198,13 @@ class User(UserMixin, db.Model):
     has_mini_sidebar = Column(Boolean(), default=False)
     has_deletion_confirmation = Column(Boolean(), default=False)
     is_service_account = Column(Boolean(), default=False)
+    mfa_secrets = Column(Text, nullable=True)
+    webauthn_credentials = Column(JSON, nullable=True)
+    mfa_setup_complete = Column(Boolean(), default=False)
 
     def __init__(self, user: str, name: str, email: str, password: str, active: bool,
-                 external_id: str = None, is_service_account: bool = False):
+                 external_id: str = None, is_service_account: bool = False, mfa_secret: str = None,
+                 webauthn_credentials: list = None):
         self.user = user
         self.name = name
         self.password = password
@@ -207,6 +212,9 @@ class User(UserMixin, db.Model):
         self.active = active
         self.external_id = external_id
         self.is_service_account = is_service_account
+        self.mfa_secrets = mfa_secret
+        self.mfa_setup_complete = False
+        self.webauthn_credentials = webauthn_credentials or []
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)

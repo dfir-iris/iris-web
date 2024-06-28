@@ -492,7 +492,7 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     return task_status
 
 
-def call_modules_hook(hook_name: str, data: any, caseid: int, hook_ui_name: str = None, module_name: str = None) -> any:
+def call_modules_hook(hook_name: str, data: any, caseid: int = None, hook_ui_name: str = None, module_name: str = None) -> any:
     """
     Calls modules which have registered the specified hook
 

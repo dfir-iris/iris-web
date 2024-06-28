@@ -24,7 +24,8 @@ from flask import url_for
 from flask_login import current_user
 from werkzeug.utils import redirect
 
-from app import db, app
+from app import db
+from app import app
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import add_all_cases_access_to_group
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
@@ -39,8 +40,10 @@ from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
 from app.forms import AddGroupForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_ldp_group_removal, ac_flag_match_mask, \
-    ac_ldp_group_update
+from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_ldp_group_removal
+from app.iris_engine.access_control.utils import ac_flag_match_mask
+from app.iris_engine.access_control.utils import ac_ldp_group_update
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
 from app.iris_engine.utils.tracker import track_activity
@@ -64,8 +67,8 @@ log = app.logger
 
 
 @manage_groups_blueprint.route('/manage/groups/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_index(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_index():
     groups = get_groups_list_hr_perms()
 
     return response_success('', data=groups)
@@ -104,8 +107,8 @@ def manage_groups_add_modal(caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_add(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_add():
 
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -125,16 +128,16 @@ def manage_groups_add(caseid):
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
-    track_activity(message=f"added group {ags_c.group_name}", caseid=caseid, ctx_less=True)
+    track_activity(message=f"added group {ags_c.group_name}", ctx_less=True)
 
     return response_success('', data=ags.dump(ags_c))
 
 
 @manage_groups_blueprint.route('/manage/groups/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_update(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_update(cur_id):
 
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -148,7 +151,7 @@ def manage_groups_update(cur_id, caseid):
         return response_error("Invalid group ID")
 
     if protect_demo_mode_group(group):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     ags = AuthorizationGroupSchema()
 
@@ -168,21 +171,21 @@ def manage_groups_update(cur_id, caseid):
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_success('', data=ags.dump(ags_c))
 
 
 @manage_groups_blueprint.route('/manage/groups/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_delete(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_delete(cur_id):
 
     group = get_group(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
     if protect_demo_mode_group(group):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     if ac_ldp_group_removal(current_user.id, group_id=group.group_id):
         return response_error("I can't let you do that Dave", data="Removing this group will lock you out")
@@ -193,8 +196,8 @@ def manage_groups_delete(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_view(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_view(cur_id):
 
     group = get_group_details(cur_id)
     if not group:
@@ -220,15 +223,15 @@ def manage_groups_members_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_members_update(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_members_update(cur_id):
 
     group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
     if protect_demo_mode_group(group):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
@@ -247,15 +250,15 @@ def manage_groups_members_update(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/members/delete/<int:cur_id_2>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_members_delete(cur_id, cur_id_2, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_members_delete(cur_id, cur_id_2):
 
     group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
     if protect_demo_mode_group(group):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     user = get_user(cur_id_2)
     if not user:
@@ -298,8 +301,8 @@ def manage_groups_cac_modal(cur_id, caseid, url_redir):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_cac_add_case(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_cac_add_case(cur_id):
     if not request.is_json:
         return response_error("Invalid request, expecting JSON")
 
@@ -312,7 +315,7 @@ def manage_groups_cac_add_case(cur_id, caseid):
         return response_error("Invalid group ID")
 
     if protect_demo_mode_group(group):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     if not isinstance(data.get('access_level'), int):
         try:
@@ -344,15 +347,15 @@ def manage_groups_cac_add_case(cur_id, caseid):
 
 
 @manage_groups_blueprint.route('/manage/groups/<int:cur_id>/cases-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def manage_groups_cac_delete_case(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_cac_delete_case(cur_id):
 
     group = get_group_with_members(cur_id)
     if not group:
         return response_error("Invalid group ID")
 
     if protect_demo_mode_group(group):
-        return ac_api_return_access_denied(caseid=caseid)
+        return ac_api_return_access_denied()
 
     if not request.is_json:
         return response_error("Invalid request")

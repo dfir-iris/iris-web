@@ -15,29 +15,36 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import base64
+
+import io
+
+import pyotp
+import qrcode
 from urllib.parse import urlsplit
 
 # IMPORTS ------------------------------------------------
 
-from flask import Blueprint
+from flask import Blueprint, flash
 from flask import redirect
 from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
-from flask_login import current_user
+from flask_login import current_user, login_required
 from flask_login import login_user
 
 from app import app
 from app import bc
 from app import db
+from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 
-from app.forms import LoginForm
+from app.forms import LoginForm, MFASetupForm
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.util import is_authentication_ldap
+from app.util import is_authentication_ldap, regenerate_session
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 
 
@@ -109,7 +116,7 @@ def _authenticate_password(form, username, password):
 if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
     @login_blueprint.route('/login', methods=['GET', 'POST'])
     def login():
-        session.permanent = True
+        #session.permanent = True
 
         if current_user.is_authenticated:
             return redirect(url_for('index.index'))
@@ -131,9 +138,18 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
 
 
 def wrap_login_user(user):
+
+    session['username'] = user.user
+
+    if 'SERVER_SETTINGS' not in app.config:
+        app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
+
+    if app.config['SERVER_SETTINGS']['enforce_mfa']:
+        if "mfa_verified" not in session or session["mfa_verified"] is False:
+            return redirect(url_for('mfa_verify'))
+
     login_user(user)
 
-    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
     caseid = user.ctx_case
     session['permissions'] = ac_get_effective_permissions_of_user(user)
 
@@ -149,7 +165,7 @@ def wrap_login_user(user):
         'case_id': user.ctx_case
     }
 
-    track_activity("user '{}' successfully logged-in".format(user), ctx_less=True, display_in_ui=False)
+    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
 
     next_url = None
     if request.args.get('next'):
@@ -159,3 +175,71 @@ def wrap_login_user(user):
         next_url = url_for('index.index', cid=user.ctx_case)
 
     return redirect(next_url)
+
+
+@app.route('/auth/mfa-setup', methods=['GET', 'POST'])
+def mfa_setup():
+    user = _retrieve_user_by_username(username=session['username'])
+    form = MFASetupForm()
+
+    if form.submit() and form.validate():
+
+        token = form.token.data
+        mfa_secret = form.mfa_secret.data
+        user_password = form.user_password.data
+        totp = pyotp.TOTP(mfa_secret)
+        if totp.verify(token) and bc.check_password_hash(user.password, user_password):
+            user.mfa_secrets = mfa_secret
+            user.mfa_setup_complete = True
+            db.session.commit()
+            session["mfa_verified"] = False
+            track_activity(f'MFA setup successful for user {user.user}', ctx_less=True, display_in_ui=False)
+            return wrap_login_user(user)
+        else:
+            track_activity(f'Failed MFA setup for user {user.user}. Invalid token.', ctx_less=True, display_in_ui=False)
+            flash('Invalid token or password. Please try again.', 'danger')
+
+    temp_otp_secret = pyotp.random_base32()
+    otp_uri = pyotp.TOTP(temp_otp_secret).provisioning_uri(user.email, issuer_name="IRIS")
+    form.mfa_secret.data = temp_otp_secret
+    img = qrcode.make(otp_uri)
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    img_str = base64.b64encode(buf.getvalue()).decode()
+
+    return render_template('mfa_setup.html', form=form, img_data=img_str, otp_setup_key=temp_otp_secret)
+
+
+@app.route('/auth/mfa-verify', methods=['GET', 'POST'])
+def mfa_verify():
+    if 'username' not in session:
+
+        return redirect(url_for('login.login'))
+
+    user = _retrieve_user_by_username(username=session['username'])
+
+    # Redirect user to MFA setup if MFA is not fully set up
+    if not user.mfa_secrets or not user.mfa_setup_complete:
+        track_activity(f'MFA setup required for user {user.user}', ctx_less=True, display_in_ui=False)
+        return redirect(url_for('mfa_setup'))
+
+    form = MFASetupForm()
+    form.user_password.data = 'not required for verification'
+
+    if form.submit() and form.validate():
+        token = form.token.data
+        if not token:
+            flash('Token is required.', 'danger')
+            return render_template('mfa_verify.html', form=form)
+
+        totp = pyotp.TOTP(user.mfa_secrets)
+        if totp.verify(token):
+            session.pop('username', None)
+            session['mfa_verified'] = True
+            track_activity(f'MFA verification successful for user {user.user}', ctx_less=True, display_in_ui=False)
+            return wrap_login_user(user)
+        else:
+            track_activity(f'Failed MFA verification for user {user.user}. Invalid token.', ctx_less=True, display_in_ui=False)
+            flash('Invalid token. Please try again.', 'danger')
+
+    return render_template('mfa_verify.html', form=form)

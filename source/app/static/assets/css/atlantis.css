@@ -8306,6 +8306,7 @@ body .badge-danger {
     margin-left: -1.5px;
 }
 
+
 .timeline>li {
     position: relative;
 }
@@ -16014,4 +16015,8 @@ td.dt-nowrap { white-space: nowrap }
       top: -14px;
       right: 0px;
       letter-spacing: -1px;
+}
+
+.radial-bg-primary {
+    background: radial-gradient(#013479, #011d40) !important;
 }

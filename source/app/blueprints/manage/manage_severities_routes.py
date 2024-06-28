@@ -15,11 +15,16 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint, Response, request
+from flask import Blueprint
+from flask import Response
+from flask import request
 
-from app.datamgmt.manage.manage_common import get_severity_by_id, get_severities_list, search_severity_by_name
+from app.datamgmt.manage.manage_common import get_severity_by_id
+from app.datamgmt.manage.manage_common import get_severities_list
+from app.datamgmt.manage.manage_common import search_severity_by_name
 from app.schema.marshables import SeveritySchema
-from app.util import ac_api_requires, response_error
+from app.util import ac_api_requires
+from app.util import response_error
 from app.util import response_success
 
 manage_severities_blueprint = Blueprint('manage_severities',
@@ -27,15 +32,11 @@ manage_severities_blueprint = Blueprint('manage_severities',
                                         template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @manage_severities_blueprint.route('/manage/severities/list', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def list_severities(caseid: int) -> Response:
+@ac_api_requires()
+def list_severities() -> Response:
     """
     Get the list of severities
-
-    Args:
-        caseid (int): case id
 
     Returns:
         Flask Response object
@@ -47,14 +48,13 @@ def list_severities(caseid: int) -> Response:
 
 
 @manage_severities_blueprint.route('/manage/severities/<int:severity_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def get_case_alert_status(severity_id: int, caseid: int) -> Response:
+@ac_api_requires()
+def get_case_alert_status(severity_id: int) -> Response:
     """
     Get the alert status
 
     Args:
         severity_id (int): severity id
-        caseid (int): case id
     """
     cl = get_severity_by_id(severity_id)
     schema = SeveritySchema()
@@ -63,8 +63,8 @@ def get_case_alert_status(severity_id: int, caseid: int) -> Response:
 
 
 @manage_severities_blueprint.route('/manage/severities/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
-def search_analysis_status(caseid):
+@ac_api_requires()
+def search_analysis_status():
     if not request.is_json:
         return response_error("Invalid request")
 

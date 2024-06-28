@@ -16,10 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import logging
 import marshmallow
 import os
+
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -46,8 +46,8 @@ manage_assets_type_blueprint = Blueprint('manage_assets_type',
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/list')
-@ac_api_requires(no_cid_required=True)
-def list_assets(caseid):
+@ac_api_requires()
+def list_assets():
     # Get all assets
     assets = AssetsType.query.with_entities(
         AssetsType.asset_name,
@@ -70,8 +70,8 @@ def list_assets(caseid):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
-@ac_api_requires(no_cid_required=True)
-def view_asset_api(cur_id, caseid):
+@ac_api_requires()
+def view_asset_api(cur_id):
     # Get all assets
     asset_type = AssetsType.query.with_entities(
         AssetsType.asset_name,
@@ -110,8 +110,8 @@ def view_assets_modal(cur_id, caseid, url_redir):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def view_assets(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def view_assets(cur_id):
     asset_type = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset_type:
         return response_error("Invalid asset type ID")
@@ -131,11 +131,11 @@ def view_assets(cur_id, caseid):
             asset_sc.asset_icon_compromised = fpath_c
 
         if asset_sc:
-            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
+            track_activity("updated asset type {}".format(asset_sc.asset_name))
             return response_success("Asset type updated", asset_sc)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated")
 
@@ -151,8 +151,8 @@ def add_assets_modal(caseid, url_redir):
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def add_assets(caseid):
+@ac_api_requires(Permissions.server_administrator)
+def add_assets():
 
     asset_schema = AssetTypeSchema()
     try:
@@ -172,18 +172,18 @@ def add_assets(caseid):
             db.session.add(asset_sc)
             db.session.commit()
 
-            track_activity("updated asset type {}".format(asset_sc.asset_name), caseid=caseid)
+            track_activity("updated asset type {}".format(asset_sc.asset_name))
             return response_success("Asset type updated", asset_sc)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages, status=400)
+        return response_error(msg="Data error", data=e.messages)
 
     return response_error("Unexpected error server-side. Nothing updated")
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator, no_cid_required=True)
-def delete_assets(cur_id, caseid):
+@ac_api_requires(Permissions.server_administrator)
+def delete_assets(cur_id):
     asset = AssetsType.query.filter(AssetsType.asset_id == cur_id).first()
     if not asset:
         return response_error("Invalid asset ID")
@@ -207,14 +207,14 @@ def delete_assets(cur_id, caseid):
     
     db.session.delete(asset)
 
-    track_activity("Deleted asset type ID {asset_id}".format(asset_id=cur_id), caseid=caseid, ctx_less=True)
+    track_activity("Deleted asset type ID {asset_id}".format(asset_id=cur_id), ctx_less=True)
 
     return response_success("Deleted asset type ID {cur_id} successfully".format(cur_id=cur_id))
 
 
 @manage_assets_type_blueprint.route('/manage/asset-types/search', methods=['POST'])
-@ac_api_requires(no_cid_required=True)
-def search_assets_type(caseid):
+@ac_api_requires()
+def search_assets_type():
     """Searches for assets types in the database.
 
     This function searches for assets types in the database with a name that contains the specified search term.
@@ -244,4 +244,3 @@ def search_assets_type(caseid):
     # Serialize the assets types and return them in a JSON response
     assetst_schema = AssetTypeSchema(many=True)
     return response_success("", data=assetst_schema.dump(assets_type))
-
