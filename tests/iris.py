@@ -67,8 +67,8 @@ class Iris:
     def stop(self):
         self._docker_compose.stop()
 
-    def get(self, path):
-        return self._api.get(path)
+    def get(self, path, query_parameters=None):
+        return self._api.get(path, query_parameters=query_parameters)
 
     def post(self, path, body, query_parameters=None):
         return self._api.post(path, body, query_parameters)

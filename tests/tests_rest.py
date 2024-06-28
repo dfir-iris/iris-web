@@ -57,6 +57,16 @@ class TestsRest(TestCase):
         })
         self.assertEqual(400, response.status_code)
 
+    def test_create_case_with_classification_id_should_set_classification_id(self):
+        response = self._subject.create_case({
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': '',
+            'classification_id': 2
+        }).json()
+        self.assertEqual(2, response['classification_id'])
+
     def test_create_case_should_add_a_new_case(self):
         response = self._subject.get_cases()
         initial_case_count = len(response['data'])
