@@ -50,7 +50,7 @@ jobs:
         working-directory: source/spectaql
         run: |
           sudo npm install --global spectaql
-          docker compose up -detach 
+          docker compose up --detach 
           npx spectaql config.yml
           
 
