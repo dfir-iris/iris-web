@@ -51,9 +51,10 @@ jobs:
         run: |
           npm install spectaql
           docker images
-          docker pull iriswebapp_db:v2.4.7
+          docker run --detach iriswebapp_db:v2.4.7
           docker compose up --detach 
           npx spectaql config.yml
+          docker compose down
       - uses: actions/upload-artifact@v4
         with:
             name: GraphQL DFIR-IRIS documentation
