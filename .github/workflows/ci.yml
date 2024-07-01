@@ -37,6 +37,7 @@ jobs:
           #      Maybe the .env should be split to differentiate the variables used during the build from the variables used at runtime, 
           #      or maybe the docker building phase should also be part of the tests 
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
+          env
           cp tests/data/basic.env .env
           docker compose build
       - name: Run tests
