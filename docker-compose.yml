@@ -24,10 +24,9 @@ services:
       networks:
         - iris_backend
 
-  db:
+  iriswebapp_db:
     build:
       context: docker/db
-    container_name: iriswebapp_db
     image: iriswebapp_db:v2.4.7
     restart: always
     # Used for debugging purposes, should be deleted for production
@@ -62,7 +61,7 @@ services:
     restart: always
     depends_on:
       - "rabbitmq"
-      - "db"
+      - "iriswebapp_db"
     # Used for debugging purposes, should be deleted for production
     ports:
       - "127.0.0.1:8000:8000"
@@ -98,7 +97,7 @@ services:
       - server_data:/home/iris/server_data
     depends_on:
       - "rabbitmq"
-      - "db"
+      - "iriswebapp_db"
       - "app"
     env_file:
       - .env

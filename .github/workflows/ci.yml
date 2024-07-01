@@ -52,7 +52,6 @@ jobs:
           npm install spectaql
           docker images
           cd ../..
-          docker compose build 
           docker compose up --detach 
           cd source/spectaql
           npx spectaql config.yml
