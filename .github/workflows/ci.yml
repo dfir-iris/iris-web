@@ -52,5 +52,13 @@ jobs:
           npm install spectaql
           docker compose up --detach 
           npx spectaql config.yml
+      - uses: actions/upload-artifact@v4
+        with:
+            name: Download documentation
+            path: /source/spectaql/public
+            if-no-files-found: error
+
+
+
           
 
