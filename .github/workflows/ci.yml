@@ -41,7 +41,7 @@ jobs:
           cp tests/data/basic.env .env
           docker compose build
           docker compose up --detach
-          docker compose down --detach
+          docker compose down
       - name: Run tests
         working-directory: tests
         run: |
