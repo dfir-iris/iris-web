@@ -39,6 +39,9 @@ jobs:
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
           docker compose build
+          docker version
+          docker compose up --detach
+          docker compose down
       - name: Run tests
         working-directory: tests
         run: |
@@ -52,8 +55,6 @@ jobs:
           npm install spectaql
           docker images
           cd ../..
-          pwd
-          ls
           docker compose up --detach 
           npx spectaql config.yml
           docker compose down
