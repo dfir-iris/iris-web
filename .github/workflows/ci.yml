@@ -55,7 +55,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
             name: Download documentation
-            path: /source/spectaql/public
+            path: source/spectaql/public
             if-no-files-found: error
 
 
