@@ -44,4 +44,16 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
           PYTHONUNBUFFERED=true python -m unittest --verbose
+      - name: Documentation
+        working-directory: source/spectaql
+        run: |
+          npm install spectaql
+          docker compose up --detach
+          npx spectaql config.yml
+          docker compose down
+      - uses: actions/upload-artifact@v4
+        with:
+            name: GraphQL DFIR-IRIS documentation
+            path: source/spectaql/public
+            if-no-files-found: error
 
