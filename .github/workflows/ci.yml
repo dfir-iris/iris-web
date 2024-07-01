@@ -51,7 +51,9 @@ jobs:
         run: |
           npm install spectaql
           docker images
-          docker run --detach iriswebapp_db:v2.4.7
+          cd ../..
+          pwd
+          ls
           docker compose up --detach 
           npx spectaql config.yml
           docker compose down
