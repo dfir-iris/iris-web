@@ -12,16 +12,10 @@ extensions:
 
 info:
   title: GraphQL DFIR-IRIS DOCUMENTATION
-  description: Welcome to DFIR-IRIS GraphQL Documentation. GraphQL is a query language for APIs and a runtime for fulfilling those queries with your existing data.
+  description: Welcome to DFIR-IRIS GraphQL Documentation.
   x-introItems:
-    - title: GraphQL informations
-      description: GraphQL provides a complete and understandable description of the data in your API, gives clients the power to ask for exactly what they need and nothing more, makes it easier to evolve APIs over time, and enables powerful developer tools.
     - title: IRIS API
-      description: To use these API endpoint, an API key is needed and can be found in every user profile under My settings > API Key. This specification applies to Iris >= v2.4.0. The supported API version can be checked in Advanced > Server settings > Server versions on IRIS. The API port is the same as the one used for the web interface, so 443 by default.
-    - title: Changes in v2.0.0
-      description: This version introduces access control. Every request now needs to have the cid=x parameter in the URI. Deletion endpoints have been migrated from GET to POST. Deletion GET endpoints have been marqued as deprecated and are not available anymore.
-    - title: Changes in v1.4.5
-      description: v1.4.5 introduced the concept of custom attributes. These JSON objects that are stored into almost all case objects such as Assets, IOCs, etc. They are defined by administrators or modules and can vary from one objet to another despite being of the same type. Because of this, no definitive structure can be expected from these fields. They are all named custom_attributes.
+      description: To use these API endpoint, an API key is needed and can be found in every user profile under My settings > API Key.
 
 servers:
   - url: https://v200.beta.dfir-iris.org/login
