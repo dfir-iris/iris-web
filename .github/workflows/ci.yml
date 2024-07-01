@@ -38,9 +38,7 @@ jobs:
           #      or maybe the docker building phase should also be part of the tests 
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
-          docker compose up --detach
-          docker version
-          docker compose down
+          docker compose build
       - name: Run tests
         working-directory: tests
         run: |
@@ -54,6 +52,7 @@ jobs:
           npm install spectaql
           docker images
           cd ../..
+          docker compose build 
           docker compose up --detach 
           cd source/spectaql
           npx spectaql config.yml
