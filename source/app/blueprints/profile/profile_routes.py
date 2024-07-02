@@ -27,7 +27,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
-from app import db
+from app import db, app
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_user_primary_org
@@ -57,7 +57,7 @@ def user_settings(caseid, url_redir):
     if url_redir:
         return redirect(url_for('profile.user_settings', cid=caseid))
 
-    return render_template('profile.html')
+    return render_template('profile.html', mfa_enabled=app.config.get('MFA_ENABLED', False))
 
 
 @profile_blueprint.route('/user/token/renew', methods=['GET'])
