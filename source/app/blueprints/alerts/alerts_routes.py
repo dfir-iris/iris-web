@@ -27,12 +27,10 @@ from werkzeug import Response
 import app
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert
-from app.datamgmt.alerts.alerts_db import merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert
-from app.datamgmt.alerts.alerts_db import get_related_alerts, get_related_alerts_details
-from app.datamgmt.alerts.alerts_db import get_alert_comments, delete_alert_comment, get_alert_comment
-from app.datamgmt.alerts.alerts_db import delete_similar_alert_cache, delete_alerts
-from app.datamgmt.alerts.alerts_db import create_case_from_alerts
+from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
+    merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert, get_related_alerts, get_related_alerts_details, \
+    get_alert_comments, delete_alert_comment, get_alert_comment, delete_similar_alert_cache, delete_alerts, \
+    create_case_from_alerts
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client, user_has_client_access
 from app.iris_engine.access_control.utils import ac_set_new_case_access
@@ -41,8 +39,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema, CaseSchema, CommentSchema, CaseAssetsSchema, IocSchema
-from app.util import ac_api_requires
-from app.util import response_error, add_obj_history_entry, ac_requires
+from app.util import ac_api_requires, response_error, add_obj_history_entry, ac_requires
 from app.util import response_success
 
 alerts_blueprint = Blueprint(
@@ -52,9 +49,10 @@ alerts_blueprint = Blueprint(
 )
 
 
+# CONTENT ------------------------------------------------
 @alerts_blueprint.route('/alerts/filter', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
-def alerts_list_route() -> Response:
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+def alerts_list_route(caseid) -> Response:
     """
     Get a list of alerts from the database
 
@@ -149,8 +147,8 @@ def alerts_list_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/add', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alerts_add_route() -> Response:
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_add_route(caseid) -> Response:
     """
     Add a new alert to the database
 
@@ -160,7 +158,6 @@ def alerts_add_route() -> Response:
     returns:
         Response: The response
     """
-
     if not request.json:
         return response_error('No JSON data provided')
 
@@ -202,7 +199,7 @@ def alerts_add_route() -> Response:
                             iocs=iocs_list, alert_id=new_alert.alert_id,
                             creation_date=new_alert.alert_source_event_time)
         
-        new_alert = call_modules_hook('on_postload_alert_create', data=new_alert)
+        new_alert = call_modules_hook('on_postload_alert_create', data=new_alert, caseid=caseid)
 
         track_activity(f"created alert #{new_alert.alert_id} - {new_alert.alert_title}", ctx_less=True)
 
@@ -221,8 +218,8 @@ def alerts_add_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
-def alerts_get_route(alert_id) -> Response:
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+def alerts_get_route(caseid, alert_id) -> Response:
     """
     Get an alert from the database
 
@@ -256,8 +253,8 @@ def alerts_get_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/similarities/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
-def alerts_similarities_route(alert_id) -> Response:
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+def alerts_similarities_route(caseid, alert_id) -> Response:
     """
     Get an alert and similarities from the database
 
@@ -301,8 +298,8 @@ def alerts_similarities_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/update/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alerts_update_route(alert_id) -> Response:
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_update_route(alert_id, caseid) -> Response:
     """
     Update an alert in the database
 
@@ -348,10 +345,7 @@ def alerts_update_route(alert_id) -> Response:
                 if key == 'alert_status_id':
                     do_status_hook = True
 
-                if key not in ["alert_content", "alert_note"]:
-                    activity_data.append(f"\"{key}\" from \"{old_value}\" to \"{value}\"")
-                else:
-                    activity_data.append(f"\"{key}\"")
+                activity_data.append(f"\"{key}\"")
 
         # Deserialize the JSON data into an Alert object
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
@@ -361,13 +355,13 @@ def alerts_update_route(alert_id) -> Response:
         # Save the changes
         db.session.commit()
 
-        updated_alert = call_modules_hook('on_postload_alert_update', data=updated_alert)
+        updated_alert = call_modules_hook('on_postload_alert_update', data=updated_alert, caseid=caseid)
 
         if do_resolution_hook:
-            updated_alert = call_modules_hook('on_postload_alert_resolution_update', data=updated_alert)
+            updated_alert = call_modules_hook('on_postload_alert_resolution_update', data=updated_alert, caseid=caseid)
 
         if do_status_hook:
-            updated_alert = call_modules_hook('on_postload_alert_status_update', data=updated_alert)
+            updated_alert = call_modules_hook('on_postload_alert_status_update', data=updated_alert, caseid=caseid)
 
         if activity_data:
             track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)
@@ -387,8 +381,8 @@ def alerts_update_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/update', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alerts_batch_update_route() -> Response:
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_batch_update_route(caseid: int) -> Response:
     """
     Update multiple alerts in the database
 
@@ -407,9 +401,6 @@ def alerts_batch_update_route() -> Response:
     # Get the list of alert IDs and updates from the request data
     alert_ids: List[int] = data.get('alert_ids', [])
     updates = data.get('updates', {})
-
-    if not updates.get('alert_tags'):
-        updates.pop('alert_tags', None)
 
     if not alert_ids:
         return response_error('No alert IDs provided')
@@ -440,11 +431,11 @@ def alerts_batch_update_route() -> Response:
 
             db.session.commit()
 
-            alert = call_modules_hook('on_postload_alert_update', data=alert)
+            alert = call_modules_hook('on_postload_alert_create', data=alert, caseid=caseid)
 
             if activity_data:
-                track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)
-                add_obj_history_entry(alert, f"updated alert: {','.join(activity_data)}")
+                track_activity(f"updated alerts #{alert_id}: {','.join(activity_data)}", ctx_less=True)
+                add_obj_history_entry(alert, f"updated alerts: {','.join(activity_data)}")
 
             db.session.commit()
 
@@ -457,8 +448,8 @@ def alerts_batch_update_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/delete', methods=['POST'])
-@ac_api_requires(Permissions.alerts_delete)
-def alerts_batch_delete_route() -> Response:
+@ac_api_requires(Permissions.alerts_delete, no_cid_required=True)
+def alerts_batch_delete_route(caseid: int) -> Response:
     """
     Delete multiple alerts from the database
 
@@ -494,7 +485,7 @@ def alerts_batch_delete_route() -> Response:
     if not success:
         return response_error(logs)
     
-    alert = call_modules_hook('on_postload_alert_delete', data=f'alert_ids: {alert_ids}')
+    alert = call_modules_hook('on_postload_alert_delete', data=f'alert_ids: {alert_ids}', caseid=caseid)
 
     track_activity(f"deleted alerts #{','.join(str(alert_id) for alert_id in alert_ids)}", ctx_less=True)
 
@@ -502,8 +493,8 @@ def alerts_batch_delete_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/delete/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_delete)
-def alerts_delete_route(alert_id) -> Response:
+@ac_api_requires(Permissions.alerts_delete, no_cid_required=True)
+def alerts_delete_route(alert_id, caseid) -> Response:
     """
     Delete an alert from the database
 
@@ -532,7 +523,7 @@ def alerts_delete_route(alert_id) -> Response:
         db.session.delete(alert)
         db.session.commit()
 
-        alert = call_modules_hook('on_postload_alert_delete', data=alert_id)
+        alert = call_modules_hook('on_postload_alert_delete', data=alert_id, caseid=caseid)
 
         track_activity(f"delete alert #{alert_id}", ctx_less=True)
 
@@ -545,8 +536,8 @@ def alerts_delete_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/escalate/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alerts_escalate_route(alert_id) -> Response:
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_escalate_route(alert_id, caseid) -> Response:
     """
     Escalate an alert
 
@@ -594,7 +585,7 @@ def alerts_escalate_route(alert_id) -> Response:
 
         ac_set_new_case_access(None, case.case_id, case.client_id)
 
-        case = call_modules_hook('on_postload_case_create', data=case)
+        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
         add_obj_history_entry(case, 'created')
         track_activity("new case {case_name} created from alert".format(case_name=case.name),
@@ -602,7 +593,7 @@ def alerts_escalate_route(alert_id) -> Response:
 
         add_obj_history_entry(alert, f"Alert escalated to case #{case.case_id}")
 
-        alert = call_modules_hook('on_postload_alert_escalate', data=alert)
+        alert = call_modules_hook('on_postload_alert_escalate', data=alert, caseid=caseid)
 
         # Return the updated alert as JSON
         return response_success(data=CaseSchema().dump(case))
@@ -616,7 +607,7 @@ def alerts_escalate_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/merge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
 def alerts_merge_route(alert_id, caseid) -> Response:
     """
     Merge an alert into a case
@@ -684,8 +675,8 @@ def alerts_merge_route(alert_id, caseid) -> Response:
 
 
 @alerts_blueprint.route('/alerts/unmerge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alerts_unmerge_route(alert_id) -> Response:
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_unmerge_route(alert_id, caseid) -> Response:
     """
     Unmerge an alert from a case
 
@@ -729,7 +720,7 @@ def alerts_unmerge_route(alert_id) -> Response:
         track_activity(f"unmerge alert #{alert_id} from case #{target_case_id}", caseid=target_case_id)
         add_obj_history_entry(alert, f"Alert unmerged from case #{target_case_id}")
 
-        alert = call_modules_hook('on_postload_alert_unmerge', data=alert)
+        alert = call_modules_hook('on_postload_alert_unmerge', data=alert, caseid=caseid)
 
         # Return the updated case as JSON
         return response_success(data=AlertSchema().dump(alert), msg=message)
@@ -740,8 +731,8 @@ def alerts_unmerge_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/merge', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alerts_batch_merge_route() -> Response:
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_batch_merge_route(caseid) -> Response:
     """
     Merge multiple alerts into a case
 
@@ -800,7 +791,7 @@ def alerts_batch_merge_route() -> Response:
 
             add_obj_history_entry(alert, f"Alert merged into existing case #{target_case_id}")
 
-            alert = call_modules_hook('on_postload_alert_merge', data=alert)
+            alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
 
         if note:
             case.description += f"\n\n### Escalation note\n\n{note}\n\n" if case.description else f"\n\n{note}\n\n"
@@ -819,8 +810,8 @@ def alerts_batch_merge_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/escalate', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alerts_batch_escalate_route() -> Response:
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alerts_batch_escalate_route(caseid) -> Response:
     """
     Escalate multiple alerts into a case
 
@@ -863,7 +854,7 @@ def alerts_batch_escalate_route() -> Response:
 
             alert.alert_status_id = AlertStatus.query.filter_by(status_name='Merged').first().status_id
             db.session.commit()
-            alert = call_modules_hook('on_postload_alert_escalate', data=alert)
+            alert = call_modules_hook('on_postload_alert_merge', data=alert, caseid=caseid)
 
             alerts_list.append(alert)
 
@@ -877,7 +868,7 @@ def alerts_batch_escalate_route() -> Response:
 
         ac_set_new_case_access(None, case.case_id, case.client_id)
 
-        case = call_modules_hook('on_postload_case_create', data=case)
+        case = call_modules_hook('on_postload_case_create', data=case, caseid=caseid)
 
         add_obj_history_entry(case, 'created')
         track_activity("new case {case_name} created from alerts".format(case_name=case.name),
@@ -943,8 +934,8 @@ def alert_comment_modal(cur_id, caseid, url_redir):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/list', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
-def alert_comments_get(alert_id):
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+def alert_comments_get(alert_id, caseid):
     """
     Get the comments for an alert
 
@@ -971,8 +962,8 @@ def alert_comments_get(alert_id):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alert_comment_delete(alert_id, com_id):
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alert_comment_delete(alert_id, com_id, caseid):
     """
     Delete a comment for an alert
 
@@ -996,7 +987,7 @@ def alert_comment_delete(alert_id, com_id):
     if not success:
         return response_error(msg)
 
-    call_modules_hook('on_postload_alert_comment_delete', data=com_id)
+    call_modules_hook('on_postload_alert_comment_delete', data=com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on alert {alert_id} deleted", ctx_less=True)
 
@@ -1004,8 +995,8 @@ def alert_comment_delete(alert_id, com_id):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
-def alert_comment_get(alert_id, com_id):
+@ac_api_requires(Permissions.alerts_read, no_cid_required=True)
+def alert_comment_get(alert_id, com_id, caseid):
     """
     Get a comment for an alert
 
@@ -1033,8 +1024,8 @@ def alert_comment_get(alert_id, com_id):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def alert_comment_edit(alert_id, com_id):
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def alert_comment_edit(alert_id, com_id, caseid):
     """
     Edit a comment for an alert
 
@@ -1053,12 +1044,12 @@ def alert_comment_edit(alert_id, com_id):
     if not user_has_client_access(current_user.id, alert.alert_customer_id):
         return response_error('User not entitled to read alerts for the client', status=403)
 
-    return case_comment_update(com_id, 'events', None)
+    return case_comment_update(com_id, 'events', caseid=None)
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/add', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
-def case_comment_add(alert_id):
+@ac_api_requires(Permissions.alerts_write, no_cid_required=True)
+def case_comment_add(alert_id, caseid):
     """
     Add a comment to an alert
 
@@ -1096,10 +1087,10 @@ def case_comment_add(alert_id):
             "comment": comment_schema.dump(comment),
             "alert": AlertSchema().dump(alert)
         }
-        call_modules_hook('on_postload_alert_commented', data=hook_data)
+        call_modules_hook('on_postload_alert_commented', data=hook_data, caseid=caseid)
 
         track_activity(f"alert \"{alert.alert_id}\" commented", ctx_less=True)
         return response_success("Alert commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages())
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)

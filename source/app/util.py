@@ -33,6 +33,7 @@ import string
 import traceback
 import uuid
 import weakref
+import os
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
@@ -64,7 +65,6 @@ from app.iris_engine.access_control.utils import ac_get_effective_permissions_of
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
-
 
 def response(msg, data):
     rsp = {
@@ -211,34 +211,34 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def _get_caseid_from_request_data(request_data, no_cid_required):
+def get_caseid_from_request_data(request_data, no_cid_required):
     caseid = request_data.args.get('cid', default=None, type=int)
-    if caseid:
-        return False, caseid, True
+    redir = False
+    has_access = True
+    js_d = None
 
-    if no_cid_required:
-        return False, caseid, True
+    if not caseid and not no_cid_required:
 
-    try:
-        js_d = None
+        try:
 
-        if request_data.content_type == 'application/json':
-            js_d = request_data.get_json()
+            if request_data.content_type == 'application/json':
+                js_d = request_data.get_json()
 
-        if not js_d:
-            return _set_caseid_from_current_user()
+            if js_d:
+                caseid = js_d.get('cid')
+                request_data.json.pop('cid')
 
-        caseid = js_d.get('cid')
-        request_data.json.pop('cid')
+            else:
+                redir, caseid, has_access = set_caseid_from_current_user()
 
-        return False, caseid, True
+        except Exception as e:
+            print(request_data.url)
+            redir, caseid, has_access = handle_exception(e, request_data)
 
-    except Exception as e:
-        print(request_data.url)
-        return _handle_exception(e, request_data)
+    return redir, caseid, has_access
 
 
-def _set_caseid_from_current_user():
+def set_caseid_from_current_user():
     redir = False
     if current_user.ctx_case is None:
         redir = True
@@ -247,10 +247,10 @@ def _set_caseid_from_current_user():
     return redir, caseid, True
 
 
-def _handle_exception(e, request_data):
+def handle_exception(e, request_data):
     cookie_session = request_data.cookies.get('session')
     if not cookie_session:
-        return _set_caseid_from_current_user()
+        return set_caseid_from_current_user()
 
     log_exception_and_error(e)
     return True, 0, False
@@ -261,7 +261,7 @@ def log_exception_and_error(e):
     log.error(traceback.print_exc())
 
 
-def _handle_no_cid_required(no_cid_required):
+def handle_no_cid_required(request, no_cid_required):
     if no_cid_required:
         js_d = request.get_json(silent=True)
         caseid = None
@@ -276,11 +276,11 @@ def _handle_no_cid_required(no_cid_required):
                 request.json.pop('cid')
 
         except Exception:
-            return None, False
+            return False, None, False
 
-        return caseid, True
+        return False, caseid, True
 
-    return None, False
+    return False, None, False
 
 
 def update_session(caseid, eaccess_level, from_api):
@@ -318,10 +318,9 @@ def update_denied_case(caseid, from_api):
 
 
 def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
-    redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
+    redir, caseid, has_access = get_caseid_from_request_data(request_data, no_cid_required)
 
-    ctmp, has_access = _handle_no_cid_required(no_cid_required)
-    redir = False
+    redir, ctmp, has_access = handle_no_cid_required(request, no_cid_required)
     if ctmp is not None:
         return redir, ctmp, has_access
 
@@ -393,13 +392,15 @@ def _authenticate_with_email(user_email):
 
 def _oidc_proxy_authentication_process(incoming_request: Request):
     # Get the OIDC JWT authentication token from the request header
+    #print("incoming_request.headers:",incoming_request.headers)
     authentication_token = incoming_request.headers.get('X-Forwarded-Access-Token', '')
 
     if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'lazy':
         user_email = incoming_request.headers.get('X-Email')
-
-        if user_email:
-            return _authenticate_with_email(user_email.split(',')[0])
+        if "oidc_username" in session.keys() and session["oidc_username"]: #current_user.user: #user_email:
+            return _authenticate_with_email(session["oidc_username"]) #current_user.user)#user_email.split(',')[0])
+        else:
+            return False
 
     elif app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'introspection':
         # Use the authentication server's token introspection endpoint in order to determine if the request is valid /
@@ -462,12 +463,12 @@ def _oidc_proxy_authentication_process(incoming_request: Request):
 
 def not_authenticated_redirection_url(request_url: str):
     redirection_mapper = {
-        "oidc_proxy": lambda: app.config.get("AUTHENTICATION_PROXY_LOGOUT_URL"),
+        "oidc_proxy": lambda: "/logout", #app.config.get("AUTHENTICATION_LOGOUT_URL"), # ORIGINAL: AUTHENTICATION_PROXY_LOGOUT_URL
         "local": lambda: url_for('login.login', next=request_url),
         "ldap": lambda: url_for('login.login', next=request_url)
     }
 
-    return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
+    return redirection_mapper.get(session["AUTHENTICATION_TYPE"] if "AUTHENTICATION_TYPE" in session.keys() else app.config.get("AUTHENTICATION_TYPE"))()
 
 
 def is_user_authenticated(incoming_request: Request):
@@ -476,8 +477,7 @@ def is_user_authenticated(incoming_request: Request):
         "local": _local_authentication_process,
         "ldap": _local_authentication_process
     }
-
-    return authentication_mapper.get(app.config.get("AUTHENTICATION_TYPE"))(incoming_request)
+    return authentication_mapper.get(session["AUTHENTICATION_TYPE"] if "AUTHENTICATION_TYPE" in session.keys() else app.config.get("AUTHENTICATION_TYPE"))(incoming_request)
 
 
 def is_authentication_local():
@@ -487,6 +487,57 @@ def is_authentication_local():
 def is_authentication_ldap():
     return app.config.get('AUTHENTICATION_TYPE') == "ldap"
 
+def is_authentication_oidc_proxy():
+    return app.config.get('AUTHENTICATION_TYPE') == "oidc_proxy"
+
+def c_requests(url, headers, data):
+    if not app.config.get("INSECURE_REQUESTS") == "true":
+        r = requests.post(url, data=data, headers=headers)
+        try:
+            response = r.json()
+        except Exception as e:
+            response = {"Error":e}
+    else:
+        # This is for testing purposes only
+        c = f'curl -X POST --insecure -s '
+        for h in headers.keys():
+            c += f'-H "{h}: {headers[h]}" '
+        for d in data.keys():
+            c += f'-d "{d}={data[d]}" '
+        c += url
+        try:
+            r = os.popen(c).read()
+            response = json.loads(r)
+        except Exception as e:
+            response = {"Error":e}
+    return response
+
+def generate_random_pw(length):
+    """ Function that generates a password given a length """
+
+    uppercase_loc = random.randint(1,4)  # random location of lowercase
+    symbol_loc = random.randint(5, 6)  # random location of symbols
+    lowercase_loc = random.randint(7,12)  # random location of uppercase
+
+    password = ''  # empty string for password
+
+    pool = string.ascii_letters + string.punctuation  # the selection of characters used
+
+    for i in range(length):
+
+        if i == uppercase_loc:   # this is to ensure there is at least one uppercase
+            password += random.choice(string.ascii_uppercase)
+
+        elif i == lowercase_loc:  # this is to ensure there is at least one uppercase
+            password += random.choice(string.ascii_lowercase)
+
+        elif i == symbol_loc:  # this is to ensure there is at least one symbol
+            password += random.choice(string.punctuation)
+
+        else:  # adds a random character from pool
+            password += random.choice(pool)
+
+    return password  # returns the string
 
 def api_login_required(f):
     @wraps(f)
@@ -579,35 +630,21 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
-def _user_has_required_permissions(permissions):
-    if not permissions:
-        return True
-
-    for permission in permissions:
-        # TODO do we really want to do this?
-        #      as it is coded now, as soon as the user has one of the required
-        #      permission, the action is allowed
-        #      don't we rather want the user to have all required permissions?
-        if session['permissions'] & permission.value:
-            return True
-
-    return False
-
-
 def ac_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
-
             if not is_user_authenticated(request):
                 return redirect(not_authenticated_redirection_url(request.full_path))
 
             else:
                 redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
-
                 kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                if not _user_has_required_permissions(permissions):
+                if permissions:
+                    for permission in permissions:
+                        if session['permissions'] & permission.value:
+                            return f(*args, **kwargs)
                     return ac_return_access_denied()
 
                 return f(*args, **kwargs)
@@ -683,28 +720,7 @@ def ac_requires_client_access():
     return inner_wrap
 
 
-def ac_requires_case_identifier():
-    def decorate_with_requires_case_identifier(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            try:
-                redir, caseid, _ = get_case_access(request, [], from_api=True)
-            except Exception as e:
-                log.exception(e)
-                return response_error('Invalid data. Check server logs', status=500)
-
-            if not caseid and not redir:
-                return response_error('Invalid case ID', status=404)
-
-            kwargs.update({'caseid': caseid})
-
-            return f(*args, **kwargs)
-
-        return wrap
-    return decorate_with_requires_case_identifier
-
-
-def ac_api_requires(*permissions):
+def ac_api_requires(*permissions, no_cid_required=False):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -716,17 +732,33 @@ def ac_api_requires(*permissions):
                         return response_error('Invalid CSRF token')
                     elif request.is_json:
                         request.json.pop('csrf_token')
-
+            session["AUTHENTICATION_TYPE"] = "local"
             if not is_user_authenticated(request):
                 return response_error("Authentication required", status=401)
+            else:
+                try:
+                    redir, caseid, _ = get_case_access(request, [], from_api=True, no_cid_required=no_cid_required)
+                except Exception as e:
+                    log.exception(e)
+                    return response_error("Invalid data. Check server logs", status=500)
 
-            if 'permissions' not in session:
-                session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+                if not (caseid or redir) and not no_cid_required:
+                    return response_error("Invalid case ID", status=404)
 
-            if not _user_has_required_permissions(permissions):
-                return response_error('Permission denied', status=403)
+                kwargs.update({"caseid": caseid})
 
-            return f(*args, **kwargs)
+                if 'permissions' not in session:
+                    session['permissions'] = ac_get_effective_permissions_of_user(current_user)
+
+                if permissions:
+
+                    for permission in permissions:
+                        if session['permissions'] & permission.value:
+                            return f(*args, **kwargs)
+
+                    return response_error("Permission denied", status=403)
+
+                return f(*args, **kwargs)
         return wrap
     return inner_wrap
 

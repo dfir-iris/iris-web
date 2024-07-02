@@ -211,42 +211,34 @@ authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_C
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('IRIS', 'TLS_ROOT_CA', fallback=None))
 
+oidc_issuer_url = config.load('OIDC', 'IRIS_ISSUER_URL', fallback="")
 authentication_logout_url = None
 authentication_account_service_url = None
 authentication_token_introspection_url = None
-authentication_client_id = None
-authentication_client_secret = None
+authentication_client_id = config.load('OIDC', 'IRIS_CLIENT_ID', fallback="")
+authentication_client_secret = config.load('OIDC', 'IRIS_CLIENT_SECRET', fallback="")
 authentication_app_admin_role_name = None
 authentication_jwks_url = None
+auth_token_verify_mode = config.load('OIDC', 'IRIS_TOKEN_VERIFY_MODE',
+                                                    fallback='signature')
+oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
 
-
-if authentication_type == 'oidc_proxy':
-    oidc_discovery_url = config.load('OIDC', 'IRIS_DISCOVERY_URL', fallback="")
-
+if authentication_type == 'oidc_proxy' and auth_token_verify_mode!="lazy":
     try:
-
-        oidc_discovery_response = requests.get(oidc_discovery_url, verify=tls_root_ca)
-
+        oidc_discovery_response = requests.get(oidc_discovery_url, verify=False)
         if oidc_discovery_response.status_code == 200:
             response_json = oidc_discovery_response.json()
             authentication_logout_url = response_json.get('end_session_endpoint')
             authentication_account_service_url = f"{response_json.get('issuer')}/account"
             authentication_token_introspection_url = response_json.get('introspection_endpoint')
             authentication_jwks_url = response_json.get('jwks_uri')
-
         else:
-            raise IrisConfigException("Unsuccessful authN server discovery")
-
-        authentication_client_id = config.load('OIDC', 'IRIS_CLIENT_ID', fallback="")
-
-        authentication_client_secret = config.load('OIDC', 'IRIS_CLIENT_SECRET', fallback="")
-
+            raise IrisConfigException(f'Unsuccessful authN server discovery.\n - OIDC Discovery url: {oidc_discovery_url} \n - OIDC Discovery response code: {oidc_discovery_response.status_code}')
         authentication_app_admin_role_name = config.load('OIDC', 'IRIS_ADMIN_ROLE_NAME', fallback="")
 
     except Exception as e:
         log.error(f"OIDC ERROR - {e}")
         exit(0)
-        pass
     else:
         log.info("OIDC configuration properly parsed")
 
@@ -369,6 +361,13 @@ class Config:
     TLS_ROOT_CA = tls_root_ca
 
     AUTHENTICATION_TYPE = authentication_type
+    IRIS_UPSTREAM_SERVER = config.load('IRIS', 'UPSTREAM_SERVER')
+    IRIS_LOGO = config.load('IRIS', 'LOGO', fallback="/static/assets/img/logo-white.png")
+
+    OIDC_ISSUER_URL = oidc_issuer_url
+    AUTHENTICATION_CLIENT_ID = authentication_client_id
+    AUTHENTICATION_CLIENT_SECRET = authentication_client_secret
+    INSECURE_REQUESTS = config.load('IRIS', 'INSECURE_REQUESTS', fallback='false')
     AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = (authentication_create_user_if_not_exists == "True")
     IRIS_NEW_USERS_DEFAULT_GROUP = config.load('IRIS', 'NEW_USERS_DEFAULT_GROUP', fallback='Analysts')
     AUTHENTICATION_LOCAL_FALLBACK = config.load('IRIS', 'AUTHENTICATION_LOCAL_FALLBACK', fallback="True") == "True"
@@ -384,8 +383,7 @@ class Config:
         AUTHENTICATION_AUDIENCE = config.load('OIDC', 'IRIS_AUDIENCE', fallback="")
         AUTHENTICATION_VERIFY_TOKEN_EXP = config.load('OIDC', 'IRIS_VERIFY_TOKEN_EXPIRATION',
                                                       fallback=True)
-        AUTHENTICATION_TOKEN_VERIFY_MODE = config.load('OIDC', 'IRIS_TOKEN_VERIFY_MODE',
-                                                       fallback='signature')
+        AUTHENTICATION_TOKEN_VERIFY_MODE = auth_token_verify_mode
         AUTHENTICATION_INIT_ADMINISTRATOR_EMAIL = config.load('OIDC', 'IRIS_INIT_ADMINISTRATOR_EMAIL',
                                                               fallback="")
         AUTHENTICATION_APP_ADMIN_ROLE_NAME = authentication_app_admin_role_name

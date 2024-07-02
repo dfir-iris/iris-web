@@ -51,7 +51,7 @@ def get_overview(caseid, url_redir):
 
 @overview_blueprint.route('/overview/filter', methods=['GET'])
 @ac_api_requires()
-def get_overview_filter():
+def get_overview_filter(caseid):
     """
     Return an overview of the cases
     """

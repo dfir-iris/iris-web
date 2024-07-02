@@ -123,7 +123,7 @@ def case_note_detail(cur_id, caseid):
         return response_success(data=note)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])
@@ -172,7 +172,7 @@ def case_note_save(cur_id, caseid):
         note = call_modules_hook('on_postload_note_update', data=note, caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
     track_activity(f"updated note \"{note.note_title}\"", caseid=caseid)
     return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
@@ -214,7 +214,7 @@ def case_note_add(caseid):
         return response_error("Unable to create note for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
 
 @case_notes_blueprint.route('/case/notes/directories/add', methods=['POST'])
@@ -240,7 +240,7 @@ def case_directory_add(caseid):
         return response_success('Directory added', data=directory_schema.dump(new_directory))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
 
 @case_notes_blueprint.route('/case/notes/directories/update/<dir_id>', methods=['POST'])
@@ -269,7 +269,7 @@ def case_directory_update(dir_id, caseid):
         return response_success('Directory modified', data=directory_schema.dump(new_directory))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
     except Exception as e:
         app.logger.exception(f"Failed to update directory: {e}")
@@ -294,7 +294,7 @@ def case_directory_delete(dir_id, caseid):
         return response_error('Unable to delete directory')
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
 
 @case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
@@ -429,7 +429,7 @@ def case_comment_note_add(cur_id, caseid):
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages())
+        return response_error(msg="Data error", data=e.normalized_messages(), status=400)
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>', methods=['GET'])

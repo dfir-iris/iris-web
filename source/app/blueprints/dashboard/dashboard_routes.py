@@ -17,9 +17,9 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import marshmallow
+# IMPORTS ------------------------------------------------
 from datetime import datetime
 from datetime import timedelta
-
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -29,6 +29,8 @@ from flask import url_for
 from flask_login import current_user
 from flask_login import logout_user
 from flask_wtf import FlaskForm
+from sqlalchemy import distinct
+import requests
 
 from app import app
 from app import db
@@ -37,7 +39,6 @@ from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
 from app.forms import CaseGlobalTaskForm
-from app.iris_engine.access_control.utils import ac_get_user_case_counts
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
@@ -45,14 +46,17 @@ from app.models.cases import Cases
 from app.models.models import CaseTasks
 from app.models.models import GlobalTasks
 from app.models.models import TaskStatus
-from app.schema.marshables import CaseTaskSchema, CaseDetailsSchema
+from app.models.models import UserActivity
+from app.schema.marshables import CaseTaskSchema, CaseSchema, CaseDetailsSchema
 from app.schema.marshables import GlobalTasksSchema
 from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
 from app.util import ac_requires
 from app.util import not_authenticated_redirection_url
 from app.util import response_error
 from app.util import response_success
+from app.iris_engine.access_control.oidc_proxy_handler import oidc_proxy_logout
+#from app.util import is_authentication_oidc_proxy
+#from oauth2client.client import OAuth2Credentials
 
 # CONTENT ------------------------------------------------
 dashboard_blueprint = Blueprint(
@@ -69,20 +73,27 @@ def logout():
     Logout function. Erase its session and redirect to index i.e login
     :return: Page
     """
-    if session['current_case']:
-        current_user.ctx_case = session['current_case']['case_id']
-        current_user.ctx_human_case = session['current_case']['case_name']
-        db.session.commit()
+    try:
+        track_activity("user '{}' want log-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+        if 'current_case' in session.keys() and session['current_case']:
+            current_user.ctx_case = session['current_case']['case_id']
+            current_user.ctx_human_case = session['current_case']['case_name']
+            db.session.commit()
+            
+        if current_user.is_authenticated:
+            track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+            logout_user()
+            if (app.config.get('AUTHENTICATION_TYPE')) == "oidc_proxy":
+                oidc_proxy_logout()
+    except Exception as e:
+            track_activity("error loging out. Probably session not initated properly.", ctx_less=True, display_in_ui=False)
 
-    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
-    logout_user()
-
-    return redirect(not_authenticated_redirection_url('/'))
+    return redirect('/login') #not_authenticated_redirection_url('/') #
 
 
 @dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
 @ac_api_requires()
-def get_cases_charts():
+def get_cases_charts(caseid):
     """
     Get case charts
     :return: JSON
@@ -117,7 +128,8 @@ def root():
 
     return redirect(url_for('index.index'))
 
-
+#@conditional_decorator(is_authentication_oidc_proxy(), oidc.require_login)
+#@oidc.require_login
 @dashboard_blueprint.route('/dashboard')
 @ac_requires()
 def index(caseid, url_redir):
@@ -130,14 +142,22 @@ def index(caseid, url_redir):
 
     msg = None
 
-    acgucc = ac_get_user_case_counts(current_user.id)
+    # Retrieve the dashboard data from multiple sources.
+    # Quite fast as it is only counts.
+    user_open_case = Cases.query.filter(
+        Cases.owner_id == current_user.id,
+        Cases.close_date == None
+    ).count()
 
-    data = {
-        "user_open_count": acgucc[2],
-        "cases_open_count": acgucc[1],
-        "cases_count": acgucc[0],
-    }
-
+    try:
+        data = {
+            "user_open_count": user_open_case,
+            "cases_open_count": Cases.query.filter(Cases.close_date == None).count(),
+            "cases_count": Cases.query.with_entities(distinct(Cases.case_id)).count(),
+        }
+    except:
+        return redirect('/login')
+    
     # Create the customer form to be able to quickly add a customer
     form = FlaskForm()
 
@@ -146,7 +166,7 @@ def index(caseid, url_redir):
 
 @dashboard_blueprint.route('/global/tasks/list', methods=['GET'])
 @ac_api_requires()
-def get_gtasks():
+def get_gtasks(caseid):
 
     tasks_list = list_global_tasks()
 
@@ -165,7 +185,7 @@ def get_gtasks():
 
 @dashboard_blueprint.route('/user/cases/list', methods=['GET'])
 @ac_api_requires()
-def list_own_cases():
+def list_own_cases(caseid):
 
     cases = list_user_cases(
         request.args.get('show_closed', 'false', type=str).lower() == 'true'
@@ -176,7 +196,7 @@ def list_own_cases():
 
 @dashboard_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
 @ac_api_requires()
-def view_gtask(cur_id):
+def view_gtask(cur_id, caseid):
 
     task = get_global_task(task_id=cur_id)
     if not task:
@@ -187,7 +207,7 @@ def view_gtask(cur_id):
 
 @dashboard_blueprint.route('/user/tasks/list', methods=['GET'])
 @ac_api_requires()
-def get_utasks():
+def get_utasks(caseid):
 
     ct = list_user_tasks()
 
@@ -206,7 +226,7 @@ def get_utasks():
 
 @dashboard_blueprint.route('/user/reviews/list', methods=['GET'])
 @ac_api_requires()
-def get_reviews():
+def get_reviews(caseid):
 
     ct = list_user_reviews()
 
@@ -221,7 +241,6 @@ def get_reviews():
 
 @dashboard_blueprint.route('/user/tasks/status/update', methods=['POST'])
 @ac_api_requires()
-@ac_requires_case_identifier()
 def utask_statusupdate(caseid):
     jsdata = request.get_json()
     if not jsdata:
@@ -256,7 +275,7 @@ def utask_statusupdate(caseid):
 
 @dashboard_blueprint.route('/global/tasks/add/modal', methods=['GET'])
 @ac_api_requires()
-def add_gtask_modal():
+def add_gtask_modal(caseid):
     task = GlobalTasks()
 
     form = CaseGlobalTaskForm()
@@ -269,7 +288,6 @@ def add_gtask_modal():
 
 @dashboard_blueprint.route('/global/tasks/add', methods=['POST'])
 @ac_api_requires()
-@ac_requires_case_identifier()
 def add_gtask(caseid):
 
     try:
@@ -281,7 +299,7 @@ def add_gtask(caseid):
         gtask = gtask_schema.load(request_data)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
     gtask.task_userid_update = current_user.id
     gtask.task_open_date = datetime.utcnow()
@@ -294,7 +312,7 @@ def add_gtask(caseid):
         db.session.commit()
 
     except Exception as e:
-        return response_error(msg="Data error", data=e.__str__())
+        return response_error(msg="Data error", data=e.__str__(), status=400)
 
     gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
     track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
@@ -304,7 +322,7 @@ def add_gtask(caseid):
 
 @dashboard_blueprint.route('/global/tasks/update/<int:cur_id>/modal', methods=['GET'])
 @ac_api_requires()
-def edit_gtask_modal(cur_id):
+def edit_gtask_modal(cur_id, caseid):
     form = CaseGlobalTaskForm()
     task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
     form.task_assignee_id.choices = [(user.id, user.name) for user in
@@ -322,7 +340,6 @@ def edit_gtask_modal(cur_id):
 
 @dashboard_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires()
-@ac_requires_case_identifier()
 def edit_gtask(cur_id, caseid):
 
     form = CaseGlobalTaskForm()
@@ -331,7 +348,7 @@ def edit_gtask(cur_id, caseid):
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
 
     if not task:
-        return response_error(msg="Data error", data="Invalid task ID")
+        return response_error(msg="Data error", data="Invalid task ID", status=400)
 
     try:
         gtask_schema = GlobalTasksSchema()
@@ -348,7 +365,7 @@ def edit_gtask(cur_id, caseid):
         gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg="Data error", data=e.messages, status=400)
 
     track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
 
@@ -357,7 +374,6 @@ def edit_gtask(cur_id, caseid):
 
 @dashboard_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires()
-@ac_requires_case_identifier()
 def gtask_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_global_task_delete', data=cur_id, caseid=caseid)

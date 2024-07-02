@@ -19,9 +19,13 @@ import collections
 import json
 import logging as logger
 import os
+import shutil
+import sys
 import urllib.parse
 from flask import Flask
 from flask import session
+#from flask_session import Session
+#from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_login import LoginManager
@@ -34,7 +38,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
-
 
 class ReverseProxied(object):
     def __init__(self, flask_app):
@@ -62,7 +65,6 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__)
-
 
 def ac_current_user_has_permission(*permissions):
     """
@@ -98,8 +100,7 @@ app.config.from_object('app.configuration.Config')
 cache = Cache(app)
 
 SQLALCHEMY_ENGINE_OPTIONS = {
-    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict),
-    "pool_pre_ping": True
+    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict)
 }
 
 db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
@@ -134,3 +135,13 @@ def shutdown_session(exception=None):
     db.session.remove()
 
 from app import views
+
+default_logo_path = os.path.dirname(os.path.realpath(__file__))+"/static/assets/img/logo.png"
+try:
+    if os.path.isfile(app.config.get('IRIS_LOGO')):
+        shutil.copyfile(app.config.get('IRIS_LOGO'), default_logo_path)
+    else:
+        logo_path = os.path.dirname(os.path.realpath(__file__))+"/static/assets/img/logo-white.png"
+        shutil.copyfile(logo_path, default_logo_path)
+except Exception as e:
+    raise e

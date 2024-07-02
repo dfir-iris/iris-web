@@ -47,7 +47,7 @@ def get_case_summary(caseid):
     return case_summary
 
 
-def get_case(caseid) -> Cases:
+def get_case(caseid):
     return Cases.query.filter(Cases.case_id == caseid).first()
 
 

@@ -44,9 +44,10 @@ search_blueprint = Blueprint('search',
                              template_folder='templates')
 
 
+# CONTENT ------------------------------------------------
 @search_blueprint.route('/search', methods=['POST'])
 @ac_api_requires(Permissions.search_across_cases)
-def search_file_post():
+def search_file_post(caseid: int):
 
     jsdata = request.get_json()
     search_value = jsdata.get('search_value')
