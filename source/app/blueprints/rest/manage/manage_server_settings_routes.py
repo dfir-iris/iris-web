@@ -78,7 +78,6 @@ def manage_update_settings():
                 setup_periodic_update_checks(celery)
             else:
                 remove_periodic_update_checks()
-
         if srv_settings_sc:
             track_activity(f"Server settings updated: {changes}")
             app.config['SERVER_SETTINGS'] = srv_settings_schema.dump(server_settings)
