@@ -52,5 +52,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
             name: GraphQL DFIR-IRIS documentation
-            path: source/spectaql/public
+            path: public
             if-no-files-found: error
