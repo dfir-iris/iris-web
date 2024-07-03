@@ -33,7 +33,7 @@ _TEST_DATA_PATH = Path('./data')
 class Iris:
 
     def __init__(self):
-        self._docker_compose = DockerCompose(_IRIS_PATH)
+        self._docker_compose = DockerCompose(_IRIS_PATH, 'docker-compose.dev.yml')
         self._api = RestApi(API_URL, _API_KEY)
         self._administrator = User(API_URL, _API_KEY)
 
