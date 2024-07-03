@@ -41,7 +41,7 @@ class TestsRest(TestCase):
         self.assertEqual('success', response['status'])
 
     def test_create_case_should_return_201(self):
-        response = self._subject.create_case({
+        response = self._subject.create('/api/v2/cases', {
             'case_name': 'name',
             'case_description': 'description',
             'case_customer': 1,
@@ -50,7 +50,7 @@ class TestsRest(TestCase):
         self.assertEqual(201, response.status_code)
 
     def test_create_case_with_missing_name_should_return_400(self):
-        response = self._subject.create_case({
+        response = self._subject.create('/api/v2/cases', {
             'case_description': 'description',
             'case_customer': 1,
             'case_soc_id': ''
@@ -58,7 +58,7 @@ class TestsRest(TestCase):
         self.assertEqual(400, response.status_code)
 
     def test_create_case_with_classification_id_should_set_classification_id(self):
-        response = self._subject.create_case({
+        response = self._subject.create('/api/v2/cases', {
             'case_name': 'name',
             'case_description': 'description',
             'case_customer': 1,
@@ -70,19 +70,19 @@ class TestsRest(TestCase):
     def test_create_case_should_add_a_new_case(self):
         response = self._subject.get_cases()
         initial_case_count = len(response['data'])
-        self._subject.create_case_deprecated()
+        self._subject.create_dummy_case()
         response = self._subject.get_cases()
         case_count = len(response['data'])
         self.assertEqual(initial_case_count + 1, case_count)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
-        case = self._subject.create_case_deprecated()
+        case = self._subject.create_dummy_case()
         case_identifier = case['case_id']
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
 
     def test_manage_case_filter_api_rest_should_fail(self):
-        self._subject.create_case_deprecated()
+        self._subject.create_dummy_case()
         response = self._subject.get_cases_filter()
         self.assertEqual('success', response['status'])
 
@@ -111,20 +111,20 @@ class TestsRest(TestCase):
         print(response)
 
     def test_create_ioc_should_return_201(self):
-        case = self._subject.create_case_deprecated()
+        case = self._subject.create_dummy_case()
         case_identifier = case['case_id']
         response = self._subject.create_ioc(case_identifier, {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw",
                                                               "ioc_tags": ""})
         self.assertEqual(201, response.status_code)
 
-    def test_create_ioc_with_missing_value_should_return_400(self):
-        case = self._subject.create_case_deprecated()
+    def test_create_ioc_with_missing_ioc_value_should_return_400(self):
+        case = self._subject.create_dummy_case()
         case_identifier = case['case_id']
         response = self._subject.create_ioc(case_identifier, {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_description": "rewrw", "ioc_tags": ""})
         self.assertEqual(400, response.status_code)
 
     def test_get_ioc_should_return_201(self):
-        case = self._subject.create_case_deprecated()
+        case = self._subject.create_dummy_case()
         case_identifier = case['case_id']
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
@@ -132,14 +132,14 @@ class TestsRest(TestCase):
         self.assertEqual(current_identifier, test['ioc_id'])
 
     def test_get_ioc_with_missing_ioc_identifier_should_return_400(self):
-        case = self._subject.create_case_deprecated()
+        case = self._subject.create_dummy_case()
         case_identifier = case['case_id']
         self._subject.create_ioc_deprecated()
         test = self._subject.get_iocs(None, case_identifier)
         self.assertEqual('error', test['status'])
 
     def test_delete_ioc_should_return_201(self):
-        case = self._subject.create_case_deprecated()
+        case = self._subject.create_dummy_case()
         case_identifier = case['case_id']
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
@@ -148,7 +148,7 @@ class TestsRest(TestCase):
         self.assertEqual('Invalid IOC ID for this case', test)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_400(self):
-        case = self._subject.create_case_deprecated()
+        case = self._subject.create_dummy_case()
         case_identifier = case['case_id']
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']

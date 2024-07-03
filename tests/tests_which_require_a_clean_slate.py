@@ -44,7 +44,13 @@ class TestsWhichRequireACleanSlate(TestCase):
         This was just to give an example of a test which requires starting from an empty database.
         It may thus be removed when we have more interesting tests to add to this suite.
         """
-        self._subject.create_case_deprecated()
+        body = {
+            'case_name': 'case name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }
+        self._subject.create('/api/v2/cases', body)
         response = self._subject.get_cases()
         case_count = len(response['data'])
         self.assertEqual(2, case_count)

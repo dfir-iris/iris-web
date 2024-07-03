@@ -104,18 +104,15 @@ class Iris:
         user = self._api.post('/manage/users/add', body).json()
         return User(API_URL, user['data']['user_api_key'])
 
-    def create_case_deprecated(self):
+    def create_dummy_case(self):
         body = {
             'case_name': 'case name',
             'case_description': 'description',
             'case_customer': 1,
             'case_soc_id': ''
         }
-        response = self._api.post('/manage/cases/add', body).json()
-        return response['data']
-
-    def create_case(self, body):
-        return self._api.post('/api/v2/cases', body)
+        response = self._api.post('/api/v2/cases', body)
+        return response.json()
 
     def update_case(self, case_identifier, data):
         response = self._api.post(f'/manage/cases/update/{case_identifier}', data)
