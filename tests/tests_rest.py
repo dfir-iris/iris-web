@@ -76,8 +76,7 @@ class TestsRest(TestCase):
         self.assertEqual(initial_case_count + 1, case_count)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
-        case = self._subject.create_dummy_case()
-        case_identifier = case['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
 
@@ -111,36 +110,31 @@ class TestsRest(TestCase):
         print(response)
 
     def test_create_ioc_should_return_201(self):
-        case = self._subject.create_dummy_case()
-        case_identifier = case['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.create_ioc(case_identifier, {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw",
                                                               "ioc_tags": ""})
         self.assertEqual(201, response.status_code)
 
     def test_create_ioc_with_missing_ioc_value_should_return_400(self):
-        case = self._subject.create_dummy_case()
-        case_identifier = case['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.create_ioc(case_identifier, {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_description": "rewrw", "ioc_tags": ""})
         self.assertEqual(400, response.status_code)
 
     def test_get_ioc_should_return_201(self):
-        case = self._subject.create_dummy_case()
-        case_identifier = case['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
         test = self._subject.get_iocs(current_identifier, case_identifier)
         self.assertEqual(current_identifier, test['ioc_id'])
 
     def test_get_ioc_with_missing_ioc_identifier_should_return_400(self):
-        case = self._subject.create_dummy_case()
-        case_identifier = case['case_id']
+        case_identifier = self._subject.create_dummy_case()
         self._subject.create_ioc_deprecated()
         test = self._subject.get_iocs(None, case_identifier)
         self.assertEqual('error', test['status'])
 
     def test_delete_ioc_should_return_201(self):
-        case = self._subject.create_dummy_case()
-        case_identifier = case['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
         self._subject.delete_iocs(current_identifier, case_identifier)
@@ -148,10 +142,28 @@ class TestsRest(TestCase):
         self.assertEqual('Invalid IOC ID for this case', test)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_400(self):
-        case = self._subject.create_dummy_case()
-        case_identifier = case['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
         self._subject.delete_iocs(None, case_identifier)
         test = self._subject.get_iocs(current_identifier, case_identifier)
         self.assertEqual(current_identifier, test['ioc_id'])
+
+    def test_merge_alert_into_a_case_should_not_fail(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {
+            'alert_title': 'title',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1
+        }
+        response = self._subject.create('/alerts/add', body).json()
+        alert_identifier = response['data']['alert_id']
+        body = {
+            'target_case_id': case_identifier,
+            'iocs_import_list': [],
+            'assets_import_list': []
+        }
+        response = self._subject.create(f'/alerts/merge/{alert_identifier}', body)
+        # TODO should be 201
+        self.assertEqual(200, response.status_code)

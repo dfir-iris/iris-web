@@ -111,8 +111,8 @@ class Iris:
             'case_customer': 1,
             'case_soc_id': ''
         }
-        response = self._api.post('/api/v2/cases', body)
-        return response.json()
+        response = self._api.post('/api/v2/cases', body).json()
+        return response['case_id']
 
     def update_case(self, case_identifier, data):
         response = self._api.post(f'/manage/cases/update/{case_identifier}', data)
