@@ -101,13 +101,13 @@ class TestsRest(TestCase):
         body = {
             'case_template_json': '{"name": "Template name"}',
         }
-        response = self._subject.post('/manage/case-templates/add', body, query_parameters=query_parameters)
+        response = self._subject.create('/manage/case-templates/add', body, query_parameters=query_parameters)
         # TODO should really be 201 here
         self.assertEqual(200, response.status_code)
 
     def test_update_settings_should_not_fail(self):
         body = {}
-        response = self._subject.post('/manage/settings/update', body)
+        response = self._subject.create('/manage/settings/update', body)
         print(response)
 
     def test_create_ioc_should_return_201(self):

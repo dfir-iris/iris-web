@@ -70,7 +70,7 @@ class Iris:
     def get(self, path, query_parameters=None):
         return self._api.get(path, query_parameters=query_parameters)
 
-    def post(self, path, body, query_parameters=None):
+    def create(self, path, body, query_parameters=None):
         return self._api.post(path, body, query_parameters)
 
     def get_api_version(self):
