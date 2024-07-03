@@ -64,14 +64,14 @@ services:
     image: iriswebapp_nginx:v2.4.7
 
 
-networks:
-  iris_backend:
-    external: true
-  iris_frontend:
-    external: true
-
 volumes:
   iris-downloads:
   user_templates:
   server_data:
   db_data:
+
+networks:
+  iris_backend:
+    name: iris_backend
+  iris_frontend:
+    name: iris_frontend
