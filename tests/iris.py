@@ -138,3 +138,6 @@ class Iris:
 
     def get_tasks(self, current_identifier):
         return self._api.get(f'/api/v2/tasks/{current_identifier}')
+
+    def delete_tasks(self, current_identifier):
+        return self._api.delete(f'/api/v2/tasks/{current_identifier}')

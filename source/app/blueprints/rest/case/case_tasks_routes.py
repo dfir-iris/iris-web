@@ -246,6 +246,7 @@ def case_edit_task(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_delete_task(cur_id, caseid):
@@ -263,6 +264,26 @@ def case_delete_task(cur_id, caseid):
     track_activity(f"deleted task \"{task.task_title}\"")
 
     return response_success("Task deleted")
+
+
+@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['DELETE'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def api_case_delete_task(cur_id, caseid):
+    call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
+    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
+    if not task:
+        return response_failed("Invalid task ID for this case")
+
+    delete_task(task.id)
+
+    update_tasks_state(caseid=caseid)
+
+    call_modules_hook('on_postload_task_delete', data=cur_id, caseid=caseid)
+
+    track_activity(f"deleted task \"{task.task_title}\"")
+
+    return response_created("Task deleted")
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
