@@ -126,34 +126,29 @@ except Exception as e:
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+
 def _get_user_by_api_key(api_key):
     if not api_key:
         return None
 
     api_key = api_key.replace('Bearer ', '', 1)
-    user = User.query.filter(
+    return User.query.filter(
         User.api_key == api_key,
         User.active == True
     ).first()
 
-    return user
 
 @lm.request_loader
 def load_user_from_request(request):
+    api_key_sources = [
+        request.headers.get('X-IRIS-AUTH'),
+        request.headers.get('Authorization')
+    ]
 
-    # first, try to login using the api_key url arg
-    user = _get_user_by_api_key(request.args.get('api_key'))
-    if user:
-        return user
-
-    # next, try to login using Basic Auth
-    user = _get_user_by_api_key(request.headers.get('Authorization'))
-    if user:
-        return user
-
-    # next, try to login using Basic Auth from custom Header
-    user = _get_user_by_api_key(request.headers.get('X-IRIS-AUTH'))
-    if user:
-        return user
+    for api_key in api_key_sources:
+        if api_key:
+            user = _get_user_by_api_key(api_key)
+            if user:
+                return user
 
     return None
