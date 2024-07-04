@@ -18,6 +18,46 @@ from sqlalchemy.orm import relationship
 from app import db
 
 
+# ---- rbac ----
+
+class Role(db.Model):
+    __tablename__ = 'role'
+
+    role_id = Column(BigInteger, primary_key=True)
+    name = Column(String(64))
+    description = Column(Text)
+    entitlements = Column(JSON)
+
+
+class OrganisationRole(db.Model):
+    """
+    Table handles assigning roles to the organisation-level
+    """
+
+    __tablename__ = 'organisation_role'
+
+    role_id = Column(BigInteger, ForeignKey('role.role_id'), primary_key=True)
+    org_id = Column(BigInteger, ForeignKey(
+        'organisations.org_id'), primary_key=True)
+
+    UniqueConstraint('role_id', 'org_id')
+
+
+class CaseRole(db.Model):
+    """
+    Table handles assigning roles to the case-level
+    """
+
+    __tablename__ = 'case_role'
+
+    role_id = Column(BigInteger, ForeignKey('role.role_id'), primary_key=True)
+    case_id = Column(BigInteger, ForeignKey('cases.case_id'), primary_key=True)
+
+    UniqueConstraint('role_id', 'case_id')
+
+
+# ---- existing ----
+
 class CaseAccessLevel(enum.Enum):
     deny_all = 0x1
     read_only = 0x2
@@ -70,7 +110,8 @@ class OrganisationCaseAccess(db.Model):
     __tablename__ = "organisation_case_access"
 
     id = Column(BigInteger, primary_key=True)
-    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False)
+    org_id = Column(BigInteger, ForeignKey(
+        'organisations.org_id'), nullable=False)
     case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
     access_level = Column(BigInteger, nullable=False)
 
@@ -90,7 +131,8 @@ class Group(db.Model):
     group_description = Column(Text)
     group_permissions = Column(BigInteger, nullable=False)
     group_auto_follow = Column(Boolean, nullable=False, default=False)
-    group_auto_follow_access_level = Column(BigInteger, nullable=False, default=0)
+    group_auto_follow_access_level = Column(
+        BigInteger, nullable=False, default=0)
 
     UniqueConstraint('group_name')
 
@@ -99,7 +141,8 @@ class GroupCaseAccess(db.Model):
     __tablename__ = "group_case_access"
 
     id = Column(BigInteger, primary_key=True)
-    group_id = Column(BigInteger, ForeignKey('groups.group_id'), nullable=False)
+    group_id = Column(BigInteger, ForeignKey(
+        'groups.group_id'), nullable=False)
     case_id = Column(BigInteger, ForeignKey('cases.case_id'), nullable=False)
     access_level = Column(BigInteger, nullable=False)
 
@@ -142,7 +185,8 @@ class UserOrganisation(db.Model):
 
     id = Column(BigInteger, primary_key=True, nullable=False)
     user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
-    org_id = Column(BigInteger, ForeignKey('organisations.org_id'), nullable=False)
+    org_id = Column(BigInteger, ForeignKey(
+        'organisations.org_id'), nullable=False)
     is_primary_org = Column(Boolean, nullable=False)
 
     user = relationship('User')
@@ -156,7 +200,8 @@ class UserGroup(db.Model):
 
     id = Column(BigInteger, primary_key=True, nullable=False)
     user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
-    group_id = Column(BigInteger, ForeignKey('groups.group_id'), nullable=False)
+    group_id = Column(BigInteger, ForeignKey(
+        'groups.group_id'), nullable=False)
 
     user = relationship('User')
     group = relationship('Group')
@@ -169,7 +214,8 @@ class UserClient(db.Model):
 
     id = Column(BigInteger, primary_key=True, nullable=False)
     user_id = Column(BigInteger, ForeignKey('user.id'), nullable=False)
-    client_id = Column(BigInteger, ForeignKey('client.client_id'), nullable=False)
+    client_id = Column(BigInteger, ForeignKey(
+        'client.client_id'), nullable=False)
     access_level = Column(BigInteger, nullable=False)
     allow_alerts = Column(Boolean, nullable=False)
 
