@@ -133,3 +133,5 @@ class Iris:
     def delete_iocs(self, current_identifier):
         return self._api.delete(f'/api/v2/iocs/{current_identifier}')
 
+    def add_tasks(self, case_identifier, body):
+        return self._api.post(f'/api/v2/cases/{case_identifier}/tasks',  body)

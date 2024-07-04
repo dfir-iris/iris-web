@@ -25,6 +25,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated, response_failed, response_created
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -105,6 +106,7 @@ def case_task_statusupdate(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/tasks')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_task(caseid):
@@ -136,6 +138,40 @@ def case_add_task(caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
+
+
+@case_tasks_rest_blueprint.route('/api/v2/cases/<int:caseid>/tasks', methods=['POST'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def api_case_add_task(caseid):
+    try:
+        # validate before saving
+        task_schema = CaseTaskSchema()
+        request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
+
+        if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
+            return response_error('task_assignee_id is not valid anymore since v1.5.0')
+
+        task_assignee_list = request_data['task_assignees_id']
+        del request_data['task_assignees_id']
+        task = task_schema.load(request_data)
+
+        ctask = add_task(task=task,
+                         assignee_id_list=task_assignee_list,
+                         user_id=current_user.id,
+                         caseid=caseid
+                         )
+
+        ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=caseid)
+
+        if ctask:
+            track_activity(f"added task \"{ctask.task_title}\"", caseid=caseid)
+            return response_created(task_schema.dump(ctask))
+
+        return response_error("Unable to create task for internal reasons")
+
+    except marshmallow.exceptions.ValidationError as e:
+        return response_failed(e.messages)
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
