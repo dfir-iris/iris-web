@@ -235,7 +235,7 @@ def case_delete_ioc(cur_id, caseid):
         return response_error(e.get_message())
 
 
-@case_ioc_rest_blueprint.route('/api/v2/cases/iocs/<int:cur_id>', methods=['DELETE'])
+@case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['DELETE'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def delete_case_ioc(cur_id, caseid):
