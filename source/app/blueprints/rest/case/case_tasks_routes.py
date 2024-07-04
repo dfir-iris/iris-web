@@ -175,6 +175,7 @@ def api_case_add_task(caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_task_view(cur_id, caseid):
@@ -185,6 +186,19 @@ def case_task_view(cur_id, caseid):
     task_schema = CaseTaskSchema()
 
     return response_success(data=task_schema.dump(task))
+
+
+@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def api_case_task_view(cur_id, caseid):
+    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
+    if not task:
+        return response_failed("Invalid task ID for this case")
+
+    task_schema = CaseTaskSchema()
+
+    return response_created(task_schema.dump(task))
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])

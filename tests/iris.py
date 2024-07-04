@@ -135,3 +135,6 @@ class Iris:
 
     def add_tasks(self, case_identifier, body):
         return self._api.post(f'/api/v2/cases/{case_identifier}/tasks',  body)
+
+    def get_tasks(self, current_identifier):
+        return self._api.get(f'/api/v2/tasks/{current_identifier}')
