@@ -1,3 +1,5 @@
+from app.configuration import SQLALCHEMY_BASE_ADMIN_URI, PG_DB_
+import os
 from alembic import context
 from logging.config import fileConfig
 from sqlalchemy import engine_from_config
@@ -11,12 +13,11 @@ config = context.config
 # This line sets up loggers basically.
 fileConfig(config.config_file_name)
 
-import os
 os.environ["ALEMBIC"] = "1"
 
-from app.configuration import SQLALCHEMY_BASE_ADMIN_URI, PG_DB_
 
 config.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_ADMIN_URI + PG_DB_)
+
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -72,7 +73,7 @@ def run_migrations_online():
             connection=connection, target_metadata=target_metadata
         )
 
-        #with context.begin_transaction(): -- Fixes stuck transaction. Need more info on that
+        # with context.begin_transaction(): -- Fixes stuck transaction. Need more info on that
         context.run_migrations()
 
 

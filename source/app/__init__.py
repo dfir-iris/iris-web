@@ -19,6 +19,7 @@ import collections
 import json
 import logging as logger
 import os
+import sys
 import urllib.parse
 from flask import Flask
 from flask import session
@@ -109,7 +110,7 @@ bc = Bcrypt(app)  # flask-bcrypt
 lm = LoginManager()  # flask-loginmanager
 lm.init_app(app)  # init the login manager
 
-ma = Marshmallow(app) # Init marshmallow
+ma = Marshmallow(app)  # Init marshmallow
 
 dropzone = Dropzone(app)
 
@@ -134,4 +135,6 @@ def shutdown_session(exception=None):
     db.session.remove()
 
 
-from app import views
+# Only import the remainder of the app if we are actually launching the app
+if ".py" in sys.argv[0]:
+    from app import views
