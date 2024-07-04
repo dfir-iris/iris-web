@@ -216,10 +216,13 @@ class TestsRest(TestCase):
     def test_get_tasks_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         number = 1
-        self._subject.add_tasks(case_identifier, {"task_assignees_id": [number], "task_description": "", "task_status_id": number, "task_tags": "",
-                                                             "task_title": "dummy title", "custom_attributes": {}})
+        body = {
+            "task_assignees_id": [number], "task_description": "", "task_status_id": number, "task_tags": "",
+            "task_title": "dummy title", "custom_attributes": {}
+        }
+        self._subject.add_tasks(case_identifier, body)
         test = self._subject.get_tasks(number)
-        self.assertEqual(number, test['task_status_id'])
+        self.assertEqual("dummy title", test['task_title'])
 
     def test_get_tasks_with_missing_ioc_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
