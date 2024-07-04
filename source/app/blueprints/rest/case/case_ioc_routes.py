@@ -87,7 +87,7 @@ def case_list_ioc(caseid):
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/state', methods=['GET'])
-@endpoint_deprecated('GET', '/api/v2/cases/<int:caseid>/iocs')
+@endpoint_deprecated('GET', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_ioc_state(caseid):
