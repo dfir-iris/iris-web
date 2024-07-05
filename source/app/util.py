@@ -621,6 +621,28 @@ def ac_requires_client_access():
     return inner_wrap
 
 
+def ac_requires_case_access(*access_level):
+    def decorate(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            try:
+                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
+            except Exception as e:
+                log.exception(e)
+                return response_error('Invalid data. Check server logs', status=500)
+
+            if not caseid and not redir:
+                return response_error('Invalid case ID', status=404)
+
+            if not has_access:
+                return ac_api_return_access_denied(caseid=caseid)
+
+            return f(*args, **kwargs)
+
+        return wrap
+    return decorate
+
+
 def ac_requires_case_identifier(*access_level):
     def decorate_with_requires_case_identifier(f):
         @wraps(f)

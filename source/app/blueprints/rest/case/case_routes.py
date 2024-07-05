@@ -29,6 +29,7 @@ from sqlalchemy import desc
 from app import app
 from app import db
 from app import socket_io
+from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_created
 from app.blueprints.rest.endpoints import response_failed
 from app.business.cases import cases_create
@@ -57,6 +58,7 @@ from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
 from app.util import ac_requires_case_identifier
 from app.util import ac_api_requires
+from app.util import ac_requires_case_access
 from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success
@@ -351,3 +353,11 @@ def create_case():
         return response_created(case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_failed(e.get_message())
+
+
+@case_rest_blueprint.route('/api/v2/cases/<int:identifier>')
+@ac_requires_case_access(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def case_routes_get(identifier):
+    case = get_case(identifier)
+    return response_api_success(CaseSchema().dump(case))

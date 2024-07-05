@@ -75,6 +75,18 @@ class TestsRest(TestCase):
         case_count = len(response['data'])
         self.assertEqual(initial_case_count + 1, case_count)
 
+    def test_get_case_should_return_case_data(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        identifier = response['case_id']
+        response = self._subject.get(f'/api/v2/cases/{identifier}')
+        self.assertEqual('description', response['case_description'])
+
+
     def test_update_case_should_not_require_case_name_issue_358(self):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})

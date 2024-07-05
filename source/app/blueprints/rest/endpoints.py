@@ -23,10 +23,16 @@ from app.util import response
 logger = app.logger
 
 
+def response_api_success(data):
+    return response(data, 200)
+
+
+# TODO rename into reponse_api_created
 def response_created(data):
     return response(data, 201)
 
 
+# TODO rename into reponse_api_failed
 def response_failed(message):
     return response(message, 400)
 
