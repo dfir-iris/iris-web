@@ -653,13 +653,12 @@ def _is_csrf_token_valid():
     if request.headers.get('Authorization') is not None:
         return True
     cookie_session = request.cookies.get('session')
-    # TODO should really be true in the absence of a cookie_session?
     if not cookie_session:
         return True
     form = FlaskForm()
     if not form.validate():
         return False
-    # TODO not really nice to have a side-effect within a 'is' method.
+    # TODO not nice to have a side-effect within a 'is' method.
     if request.is_json:
         request.json.pop('csrf_token')
     return True

@@ -141,7 +141,7 @@ def add_case_classification() -> Response:
 
 
 @manage_case_classification_rest_blueprint.route('/manage/case-classifications/delete/<int:classification_id>',
-                                            methods=['POST'])
+                                                 methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def delete_case_classification(classification_id: int) -> Response:
     """Delete a case classification
