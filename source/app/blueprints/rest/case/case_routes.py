@@ -34,6 +34,8 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_created
 from app.blueprints.rest.endpoints import response_failed
 from app.business.cases import cases_create
+from app.business.cases import cases_delete
+from app.business.errors import PermissionDeniedError
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
@@ -61,6 +63,7 @@ from app.util import ac_requires_case_identifier
 from app.util import ac_api_requires
 from app.util import ac_requires_case_access
 from app.util import add_obj_history_entry
+from app.util import ac_api_return_access_denied
 from app.util import response_error
 from app.util import response_success
 
@@ -363,3 +366,15 @@ def create_case():
 def case_routes_get(identifier):
     case = get_case(identifier)
     return response_api_success(CaseSchema().dump(case))
+
+
+@case_rest_blueprint.route('/api/v2/<int:identifier>', methods=['DELETE'])
+@ac_api_requires(Permissions.standard_user)
+def case_routes_delete(identifier):
+    try:
+        cases_delete(identifier)
+        return response_success('Case successfully deleted')
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
+    except PermissionDeniedError:
+        return ac_api_return_access_denied(caseid=identifier)

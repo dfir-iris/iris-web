@@ -66,10 +66,10 @@ from app.models import Cases
 from app.models.authorization import CaseAccessLevel
 
 
-def response(data, status):
-    return app.response_class(response=json.dumps(data, cls=AlchemyEncoder),
-                              status=status,
-                              mimetype='application/json')
+def response(status, data=None):
+    if data is not None:
+        data = json.dumps(data, cls=AlchemyEncoder)
+    return app.response_class(response=data, status=status, mimetype='application/json')
 
 
 def response_error(msg, data=None, status=400):
@@ -78,7 +78,7 @@ def response_error(msg, data=None, status=400):
         "message": msg,
         "data": data if data is not None else []
     }
-    return response(content, status)
+    return response(status, data=content)
 
 
 def response_success(msg='', data=None):
@@ -87,7 +87,7 @@ def response_success(msg='', data=None):
         "message": msg,
         "data": data if data is not None else []
     }
-    return response(content, 200)
+    return response(200, data=content)
 
 
 def g_db_commit():

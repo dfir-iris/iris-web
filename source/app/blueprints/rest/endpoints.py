@@ -24,17 +24,21 @@ logger = app.logger
 
 
 def response_api_success(data):
-    return response(data, 200)
+    return response(200, data=data)
+
+
+def response_api_deleted():
+    return response(204)
 
 
 # TODO rename into reponse_api_created
 def response_created(data):
-    return response(data, 201)
+    return response(201, data=data)
 
 
 # TODO rename into reponse_api_failed
 def response_failed(message):
-    return response(message, 400)
+    return response(400, data=message)
 
 
 def endpoint_deprecated(alternative_verb, alternative_url):

@@ -18,6 +18,7 @@
 
 import requests
 from requests.exceptions import ConnectionError
+from requests.exceptions import JSONDecodeError
 from urllib import parse
 
 
@@ -29,6 +30,12 @@ class RestApi:
 
     def _build_url(self, path):
         return parse.urljoin(self._url, path)
+
+    def _convert_response_to_string(self, response):
+        try:
+            return f'{response.status_code} {response.json()}'
+        except JSONDecodeError:
+            return f'{response.status_code}'
 
     def get(self, path, query_parameters=None):
         url = self._build_url(path)
@@ -47,8 +54,8 @@ class RestApi:
     def delete(self, path, query_parameters=None):
         url = self._build_url(path)
         response = requests.delete(url, headers=self._headers, params=query_parameters)
-        body = response.json()
-        print(f'DELETE {url}  => {response.status_code} {body}')
+        response_as_string = self._convert_response_to_string(response)
+        print(f'DELETE {url} => {response_as_string}')
         return response
 
     def is_ready(self):

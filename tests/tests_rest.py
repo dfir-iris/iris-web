@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from unittest import TestCase
+from unittest import skip
 from iris import Iris
 
 
@@ -86,6 +87,19 @@ class TestsRest(TestCase):
         response = self._subject.get(f'/api/v2/cases/{identifier}')
         self.assertEqual('description', response['case_description'])
 
+    # TODO write a simpler test first which checks delete return 204
+    @skip
+    def test_get_case_should_return_404_after_it_is_deleted(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        identifier = response['case_id']
+        self._subject.delete(f'/api/v2/cases/{identifier}')
+        response = self._subject.get(f'/api/v2/cases/{identifier}')
+        self.assertEqual(404, response.status_code)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
         case_identifier = self._subject.create_dummy_case()
