@@ -1091,18 +1091,26 @@ function get_editor_headers(editor_instance, save, edition_btn) {
 
 function goto_case_number() {
     case_id = $('#goto_case_number_input').val();
-    if (case_id !== '' && isNaN(case_id) === false) {
-
-        get_request_api('/case/exists', true, null, case_id)
-        .done(function (data){
-            if(notify_auto_api(data, true)) {
-                var url = new window.URL(document.location);
-                url.searchParams.set("cid", case_id);
-                window.location.href = url.href;
-            }
-        });
-
+    if (case_id === '') {
+        return;
     }
+    if (isNaN(case_id)) {
+        return;
+    }
+    get_request_api(`/api/v2/cases/${case_id}`, true, null, case_id)
+    .done(function(data, textStatus) {
+        if (textStatus !== 'success') {
+            let error_message = data.message;
+            if (error_message.length === 0) {
+                error_message = 'Operation failed';
+            }
+            notify_error(error_message);
+            return;
+        }
+        var url = new window.URL(document.location);
+        url.searchParams.set("cid", case_id);
+        window.location.href = url.href;
+    });
 }
 
 

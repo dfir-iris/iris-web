@@ -29,6 +29,7 @@ from sqlalchemy import desc
 from app import app
 from app import db
 from app import socket_io
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_created
 from app.blueprints.rest.endpoints import response_failed
@@ -69,6 +70,7 @@ log = app.logger
 
 
 @case_rest_blueprint.route('/case/exists', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/cases/{identifier}')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_exists_r(caseid):
