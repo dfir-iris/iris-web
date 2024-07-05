@@ -210,9 +210,9 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
     if no_cid_required:
         return False, caseid, True
 
-    try:
-        js_d = None
+    js_d = None
 
+    try:
         if request_data.content_type == 'application/json':
             js_d = request_data.get_json()
 
@@ -220,13 +220,17 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
             redir, caseid = _set_caseid_from_current_user()
             return redir, caseid, True
 
+        if 'cid' not in js_d:
+            cookie_session = request_data.cookies.get('session')
+            if not cookie_session:
+                redir, caseid = _set_caseid_from_current_user()
+                return redir, caseid, True
+
         caseid = js_d.get('cid')
-        request_data.json.pop('cid')
 
         return False, caseid, True
 
     except Exception as e:
-        print(request_data.url)
         cookie_session = request_data.cookies.get('session')
         if not cookie_session:
             redir, caseid = _set_caseid_from_current_user()
