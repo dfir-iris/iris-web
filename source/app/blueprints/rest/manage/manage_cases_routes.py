@@ -65,6 +65,7 @@ manage_cases_rest_blueprint = Blueprint('manage_case_rest', __name__)
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/cases/{identifier}')
 @ac_api_requires()
 def get_case_api(cur_id):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
