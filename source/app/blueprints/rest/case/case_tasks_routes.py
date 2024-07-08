@@ -168,7 +168,7 @@ def api_case_add_task(caseid):
             track_activity(f"added task \"{ctask.task_title}\"", caseid=caseid)
             return response_created(task_schema.dump(ctask))
 
-        return response_error("Unable to create task for internal reasons")
+        return response_failed("Unable to create task for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
         return response_failed(e.messages)
