@@ -215,7 +215,7 @@ class TestsRest(TestCase):
 
     def test_get_tasks_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        number = 1
+        number = 2
         body = {
             "task_assignees_id": [number], "task_description": "", "task_status_id": number, "task_tags": "",
             "task_title": "dummy title", "custom_attributes": {}
