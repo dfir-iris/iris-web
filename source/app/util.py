@@ -64,6 +64,7 @@ from app.iris_engine.access_control.utils import ac_get_effective_permissions_of
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
+from app.models.authorization import Permissions
 
 
 def response(status, data=None):
@@ -543,7 +544,7 @@ def ac_requires(*permissions, no_cid_required=False):
             redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
             kwargs.update({'caseid': caseid, 'url_redir': redir})
 
-            if not _user_has_required_permissions(permissions):
+            if not _user_has_at_least_a_required_permission(permissions):
                 return _ac_return_access_denied()
 
             return f(*args, **kwargs)
@@ -575,15 +576,16 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
-def _user_has_required_permissions(permissions):
+def _user_has_at_least_a_required_permission(permissions: list[Permissions]):
+    """
+        Returns true as soon as the user has at least one permission in the list of permissions
+        Returns true if the list of required permissions is empty
+    """
+
     if not permissions:
         return True
 
     for permission in permissions:
-        # TODO do we really want to do this?
-        #      as it is coded now, as soon as the user has one of the required
-        #      permission, the action is allowed
-        #      don't we rather want the user to have all required permissions?
         if session['permissions'] & permission.value:
             return True
 
@@ -679,6 +681,7 @@ def _is_csrf_token_valid():
     if request.headers.get('Authorization') is not None:
         return True
     cookie_session = request.cookies.get('session')
+    # True in the absence of a session cookie, because no CSRF token is required for API calls
     if not cookie_session:
         return True
     form = FlaskForm()
@@ -703,7 +706,7 @@ def ac_api_requires(*permissions):
             if 'permissions' not in session:
                 session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
-            if not _user_has_required_permissions(permissions):
+            if not _user_has_at_least_a_required_permission(permissions):
                 return response_error('Permission denied', status=403)
 
             return f(*args, **kwargs)
