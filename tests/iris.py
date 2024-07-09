@@ -77,7 +77,7 @@ class Iris:
         return self._api.delete(path)
 
     def get_api_version(self):
-        return self._api.get('api/versions')
+        return self._api.get('api/versions').json()
 
     def create_alert(self):
         body = {
@@ -122,10 +122,10 @@ class Iris:
         return response.json()
 
     def get_cases(self):
-        return self._api.get('/manage/cases/list')
+        return self._api.get('/manage/cases/list').json()
 
     def get_cases_filter(self):
-        return self._api.get('/manage/cases/filter')
+        return self._api.get('/manage/cases/filter').json()
 
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
@@ -143,7 +143,7 @@ class Iris:
         return self._api.post(f'/api/v2/cases/{case_identifier}/iocs', body)
 
     def get_iocs(self, current_identifier):
-        return self._api.get(f'/api/v2/iocs/{current_identifier}')
+        return self._api.get(f'/api/v2/iocs/{current_identifier}').json()
 
     def delete_iocs(self, current_identifier):
         return self._api.delete(f'/api/v2/iocs/{current_identifier}')

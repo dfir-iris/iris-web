@@ -84,7 +84,7 @@ class TestsRest(TestCase):
             'case_soc_id': ''
         }).json()
         identifier = response['case_id']
-        response = self._subject.get(f'/api/v2/cases/{identifier}')
+        response = self._subject.get(f'/api/v2/cases/{identifier}').json()
         self.assertEqual('description', response['case_description'])
 
     # TODO write a simpler test first which checks delete return 204
@@ -98,7 +98,7 @@ class TestsRest(TestCase):
         }).json()
         identifier = response['case_id']
         self._subject.delete(f'/api/v2/cases/{identifier}')
-        response = self._subject.get(f'/api/v2/cases/{identifier}')
+        response = self._subject.get(f'/api/v2/cases/{identifier}').json()
         self.assertEqual(404, response.status_code)
 
     def test_update_case_should_not_require_case_name_issue_358(self):
@@ -112,11 +112,11 @@ class TestsRest(TestCase):
         self.assertEqual('success', response['status'])
 
     def test_get_case_graph_should_not_fail(self):
-        response = self._subject.get('/case/graph/getdata')
+        response = self._subject.get('/case/graph/getdata').json()
         self.assertEqual('success', response['status'])
 
     def test_get_iocs_should_not_fail(self):
-        response = self._subject.get('/case/ioc/list')
+        response = self._subject.get('/case/ioc/list').json()
         self.assertEqual('success', response['status'])
 
     def test_create_case_template_should_not_be_forbidden_to_administrator(self):
@@ -188,4 +188,8 @@ class TestsRest(TestCase):
         }
         response = self._subject.create(f'/alerts/merge/{alert_identifier}', body)
         # TODO should be 201
+        self.assertEqual(200, response.status_code)
+
+    def test_get_timeline_state_should_return_200(self):
+        response = self._subject.get('/case/timeline/state', query_parameters={'cid': 1})
         self.assertEqual(200, response.status_code)
