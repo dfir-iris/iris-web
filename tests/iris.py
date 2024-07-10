@@ -134,7 +134,7 @@ class Iris:
         response = self._api.post(f'/api/v2/cases/{case_identifier}/iocs', body)
         return response.json()
 
-    def get_iocs(self, current_identifier):
+    def get_ioc(self, current_identifier):
         response = self._api.get(f'/api/v2/iocs/{current_identifier}')
         return response.json()
 
