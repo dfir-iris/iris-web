@@ -131,10 +131,12 @@ class Iris:
         return self._administrator.execute_graphql_query(payload)
 
     def create_ioc(self, case_identifier, body):
-        return self._api.post(f'/api/v2/cases/{case_identifier}/iocs', body)
+        response = self._api.post(f'/api/v2/cases/{case_identifier}/iocs', body)
+        return response.json()
 
     def get_iocs(self, current_identifier):
-        return self._api.get(f'/api/v2/iocs/{current_identifier}').json()
+        response = (self._api.get(f'/api/v2/iocs/{current_identifier}'))
+        return response.json()
 
     def delete_iocs(self, current_identifier):
         return self._api.delete(f'/api/v2/iocs/{current_identifier}')
