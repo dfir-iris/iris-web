@@ -355,7 +355,7 @@ function note_revision_delete(_item, _rev) {
         if (doDelete) {
             post_request_api('/case/notes/' + _item + '/revisions/' + _rev + '/delete')
             .done((data) => {
-                if (notify_auto_api(data, false)) {
+                if (notify_auto_api(data)) {
                     load_note_revisions(_item);
                 }
 
