@@ -80,7 +80,7 @@ function add_ioc() {
                             .addClass('btn-success', 'text-dark');
                     })
                     .done((data, textStatus) => {
-                        if (textStatus == 'success') {
+                        if (textStatus === 'success') {
                                 reload_iocs();
                                 notify_success(textStatus);
                                 if (index == (iocs_list.length - 1)) {
@@ -108,7 +108,7 @@ function add_ioc() {
                             .addClass('btn-success', 'text-dark');
                     })
                 .done((data, textStatus) => {
-                    if (textStatus == 'success') {
+                    if (textStatus === 'success') {
                         reload_iocs();
                         notify_success(textStatus);
                         $('#modal_add_ioc').modal('hide');
