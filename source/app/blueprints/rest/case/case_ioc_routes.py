@@ -268,7 +268,7 @@ def get_case_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
-        return response_api_error("Invalid IOC ID for this case")
+        return response_api_error('Invalid IOC ID for this case')
 
     return response_created(ioc_schema.dump(ioc))
 
