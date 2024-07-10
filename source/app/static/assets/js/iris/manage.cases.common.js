@@ -74,24 +74,28 @@ function remove_case(id) {
     })
         .then((willDelete) => {
             if (willDelete) {
-                post_request_api('/manage/cases/delete/' + id)
-                .done((data) => {
-                    if (notify_auto_api(data)) {
-                        if (!refresh_case_table()) {
-                            swal({
-                                title: "Done!",
-                                text: "You will be redirected in 5 seconds",
-                                icon: "success",
-                                buttons: false,
-                                dangerMode: false
-                            })
-                            setTimeout(function () {
-                                window.location.href = '/dashboard?cid=1';
-                            }, 4500);
-                        } else {
-                            refresh_case_table();
-                            $('#modal_case_detail').modal('hide');
-                        }
+                post_request_api(`/api/v2/cases/${id}`)
+                .done((data, textStatus) => {
+                    if (textStatus !== 'success') {
+                        notify_error(data);
+                        return;
+                    }
+                    notify_success('Case successfully deleted');
+
+                    if (!refresh_case_table()) {
+                        swal({
+                            title: "Done!",
+                            text: "You will be redirected in 5 seconds",
+                            icon: "success",
+                            buttons: false,
+                            dangerMode: false
+                        })
+                        setTimeout(function () {
+                            window.location.href = '/dashboard?cid=1';
+                        }, 4500);
+                    } else {
+                        refresh_case_table();
+                        $('#modal_case_detail').modal('hide');
                     }
                 });
             } else {
