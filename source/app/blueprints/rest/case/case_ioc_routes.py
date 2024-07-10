@@ -27,6 +27,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import endpoint_deprecated
@@ -99,7 +100,7 @@ def case_ioc_state(caseid):
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/add', methods=['POST'])
-@endpoint_deprecated('POST', '/api/v2/cases/<int:identifier>/iocs')
+@endpoint_deprecated('POST', '/api/v2/cases/{identifier}/iocs')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_case_add_ioc(caseid):
@@ -241,8 +242,8 @@ def case_delete_ioc(cur_id, caseid):
 def delete_case_ioc(cur_id, caseid):
     try:
 
-        msg = iocs_delete(cur_id, caseid)
-        return response_api_created(msg)
+        iocs_delete(cur_id, caseid)
+        return response_api_deleted()
 
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
@@ -268,7 +269,7 @@ def get_case_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
-        return response_api_error('Invalid IOC ID for this case')
+        return response_api_error("Invalid IOC ID for this case")
 
     return response_api_created(ioc_schema.dump(ioc))
 

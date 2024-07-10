@@ -169,9 +169,8 @@ class TestsRest(TestCase):
     def test_delete_ioc_should_return_201(self):
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
-        self._subject.delete_iocs(current_identifier)
-        test = self._subject.get_iocs(current_identifier)
-        self.assertEqual('Invalid IOC ID for this case', test)
+        response = self._subject.delete_iocs(current_identifier)
+        self.assertEqual(204, response.status_code)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_400(self):
         response = self._subject.create_ioc_deprecated()
