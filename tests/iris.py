@@ -130,10 +130,6 @@ class Iris:
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
 
-    def create_ioc(self, case_identifier, body):
-        response = self._api.post(f'/api/v2/cases/{case_identifier}/iocs', body)
-        return response.json()
-
     def get_ioc(self, current_identifier):
         response = self._api.get(f'/api/v2/iocs/{current_identifier}')
         return response.json()
