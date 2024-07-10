@@ -258,10 +258,7 @@ function notify_auto_api(data, silent_success) {
         }
         return true;
     }
-    if (data.message.length === 0) {
-        data.message = 'Operation failed';
-    }
-    notify_error(data.message);
+    notify_api_request_error(data);
     return false;
 }
 
