@@ -79,9 +79,11 @@ $('input[type=radio][name=iris-theme]').change(function() {
     }
     get_request_api('theme/set/'+ theme)
     .done((data) => {
-        if (notify_auto_api(data, true)) {
-            location.reload(true);
+        notify_auto_api(data, true);
+        if (data.status !== 'success') {
+            return;
         }
+        location.reload(true);
     });
 });
 
