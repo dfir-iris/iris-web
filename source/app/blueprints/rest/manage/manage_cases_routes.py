@@ -153,6 +153,7 @@ def manage_case_filter() -> Response:
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/cases/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
 def api_delete_case(cur_id):
     try:
