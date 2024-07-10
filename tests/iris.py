@@ -49,6 +49,9 @@ class Iris:
     def _wait_until_api_is_ready(self):
         self._wait(self._api.is_ready, 60)
 
+    def get(self, path, query_parameters=None):
+        return self._api.get(path, query_parameters=query_parameters)
+
     def start(self):
         # TODO it would be preferable to have a dedicated directory with the
         #      docker-compose.yml file, because for now, it will overwrite the
