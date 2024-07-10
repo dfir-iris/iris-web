@@ -11,10 +11,11 @@ function add_object_attribute() {
 
             post_request_api('/manage/attributes/add', JSON.stringify(form), true)
             .done((data) => {
-                if (notify_auto_api(data, true)) {
-                    refresh_attribute_table();
-                    $('#modal_add_attribute').modal('hide');
+                if (api_request_failed(data)) {
+                    return;
                 }
+                refresh_attribute_table();
+                $('#modal_add_attribute').modal('hide');
             });
 
             return false;
@@ -116,11 +117,12 @@ function attribute_detail(attr_id) {
 
             post_request_api('/manage/attributes/preview', JSON.stringify(data_sent), true)
             .done((data) => {
-                if (notify_auto_api(data, true)) {
-                    $('#modal_preview_attribute_content').html(data.data);
-
-                    $('#modal_preview_attribute').modal({ show: true });
+                if (api_request_failed(data)) {
+                    return;
                 }
+                $('#modal_preview_attribute_content').html(data.data);
+
+                $('#modal_preview_attribute').modal({ show: true });
             });
         });
 

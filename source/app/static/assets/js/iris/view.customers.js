@@ -115,18 +115,20 @@ function load_customer_stats(customer_id) {
 function refresh_client_users(customer_id) {
     get_raw_request_api(`/manage/users/filter?customer_id=${customer_id}`)
         .done((data) => {
-            if (notify_auto_api(data, true)) {
-                users_table.api().clear().rows.add(data.data.users).draw();
+            if (api_request_failed(data)) {
+                return;
             }
+            users_table.api().clear().rows.add(data.data.users).draw();
         })
 }
 
 function refresh_client_cases(customer_id) {
     get_raw_request_api(`/manage/cases/filter?case_customer_id=${customer_id}`)
         .done((data) => {
-            if (notify_auto_api(data, true)) {
-                cases_table.api().clear().rows.add(data.data.cases).draw();
+            if (api_request_failed(data)) {
+                return;
             }
+            cases_table.api().clear().rows.add(data.data.cases).draw();
         })
 
 }
