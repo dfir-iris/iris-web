@@ -283,8 +283,10 @@ function mergeAlertModal(alert_id) {
 
     fetchAlert(alert_id)
         .then((data) => {
+            if (data.status !== 'success') {
+                notify_api_request_error(data);
+            }
             alertDataReq = data;
-            notify_api_request_error(data);
             let alert_title = filterXSS(alertDataReq.data.alert_title);
 
             $("#modalAlertId").val(alert_id);
