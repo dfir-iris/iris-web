@@ -373,7 +373,7 @@ async function note_detail(id) {
 
     get_request_api('/case/notes/' + id)
     .done((data) => {
-        if (notify_auto_api(data, true, true)) {
+        if (data.status === 'success') {
             let timer;
             let timeout = 10000;
             $('#form_note').keyup(function(){
