@@ -795,22 +795,23 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
 
 function load_menu_mod_options_modal(element_id, data_type, anchor) {
     get_request_api('/dim/hooks/options/'+ data_type +'/list')
-    .done(function (data){
-        if (notify_auto_api(data, true)) {
-            if (data.data != null) {
-                let jsdata = data.data;
-                if (jsdata.length !== 0 && anchor.children().length !== 0){
-                    anchor.append('<div class="dropdown-divider"></div>');
-                }
-
-                for (option in jsdata) {
-                    let opt = jsdata[option];
-                    let menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
-                                `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
-                    anchor.append(menu_opt);
-                }
-
+    .done(function (data) {
+        if (api_request_failed(data)) {
+            return;
+        }
+        if (data.data != null) {
+            let jsdata = data.data;
+            if (jsdata.length !== 0 && anchor.children().length !== 0){
+                anchor.append('<div class="dropdown-divider"></div>');
             }
+
+            for (option in jsdata) {
+                let opt = jsdata[option];
+                let menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
+                            `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                anchor.append(menu_opt);
+            }
+
         }
     })
 }
@@ -1163,98 +1164,99 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
 
     get_request_api("/dim/hooks/options/"+ data_type +"/list")
     .done((data) => {
-        if (notify_auto_api(data, true)) {
-            if (data.data != null) {
-                jsdata = data.data;
+        if (api_request_failed(data)) {
+            return;
+        }
+        if (data.data != null) {
+            jsdata = data.data;
 
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Share',
-                    multi: false,
-                    iconClass: 'fas fa-share',
-                    action: function(rows){
-                        row = rows[0];
-                        copy_object_link(get_row_id(row));
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Comment',
-                    multi: false,
-                    iconClass: 'fas fa-comments',
-                    action: function(rows){
-                        row = rows[0];
-                        if (data_type in datatype_map) {
-                            comment_element(get_row_id(row), datatype_map[data_type]);
-                        }
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Markdown Link',
-                    multi: false,
-                    iconClass: 'fa-brands fa-markdown',
-                    action: function(rows){
-                        row = rows[0];
-                        copy_object_link_md(data_type, get_row_id(row));
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Copy',
-                    multi: false,
-                    iconClass: 'fa-regular fa-copy',
-                    action: function(rows){
-                        row = rows[0];
-                        copy_text_clipboard(get_row_value(row));
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'divider'
-                });
-                jdata_menu_options = jsdata;
-
-                for (option in jsdata) {
-                    opt = jsdata[option];
-
-                    actionOptions.items.push({
-                        type: 'option',
-                        title: opt.manual_hook_ui_name,
-                        multi: true,
-                        multiTitle: opt.manual_hook_ui_name,
-                        iconClass: 'fas fa-rocket',
-                        contextMenuClasses: ['text-dark'],
-                        action: function (rows, de, ke) {
-                            init_module_processing_wrap(rows, data_type, de[0].outerText);
-                        },
-                    })
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Share',
+                multi: false,
+                iconClass: 'fas fa-share',
+                action: function(rows){
+                    row = rows[0];
+                    copy_object_link(get_row_id(row));
                 }
+            });
 
-                if (deletion_fn !== undefined) {
-                    actionOptions.items.push({
-                        type: 'divider',
-                    });
-
-                    actionOptions.items.push({
-                        type: 'option',
-                        title: 'Delete',
-                        multi: false,
-                        iconClass: 'fas fa-trash',
-                        contextMenuClasses: ['text-danger'],
-                        action: function(rows){
-                            row = rows[0];
-                            deletion_fn(get_row_id(row));
-                        }
-                    });
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Comment',
+                multi: false,
+                iconClass: 'fas fa-comments',
+                action: function(rows){
+                    row = rows[0];
+                    if (data_type in datatype_map) {
+                        comment_element(get_row_id(row), datatype_map[data_type]);
+                    }
                 }
+            });
 
-                tableActions = table.contextualActions(actionOptions);
-                tableActions.update();
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Markdown Link',
+                multi: false,
+                iconClass: 'fa-brands fa-markdown',
+                action: function(rows){
+                    row = rows[0];
+                    copy_object_link_md(data_type, get_row_id(row));
+                }
+            });
+
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Copy',
+                multi: false,
+                iconClass: 'fa-regular fa-copy',
+                action: function(rows){
+                    row = rows[0];
+                    copy_text_clipboard(get_row_value(row));
+                }
+            });
+
+            actionOptions.items.push({
+                type: 'divider'
+            });
+            jdata_menu_options = jsdata;
+
+            for (option in jsdata) {
+                opt = jsdata[option];
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: opt.manual_hook_ui_name,
+                    multi: true,
+                    multiTitle: opt.manual_hook_ui_name,
+                    iconClass: 'fas fa-rocket',
+                    contextMenuClasses: ['text-dark'],
+                    action: function (rows, de, ke) {
+                        init_module_processing_wrap(rows, data_type, de[0].outerText);
+                    },
+                })
             }
+
+            if (deletion_fn !== undefined) {
+                actionOptions.items.push({
+                    type: 'divider',
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Delete',
+                    multi: false,
+                    iconClass: 'fas fa-trash',
+                    contextMenuClasses: ['text-danger'],
+                    action: function(rows){
+                        row = rows[0];
+                        deletion_fn(get_row_id(row));
+                    }
+                });
+            }
+
+            tableActions = table.contextualActions(actionOptions);
+            tableActions.update();
         }
     })
 }
@@ -1531,36 +1533,36 @@ function load_context_switcher() {
 }
 
 function context_data_parser(data, fire_modal = true) {
-    if (notify_auto_api(data, true)) {
-        $('#user_context').empty();
-
-        $('#user_context').append('<optgroup label="Open" id="switch_case_opened_opt"></optgroup>');
-        $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
-        ocs = data.data;
-        ret_data = [];
-        for (index in ocs) {
-            case_name = sanitizeHTML(ocs[index].name);
-            cs_name = sanitizeHTML(ocs[index].customer_name);
-            ret_data.push({
-                        'value': ocs[index].case_id,
-                        'text': `${case_name} (${cs_name}) ${ocs[index].access}`
-                    });
-            if (ocs[index].close_date != null) {
-                $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
-            } else {
-                $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
-            }
-        }
-
-        if (fire_modal) {
-            $('#modal_switch_context').modal("show");
-        }
-
-        $('#user_context').selectpicker('refresh');
-        $('#user_context').selectpicker('val', get_caseid());
-        return ret_data;
-
+    if (api_request_failed(data)) {
+        return;
     }
+    $('#user_context').empty();
+
+    $('#user_context').append('<optgroup label="Open" id="switch_case_opened_opt"></optgroup>');
+    $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
+    ocs = data.data;
+    ret_data = [];
+    for (index in ocs) {
+        case_name = sanitizeHTML(ocs[index].name);
+        cs_name = sanitizeHTML(ocs[index].customer_name);
+        ret_data.push({
+                    'value': ocs[index].case_id,
+                    'text': `${case_name} (${cs_name}) ${ocs[index].access}`
+                });
+        if (ocs[index].close_date != null) {
+            $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
+        } else {
+            $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
+        }
+    }
+
+    if (fire_modal) {
+        $('#modal_switch_context').modal("show");
+    }
+
+    $('#user_context').selectpicker('refresh');
+    $('#user_context').selectpicker('val', get_caseid());
+    return ret_data;
 }
 
 function focus_on_input_chg_case(){
@@ -1684,10 +1686,11 @@ function userWhoamiRequest(force = false) {
   if (!userWhoami || force) {
     get_request_api('/user/whoami')
       .done((data) => {
-        if (notify_auto_api(data, true)) {
-            userWhoami = data.data;
-          sessionStorage.setItem('userWhoami', JSON.stringify(userWhoami));
+        if (api_request_failed(data)) {
+            return;
         }
+          userWhoami = data.data;
+          sessionStorage.setItem('userWhoami', JSON.stringify(userWhoami));
       });
   }
 }
@@ -1818,21 +1821,22 @@ $(document).ready(function(){
     data_sent.ctx_h = $("#user_context option:selected").text();
     post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
     .done((data) => {
-            if (notify_auto_api(data, true)) {
-                $('#modal_switch_context').modal('hide');
-                swal({
-                    title: 'Context changed successfully',
-                    text: 'Reloading...',
-                    icon: 'success',
-                    timer: 500,
-                    buttons: false,
-                })
-                .then(() => {
-                    var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
-                    window.history.replaceState('', '', newURL);
-                    location.reload();
-                })
+            if (api_request_failed(data)) {
+                return true;
             }
+            $('#modal_switch_context').modal('hide');
+            swal({
+                title: 'Context changed successfully',
+                text: 'Reloading...',
+                icon: 'success',
+                timer: 500,
+                buttons: false,
+            })
+            .then(() => {
+                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
+                window.history.replaceState('', '', newURL);
+                location.reload();
+            })
         });
     });
 
