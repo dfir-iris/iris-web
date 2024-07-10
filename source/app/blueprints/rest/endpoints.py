@@ -36,8 +36,7 @@ def response_created(data):
     return response(201, data=data)
 
 
-# TODO rename into reponse_api_failed
-def response_failed(message):
+def response_api_error(message):
     return response(400, data=message)
 
 

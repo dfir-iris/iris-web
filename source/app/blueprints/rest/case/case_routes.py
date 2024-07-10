@@ -34,7 +34,7 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_created
-from app.blueprints.rest.endpoints import response_failed
+from app.blueprints.rest.endpoints import response_api_error
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.business.errors import PermissionDeniedError
@@ -359,7 +359,7 @@ def create_case():
         case, _ = cases_create(request.get_json())
         return response_created(case_schema.dump(case))
     except BusinessProcessingError as e:
-        return response_failed(e.get_message())
+        return response_api_error(e.get_message())
 
 
 @case_rest_blueprint.route('/api/v2/cases/<int:identifier>')
@@ -379,6 +379,6 @@ def case_routes_delete(identifier):
         cases_delete(identifier)
         return response_api_deleted()
     except BusinessProcessingError as e:
-        return response_failed(e.get_message())
+        return response_api_error(e.get_message())
     except PermissionDeniedError:
         return ac_api_return_access_denied(caseid=identifier)
