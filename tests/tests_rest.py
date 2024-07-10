@@ -237,7 +237,7 @@ class TestsRest(TestCase):
                 "custom_attributes": {}}
         self._subject.add_tasks(case_identifier, body)
         test = self._subject.delete_tasks(number)
-        self.assertEqual(201, test.status_code)
+        self.assertEqual(204, test.status_code)
 
     def test_delete_task_with_missing_task_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()

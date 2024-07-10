@@ -25,7 +25,10 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import endpoint_deprecated, response_failed, response_created
+from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.blueprints.rest.endpoints import response_failed
+from app.blueprints.rest.endpoints import response_created
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -283,7 +286,7 @@ def api_case_delete_task(cur_id, caseid):
 
     track_activity(f"deleted task \"{task.task_title}\"")
 
-    return response_created("Task deleted")
+    return response_api_deleted()
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
