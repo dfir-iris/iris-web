@@ -75,7 +75,7 @@ log = app.logger
 
 
 @case_rest_blueprint.route('/case/exists', methods=['GET'])
-@endpoint_deprecated('GET', '/api/v2/cases/{identifier}')
+@endpoint_deprecated('GET', '/api/v2/cases/<int:identifier>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_exists_r(caseid):
