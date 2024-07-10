@@ -56,7 +56,8 @@ let alertResolutionList = {};
 function getAlertStatusList() {
     get_request_api('/manage/alert-status/list')
         .then((data) => {
-            if (!notify_auto_api(data, true)) {
+            notify_auto_api(data, true);
+            if (data.status !== 'success') {
                 return;
             }
             alertStatusList = data.data;
@@ -66,7 +67,8 @@ function getAlertStatusList() {
 function getAlertResolutionList() {
     get_request_api('/manage/alert-resolutions/list')
         .then((data) => {
-            if (!notify_auto_api(data, true)) {
+            notify_auto_api(data, true);
+            if (data.status !== 'success') {
                 return;
             }
             alertResolutionList = data.data;
@@ -124,7 +126,8 @@ function unlinkAlertFromCase(alert_id, case_id) {
         .then( () => {
             unlinkAlertFromCaseRequest(alert_id, case_id)
                 .then((data) => {
-                    if (!notify_auto_api(data)) {
+                    notify_auto_api(data);
+                    if (data.status !== 'success') {
                         return;
                     }
                     refreshAlert(alert_id);
@@ -348,7 +351,8 @@ function mergeAlertModal(alert_id) {
                             ioCsList.html("");
                             assetsList.html("");
 
-                            if (!notify_auto_api(alertDataReq, true)) {
+                            notify_auto_api(alertDataReq, true);
+                            if (alertDataReq.status !== 'success') {
                                 return;
                             }
 
@@ -1237,7 +1241,8 @@ let modulesOptionsIocReq = null;
 
 async function showAlertHistory(alertId) {
     const alertDataReq = await fetchAlert(alertId);
-    if (!notify_auto_api(alertDataReq, true)) {
+    notify_auto_api(alertDataReq, true);
+    if (alertDataReq.status !== 'success') {
         return;
     }
     let alertData = alertDataReq.data;
@@ -1257,7 +1262,8 @@ async function showAlertHistory(alertId) {
 async function refreshAlert(alertId, alertData, expanded=false) {
     if (alertData === undefined) {
         const alertDataReq = await fetchAlert(alertId);
-        if (!notify_auto_api(alertDataReq, true)) {
+        notify_auto_api(alertDataReq, true);
+        if (alertDataReq.status !== 'success') {
             return;
         }
         alertData = alertDataReq.data;
@@ -1265,13 +1271,15 @@ async function refreshAlert(alertId, alertData, expanded=false) {
 
       if (modulesOptionsAlertReq === null) {
     modulesOptionsAlertReq = await fetchModulesOptionsAlert();
-    if (!notify_auto_api(modulesOptionsAlertReq, true)) {
+    notify_auto_api(modulesOptionsAlertReq, true);
+    if (modulesOptionsAlertReq !== success) {
         return;
     }
   }
   if (modulesOptionsIocReq === null) {
     modulesOptionsIocReq = await fetchModulesOptionsIoc();
-    if (!notify_auto_api(modulesOptionsIocReq, true)) {
+    notify_auto_api(modulesOptionsIocReq, true);
+    if (modulesOptionsIocReq.status !== 'success') {
         return;
     }
   }
@@ -1313,20 +1321,23 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   const filterString = objectToQueryString(filters);
   const data = await fetchAlerts(page, per_page, filterString, sortOrder);
 
-  if (!notify_auto_api(data, true)) {
-    return;
+  notify_auto_api(data, true);
+  if (data.status !== 'success') {
+      return;
   }
   const alerts = data.data.alerts;
 
   if (modulesOptionsAlertReq === null) {
     modulesOptionsAlertReq = await fetchModulesOptionsAlert();
-    if (!notify_auto_api(modulesOptionsAlertReq, true)) {
+    notify_auto_api(modulesOptionsAlertReq, true);
+    if (modulesOptionsAlertReq !== 'success') {
         return;
     }
   }
   if (modulesOptionsIocReq === null) {
     modulesOptionsIocReq = await fetchModulesOptionsIoc();
-    if (!notify_auto_api(modulesOptionsIocReq, true)) {
+    notify_auto_api(modulesOptionsIocReq, true);
+    if (modulesOptionsIocReq.status !== 'success') {
         return;
     }
   }
@@ -1722,7 +1733,10 @@ async function fetchSavedFilters() {
 
                     get_request_api(url)
                         .then((data) => {
-                            if(!notify_auto_api(data, true)) return;
+                            notify_auto_api(data, true);
+                            if (data.status !== 'success') {
+                                return;
+                            }
                             const queryParams = new URLSearchParams();
                             Object.entries(data.data.filter_data).forEach(([key, value]) => {
                                 if (value !== '') {
@@ -1787,7 +1801,10 @@ async function changeAlertOwner(alertId) {
   // Fetch the user list from the endpoint
   const usersReq = await get_request_api('/manage/users/restricted/list');
 
-  if (!notify_auto_api(usersReq, true)) { return; };
+  notify_auto_api(usersReq, true);
+  if (usersReq.status !== 'success') {
+    return;
+  };
 
   users = usersReq.data;
 
@@ -1829,7 +1846,10 @@ async function changeBatchAlertOwner(alertId) {
       // Fetch the user list from the endpoint
       const usersReq = await get_request_api('/manage/users/restricted/list');
 
-      if (!notify_auto_api(usersReq, true)) { return; };
+      notify_auto_api(usersReq, true);
+      if (usersReq.status !== 'success') {
+        return;
+      };
 
       users = usersReq.data;
 
@@ -1927,7 +1947,8 @@ function fetchSelectOptions(selectElementId, configItem) {
   return new Promise((resolve, reject) => {
     get_request_api(configItem.url)
       .then(function (data) {
-        if (!notify_auto_api(data, true)) {
+        notify_auto_api(data, true);
+        if (data.status !== 'success') {
           reject('Failed to fetch options');
           return;
         }

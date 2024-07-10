@@ -74,15 +74,17 @@ function get_activities () {
 
     get_request_api(url)
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-            jsdata = data;
-            if (jsdata.status == "success") {
-                  Table.clear();
-                  Table.rows.add(data.data);
-                  Table.columns.adjust().draw();
-                  Table.buttons().container().appendTo($('#activities_table_info'));
-                hide_loader();
-            }
+        notify_auto_api(data, true);
+        if (data.status !== 'success') {
+            return;
+        }
+        jsdata = data;
+        if (jsdata.status == "success") {
+              Table.clear();
+              Table.rows.add(data.data);
+              Table.columns.adjust().draw();
+              Table.buttons().container().appendTo($('#activities_table_info'));
+            hide_loader();
         }
     }).fail((data) => {
         hide_loader();
