@@ -281,10 +281,12 @@ function access_case_info_reload(case_id, owner_id, reviewer_id) {
 
     get_request_api('/case/users/list')
     .done((data) => {
-        has_table = $.fn.dataTable.isDataTable( '#case_access_users_list_table' );
-        notify_auto_api(data, !has_table);
-        if (data.status !== 'success') {
+        if (api_request_failed(data)) {
             return;
+        }
+        has_table = $.fn.dataTable.isDataTable( '#case_access_users_list_table' );
+        if (has_table) {
+            notify_api_request_success(data)
         }
 
         req_users = data.data;

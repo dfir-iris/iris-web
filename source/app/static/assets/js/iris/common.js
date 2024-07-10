@@ -229,6 +229,13 @@ function notify_success(message) {
     });
 }
 
+function notify_api_request_success(data) {
+    if (data.message.length === 0) {
+        data.message = 'Operation succeeded';
+    }
+    notify_success(data.message);
+}
+
 function notify_api_request_error(data) {
     if (data.message.length === 0) {
         data.message = 'Operation failed';
@@ -247,10 +254,7 @@ function api_request_failed(data) {
 function notify_auto_api(data, silent_success) {
     if (data.status === 'success') {
         if (silent_success === undefined || silent_success === false) {
-            if (data.message.length === 0) {
-                data.message = 'Operation succeeded';
-            }
-            notify_success(data.message);
+            notify_api_request_success(data);
         }
         return true;
     }
