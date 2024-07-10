@@ -135,7 +135,7 @@ class Iris:
         return response.json()
 
     def get_iocs(self, current_identifier):
-        response = (self._api.get(f'/api/v2/iocs/{current_identifier}'))
+        response = self._api.get(f'/api/v2/iocs/{current_identifier}')
         return response.json()
 
     def delete_iocs(self, current_identifier):
