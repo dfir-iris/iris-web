@@ -251,11 +251,9 @@ function api_request_failed(data) {
     return true;
 }
 
-function notify_auto_api(data, silent_success) {
+function notify_auto_api(data) {
     if (data.status === 'success') {
-        if (silent_success === undefined || silent_success === false) {
-            notify_api_request_success(data);
-        }
+        notify_api_request_success(data);
         return true;
     }
     notify_api_request_error(data);
