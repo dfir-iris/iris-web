@@ -1163,7 +1163,7 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
 
     get_request_api("/dim/hooks/options/"+ data_type +"/list")
     .done((data) => {
-        if(notify_auto_api(data, true)) {
+        if (notify_auto_api(data, true)) {
             if (data.data != null) {
                 jsdata = data.data;
 
@@ -1697,13 +1697,17 @@ $('.toggle-sidebar').on('click', function() {
         $('.wrapper').removeClass('sidebar_minimize');
         get_request_api('/user/mini-sidebar/set/false')
             .then((data) => {
-                notify_auto_api(data, true);
+                if (data.success !== 'success') {
+                    notify_api_request_error(data);
+                }
             });
     } else {
         $('.wrapper').addClass('sidebar_minimize');
         get_request_api('/user/mini-sidebar/set/true')
             .then((data) => {
-                notify_auto_api(data, true);
+                if (data.success !== 'success') {
+                    notify_api_request_error(data);
+                }
             });
     }
 });
