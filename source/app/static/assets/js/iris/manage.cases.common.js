@@ -287,7 +287,7 @@ function access_case_info_reload(case_id, owner_id, reviewer_id) {
         }
 
         req_users = data.data;
-        if ( has_table ) {
+        if (has_table) {
             table = $('#case_access_users_list_table').DataTable();
             table.clear();
             table.rows.add(req_users);
