@@ -130,15 +130,6 @@ class Iris:
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
 
-    def create_ioc_deprecated(self):
-        body = {
-            'ioc_type_id': 1,
-            'ioc_tlp_id': 1,
-            'ioc_value': "value",
-        }
-        response = self._api.post('/case/ioc/add', body).json()
-        return response['data']
-
     def create_ioc(self, case_identifier, body):
         return self._api.post(f'/api/v2/cases/{case_identifier}/iocs', body)
 
