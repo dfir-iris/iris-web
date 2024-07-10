@@ -166,7 +166,7 @@ class TestsRest(TestCase):
         test = self._subject.get_iocs(None)
         self.assertEqual('error', test['status'])
 
-    def test_delete_ioc_should_return_201(self):
+    def test_delete_ioc_should_return_204(self):
         response = self._subject.create_ioc_deprecated()
         current_identifier = response['ioc_id']
         response = self._subject.delete_iocs(current_identifier)
