@@ -262,16 +262,14 @@ function refresh_users(on_finish, cur_assignees_id_list) {
 
     get_request_api('/case/users/list')
     .done((data) => {
-
-        if(notify_auto_api(data, true)) {
-            current_users_list = data.data;
-
-            if (on_finish !== undefined) {
-                on_finish(current_users_list, cur_assignees_id_list);
-            }
-
+        if (api_request_failed(data)) {
+            return;
         }
 
+        current_users_list = data.data;
+        if (on_finish !== undefined) {
+            on_finish(current_users_list, cur_assignees_id_list);
+        }
     });
 
 }
