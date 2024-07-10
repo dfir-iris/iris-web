@@ -229,6 +229,21 @@ function notify_success(message) {
     });
 }
 
+function notify_api_request_error(data) {
+    if (data.message.length === 0) {
+        data.message = 'Operation failed';
+    }
+    notify_error(data.message);
+}
+
+function api_request_failed(data) {
+    if (data.status === 'success') {
+        return false;
+    }
+    notify_api_request_error(data);
+    return true;
+}
+
 function notify_auto_api(data, silent_success) {
     if (data.status === 'success') {
         if (silent_success === undefined || silent_success === false) {

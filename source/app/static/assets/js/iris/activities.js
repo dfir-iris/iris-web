@@ -74,8 +74,7 @@ function get_activities () {
 
     get_request_api(url)
     .done((data) => {
-        notify_auto_api(data, true);
-        if (data.status !== 'success') {
+        if (api_request_failed(data)) {
             return;
         }
         jsdata = data;
