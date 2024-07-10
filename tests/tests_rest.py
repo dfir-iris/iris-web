@@ -98,8 +98,6 @@ class TestsRest(TestCase):
         response = self._subject.delete(f'/api/v2/cases/{identifier}')
         self.assertEqual(204, response.status_code)
 
-
-    @skip
     def test_get_case_should_return_404_after_it_is_deleted(self):
         response = self._subject.create('/api/v2/cases', {
             'case_name': 'name',
@@ -109,7 +107,7 @@ class TestsRest(TestCase):
         }).json()
         identifier = response['case_id']
         self._subject.delete(f'/api/v2/cases/{identifier}')
-        response = self._subject.get(f'/api/v2/cases/{identifier}').json()
+        response = self._subject.get(f'/api/v2/cases/{identifier}')
         self.assertEqual(404, response.status_code)
 
     def test_update_case_should_not_require_case_name_issue_358(self):

@@ -40,8 +40,8 @@ class RestApi:
     def get(self, path, query_parameters=None):
         url = self._build_url(path)
         response = requests.get(url, headers=self._headers, params=query_parameters)
-        body = response.json()
-        print(f'GET {url} => {response.status_code} {body}')
+        response_as_string = self._convert_response_to_string(response)
+        print(f'GET {url} => {response_as_string}')
         return response
 
     def post(self, path, payload, query_parameters=None):

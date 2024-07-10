@@ -32,6 +32,7 @@ from app import socket_io
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_created
 from app.blueprints.rest.endpoints import response_failed
 from app.business.cases import cases_create
@@ -366,6 +367,8 @@ def create_case():
 @ac_api_requires()
 def case_routes_get(identifier):
     case = get_case(identifier)
+    if not case:
+        return response_api_not_found()
     return response_api_success(CaseSchema().dump(case))
 
 

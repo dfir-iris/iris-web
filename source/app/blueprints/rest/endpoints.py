@@ -41,6 +41,10 @@ def response_failed(message):
     return response(400, data=message)
 
 
+def response_api_not_found():
+    return response(404)
+
+
 def endpoint_deprecated(alternative_verb, alternative_url):
     def inner_wrap(f):
         @wraps(f)
