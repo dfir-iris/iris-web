@@ -242,9 +242,7 @@ function notify_auto_api(data, silent_success) {
     if (data.message.length === 0) {
         data.message = 'Operation failed';
     }
-    if (silent_failure === undefined || silent_failure === false) {
-        notify_error(data.message);
-    }
+    notify_error(data.message);
     return false;
 }
 
