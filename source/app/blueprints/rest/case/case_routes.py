@@ -33,7 +33,7 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
-from app.blueprints.rest.endpoints import response_created
+from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
@@ -357,7 +357,7 @@ def create_case():
 
     try:
         case, _ = cases_create(request.get_json())
-        return response_created(case_schema.dump(case))
+        return response_api_created(case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 

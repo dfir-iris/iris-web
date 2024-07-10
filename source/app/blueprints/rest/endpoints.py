@@ -31,8 +31,7 @@ def response_api_deleted():
     return response(204)
 
 
-# TODO rename into reponse_api_created
-def response_created(data):
+def response_api_created(data):
     return response(201, data=data)
 
 

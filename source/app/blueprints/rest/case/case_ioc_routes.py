@@ -27,7 +27,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import response_created
+from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
@@ -120,7 +120,7 @@ def case_add_ioc(caseid):
 
     try:
         ioc, _ = iocs_create(request.get_json(), caseid)
-        return response_created(ioc_schema.dump(ioc))
+        return response_api_created(ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
@@ -241,8 +241,8 @@ def case_delete_ioc(cur_id, caseid):
 def delete_case_ioc(cur_id, caseid):
     try:
 
-        msg = delete(cur_id, caseid)
-        return response_created(msg)
+        msg = iocs_delete(cur_id, caseid)
+        return response_api_created(msg)
 
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
@@ -270,7 +270,7 @@ def get_case_ioc(cur_id, caseid):
     if not ioc:
         return response_api_error('Invalid IOC ID for this case')
 
-    return response_created(ioc_schema.dump(ioc))
+    return response_api_created(ioc_schema.dump(ioc))
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
