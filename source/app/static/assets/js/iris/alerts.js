@@ -204,62 +204,63 @@ function mergeMultipleAlertsModal() {
 
                         get_request_api('/manage/case-templates/list')
                         .done((dataTemplate) => {
-                            if (notify_auto_api(dataTemplate, true)) {
-                                dataTemplate = dataTemplate.data;
-                                const templateSelect = $('#mergeAlertCaseTemplateSelect');
-                                templateSelect.html('');
-                                templateSelect.append('<option value="">Select a template</option>');
-                                for (let i = 0; i < dataTemplate.length; i++) {
-                                    templateSelect.append(`<option value="${dataTemplate[i].id}">${filterXSS(dataTemplate[i].display_name)}</option>`);
-                                }
-                                templateSelect.selectpicker('refresh');
-
-                                // Clear the lists
-                                ioCsList.html("");
-                                assetsList.html("");
-
-                                let alertsData = alertDataReq.data;
-
-                                for (let i = 0; i < alertsData.length; i++) {
-                                    let alertData = alertsData[i];
-                                    if (alertData.iocs.length !== 0) {
-                                        appendLabels(ioCsList, alertData.iocs, 'ioc');
-                                    }
-                                    if (alertData.assets.length !== 0) {
-                                        appendLabels(assetsList, alertData.assets, 'asset');
-                                    }
-                                }
-
-                                escalateButton.attr("data-merge", false);
-                                escalateButton.attr("data-multi-merge", true);
-                                $("#escalateOrMergeButton").attr('onclick',
-                                    `mergeAlertClicked("${selectedAlerts.join(',')}");`);
-
-                                $('#escalateModal').modal('show');
-
-                                $("input[type='radio'][name='mergeOption']:checked").trigger("change");
-
-                                $("input[type='radio'][name='mergeOption']").off('change').on("change", function () {
-                                    if ($(this).val() === "existing_case") {
-                                        $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in an existing case`);
-                                        $('#escalateModalExplanation').text('These alerts will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
-                                        $('#mergeAlertCaseSelectSection').show();
-                                        $('#mergeAlertCaseTemplateSection').hide();
-                                        $('#modalEscalateCaseTitleContainer').hide();
-                                        $('#mergeAlertCaseSelect').selectpicker('refresh');
-                                        $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
-                                        escalateButton.data("merge", true);
-                                    } else {
-                                        console.log('change')
-                                        $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in new case`);
-                                        $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
-                                        $('#mergeAlertCaseSelectSection').hide();
-                                        $('#mergeAlertCaseTemplateSection').show();
-                                        $('#modalEscalateCaseTitleContainer').show();
-                                        escalateButton.data("merge", false);
-                                    }
-                                });
+                            if (api_request_failed(dataTemplate)) {
+                                return;
                             }
+                            dataTemplate = dataTemplate.data;
+                            const templateSelect = $('#mergeAlertCaseTemplateSelect');
+                            templateSelect.html('');
+                            templateSelect.append('<option value="">Select a template</option>');
+                            for (let i = 0; i < dataTemplate.length; i++) {
+                                templateSelect.append(`<option value="${dataTemplate[i].id}">${filterXSS(dataTemplate[i].display_name)}</option>`);
+                            }
+                            templateSelect.selectpicker('refresh');
+
+                            // Clear the lists
+                            ioCsList.html("");
+                            assetsList.html("");
+
+                            let alertsData = alertDataReq.data;
+
+                            for (let i = 0; i < alertsData.length; i++) {
+                                let alertData = alertsData[i];
+                                if (alertData.iocs.length !== 0) {
+                                    appendLabels(ioCsList, alertData.iocs, 'ioc');
+                                }
+                                if (alertData.assets.length !== 0) {
+                                    appendLabels(assetsList, alertData.assets, 'asset');
+                                }
+                            }
+
+                            escalateButton.attr("data-merge", false);
+                            escalateButton.attr("data-multi-merge", true);
+                            $("#escalateOrMergeButton").attr('onclick',
+                                `mergeAlertClicked("${selectedAlerts.join(',')}");`);
+
+                            $('#escalateModal').modal('show');
+
+                            $("input[type='radio'][name='mergeOption']:checked").trigger("change");
+
+                            $("input[type='radio'][name='mergeOption']").off('change').on("change", function () {
+                                if ($(this).val() === "existing_case") {
+                                    $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in an existing case`);
+                                    $('#escalateModalExplanation').text('These alerts will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
+                                    $('#mergeAlertCaseSelectSection').show();
+                                    $('#mergeAlertCaseTemplateSection').hide();
+                                    $('#modalEscalateCaseTitleContainer').hide();
+                                    $('#mergeAlertCaseSelect').selectpicker('refresh');
+                                    $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
+                                    escalateButton.data("merge", true);
+                                } else {
+                                    console.log('change')
+                                    $('#escalateModalLabel').text(`Merge ${selectedAlerts.length} alerts in new case`);
+                                    $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
+                                    $('#mergeAlertCaseSelectSection').hide();
+                                    $('#mergeAlertCaseTemplateSection').show();
+                                    $('#modalEscalateCaseTitleContainer').show();
+                                    escalateButton.data("merge", false);
+                                }
+                            });
                         });
                     });
         });
@@ -339,74 +340,75 @@ function mergeAlertModal(alert_id) {
 
                 get_request_api('/manage/case-templates/list')
                 .done((data) => {
-                    if (notify_auto_api(data, true)) {
-                        data = data.data;
-                        const templateSelect = $('#mergeAlertCaseTemplateSelect');
-                        templateSelect.html('');
-                        templateSelect.append('<option value="">Select a template</option>');
-                        for (let i = 0; i < data.length; i++) {
-                            templateSelect.append(`<option value="${data[i].id}">${filterXSS(data[i].display_name)}</option>`);
-                        }
-                        templateSelect.selectpicker('refresh');
-
-                        // Clear the lists
-                        ioCsList.html("");
-                        assetsList.html("");
-
-                        if (api_request_failed(alertDataReq)) {
-                            return;
-                        }
-
-                        let alertData = alertDataReq.data;
-
-                        if (alertData.iocs.length !== 0) {
-                            appendLabels(ioCsList, alertData.iocs, 'ioc');
-                            $("#toggle-iocs").off("click").on("click", function () {
-                                toggleSelectDeselect($(this), "#ioCsList input[type='checkbox']");
-                            });
-                            $("#ioc-container").show();
-                        } else {
-                            $("#ioc-container").show();
-                        }
-
-                        if (alertData.assets.length !== 0) {
-                            appendLabels(assetsList, alertData.assets, 'asset');
-                            $("#toggle-assets").off("click").on("click", function () {
-                                toggleSelectDeselect($(this), "#assetsList input[type='checkbox']");
-                            });
-                            $("#asset-container").show();
-                        } else {
-                            $("#asset-container").hide();
-                        }
-
-
-                        $("input[type='radio'][name='mergeOption']:checked").trigger("change");
-
-                        $("input[type='radio'][name='mergeOption']").off("change").on("change", function () {
-                            if ($(this).val() === "existing_case") {
-                                $('#escalateModalLabel').text(`Merge alert #${alert_id} in existing case`);
-                                $('#escalateModalExplanation').text('This alert will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
-                                $('#mergeAlertCaseSelectSection').show();
-                                $('#mergeAlertCaseTemplateSection').hide();
-                                $('#modalEscalateCaseTitleContainer').hide();
-                                $('#mergeAlertCaseSelect').selectpicker('refresh');
-                                $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
-                                escalateButton.data("merge", true);
-                            } else {
-                                $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
-                                $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
-                                $('#mergeAlertCaseSelectSection').hide();
-                                $('#mergeAlertCaseTemplateSection').show();
-                                $('#modalEscalateCaseTitleContainer').show();
-                                escalateButton.data("merge", false);
-                            }
-                        });
-
-                        $("#escalateOrMergeButton").attr('onclick',
-                            `mergeAlertClicked(${alert_id});`);
-
-                        $("#escalateModal").modal("show");
+                    if (api_request_failed(data)) {
+                        return;
                     }
+                    data = data.data;
+                    const templateSelect = $('#mergeAlertCaseTemplateSelect');
+                    templateSelect.html('');
+                    templateSelect.append('<option value="">Select a template</option>');
+                    for (let i = 0; i < data.length; i++) {
+                        templateSelect.append(`<option value="${data[i].id}">${filterXSS(data[i].display_name)}</option>`);
+                    }
+                    templateSelect.selectpicker('refresh');
+
+                    // Clear the lists
+                    ioCsList.html("");
+                    assetsList.html("");
+
+                    if (api_request_failed(alertDataReq)) {
+                        return;
+                    }
+
+                    let alertData = alertDataReq.data;
+
+                    if (alertData.iocs.length !== 0) {
+                        appendLabels(ioCsList, alertData.iocs, 'ioc');
+                        $("#toggle-iocs").off("click").on("click", function () {
+                            toggleSelectDeselect($(this), "#ioCsList input[type='checkbox']");
+                        });
+                        $("#ioc-container").show();
+                    } else {
+                        $("#ioc-container").show();
+                    }
+
+                    if (alertData.assets.length !== 0) {
+                        appendLabels(assetsList, alertData.assets, 'asset');
+                        $("#toggle-assets").off("click").on("click", function () {
+                            toggleSelectDeselect($(this), "#assetsList input[type='checkbox']");
+                        });
+                        $("#asset-container").show();
+                    } else {
+                        $("#asset-container").hide();
+                    }
+
+
+                    $("input[type='radio'][name='mergeOption']:checked").trigger("change");
+
+                    $("input[type='radio'][name='mergeOption']").off("change").on("change", function () {
+                        if ($(this).val() === "existing_case") {
+                            $('#escalateModalLabel').text(`Merge alert #${alert_id} in existing case`);
+                            $('#escalateModalExplanation').text('This alert will be merged into the selected case. Select the IOCs and Assets to merge into the case.');
+                            $('#mergeAlertCaseSelectSection').show();
+                            $('#mergeAlertCaseTemplateSection').hide();
+                            $('#modalEscalateCaseTitleContainer').hide();
+                            $('#mergeAlertCaseSelect').selectpicker('refresh');
+                            $('#mergeAlertCaseSelect').selectpicker('val', get_caseid());
+                            escalateButton.data("merge", true);
+                        } else {
+                            $('#escalateModalLabel').text(`Merge alert #${alert_id} in new case`);
+                            $('#escalateModalExplanation').text('This alert will be merged into a new case. Set the case title and select the IOCs and Assets to merge into the case.');
+                            $('#mergeAlertCaseSelectSection').hide();
+                            $('#mergeAlertCaseTemplateSection').show();
+                            $('#modalEscalateCaseTitleContainer').show();
+                            escalateButton.data("merge", false);
+                        }
+                    });
+
+                    $("#escalateOrMergeButton").attr('onclick',
+                        `mergeAlertClicked(${alert_id});`);
+
+                    $("#escalateModal").modal("show");
                 });
             });
 
@@ -1276,8 +1278,7 @@ async function refreshAlert(alertId, alertData, expanded=false) {
   }
   if (modulesOptionsIocReq === null) {
     modulesOptionsIocReq = await fetchModulesOptionsIoc();
-    notify_auto_api(modulesOptionsIocReq, true);
-    if (modulesOptionsIocReq.status !== 'success') {
+    if (api_request_failed(modulesOptionsIocReq)) {
         return;
     }
   }
@@ -1666,85 +1667,86 @@ async function fetchSavedFilters() {
     const url = '/filters/alerts/list';
     return get_request_api(url)
         .then((data) => {
-            if (notify_auto_api(data, true)) {
-                const savedFiltersDropdown = $('#savedFiltersDropdown');
-
-                savedFiltersDropdown.empty();
-
-                let dropdownHtml = `
-                    <select class="selectpicker ml-2" data-style="btn-sm" data-live-search="true" title="Select preset filter" id="savedFilters">
-                `;
-
-                data.data.forEach(filter => {
-                    let filter_name = filterXSS(filter.filter_name);
-                    dropdownHtml += `
-                                <option value="${filter.filter_id}" data-content='<div class="d-flex align-items-center"><span>${filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><div class="trash-wrapper hidden-trash"><i class="fas fa-trash delete-filter text-danger" id="dropfilter-id-${filter.filter_id}" title="Delete filter"></i></div></div>'>${filter_name}</option>
-                    `;
-                });
-
-                dropdownHtml += '</select>';
-
-                savedFiltersDropdown.append(dropdownHtml);
-
-                // Initialize the bootstrap-select component
-                $('#savedFilters').selectpicker();
-
-                // Add the event listener after the selectpicker is loaded
-                $('#savedFilters').on('shown.bs.select', function () {
-                    $('.trash-wrapper').removeClass('hidden-trash');
-                    $('.delete-filter').off().on('click', function (event) {
-                        event.preventDefault();
-                        event.stopPropagation();
-
-                        const filterId = $(this).attr('id').split('-')[2];
-
-                        if (!filterId) return;
-
-                        do_deletion_prompt(`Are you sure you want to delete filter #${filterId}?`, true)
-                            .then((do_delete) => {
-                                if (!do_delete) return;
-                                const url = `/filters/delete/${filterId}`;
-                                const data = {
-                                    csrf_token: $('#csrf_token').val()
-                                };
-                                post_request_api(url, JSON.stringify(data))
-                                    .then((data) => {
-                                        if (notify_auto_api(data)) {
-                                            fetchSavedFilters();
-                                        }
-                                    });
-                        });
-                    });
-                }).on('hide.bs.select', function () {
-                    $('.trash-wrapper').addClass('hidden-trash');
-                });
-
-                $('#savedFilters').on('change', function() {
-
-                    const selectedFilterId = $('#savedFilters').val();
-                    if (!selectedFilterId) return;
-
-                    const url = `/filters/${selectedFilterId}`;
-
-                    get_request_api(url)
-                        .then((data) => {
-                            if (api_request_failed(data)) {
-                                return;
-                            }
-                            const queryParams = new URLSearchParams();
-                            Object.entries(data.data.filter_data).forEach(([key, value]) => {
-                                if (value !== '') {
-                                    queryParams.set(key, value);
-                                }
-                            });
-
-                            queryParams.set('filter_id', selectedFilterId);
-
-                            // Update the URL and reload the page with the new filter settings
-                            window.location.href = window.location.pathname + case_param() + '&' + queryParams.toString();
-                        })
-                });
+            if (api_request_failed(data)) {
+                return;
             }
+            const savedFiltersDropdown = $('#savedFiltersDropdown');
+
+            savedFiltersDropdown.empty();
+
+            let dropdownHtml = `
+                <select class="selectpicker ml-2" data-style="btn-sm" data-live-search="true" title="Select preset filter" id="savedFilters">
+            `;
+
+            data.data.forEach(filter => {
+                let filter_name = filterXSS(filter.filter_name);
+                dropdownHtml += `
+                            <option value="${filter.filter_id}" data-content='<div class="d-flex align-items-center"><span>${filter_name} ${filter.filter_is_private ? '(private)' : ''}</span><div class="trash-wrapper hidden-trash"><i class="fas fa-trash delete-filter text-danger" id="dropfilter-id-${filter.filter_id}" title="Delete filter"></i></div></div>'>${filter_name}</option>
+                `;
+            });
+
+            dropdownHtml += '</select>';
+
+            savedFiltersDropdown.append(dropdownHtml);
+
+            // Initialize the bootstrap-select component
+            $('#savedFilters').selectpicker();
+
+            // Add the event listener after the selectpicker is loaded
+            $('#savedFilters').on('shown.bs.select', function () {
+                $('.trash-wrapper').removeClass('hidden-trash');
+                $('.delete-filter').off().on('click', function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    const filterId = $(this).attr('id').split('-')[2];
+
+                    if (!filterId) return;
+
+                    do_deletion_prompt(`Are you sure you want to delete filter #${filterId}?`, true)
+                        .then((do_delete) => {
+                            if (!do_delete) return;
+                            const url = `/filters/delete/${filterId}`;
+                            const data = {
+                                csrf_token: $('#csrf_token').val()
+                            };
+                            post_request_api(url, JSON.stringify(data))
+                                .then((data) => {
+                                    if (notify_auto_api(data)) {
+                                        fetchSavedFilters();
+                                    }
+                                });
+                    });
+                });
+            }).on('hide.bs.select', function () {
+                $('.trash-wrapper').addClass('hidden-trash');
+            });
+
+            $('#savedFilters').on('change', function() {
+
+                const selectedFilterId = $('#savedFilters').val();
+                if (!selectedFilterId) return;
+
+                const url = `/filters/${selectedFilterId}`;
+
+                get_request_api(url)
+                    .then((data) => {
+                        if (api_request_failed(data)) {
+                            return;
+                        }
+                        const queryParams = new URLSearchParams();
+                        Object.entries(data.data.filter_data).forEach(([key, value]) => {
+                            if (value !== '') {
+                                queryParams.set(key, value);
+                            }
+                        });
+
+                        queryParams.set('filter_id', selectedFilterId);
+
+                        // Update the URL and reload the page with the new filter settings
+                        window.location.href = window.location.pathname + case_param() + '&' + queryParams.toString();
+                    })
+            });
         });
 }
 
