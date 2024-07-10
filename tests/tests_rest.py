@@ -87,7 +87,18 @@ class TestsRest(TestCase):
         response = self._subject.get(f'/api/v2/cases/{identifier}').json()
         self.assertEqual('description', response['case_description'])
 
-    # TODO write a simpler test first which checks delete return 204
+    def test_delete_case_should_return_204(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        identifier = response['case_id']
+        response = self._subject.delete(f'/api/v2/cases/{identifier}')
+        self.assertEqual(204, response.status_code)
+
+
     @skip
     def test_get_case_should_return_404_after_it_is_deleted(self):
         response = self._subject.create('/api/v2/cases', {

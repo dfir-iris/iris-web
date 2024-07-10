@@ -31,6 +31,7 @@ from app import db
 from app import socket_io
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_created
 from app.blueprints.rest.endpoints import response_failed
 from app.business.cases import cases_create
@@ -368,13 +369,13 @@ def case_routes_get(identifier):
     return response_api_success(CaseSchema().dump(case))
 
 
-@case_rest_blueprint.route('/api/v2/<int:identifier>', methods=['DELETE'])
+@case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['DELETE'])
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
     try:
         cases_delete(identifier)
-        return response_success('Case successfully deleted')
+        return response_api_deleted()
     except BusinessProcessingError as e:
-        return response_error(e.get_message())
+        return response_failed(e.get_message())
     except PermissionDeniedError:
         return ac_api_return_access_denied(caseid=identifier)
