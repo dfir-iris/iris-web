@@ -173,11 +173,8 @@ class TestsRest(TestCase):
         self.assertEqual(204, response.status_code)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_400(self):
-        response = self._subject.create_ioc_deprecated()
-        current_identifier = response['ioc_id']
-        self._subject.delete_iocs(None)
-        test = self._subject.get_iocs(current_identifier)
-        self.assertEqual(current_identifier, test['ioc_id'])
+        response = self._subject.delete_iocs(None)
+        self.assertEqual(400, response.status_code)
 
     def test_merge_alert_into_a_case_should_not_fail(self):
         case_identifier = self._subject.create_dummy_case()
