@@ -865,29 +865,30 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     asset_type_alias = aliased(AssetsType)
     alert_status_filter = []
 
-    conditions = and_(SimilarAlertsCache.customer_id == customer_id,
-                      or_(
-                        tuple_(SimilarAlertsCache.asset_name,SimilarAlertsCache.asset_type_id).in_(asset_names)
-                        ,
-                        tuple_(SimilarAlertsCache.ioc_value, SimilarAlertsCache.ioc_type_id).in_(ioc_values)
-                      ))
-
     if open_alerts:
         open_alert_status_ids = AlertStatus.query.with_entities(
             AlertStatus.status_id
         ).filter(AlertStatus.status_name.in_(['New', 'Assigned', 'In progress', 'Pending', 'Unspecified'])).all()
-        alert_status_filter += open_alert_status_ids
+        alert_status_filter += [status_id[0] for status_id in open_alert_status_ids]
 
     if closed_alerts:
         closed_alert_status_ids = AlertStatus.query.with_entities(
             AlertStatus.status_id
         ).filter(AlertStatus.status_name.in_(['Closed', 'Merged', 'Escalated'])).all()
-        alert_status_filter += closed_alert_status_ids
+        alert_status_filter += [status_id[0] for status_id in closed_alert_status_ids]
 
-    alert_status_filter = [status_id[0] for status_id in alert_status_filter]
+    conditions = and_(
+        SimilarAlertsCache.customer_id == customer_id,
+        and_(or_(
+            tuple_(SimilarAlertsCache.asset_name, SimilarAlertsCache.asset_type_id).in_(asset_names),
+            tuple_(SimilarAlertsCache.ioc_value, SimilarAlertsCache.ioc_type_id).in_(ioc_values)
+        ),
+        SimilarAlertsCache.created_at >= (func.now() - timedelta(days=days_back))
+        )
+    )
 
-    # Add alert_status_filter to the conditions
-    conditions = and_(conditions, Alert.alert_status_id.in_(alert_status_filter))
+    if alert_status_filter:
+        conditions = and_(conditions, Alert.alert_status_id.in_(alert_status_filter))
 
     related_alerts = (
         db.session.query(Alert, SimilarAlertsCache.asset_name, SimilarAlertsCache.ioc_value,
@@ -895,10 +896,8 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
         .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
         .filter(conditions)
-        .filter(SimilarAlertsCache.created_at >= (func.now() - timedelta(days=days_back)))
         .limit(number_of_results)
         .all()
-
     )
 
     alerts_dict = {}
@@ -933,7 +932,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             'icon': {
                 'face': 'FontAwesome',
                 'code': '\uf0f3',
-                'color':  alert_color,
+                'color': alert_color,
                 'weight': "bold"
             },
             'font': "12px verdana white" if current_user.in_dark_mode else ''
@@ -982,7 +981,6 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             })
 
     if open_cases or closed_cases:
-
         close_condition = None
         if open_cases and not closed_cases:
             close_condition = Cases.close_date.is_(None)
@@ -991,7 +989,6 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         if open_cases and closed_cases:
             close_condition = Cases.close_date.isnot(None) | Cases.close_date.is_(None)
 
-        # Find cases with matching IOC value and IOC type
         matching_ioc_cases = (
             db.session.query(IocLink)
             .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
@@ -1005,7 +1002,6 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             .all()
         )
 
-        # Find cases with matching asset_title and asset_type
         matching_asset_cases = (
             db.session.query(CaseAssets)
             .with_entities(CaseAssets.case_id, CaseAssets.asset_name, Cases.name, Cases.close_date)
@@ -1020,21 +1016,18 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         cases_data = {}
 
-        # Iterate through matching_ioc_cases and update cases_data
         for case_id, ioc_value, case_name, close_date in matching_ioc_cases:
             if case_id not in cases_data:
                 cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': [],
                                        'close_date': close_date}
             cases_data[case_id]['matching_ioc'].append(ioc_value)
 
-        # Iterate through matching_asset_cases and update cases_data
         for case_id, asset_name, case_name, close_date in matching_asset_cases:
             if case_id not in cases_data:
                 cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': [],
                                        'close_date': close_date}
             cases_data[case_id]['matching_assets'].append(asset_name)
 
-        # Add nodes and edges for matching cases
         for case_id in cases_data:
             if case_id not in added_cases:
                 nodes.append({
@@ -1052,7 +1045,6 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                 })
                 added_cases.add(case_id)
 
-            # Add edges for matching IOC
             for ioc_value in cases_data[case_id]['matching_ioc']:
                 edges.append({
                     'from': f'ioc_{ioc_value}',
@@ -1060,7 +1052,6 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                     'dashes': True
                 })
 
-            # Add edges for matching assets
             for asset_name in cases_data[case_id]['matching_assets']:
                 edges.append({
                     'from': f'asset_{asset_name}',
