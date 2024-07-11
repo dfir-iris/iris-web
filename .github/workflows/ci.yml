@@ -36,7 +36,7 @@ jobs:
           #      or maybe the docker building phase should also be part of the tests 
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
-          docker compose build
+          docker compose -f docker-compose.dev.yml build
       - name: Run tests
         working-directory: tests
         run: |
@@ -44,4 +44,13 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
           PYTHONUNBUFFERED=true python -m unittest --verbose
-
+      - name: Documentation
+        run: |
+          docker compose -f docker-compose.dev.yml up --detach
+          npx --yes spectaql source/spectaql/config.yml
+          docker compose down
+      - uses: actions/upload-artifact@v4
+        with:
+            name: GraphQL DFIR-IRIS documentation
+            path: public
+            if-no-files-found: error
