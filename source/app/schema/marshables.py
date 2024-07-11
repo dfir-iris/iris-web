@@ -679,6 +679,10 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         Check if the asset is unique for the customer
         """
 
+        if request_data.get('asset_name') is None:
+            raise marshmallow.exceptions.ValidationError("Asset name is required",
+                                                         field_name="asset_name")
+
         case_alias = aliased(Cases)
         asset_alias = aliased(CaseAssets)
 
@@ -687,7 +691,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         ).join(
             case_alias, asset_alias.case_id == case_alias.case_id
         ).filter(
-            asset_alias.asset_name == request_data.get('asset_name'),
+            func.lower(asset_alias.asset_name) == request_data.get('asset_name').lower(),
             asset_alias.asset_type_id == request_data.get('asset_type_id'),
             asset_alias.asset_id != request_data.get('asset_id'),
             case_alias.client_id == customer_id
@@ -724,7 +728,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         """
 
         asset = CaseAssets.query.filter(
-            CaseAssets.asset_name == request_data.get('asset_name'),
+            func.lower(CaseAssets.asset_name) == func.lower(request_data.get('asset_name')),
             CaseAssets.asset_type_id == request_data.get('asset_type_id'),
             CaseAssets.asset_id != request_data.get('asset_id'),
             CaseAssets.case_id == case_id
