@@ -15,13 +15,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from copy import deepcopy
+
 import json
 from datetime import datetime, timedelta
 from flask_login import current_user
 from functools import reduce
 from operator import and_
 from sqlalchemy import desc, asc, func, tuple_, or_
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, make_transient
 from sqlalchemy.orm import joinedload
 from typing import List, Tuple
 
@@ -457,6 +459,18 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
             if str(alert_asset.asset_uuid) == asset_uuid:
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
+                if alert_asset.case_id is not None:
+                    # Make a deep copy of the asset
+                    # prevent the asset to conflict with the existing asset
+                    new_alert_asset = deepcopy(alert_asset)
+                    make_transient(new_alert_asset)
+
+                    new_alert_asset.asset_id = None
+                    new_alert_asset.asset_uuid = asset_uuid
+
+                    db.session.add(new_alert_asset)
+                    db.session.commit()
+
                 asset = create_asset(asset=alert_asset,
                                      caseid=case.case_id,
                                      user_id=current_user.id
@@ -566,12 +580,20 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
 
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
-                asset = create_asset(asset=alert_asset,
-                                     caseid=case.case_id,
-                                     user_id=current_user.id
-                                     )
+                tmp_asset = CaseAssets.query.filter(
+                    CaseAssets.asset_uuid == alert_asset.asset_uuid
+                ).first()
 
-                set_ioc_links(ioc_links, asset.asset_id)
+                if tmp_asset:
+                    asset = tmp_asset
+                else:
+                    asset = create_asset(asset=alert_asset,
+                                         caseid=case.case_id,
+                                         user_id=current_user.id
+                                         )
+
+                    set_ioc_links(ioc_links, asset.asset_id)
+
                 asset_links.append(asset.asset_id)
 
     # Add event to timeline

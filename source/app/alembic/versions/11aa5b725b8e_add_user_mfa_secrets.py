@@ -27,11 +27,11 @@ def upgrade():
         op.add_column('user', sa.Column('webauthn_credentials', sa.JSON, nullable=True))
 
     if not _table_has_column('user', 'mfa_setup_complete'):
-        op.add_column('user', sa.Column('mfa_setup_complete', sa.Boolean(), nullable=False,
+        op.add_column('user', sa.Column('mfa_setup_complete', sa.Boolean, nullable=False,
                                         server_default=text("FALSE")))
 
     if not _table_has_column('server_settings', 'enforce_mfa'):
-        op.add_column('server_settings', sa.Column('enforce_mfa', sa.Boolean(), default=False))
+        op.add_column('server_settings', sa.Column('enforce_mfa', sa.Boolean, default=False))
 
     return
 

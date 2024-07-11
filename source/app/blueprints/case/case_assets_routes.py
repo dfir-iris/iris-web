@@ -28,6 +28,7 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 
+import app
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
@@ -174,6 +175,7 @@ def add_asset(caseid):
         add_asset_schema = CaseAssetsSchema()
         request_data = call_modules_hook('on_preload_asset_create', data=request.get_json(), caseid=caseid)
 
+        add_asset_schema.is_unique_for_cid(caseid, request_data)
         asset = add_asset_schema.load(request_data)
 
         asset = create_asset(asset=asset,
@@ -195,6 +197,7 @@ def add_asset(caseid):
         return response_error("Unable to create asset for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
+        db.session.rollback()
         return response_error(msg="Data error", data=e.messages)
 
 
@@ -265,6 +268,8 @@ def case_upload_ioc(caseid):
             row['analysis_status_id'] = analysis_status_id
 
             request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
+
+            add_asset_schema.is_unique_for_cid(caseid, request_data)
             asset_sc = add_asset_schema.load(request_data)
             asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
@@ -363,6 +368,8 @@ def asset_update(cur_id, caseid):
         request_data = call_modules_hook('on_preload_asset_update', data=request.get_json(), caseid=caseid)
 
         request_data['asset_id'] = cur_id
+
+        add_asset_schema.is_unique_for_cid(caseid, request_data)
         asset_schema = add_asset_schema.load(request_data, instance=asset)
 
         update_assets_state(caseid=caseid)
