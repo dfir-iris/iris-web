@@ -121,7 +121,6 @@ def cases_create(request_json):
 
 
 def cases_delete(case_identifier):
-    permissions_check_current_user_has_some_permission([Permissions.standard_user])
     permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
     if case_identifier == 1:
@@ -144,7 +143,6 @@ def cases_delete(case_identifier):
 
 
 def cases_update(case_identifier, request_data):
-    permissions_check_current_user_has_some_permission([Permissions.standard_user])
     permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
     case_i = get_case(case_identifier)
