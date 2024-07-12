@@ -546,7 +546,7 @@ class Tests(TestCase):
         self._subject.execute_graphql_query(payload2)
         payload = {
             'query': f''' mutation {{
-                             caseUpdate(caseId:  {case_identifier}, name: "test_delete_case") {{
+                             caseUpdate(caseId: {case_identifier}, name: "test_delete_case") {{
                                   case {{ name }}
                              }} 
                         }}'''
