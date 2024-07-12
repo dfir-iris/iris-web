@@ -225,8 +225,6 @@ def notes_delete_revision(identifier: int = None, revision_number: int = None, c
     :param revision_number: The revision number.
     :param case_identifier: The case identifier.
     """
-    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
-
     try:
         note = get_note(identifier, caseid=case_identifier)
         if not note:
