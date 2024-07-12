@@ -87,7 +87,7 @@ def download_case_activity(report_id, caseid):
 @reports_blueprint.route("/case/report/generate-investigation/<int:report_id>", methods=['GET'])
 @ac_api_requires()
 @ac_requires_case_identifier()
-def _gen_report(report_id, caseid):
+def generate_report(report_id, caseid):
 
     safe_mode = False
 
