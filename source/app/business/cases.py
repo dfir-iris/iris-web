@@ -35,6 +35,7 @@ from app.models import ReviewStatusList
 
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import permissions_check_current_user_has_some_case_access
+from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.business.iocs import iocs_exports_to_json
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -242,6 +243,8 @@ def cases_export_to_json(case_id):
     """
     Fully export a case a JSON
     """
+    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+
     export = {}
     case = export_caseinfo_json(case_id)
 
@@ -268,6 +271,8 @@ def cases_export_to_report_json(case_id):
     """
     Fully export of a case for report generation
     """
+    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+
     export = {}
     case = export_caseinfo_json(case_id)
 

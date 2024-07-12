@@ -20,8 +20,8 @@ from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
-from app.models import Ioc, IocLink
-from app.models.authorization import CaseAccessLevel
+from app.models import Ioc
+from app.models import IocLink
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
@@ -32,7 +32,6 @@ from app.schema.marshables import IocSchema
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.business.errors import BusinessProcessingError
-from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_iocs_db import get_ioc
 
 
@@ -138,7 +137,6 @@ def iocs_delete(identifier, case_identifier):
 
 
 def iocs_exports_to_json(case_id):
-    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
     iocs = get_iocs_by_case(case_id)
 
     iocs_serialized = IocSchema().dump(iocs, many=True)
