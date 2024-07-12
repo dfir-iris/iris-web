@@ -137,14 +137,9 @@ def iocs_delete(identifier, case_identifier):
     return f'IOC {identifier} deleted'
 
 
-def iocs_get_by_case(case_identifier):
-    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
-
-    return get_iocs_by_case(case_identifier)
-
-
 def export_case_iocs_json(case_id):
-    iocs = iocs_get_by_case(case_id)
+    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+    iocs = get_iocs_by_case(case_id)
 
     iocs_serialized = IocSchema().dump(iocs, many=True)
 
