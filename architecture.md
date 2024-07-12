@@ -4,7 +4,7 @@ The IRIS coarse-grained architecture can be understood by looking at the docker-
 
 * db: postgresql database to store all application data
 * app: backend application
-* worker: most operations are processed by the worker 
+* worker: most module hooks are processed by the worker 
 * rabbitmq: message broker between the app and worker
 * nginx: the front server to serve static files and dispatch requests to app
 
