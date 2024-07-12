@@ -167,15 +167,15 @@ class TestsRest(TestCase):
         self.assertEqual('error', test['status'])
 
     def test_delete_ioc_should_return_204(self):
-        number = 1
         case_identifier = self._subject.create_dummy_case()
         body = {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        response = self._subject.delete_iocs(number)
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        response = self._subject.delete(f'/api/v2/iocs/{ioc_identifier}')
         self.assertEqual(204, response.status_code)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_404(self):
-        response = self._subject.delete_iocs(None)
+        response = self._subject.delete(f'/api/v2/iocs/None')
         self.assertEqual(404, response.status_code)
 
     def test_merge_alert_into_a_case_should_not_fail(self):
@@ -219,16 +219,16 @@ class TestsRest(TestCase):
         body = {"task_assignees_id": [number], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
                 "custom_attributes": {}}
         self._subject.add_tasks(case_identifier, body)
-        test = self._subject.get_tasks(number)
-        self.assertEqual("dummy title", test['task_title'])
+        response = self._subject.get_tasks(number).json()
+        self.assertEqual("dummy title", response['task_title'])
 
     def test_get_tasks_with_missing_ioc_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
         number = 1
         body = {"task_assignees_id": [number], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
         self._subject.add_tasks(case_identifier, body)
-        test = self._subject.get_tasks(None)
-        self.assertEqual('error', test['status'])
+        response = self._subject.get_tasks(None).json()
+        self.assertEqual('error', response['status'])
 
     def test_delete_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()

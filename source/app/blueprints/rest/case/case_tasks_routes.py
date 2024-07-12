@@ -27,8 +27,8 @@ from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import endpoint_deprecated
-from app.blueprints.rest.endpoints import response_failed
-from app.blueprints.rest.endpoints import response_created
+from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.endpoints import response_api_created
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -153,7 +153,7 @@ def api_case_add_task(caseid):
         request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
 
         if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
-            return response_failed('task_assignee_id is not valid anymore since v1.5.0')
+            return response_api_error('task_assignee_id is not valid anymore since v1.5.0')
 
         task_assignee_list = request_data['task_assignees_id']
         del request_data['task_assignees_id']
@@ -169,12 +169,12 @@ def api_case_add_task(caseid):
 
         if ctask:
             track_activity(f"added task \"{ctask.task_title}\"", caseid=caseid)
-            return response_created(task_schema.dump(ctask))
+            return response_api_created(task_schema.dump(ctask))
 
-        return response_failed("Unable to create task for internal reasons")
+        return response_api_error("Unable to create task for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_failed(e.messages)
+        return response_api_error(e.messages)
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
@@ -197,11 +197,11 @@ def case_task_view(cur_id, caseid):
 def api_case_task_view(cur_id, caseid):
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
-        return response_failed("Invalid task ID for this case")
+        return response_api_error("Invalid task ID for this case")
 
     task_schema = CaseTaskSchema()
 
-    return response_created(task_schema.dump(task))
+    return response_api_created(task_schema.dump(task))
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
@@ -276,7 +276,7 @@ def api_case_delete_task(cur_id, caseid):
     call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
-        return response_failed("Invalid task ID for this case")
+        return response_api_error("Invalid task ID for this case")
 
     delete_task(task.id)
 
