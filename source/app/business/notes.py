@@ -19,7 +19,8 @@ from datetime import datetime
 from flask_login import current_user
 from marshmallow import ValidationError
 
-from app import db, app
+from app import db
+from app import app
 from app.business.errors import BusinessProcessingError, UnhandledBusinessError
 from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_notes_db import get_note
