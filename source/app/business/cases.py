@@ -35,7 +35,7 @@ from app.models import ReviewStatusList
 
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import permissions_check_current_user_has_some_case_access
-from app.business.iocs import export_case_iocs_json
+from app.business.iocs import iocs_exports_to_json
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -254,7 +254,7 @@ def cases_export_to_json(case_id):
     export['case'] = case
     export['evidences'] = export_case_evidences_json(case_id)
     export['timeline'] = export_case_tm_json(case_id)
-    export['iocs'] = export_case_iocs_json(case_id)
+    export['iocs'] = iocs_exports_to_json(case_id)
     export['assets'] = export_case_assets_json(case_id)
     export['tasks'] = export_case_tasks_json(case_id)
     export['comments'] = export_case_comments_json(case_id)
@@ -280,7 +280,7 @@ def cases_export_to_report_json(case_id):
     export['case'] = case
     export['evidences'] = export_case_evidences_json(case_id)
     export['timeline'] = export_case_tm_json(case_id)
-    export['iocs'] = export_case_iocs_json(case_id)
+    export['iocs'] = iocs_exports_to_json(case_id)
     export['assets'] = export_case_assets_json(case_id)
     export['tasks'] = export_case_tasks_json(case_id)
     export['notes'] = export_case_notes_json(case_id)

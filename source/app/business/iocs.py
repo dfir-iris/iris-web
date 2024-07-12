@@ -137,7 +137,7 @@ def iocs_delete(identifier, case_identifier):
     return f'IOC {identifier} deleted'
 
 
-def export_case_iocs_json(case_id):
+def iocs_exports_to_json(case_id):
     permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
     iocs = get_iocs_by_case(case_id)
 
