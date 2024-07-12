@@ -27,6 +27,7 @@ The requests payloads are converted to business objects from `models` and passed
 Forbidden imports in this layer:
 
 * `from app.datamgmt`, as everything should go through the business layer first 
+* `from sqlalchemy`
 
 ### business
 
