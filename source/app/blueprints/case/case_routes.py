@@ -53,7 +53,7 @@ from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.manage.manage_users_db import set_user_case_access
-from app.business.cases import export_case_json
+from app.business.cases import cases_export_to_json
 from app.forms import PipelinesCaseForm
 from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
@@ -243,7 +243,7 @@ def activity_fetch(caseid):
 @case_blueprint.route("/case/export", methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def export_case(caseid):
-    return response_success('', data=export_case_json(caseid))
+    return response_success('', data=cases_export_to_json(caseid))
 
 
 @case_blueprint.route("/case/meta", methods=['GET'])

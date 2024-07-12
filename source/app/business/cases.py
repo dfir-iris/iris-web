@@ -238,7 +238,7 @@ def cases_update(case_identifier, request_data):
         raise BusinessProcessingError('Error updating case - check server logs')
 
 
-def export_case_json(case_id):
+def cases_export_to_json(case_id):
     """
     Fully export a case a JSON
     """

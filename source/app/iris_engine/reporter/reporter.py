@@ -28,7 +28,7 @@ from sqlalchemy import desc
 
 from app import app
 from app.business.cases import export_case_json_for_report
-from app.business.cases import export_case_json
+from app.business.cases import cases_export_to_json
 
 from app.datamgmt.activities.activities_db import get_auto_activities
 from app.datamgmt.activities.activities_db import get_manual_activities
@@ -109,7 +109,7 @@ class IrisReportMaker(object):
         Retrieve information of the case
         :return:
         """
-        case_info = export_case_json(self._caseid)
+        case_info = cases_export_to_json(self._caseid)
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisReportMaker.get_docid()
