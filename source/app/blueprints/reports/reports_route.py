@@ -47,6 +47,10 @@ file_remover = FileRemover()
 @ac_api_requires()
 @ac_requires_case_identifier()
 def download_case_activity(report_id, caseid):
+    # TODO should we move this up
+    # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
+    permissions_check_current_user_has_some_case_access_stricter(
+        [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     call_modules_hook('on_preload_activities_report_create', data=report_id, caseid=caseid)
     if report_id:
@@ -61,16 +65,13 @@ def download_case_activity(report_id, caseid):
 
             # Get file extension
             _, report_format = os.path.splitext(report.internal_reference)
-            
+
             # Depending on the template format, the generation process is different
             if report_format == ".docx":
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_doc_report(doc_type="Activities")
 
             elif report_format == ".md" or report_format == ".html" :
-                # TODO should we move this up
-                # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
-                permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Activities")
 
@@ -96,6 +97,10 @@ def download_case_activity(report_id, caseid):
 @ac_api_requires()
 @ac_requires_case_identifier()
 def generate_report(report_id, caseid):
+    # TODO should we move this up
+    # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
+    permissions_check_current_user_has_some_case_access_stricter(
+        [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     safe_mode = False
 
@@ -109,11 +114,8 @@ def generate_report(report_id, caseid):
                 safe_mode = True
 
             _, report_format = os.path.splitext(report.internal_reference)
-            
+
             if report_format == ".md" or report_format == ".html":
-                # TODO should we move this up
-                # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
-                permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Investigation")
 

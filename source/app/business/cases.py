@@ -269,8 +269,6 @@ def cases_export_to_report_json(case_id):
     """
     Fully export of a case for report generation
     """
-    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
-
     export = {}
     case = export_caseinfo_json(case_id)
 
