@@ -22,12 +22,11 @@ from marshmallow import ValidationError
 from app import db
 from app import app
 from app.business.errors import BusinessProcessingError, UnhandledBusinessError
-from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_notes_db import get_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import NoteRevisions
-from app.models.authorization import CaseAccessLevel, User
+from app.models.authorization import User
 from app.schema.marshables import CaseNoteSchema
 from app.util import add_obj_history_entry
 
@@ -96,7 +95,6 @@ def notes_update(identifier: int = None, request_json: dict = None, case_identif
     :param request_json: The request data.
     :param case_identifier: The case identifier.
     """
-    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
     try:
         addnote_schema = CaseNoteSchema()
