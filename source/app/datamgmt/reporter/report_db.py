@@ -21,19 +21,19 @@ import re
 from sqlalchemy import desc
 
 from app.business.iocs import iocs_get_by_case
-from app.datamgmt.case.case_notes_db import get_notes_from_group, get_case_note_comments
-from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
-from app.models import AnalysisStatus, CompromiseStatus, TaskAssignee, NotesGroupLink
+from app.datamgmt.case.case_notes_db import get_notes_from_group
+from app.datamgmt.case.case_notes_db import get_case_note_comments
+from app.models import AnalysisStatus
+from app.models import CompromiseStatus
+from app.models import TaskAssignee
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
-from app.models import CaseStatus
 from app.models import CaseTasks
 from app.models import Cases
 from app.models import CasesEvent
-from app.models import Client
 from app.models import Comments
 from app.models import EventCategory
 from app.models import Ioc
@@ -45,33 +45,10 @@ from app.models import NotesGroup
 from app.models import TaskStatus
 from app.models import Tlp
 from app.models.authorization import User
-from app.schema.marshables import CaseDetailsSchema, CommentSchema, CaseNoteSchema, IocSchema
-
-
-def export_case_json(case_id):
-    """
-    Fully export a case a JSON
-    """
-    export = {}
-    case = export_caseinfo_json(case_id)
-
-    if not case:
-        export['errors'] = ["Invalid case number"]
-        return export
-
-    case['description'] = process_md_images_links_for_report(case['description'])
-
-    export['case'] = case
-    export['evidences'] = export_case_evidences_json(case_id)
-    export['timeline'] = export_case_tm_json(case_id)
-    export['iocs'] = export_case_iocs_json(case_id)
-    export['assets'] = export_case_assets_json(case_id)
-    export['tasks'] = export_case_tasks_json(case_id)
-    export['comments'] = export_case_comments_json(case_id)
-    export['notes'] = export_case_notes_json(case_id)
-    export['export_date'] = datetime.datetime.utcnow()
-
-    return export
+from app.schema.marshables import CaseDetailsSchema
+from app.schema.marshables import CommentSchema
+from app.schema.marshables import CaseNoteSchema
+from app.schema.marshables import IocSchema
 
 
 def export_case_json_for_report(case_id):

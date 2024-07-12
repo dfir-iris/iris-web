@@ -18,17 +18,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
-
-# VARS ---------------------------------------------------
-
-# CONTENT ------------------------------------------------
 import logging as log
 import os
 from datetime import datetime
-
-import jinja2
-from jinja2.sandbox import SandboxedEnvironment
 
 from app.datamgmt.reporter.report_db import export_case_json_for_report
 from app.iris_engine.utils.common import IrisJinjaEnv
@@ -41,7 +33,7 @@ from app import app
 from app.datamgmt.activities.activities_db import get_auto_activities
 from app.datamgmt.activities.activities_db import get_manual_activities
 from app.datamgmt.case.case_db import case_get_desc_crc
-from app.datamgmt.reporter.report_db import export_case_json
+from app.business.cases import export_case_json
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets

@@ -16,6 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import datetime
 import logging as log
 import traceback
 
@@ -23,15 +24,13 @@ from flask_login import current_user
 
 from marshmallow.exceptions import ValidationError
 
-from app.schema.marshables import CaseSchema
-
 from app import app
 from app import db
 
 from app.util import add_obj_history_entry
+from app.schema.marshables import CaseSchema
 
 from app.models.authorization import CaseAccessLevel
-from app.models.authorization import Permissions
 from app.models import ReviewStatusList
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -51,10 +50,18 @@ from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_cases_db import map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.reporter.report_db import export_caseinfo_json
+from app.datamgmt.reporter.report_db import process_md_images_links_for_report
+from app.datamgmt.reporter.report_db import export_case_evidences_json
+from app.datamgmt.reporter.report_db import export_case_tm_json
+from app.datamgmt.reporter.report_db import export_case_iocs_json
+from app.datamgmt.reporter.report_db import export_case_assets_json
+from app.datamgmt.reporter.report_db import export_case_tasks_json
+from app.datamgmt.reporter.report_db import export_case_comments_json
+from app.datamgmt.reporter.report_db import export_case_notes_json
 
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import permissions_check_current_user_has_some_case_access
-from app.business.permissions import permissions_check_current_user_has_some_permission
 
 
 def _load(request_data, **kwargs):
@@ -229,3 +236,29 @@ def cases_update(case_identifier, request_data):
         log.error(e.__str__())
         log.error(traceback.format_exc())
         raise BusinessProcessingError('Error updating case - check server logs')
+
+
+def export_case_json(case_id):
+    """
+    Fully export a case a JSON
+    """
+    export = {}
+    case = export_caseinfo_json(case_id)
+
+    if not case:
+        export['errors'] = ["Invalid case number"]
+        return export
+
+    case['description'] = process_md_images_links_for_report(case['description'])
+
+    export['case'] = case
+    export['evidences'] = export_case_evidences_json(case_id)
+    export['timeline'] = export_case_tm_json(case_id)
+    export['iocs'] = export_case_iocs_json(case_id)
+    export['assets'] = export_case_assets_json(case_id)
+    export['tasks'] = export_case_tasks_json(case_id)
+    export['comments'] = export_case_comments_json(case_id)
+    export['notes'] = export_case_notes_json(case_id)
+    export['export_date'] = datetime.datetime.utcnow()
+
+    return export
