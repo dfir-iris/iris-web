@@ -19,6 +19,7 @@ depends_on = None
 
 
 def upgrade():
+    op.execute('COMMIT')
 
     if not _table_has_column('user', 'mfa_secrets'):
         op.add_column('user', sa.Column('mfa_secrets', sa.Text, nullable=True))
