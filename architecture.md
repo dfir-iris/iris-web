@@ -41,6 +41,10 @@ Forbidden imports in this layer:
 
 This layer handles persistence. It should be the only layer with knowledge of the database engine.
 
+Forbidden imports in this layer:
+
+* `from app.business`, as the business layer should call the persistence layer (not the other way around)
+
 ### models
 
 The description of all objects handled by IRIS `business` layer and persisted through `datamgt`.
