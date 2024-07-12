@@ -143,6 +143,14 @@ def iocs_get_by_case(case_identifier):
     return get_iocs_by_case(case_identifier)
 
 
+def export_case_iocs_json(case_id):
+    iocs = iocs_get_by_case(case_id)
+
+    iocs_serialized = IocSchema().dump(iocs, many=True)
+
+    return iocs_serialized
+
+
 def iocs_build_filter_query(ioc_id: int = None,
                             ioc_uuid: str = None,
                             ioc_value: str = None,

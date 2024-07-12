@@ -20,7 +20,6 @@ import re
 
 from sqlalchemy import desc
 
-from app.business.iocs import iocs_get_by_case
 from app.datamgmt.case.case_notes_db import get_notes_from_group
 from app.datamgmt.case.case_notes_db import get_case_note_comments
 from app.models import AnalysisStatus
@@ -48,7 +47,6 @@ from app.models.authorization import User
 from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import CaseNoteSchema
-from app.schema.marshables import IocSchema
 
 
 def export_case_json_extended(case_id):
@@ -283,14 +281,6 @@ def export_case_tm_json(case_id):
         tim.append(ras)
 
     return tim
-
-
-def export_case_iocs_json(case_id):
-    iocs = iocs_get_by_case(case_id)
-
-    iocs_serialized = IocSchema().dump(iocs, many=True)
-
-    return iocs_serialized
 
 
 def export_case_tasks_json(case_id):
