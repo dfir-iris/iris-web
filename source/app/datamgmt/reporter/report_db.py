@@ -51,32 +51,6 @@ from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import IocSchema
 
 
-def export_case_json_for_report(case_id):
-    """
-    Fully export of a case for report generation
-    """
-    export = {}
-    case = export_caseinfo_json(case_id)
-
-    if not case:
-        export['errors'] = ["Invalid case number"]
-        return export
-
-    case['description'] = process_md_images_links_for_report(case['description'])
-
-    export['case'] = case
-    export['evidences'] = export_case_evidences_json(case_id)
-    export['timeline'] = export_case_tm_json(case_id)
-    export['iocs'] = export_case_iocs_json(case_id)
-    export['assets'] = export_case_assets_json(case_id)
-    export['tasks'] = export_case_tasks_json(case_id)
-    export['notes'] = export_case_notes_json(case_id)
-    export['comments'] = export_case_comments_json(case_id)
-    export['export_date'] = datetime.datetime.utcnow()
-
-    return export
-
-
 def export_case_json_extended(case_id):
     """
     Export a case a JSON
