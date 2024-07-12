@@ -264,7 +264,7 @@ def cases_export_to_json(case_id):
     return export
 
 
-def export_case_json_for_report(case_id):
+def cases_export_to_report_json(case_id):
     """
     Fully export of a case for report generation
     """

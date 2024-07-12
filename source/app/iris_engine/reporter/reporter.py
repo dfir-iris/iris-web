@@ -27,7 +27,7 @@ from flask_login import current_user
 from sqlalchemy import desc
 
 from app import app
-from app.business.cases import export_case_json_for_report
+from app.business.cases import cases_export_to_report_json
 from app.business.cases import cases_export_to_json
 
 from app.datamgmt.activities.activities_db import get_auto_activities
@@ -355,7 +355,7 @@ class IrisMakeDocReport(IrisReportMaker):
         Retrieve information of the case
         :return:
         """
-        case_info = export_case_json_for_report(self._caseid)
+        case_info = cases_export_to_report_json(self._caseid)
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisMakeDocReport.get_docid()
