@@ -146,8 +146,6 @@ def cases_delete(case_identifier):
 
 
 def cases_update(case_identifier, request_data):
-    permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
-
     case_i = get_case(case_identifier)
     if not case_i:
         raise BusinessProcessingError('Case not found')

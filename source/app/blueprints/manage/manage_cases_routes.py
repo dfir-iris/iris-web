@@ -370,6 +370,8 @@ def api_list_case():
 @manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def update_case_info(cur_id):
+    permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+
     case_schema = CaseSchema()
     try:
         case, msg = cases_update(cur_id, request.get_json())

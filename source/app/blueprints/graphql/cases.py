@@ -132,7 +132,7 @@ class CaseUpdate(Mutation):
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, case_id, name=None, soc_id=None, classification_id=None, client_id=None, description=None,
+    def mutate(root, info, case_identifier, name=None, soc_id=None, classification_id=None, client_id=None, description=None,
                severity_id=None, owner_id=None, state_id=None, reviewer_id=None, tags=None, review_status_id=None):
         request = {}
         if name:
@@ -158,5 +158,7 @@ class CaseUpdate(Mutation):
         if review_status_id:
             request['review_status_id'] = review_status_id
         permissions_check_current_user_has_some_permission([Permissions.standard_user])
-        case, _ = cases_update(case_id, request)
+        permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
+
+        case, _ = cases_update(case_identifier, request)
         return CaseUpdate(case=case)
