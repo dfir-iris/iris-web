@@ -40,7 +40,7 @@ def _load(request_data, note_schema=None):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def create(request_json, case_identifier):
+def notes_create(request_json, case_identifier):
     """
     Create a note.
 
@@ -87,7 +87,7 @@ def create(request_json, case_identifier):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def update(identifier: int = None, request_json: dict = None, case_identifier: int = None):
+def notes_update(identifier: int = None, request_json: dict = None, case_identifier: int = None):
     """
     Update a note by its identifier.
 
@@ -152,7 +152,7 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def list_note_revisions(identifier: int = None, case_identifier: int = None):
+def notes_list_revisions(identifier: int = None, case_identifier: int = None):
     """
     List the revisions of a note by its identifier.
 
@@ -187,7 +187,7 @@ def list_note_revisions(identifier: int = None, case_identifier: int = None):
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def get_note_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
+def notes_get_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
     """
     Get a note revision by its identifier and revision number.
 
@@ -216,7 +216,7 @@ def get_note_revision(identifier: int = None, revision_number: int = None, case_
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def delete_note_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
+def notes_delete_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
     """
     Delete a note revision by its identifier and revision number.
 
