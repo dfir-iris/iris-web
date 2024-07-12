@@ -29,12 +29,14 @@ from graphene import String
 
 from app.models.cases import Cases
 from app.models.authorization import Permissions
+from app.models.authorization import CaseAccessLevel
 
 from app.business.iocs import iocs_build_filter_query
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.business.cases import cases_update
 from app.business.permissions import permissions_check_current_user_has_some_permission
+from app.business.permissions import permissions_check_current_user_has_some_case_access
 
 from app.blueprints.graphql.iocs import IOCConnection
 
@@ -104,9 +106,10 @@ class CaseDelete(Mutation):
     case = Field(CaseObject)
 
     @staticmethod
-    def mutate(root, info, case_id):
+    def mutate(root, info, case_identifier):
         permissions_check_current_user_has_some_permission([Permissions.standard_user])
-        cases_delete(case_id)
+        permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
+        cases_delete(case_identifier)
 
 
 class CaseUpdate(Mutation):

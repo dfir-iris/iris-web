@@ -128,8 +128,6 @@ def cases_create(request_json):
 
 
 def cases_delete(case_identifier):
-    permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
-
     if case_identifier == 1:
         track_activity(f'tried to delete case {case_identifier}, but case is the primary case',
                        caseid=case_identifier, ctx_less=True)

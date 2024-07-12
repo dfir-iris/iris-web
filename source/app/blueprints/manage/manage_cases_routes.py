@@ -31,6 +31,17 @@ from werkzeug import Response
 from werkzeug.utils import secure_filename
 
 from app import db
+
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import Permissions
+
+from app.business.permissions import permissions_check_current_user_has_some_case_access
+from app.business.cases import cases_delete
+from app.business.cases import cases_update
+from app.business.cases import cases_create
+from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDeniedError
+
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.client.client_db import get_client_list
@@ -56,8 +67,6 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import CaseAccessLevel
-from app.models.authorization import Permissions
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
 from app.util import add_obj_history_entry
@@ -67,11 +76,6 @@ from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
-from app.business.cases import cases_delete
-from app.business.cases import cases_update
-from app.business.cases import cases_create
-from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
@@ -230,6 +234,8 @@ def manage_case_filter() -> Response:
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def api_delete_case(cur_id):
+    permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+
     try:
         cases_delete(cur_id)
         return response_success('Case successfully deleted')
