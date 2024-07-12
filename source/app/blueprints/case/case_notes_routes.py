@@ -528,7 +528,7 @@ def socket_ping_note(data):
 
 @socket_io.on('pong-note')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def socket_ping_note(data):
+def socket_pong_note(data):
 
     emit('pong-note', {"user": current_user.name, "note_id": data['note_id']}, room=data['channel'])
 

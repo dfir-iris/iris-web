@@ -47,7 +47,6 @@ def notes_create(request_json, case_identifier):
     :param request_json: The request data.
     :param case_identifier: The case identifier.
     """
-
     try:
         request_data = call_modules_hook('on_preload_note_create', data=request_json, caseid=case_identifier)
         note_schema = CaseNoteSchema()
@@ -95,7 +94,6 @@ def notes_update(identifier: int = None, request_json: dict = None, case_identif
     :param request_json: The request data.
     :param case_identifier: The case identifier.
     """
-
     try:
         addnote_schema = CaseNoteSchema()
 
