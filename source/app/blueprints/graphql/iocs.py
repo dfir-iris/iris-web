@@ -24,7 +24,7 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.business.permissions import check_current_user_has_some_case_access_stricter
+from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
 from app.business.iocs import create
@@ -74,7 +74,7 @@ class IOCCreate(Mutation):
             'ioc_description': description,
             'ioc_tags': tags
         }
-        check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+        permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
         ioc, _ = create(request, case_id)
         return IOCCreate(ioc=ioc)
@@ -101,7 +101,7 @@ class IOCUpdate(Mutation):
     @staticmethod
     def mutate(root, info, ioc_id, case_id, type_id=None, tlp_id=None, value=None, description=None, tags=None,
                ioc_misp=None, user_id=None, ioc_enrichment=None, modification_history=None):
-        check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+        permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
         request = {}
         if type_id:
@@ -136,7 +136,7 @@ class IOCDelete(Mutation):
 
     @staticmethod
     def mutate(root, info, ioc_id, case_id):
-        check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+        permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
         message = delete(ioc_id, case_id)
         return IOCDelete(message=message)

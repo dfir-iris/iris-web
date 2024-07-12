@@ -53,12 +53,12 @@ from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.case.case_db import get_case
 
 from app.business.errors import BusinessProcessingError
-from app.business.permissions import check_current_user_has_some_case_access
-from app.business.permissions import check_current_user_has_some_permission
+from app.business.permissions import permissions_check_current_user_has_some_case_access
+from app.business.permissions import permissions_check_current_user_has_some_permission
 
 
 def get_case_by_identifier(case_identifier):
-    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+    permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     return get_case(case_identifier)
 
@@ -121,8 +121,8 @@ def create(request_json):
 
 
 def delete(case_identifier):
-    check_current_user_has_some_permission([Permissions.standard_user])
-    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
+    permissions_check_current_user_has_some_permission([Permissions.standard_user])
+    permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
     if case_identifier == 1:
         track_activity(f'tried to delete case {case_identifier}, but case is the primary case',
@@ -144,8 +144,8 @@ def delete(case_identifier):
 
 
 def update(case_identifier, request_data):
-    check_current_user_has_some_permission([Permissions.standard_user])
-    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
+    permissions_check_current_user_has_some_permission([Permissions.standard_user])
+    permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
     case_i = get_case(case_identifier)
     if not case_i:

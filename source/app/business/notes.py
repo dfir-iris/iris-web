@@ -21,7 +21,7 @@ from marshmallow import ValidationError
 
 from app import db, app
 from app.business.errors import BusinessProcessingError, UnhandledBusinessError
-from app.business.permissions import check_current_user_has_some_case_access_stricter
+from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_notes_db import get_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -95,7 +95,7 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
     :param request_json: The request data.
     :param case_identifier: The case identifier.
     """
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
     try:
         addnote_schema = CaseNoteSchema()
@@ -224,7 +224,7 @@ def delete_note_revision(identifier: int = None, revision_number: int = None, ca
     :param revision_number: The revision number.
     :param case_identifier: The case identifier.
     """
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
     try:
         note = get_note(identifier, caseid=case_identifier)

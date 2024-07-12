@@ -32,7 +32,7 @@ from app.schema.marshables import IocSchema
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.business.errors import BusinessProcessingError
-from app.business.permissions import check_current_user_has_some_case_access_stricter
+from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_iocs_db import get_ioc
 
 
@@ -139,7 +139,7 @@ def delete(identifier, case_identifier):
 
 
 def get_iocs(case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+    permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     return get_iocs_by_case(case_identifier)
 

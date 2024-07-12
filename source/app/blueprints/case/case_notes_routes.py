@@ -224,8 +224,7 @@ def case_note_add(caseid):
 
     try:
 
-        note = create(request_json=request.get_json(),
-                      case_identifier=caseid)
+        note = create(request_json=request.get_json(), case_identifier=caseid)
 
         return response_success(f"Note ID {note.note_id} created", data=addnote_schema.dump(note))
 
