@@ -35,7 +35,6 @@ from app.models import ReviewStatusList
 
 from app.business.errors import BusinessProcessingError
 from app.business.permissions import permissions_check_current_user_has_some_case_access
-from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.business.iocs import iocs_exports_to_json
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
