@@ -67,9 +67,9 @@ from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
-from app.business.cases import delete
-from app.business.cases import update
-from app.business.cases import create
+from app.business.cases import cases_delete
+from app.business.cases import cases_update
+from app.business.cases import cases_create
 from app.business.errors import BusinessProcessingError
 from app.business.errors import PermissionDeniedError
 
@@ -78,7 +78,6 @@ manage_cases_blueprint = Blueprint('manage_case',
                                    template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
 @ac_requires(Permissions.standard_user, no_cid_required=True)
 def manage_index_cases(caseid, url_redir):
@@ -232,7 +231,7 @@ def manage_case_filter() -> Response:
 @ac_api_requires(Permissions.standard_user)
 def api_delete_case(cur_id):
     try:
-        delete(cur_id)
+        cases_delete(cur_id)
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
@@ -348,7 +347,7 @@ def api_add_case():
     case_schema = CaseSchema()
 
     try:
-        case, msg = create(request.get_json())
+        case, msg = cases_create(request.get_json())
         return response_success(msg, data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -367,7 +366,7 @@ def api_list_case():
 def update_case_info(cur_id):
     case_schema = CaseSchema()
     try:
-        case, msg = update(cur_id, request.get_json())
+        case, msg = cases_update(cur_id, request.get_json())
         return response_success(msg, data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())

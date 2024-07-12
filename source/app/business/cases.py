@@ -57,12 +57,6 @@ from app.business.permissions import permissions_check_current_user_has_some_cas
 from app.business.permissions import permissions_check_current_user_has_some_permission
 
 
-def get_case_by_identifier(case_identifier):
-    permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
-
-    return get_case(case_identifier)
-
-
 def _load(request_data, **kwargs):
     try:
         add_case_schema = CaseSchema()
@@ -71,7 +65,13 @@ def _load(request_data, **kwargs):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def create(request_json):
+def cases_get_by_identifier(case_identifier):
+    permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+
+    return get_case(case_identifier)
+
+
+def cases_create(request_json):
     try:
         # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
         request_data = call_modules_hook('on_preload_case_create', request_json, None)
@@ -120,7 +120,7 @@ def create(request_json):
         raise BusinessProcessingError('Error creating case - check server logs')
 
 
-def delete(case_identifier):
+def cases_delete(case_identifier):
     permissions_check_current_user_has_some_permission([Permissions.standard_user])
     permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
@@ -143,7 +143,7 @@ def delete(case_identifier):
         raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
 
 
-def update(case_identifier, request_data):
+def cases_update(case_identifier, request_data):
     permissions_check_current_user_has_some_permission([Permissions.standard_user])
     permissions_check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
 
