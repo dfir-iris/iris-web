@@ -36,11 +36,6 @@ from app.business.permissions import permissions_check_current_user_has_some_cas
 from app.datamgmt.case.case_iocs_db import get_ioc
 
 
-def get_ioc_by_identifier(ioc_identifier):
-
-    return get_ioc(ioc_identifier)
-
-
 def _load(request_data):
     try:
         add_ioc_schema = IocSchema()
@@ -49,7 +44,11 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def create(request_json, case_identifier):
+def iocs_get_by_identifier(ioc_identifier):
+    return get_ioc(ioc_identifier)
+
+
+def iocs_create(request_json, case_identifier):
 
     # TODO ideally schema validation should be done before, outside the business logic in the REST API
     #      for that the hook should be called after schema validation
@@ -81,7 +80,7 @@ def create(request_json, case_identifier):
 
 
 # TODO most probably this method should not require a case_identifier... Since the IOC gets modified for all cases...
-def update(identifier, request_json, case_identifier):
+def iocs_update(identifier, request_json, case_identifier):
 
     try:
         ioc = get_ioc(identifier, caseid=case_identifier)
@@ -120,7 +119,7 @@ def update(identifier, request_json, case_identifier):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def delete(identifier, case_identifier):
+def iocs_delete(identifier, case_identifier):
 
     call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
     ioc = get_ioc(identifier, case_identifier)
@@ -138,23 +137,22 @@ def delete(identifier, case_identifier):
     return f'IOC {identifier} deleted'
 
 
-def get_iocs(case_identifier):
+def iocs_get_by_case(case_identifier):
     permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     return get_iocs_by_case(case_identifier)
 
 
-def build_filter_case_ioc_query(ioc_id: int = None,
-                                ioc_uuid: str = None,
-                                ioc_value: str = None,
-                                ioc_type_id: int = None,
-                                ioc_description: str = None,
-                                ioc_tlp_id: int = None,
-                                ioc_tags: str = None,
-                                ioc_misp: str = None,
-                                user_id: float = None,
-                                linked_cases: float = None
-                                ):
+def iocs_build_filter_query(ioc_id: int = None,
+                            ioc_uuid: str = None,
+                            ioc_value: str = None,
+                            ioc_type_id: int = None,
+                            ioc_description: str = None,
+                            ioc_tlp_id: int = None,
+                            ioc_tags: str = None,
+                            ioc_misp: str = None,
+                            user_id: float = None,
+                            linked_cases: float = None):
     """
     Get a list of iocs from the database, filtered by the given parameters
     """

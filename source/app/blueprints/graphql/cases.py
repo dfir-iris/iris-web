@@ -27,7 +27,7 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.business.iocs import build_filter_case_ioc_query
+from app.business.iocs import iocs_build_filter_query
 from app.models.cases import Cases
 from app.business.cases import create
 from app.business.cases import delete
@@ -48,10 +48,10 @@ class CaseObject(SQLAlchemyObjectType):
     @staticmethod
     def resolve_iocs(root, info, ioc_id=None, ioc_uuid=None, ioc_value=None, ioc_type_id=None, ioc_description=None, ioc_tlp_id=None, ioc_tags=None,
                      ioc_misp=None, user_id=None, Linked_cases=None, **kwargs):
-        return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
-                                           ioc_type_id=ioc_type_id, ioc_description=ioc_description,
-                                           ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
-                                           user_id=user_id, linked_cases=Linked_cases)
+        return iocs_build_filter_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
+                                       ioc_type_id=ioc_type_id, ioc_description=ioc_description,
+                                       ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
+                                       user_id=user_id, linked_cases=Linked_cases)
 
 
 class CaseConnection(Connection):

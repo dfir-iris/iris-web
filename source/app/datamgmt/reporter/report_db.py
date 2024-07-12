@@ -20,7 +20,7 @@ import re
 
 from sqlalchemy import desc
 
-from app.business.iocs import get_iocs
+from app.business.iocs import iocs_get_by_case
 from app.datamgmt.case.case_notes_db import get_notes_from_group, get_case_note_comments
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.models import AnalysisStatus, CompromiseStatus, TaskAssignee, NotesGroupLink
@@ -335,7 +335,7 @@ def export_case_tm_json(case_id):
 
 
 def export_case_iocs_json(case_id):
-    iocs = get_iocs(case_id)
+    iocs = iocs_get_by_case(case_id)
 
     iocs_serialized = IocSchema().dump(iocs, many=True)
 

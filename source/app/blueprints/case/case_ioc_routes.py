@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 from datetime import datetime
 
 import csv
@@ -61,9 +60,9 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
-from app.business.iocs import create
-from app.business.iocs import update
-from app.business.iocs import delete
+from app.business.iocs import iocs_create
+from app.business.iocs import iocs_update
+from app.business.iocs import iocs_delete
 from app.business.errors import BusinessProcessingError
 
 case_ioc_blueprint = Blueprint(
@@ -73,7 +72,6 @@ case_ioc_blueprint = Blueprint(
 )
 
 
-# CONTENT ------------------------------------------------
 @case_ioc_blueprint.route('/case/ioc', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_ioc(caseid, url_redir):
@@ -130,7 +128,7 @@ def case_add_ioc(caseid):
     ioc_schema = IocSchema()
 
     try:
-        ioc, msg = create(request.get_json(), caseid)
+        ioc, msg = iocs_create(request.get_json(), caseid)
         return response_success(msg, data=ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -249,7 +247,7 @@ def case_add_ioc_modal(caseid):
 def case_delete_ioc(cur_id, caseid):
     try:
 
-        msg = delete(cur_id, caseid)
+        msg = iocs_delete(cur_id, caseid)
         return response_success(msg=msg)
 
     except BusinessProcessingError as e:
@@ -297,7 +295,7 @@ def case_update_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
 
     try:
-        ioc, msg = update(cur_id, request.get_json(), caseid)
+        ioc, msg = iocs_update(cur_id, request.get_json(), caseid)
         return response_success(msg, data=ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
