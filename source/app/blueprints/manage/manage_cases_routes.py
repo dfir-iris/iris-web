@@ -234,15 +234,16 @@ def manage_case_filter() -> Response:
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def api_delete_case(cur_id):
-    permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+    try:
+        permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+    except PermissionDeniedError:
+        return ac_api_return_access_denied(caseid=cur_id)
 
     try:
         cases_delete(cur_id)
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
-    except PermissionDeniedError:
-        return ac_api_return_access_denied(caseid=cur_id)
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
