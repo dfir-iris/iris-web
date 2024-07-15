@@ -212,13 +212,14 @@ def mfa_setup():
         totp = pyotp.TOTP(mfa_secret)
 
         if totp.verify(token):
-            has_valid_password = True
+            has_valid_password = False
             if is_authentication_ldap() is True:
-                if not ldap_authenticate(user.user, user_password, local_fallback=False):
-                    has_valid_password = False
+                if _validate_ldap_login(user.user, user_password,
+                                        local_fallback=app.config.get('AUTHENTICATION_LOCAL_FALLBACK')):
+                    has_valid_password = True
 
-            elif not bc.check_password_hash(user.password, user_password):
-                has_valid_password = False
+            elif bc.check_password_hash(user.password, user_password):
+                has_valid_password = True
 
             if not has_valid_password:
                 track_activity(f'Failed MFA setup for user {user.user}. Invalid password.', ctx_less=True, display_in_ui=False)
