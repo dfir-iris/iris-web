@@ -75,24 +75,46 @@ def _render_template_login(form, msg):
                            login_banner=login_banner, ptfm_contact=ptfm_contact)
 
 
-def _authenticate_ldap(form, username, password, local_fallback=True):
+def _validate_local_login(username, password):
+    user = _retrieve_user_by_username(username)
+    if not user:
+        return None
+
+    if bc.check_password_hash(user.password, password):
+        return user
+
+    track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True, display_in_ui=False)
+    return None
+
+
+def _validate_ldap_login(username, password, local_fallback=True):
     try:
         if ldap_authenticate(username, password) is False:
             if local_fallback is True:
                 track_activity("wrong login password for user '{}' using LDAP auth - falling back to local based on settings".format(username),
-                                 ctx_less=True, display_in_ui=False)
-                
-                return _authenticate_password(form, username, password)
-            
-            track_activity("wrong login password for user '{}' using LDAP auth".format(username),
-                           ctx_less=True, display_in_ui=False)
-            return _render_template_login(form, 'Wrong credentials. Please try again.')
+                               ctx_less=True, display_in_ui=False)
+                return _validate_local_login(username, password)
+            track_activity("wrong login password for user '{}' using LDAP auth".format(username), ctx_less=True, display_in_ui=False)
+            return None
 
         user = _retrieve_user_by_username(username)
         if not user:
+            return None
+
+        return user
+    except Exception as e:
+        log.error(e.__str__())
+        return None
+
+
+def _authenticate_ldap(form, username, password, local_fallback=True):
+    try:
+        user = _validate_ldap_login(username, password, local_fallback)
+        if user is None:
             return _render_template_login(form, 'Wrong credentials. Please try again.')
 
         return wrap_login_user(user)
+
     except Exception as e:
         log.error(e.__str__())
         return _render_template_login(form, 'LDAP authentication unavailable. Check server logs')
@@ -188,7 +210,21 @@ def mfa_setup():
         mfa_secret = form.mfa_secret.data
         user_password = form.user_password.data
         totp = pyotp.TOTP(mfa_secret)
-        if totp.verify(token) and bc.check_password_hash(user.password, user_password):
+
+        if totp.verify(token):
+            has_valid_password = True
+            if is_authentication_ldap() is True:
+                if not ldap_authenticate(user.user, user_password, local_fallback=False):
+                    has_valid_password = False
+
+            elif not bc.check_password_hash(user.password, user_password):
+                has_valid_password = False
+
+            if not has_valid_password:
+                track_activity(f'Failed MFA setup for user {user.user}. Invalid password.', ctx_less=True, display_in_ui=False)
+                flash('Invalid password. Please try again.', 'danger')
+                return render_template('mfa_setup.html', form=form)
+
             user.mfa_secrets = mfa_secret
             user.mfa_setup_complete = True
             db.session.commit()
