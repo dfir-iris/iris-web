@@ -504,9 +504,9 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
     edges: new vis.DataSet(edges),
   };
 
-  const options = {
+const options = {
     edges: {
-      smooth: {
+        smooth: {
             enabled: true,
             type: 'continuous',
             roundness: 0.5
@@ -517,27 +517,29 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
         improvedLayout: true
     },
     interaction: {
-      hideEdgesOnDrag: false,
-        tooltipDelay: 100
+        hideEdgesOnDrag: false,
+        tooltipDelay: 100,
+        zoomView: false
     },
-    height: (window.innerHeight- 250) + "px",
+    height: (window.innerHeight - 250) + "px",
     clickToUse: true,
     physics: {
         forceAtlas2Based: {
-          gravitationalConstant: -167,
-          centralGravity: 0.04,
-          springLength: 0,
-          springConstant: 0.02,
-          damping: 0.9
+            gravitationalConstant: -167,
+            centralGravity: 0.04,
+            springLength: 0,
+            springConstant: 0.02,
+            damping: 0.9
         },
         minVelocity: 0.41,
         solver: "forceAtlas2Based",
         timestep: 0.45
     }
-  };
+};
 
-    const container = document.getElementById(containerId);
-    const network = new vis.Network(container, data, options);
+const container = document.getElementById(containerId);
+const network = new vis.Network(container, data, options);
+
 
     // Create a MutationObserver to listen for DOM changes in the container
     const observer = new MutationObserver((mutations) => {
