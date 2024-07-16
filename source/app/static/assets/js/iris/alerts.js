@@ -809,21 +809,21 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
-function alertResolutionToARC(resolution) {
+function alertResolutionToARC(resolution, alert_id) {
     if (resolution === null) {
         return '';
     }
     switch (resolution.resolution_status_name) {
         case 'True Positive With Impact':
-            return `<span class="badge alert-bade-status badge-pill badge-danger mr-2">True Positive with impact</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-danger mr-2" id="alertResolution-${alert_id}" data-value="true_positive_with_impact">True Positive with impact</span>`
         case 'True Positive Without Impact':
-            return `<span class="badge alert-bade-status badge-pill badge-warning mr-2">True Positive without impact</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-warning mr-2" id="alertResolution-${alert_id}" data-value="true_positive_without_impact">True Positive without impact</span>`
         case 'False Positive':
-            return `<span class="badge alert-bade-status badge-pill badge-success mr-2">False Positive</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-success mr-2" id="alertResolution-${alert_id}" data-value="false_positive">False Positive</span>`
         case 'Legitimate':
-            return `<span class="badge alert-bade-status badge-pill badge-info mr-2">Legitimate</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-info mr-2" id="alertResolution-${alert_id}" data-value="legitimate">Legitimate</span>`
         case 'Unknown':
-            return `<span class="badge alert-bade-status badge-pill badge-light mr-2">Unknown resolution</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-light mr-2" id="alertResolution-${alert_id}" data-value="unknown">Unknown resolution</span>`
     }
 }
 
@@ -843,7 +843,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                      modulesOptionsIocReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
-  const alert_resolution = alertResolutionToARC(alert.resolution_status);
+  const alert_resolution = alertResolutionToARC(alert.resolution_status, alert.alert_id);
 
   if (alert.owner !== null) {
       alert.owner.user_name = filterXSS(alert.owner.user_name);
@@ -1549,6 +1549,10 @@ function delete_alert(alert_id) {
         });
 }
 
+function getAlertResolutionName(alert_id) {
+    return $(`#alertResolution-${alert_id}`).data('value');
+}
+
 async function editAlert(alert_id, close=false) {
 
     const alertTag = $('#editAlertTags');
@@ -1557,6 +1561,16 @@ async function editAlert(alert_id, close=false) {
     alertTag.val($(`#alertTags-${alert_id}`).text())
     set_suggest_tags(`editAlertTags`);
     $('#editAlertNote').val($(`#alertNote-${alert_id}`).text());
+
+    let alert_resolution = getAlertResolutionName(alert_id);
+    if (alert_resolution === '') {
+        alert_resolution = 'Unknown';
+    }
+
+    // Uncheck all radio buttons
+    $(`input[type='radio'][name='resolutionStatus']`).prop('checked', false);
+
+    $(`input[type='radio'][name='resolutionStatus'][value='${alert_resolution}']`).prop('checked', true);
 
     if (close) {
         confirmAlertEdition.text('Close alert');
