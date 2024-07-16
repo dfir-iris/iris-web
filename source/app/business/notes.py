@@ -120,7 +120,6 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
             if latest_version.note_title == request_data.get('note_title') and latest_version.note_content == request_data.get('note_content'):
                 no_changes = True
                 app.logger.debug(f"Note {identifier} has not changed, skipping versioning")
-                print(f"Note {identifier} has not changed, skipping versioning")
 
         if not no_changes:
             note_version = NoteRevisions(
@@ -128,7 +127,7 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
                 revision_number=revision_number,
                 note_title=note.note_title,
                 note_content=note.note_content,
-                note_user=note.note_user,
+                note_user=current_user.id,
                 revision_timestamp=datetime.utcnow()
             )
             db.session.add(note_version)
