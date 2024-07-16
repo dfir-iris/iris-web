@@ -631,7 +631,8 @@ def ac_api_case_requires(*access_level):
         def wrap(*args, **kwargs):
             if request.method == 'POST':
                 cookie_session = request.cookies.get('session')
-                if cookie_session:
+                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
+                if cookie_session and not is_api:
                     form = FlaskForm()
                     if not form.validate():
                         return response_error('Invalid CSRF token')
@@ -720,7 +721,8 @@ def ac_api_requires(*permissions):
         def wrap(*args, **kwargs):
             if request.method == 'POST':
                 cookie_session = request.cookies.get('session')
-                if cookie_session:
+                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
+                if cookie_session and not is_api:
                     form = FlaskForm()
                     if not form.validate():
                         return response_error('Invalid CSRF token')

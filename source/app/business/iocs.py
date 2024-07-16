@@ -50,7 +50,6 @@ def _load(request_data):
 
 
 def create(request_json, case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
     # TODO ideally schema validation should be done before, outside the business logic in the REST API
     #      for that the hook should be called after schema validation
@@ -83,7 +82,6 @@ def create(request_json, case_identifier):
 
 # TODO most probably this method should not require a case_identifier... Since the IOC gets modified for all cases...
 def update(identifier, request_json, case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
     try:
         ioc = get_ioc(identifier, caseid=case_identifier)
@@ -123,7 +121,6 @@ def update(identifier, request_json, case_identifier):
 
 
 def delete(identifier, case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
     call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
     ioc = get_ioc(identifier, case_identifier)

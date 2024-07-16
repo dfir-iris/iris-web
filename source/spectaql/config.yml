@@ -1,0 +1,21 @@
+spectaql:
+  logoFile: source/app/static/assets/img/logo-full-blue.png
+
+introspection:
+  url: http://127.0.0.1:8000/graphql
+  headers:
+    Authorization: Bearer B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594
+
+extensions:
+  graphqlScalarExamples: true
+
+info:
+  title: GraphQL DFIR-IRIS DOCUMENTATION
+  description: Welcome to DFIR-IRIS GraphQL Documentation.
+  x-introItems:
+    - title: IRIS API
+      description: To use these API endpoint, an API key is needed and can be found in every user profile under My settings > API Key.
+
+servers:
+  - url: https://v200.beta.dfir-iris.org/login
+    production: true
