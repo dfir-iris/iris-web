@@ -499,7 +499,7 @@ class TestsGraphQL(TestCase):
         description = body['data']['caseCreate']['case']['description']
         self.assertEqual(description, test_description)
 
-    def test_graphql_delete_case_should_not_fail(self):
+    def test_graphql_update_case_fail_due_to_delete_case(self):
         payload = {
             'query': '''mutation {
                             caseCreate(name: "case2", description: "Some description", clientId: 1) {
