@@ -151,13 +151,13 @@ class TestsRest(TestCase):
         self.assertEqual(1, response['ioc_type_id'])
 
     def test_get_ioc_should_return_ioc_type_id(self):
-        number = 1
+        ioc_type_id = 1
         case_identifier = self._subject.create_dummy_case()
-        body = {"ioc_type_id": number, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
+        body = {"ioc_type_id": ioc_type_id, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
         test = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         current_id = test['ioc_id']
         response = self._subject.get(f'/api/v2/iocs/{current_id}').json()
-        self.assertEqual(number, response['ioc_type_id'])
+        self.assertEqual(ioc_type_id, response['ioc_type_id'])
 
     def test_get_ioc_with_missing_ioc_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
@@ -215,34 +215,34 @@ class TestsRest(TestCase):
 
     def test_get_tasks_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        number = 2
-        body = {"task_assignees_id": [number], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
+        task_id = 2
+        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
                 "custom_attributes": {}}
         self._subject.add_tasks(case_identifier, body)
-        response = self._subject.get_tasks(number).json()
+        response = self._subject.get_tasks(task_id).json()
         self.assertEqual("dummy title", response['task_title'])
 
     def test_get_tasks_with_missing_ioc_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
-        number = 1
-        body = {"task_assignees_id": [number], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
+        task_id = 1
+        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
         self._subject.add_tasks(case_identifier, body)
         response = self._subject.get_tasks(None).json()
         self.assertEqual('error', response['status'])
 
     def test_delete_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        number = 1
-        body = {"task_assignees_id": [number], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
+        task_id = 1
+        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
                 "custom_attributes": {}}
         self._subject.add_tasks(case_identifier, body)
-        test = self._subject.delete_tasks(number)
+        test = self._subject.delete_tasks(task_id)
         self.assertEqual(204, test.status_code)
 
     def test_delete_task_with_missing_task_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
-        number = 1
-        body = {"task_assignees_id": [number], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
+        task_id = 1
+        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
                 "custom_attributes": {}}
         self._subject.add_tasks(case_identifier, body)
         test = self._subject.delete_tasks(None)
