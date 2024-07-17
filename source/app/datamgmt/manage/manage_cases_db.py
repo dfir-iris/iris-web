@@ -397,6 +397,8 @@ def delete_case(case_id):
     return True
 
 
+# TODO is it really necessary to have both case_name and search_value
+#      as of now, it seems case_name does a case.name.ilike, whereas search_value does a case.name.like
 def build_filter_case_query(current_user_id,
                             start_open_date: str = None,
                             end_open_date: str = None,
