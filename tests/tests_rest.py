@@ -265,3 +265,7 @@ class TestsRest(TestCase):
         self._subject.add_tasks(case_identifier, body)
         test = self._subject.delete_tasks(None)
         self.assertEqual(404, test.status_code)
+
+    def test_get_cases_should_not_fail(self):
+        response = self._subject.get('/api/v2/cases')
+        self.assertEqual(200, response.status_code)
