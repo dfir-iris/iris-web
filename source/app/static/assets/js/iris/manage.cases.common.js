@@ -76,7 +76,7 @@ function remove_case(id) {
             if (willDelete) {
                 delete_request_api(`/api/v2/cases/${id}`)
                 .done((data, textStatus) => {
-                    if (textStatus === 'success') {
+                    if (textStatus !== 'nocontent') {
                         notify_error(data);
                         return;
                     }
