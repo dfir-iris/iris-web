@@ -293,7 +293,7 @@ function delete_ioc(ioc_id) {
         if (doDelete) {
             delete_request_api('/api/v2/iocs/' + ioc_id)
             .done((data, textStatus) => {
-                if (textStatus === 'success') {
+                if (textStatus === 'nocontent') {
                     reload_iocs();
                     notify_success(textStatus);
                     $('#modal_add_ioc').modal('hide');
