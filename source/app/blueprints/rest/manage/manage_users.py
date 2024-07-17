@@ -25,6 +25,7 @@ from flask_login import current_user
 
 from app import app
 from app import db
+from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.datamgmt.manage.manage_users_db import add_case_access_to_user
 from app.datamgmt.manage.manage_users_db import update_user_customers
 from app.datamgmt.manage.manage_users_db import get_filtered_users
@@ -74,16 +75,9 @@ def manage_users_filter():
     user_ids_str = request.args.get('user_ids', None, type=str)
     sort = request.args.get('sort', 'desc', type=str)
 
-
     if user_ids_str:
         try:
-
-            if ',' in user_ids_str:
-                user_ids_str = [int(user_id) for user_id in user_ids_str.split(',')]
-
-            else:
-                user_ids_str = [int(user_ids_str)]
-
+            user_ids_str = parse_comma_separated_identifiers(user_ids_str)
         except ValueError:
             return response_error('Invalid user_ids parameter')
 

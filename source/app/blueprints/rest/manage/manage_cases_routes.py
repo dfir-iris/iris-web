@@ -27,6 +27,7 @@ from werkzeug import Response
 from werkzeug.utils import secure_filename
 
 from app import db
+from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
@@ -90,7 +91,7 @@ def manage_case_filter() -> Response:
 
     if case_ids_str:
         try:
-            case_ids_str = [int(case_id) for case_id in case_ids_str.split(',')]
+            case_ids_str = parse_comma_separated_identifiers(case_ids_str)
 
         except ValueError:
             return response_error('Invalid case id')

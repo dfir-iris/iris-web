@@ -27,6 +27,7 @@ from werkzeug import Response
 
 import app
 from app import db
+from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.datamgmt.alerts.alerts_db import get_alert_by_id
@@ -83,11 +84,7 @@ def alerts_list_route() -> Response:
     if alert_ids_str:
         try:
 
-            if ',' in alert_ids_str:
-                alert_ids = [int(alert_id) for alert_id in alert_ids_str.split(',')]
-
-            else:
-                alert_ids = [int(alert_ids_str)]
+            alert_ids = parse_comma_separated_identifiers(alert_ids_str)
 
         except ValueError:
             return response_error('Invalid alert id')
@@ -97,11 +94,7 @@ def alerts_list_route() -> Response:
     if alert_assets_str:
         try:
 
-            if ',' in alert_assets_str:
-                alert_assets = [str(alert_asset) for alert_asset in alert_assets_str.split(',')]
-
-            else:
-                alert_assets = [str(alert_assets_str)]
+            alert_assets = parse_comma_separated_identifiers(alert_assets_str)
 
         except ValueError:
             return response_error('Invalid alert asset')
@@ -111,11 +104,7 @@ def alerts_list_route() -> Response:
     if alert_iocs_str:
         try:
 
-            if ',' in alert_iocs_str:
-                alert_iocs = [str(alert_ioc) for alert_ioc in alert_iocs_str.split(',')]
-
-            else:
-                alert_iocs = [str(alert_iocs_str)]
+            alert_iocs = parse_comma_separated_identifiers(alert_iocs_str)
 
         except ValueError:
             return response_error('Invalid alert ioc')
@@ -791,8 +780,7 @@ def alerts_batch_merge_route() -> Response:
 
     try:
         # Merge the alerts into a case
-        for alert_id in alert_ids.split(','):
-            alert_id = int(alert_id)
+        for alert_id in parse_comma_separated_identifiers(alert_ids):
 
             alert = get_alert_by_id(alert_id)
             if not alert:
@@ -861,8 +849,7 @@ def alerts_batch_escalate_route() -> Response:
 
     try:
         # Merge the alerts into a case
-        for alert_id in alert_ids.split(','):
-            alert_id = int(alert_id)
+        for alert_id in parse_comma_separated_identifiers(alert_ids):
 
             alert = get_alert_by_id(alert_id)
             if not alert:
