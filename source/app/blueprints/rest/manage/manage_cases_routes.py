@@ -90,12 +90,7 @@ def manage_case_filter() -> Response:
 
     if case_ids_str:
         try:
-
-            if ',' in case_ids_str:
-                case_ids_str = [int(alert_id) for alert_id in case_ids_str.split(',')]
-
-            else:
-                case_ids_str = [int(case_ids_str)]
+            case_ids_str = [int(case_id) for case_id in case_ids_str.split(',')]
 
         except ValueError:
             return response_error('Invalid case id')
