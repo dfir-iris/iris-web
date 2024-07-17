@@ -178,6 +178,24 @@ class TestsRest(TestCase):
         response = self._subject.delete(f'/api/v2/iocs/None')
         self.assertEqual(404, response.status_code)
 
+    def test_create_alert_should_not_fail(self):
+        body = {
+            'alert_title': 'title',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1
+        }
+        response = self._subject.create('/alerts/add', body)
+        self.assertEqual(200, response.status_code)
+
+    def test_alerts_filter_with_alerts_filter_should_not_fail(self):
+        response = self._subject.get('/alerts/filter', query_parameters={'alert_assets': 'some assert name'})
+        self.assertEqual(200, response.status_code)
+
+    def test_alerts_filter_with_iocs_filter_should_not_fail(self):
+        response = self._subject.get('/alerts/filter', query_parameters={'alert_iocs': 'some ioc value'})
+        self.assertEqual(200, response.status_code)
+
     def test_merge_alert_into_a_case_should_not_fail(self):
         case_identifier = self._subject.create_dummy_case()
         body = {

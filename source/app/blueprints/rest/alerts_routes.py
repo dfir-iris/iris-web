@@ -93,8 +93,7 @@ def alerts_list_route() -> Response:
     alert_assets = None
     if alert_assets_str:
         try:
-
-            alert_assets = parse_comma_separated_identifiers(alert_assets_str)
+            alert_assets = [str(alert_asset) for alert_asset in alert_assets_str.split(',')]
 
         except ValueError:
             return response_error('Invalid alert asset')
@@ -103,8 +102,7 @@ def alerts_list_route() -> Response:
     alert_iocs = None
     if alert_iocs_str:
         try:
-
-            alert_iocs = parse_comma_separated_identifiers(alert_iocs_str)
+            alert_iocs = [str(alert_ioc) for alert_ioc in alert_iocs_str.split(',')]
 
         except ValueError:
             return response_error('Invalid alert ioc')
