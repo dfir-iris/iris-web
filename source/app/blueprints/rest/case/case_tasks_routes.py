@@ -29,6 +29,8 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
+from app.business.errors import BusinessProcessingError
+from app.business.tasks import delete
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -253,20 +255,11 @@ def case_edit_task(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_delete_task(cur_id, caseid):
-    call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
-    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
-    if not task:
-        return response_error("Invalid task ID for this case")
-
-    delete_task(task.id)
-
-    update_tasks_state(caseid=caseid)
-
-    call_modules_hook('on_postload_task_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"deleted task \"{task.task_title}\"")
-
-    return response_success("Task deleted")
+    try:
+        msg = delete(cur_id, caseid)
+        return response_success(msg)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
 
 
 @case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['DELETE'])
