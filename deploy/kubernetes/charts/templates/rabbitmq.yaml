@@ -15,6 +15,17 @@ spec:
     spec:
       containers:
       - image: "{{ .Values.rabbitmq.image}}:{{ .Values.rabbitmq.tag}}"
+        resources:
+            {{- if and .Values.rabbitmq.limits_memory .Values.rabbitmq.limits_cpu .Values.rabbitmq.requests_memory .Values.rabbitmq.requests_cpu -}}
+            limits:
+              memory: {{ .Values.rabbitmq.limits_memory }}
+              cpu: {{ .Values.rabbitmq.limits_cpu }}
+            requests:
+              memory: {{ .Values.rabbitmq.requests_memory }}
+              cpu: {{ .Values.rabbitmq.requests_cpu }}
+            {{- else -}}
+            {}
+            {{- end -}}
         imagePullPolicy: {{ .Values.rabbitmq.imagePullPolicy}}
         name:  {{ .Values.rabbitmq.name }}
         ports:

@@ -50,6 +50,17 @@ spec:
     spec:
       containers:
         - name: {{ .Values.postgres.name }}
+          resources:
+            {{- if and .Values.postgres.limits_memory .Values.postgres.limits_cpu .Values.postgres.requests_memory .Values.postgres.requests_cpu -}}
+            limits:
+              memory: {{ .Values.postgres.limits_memory }}
+              cpu: {{ .Values.postgres.limits_cpu }}
+            requests:
+              memory: {{ .Values.postgres.requests_memory }}
+              cpu: {{ .Values.postgres.requests_cpu }}
+            {{- else -}}
+            {}
+            {{- end -}}
           image: "{{ .Values.postgres.image}}:{{ .Values.postgres.tag }}"
           imagePullPolicy: "{{ .Values.postgres.imagePullPolicy }}"
 
