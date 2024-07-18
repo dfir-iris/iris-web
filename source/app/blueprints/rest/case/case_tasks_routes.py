@@ -30,7 +30,7 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.tasks import delete
+from app.business.tasks import delete, create
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -115,32 +115,13 @@ def case_task_statusupdate(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_task(caseid):
+
+    task_schema = CaseTaskSchema()
     try:
-        # validate before saving
-        task_schema = CaseTaskSchema()
-        request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
-
-        if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
-            return response_error('task_assignee_id is not valid anymore since v1.5.0')
-
-        task_assignee_list = request_data['task_assignees_id']
-        del request_data['task_assignees_id']
-        task = task_schema.load(request_data)
-
-        ctask = add_task(task=task,
-                         assignee_id_list=task_assignee_list,
-                         user_id=current_user.id,
-                         caseid=caseid
-                         )
-
-        ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=caseid)
-
-        if ctask:
-            track_activity(f"added task \"{ctask.task_title}\"", caseid=caseid)
-            return response_success("Task '{}' added".format(ctask.task_title), data=task_schema.dump(ctask))
-
-        return response_error("Unable to create task for internal reasons")
-
+        case, msg = create(caseid, request.get_json())
+        return response_success(msg, data=task_schema.dump(case))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
 
