@@ -19,3 +19,11 @@
 
 def parse_comma_separated_identifiers(identifiers: str):
     return [int(identifier) for identifier in identifiers.split(',')]
+
+
+def parse_boolean(parameter: str):
+    if parameter == 'true':
+        return True
+    if parameter == 'false':
+        return False
+    raise ValueError(f'Expected true or false, got {parameter}')

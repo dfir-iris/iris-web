@@ -32,6 +32,7 @@ from app import app
 from app import db
 from app import socket_io
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
+from app.blueprints.rest.parsing import parse_boolean
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_deleted
@@ -393,6 +394,7 @@ def get_cases() -> Response:
     case_soc_id = request.args.get('case_soc_id', None, type=str)
     start_open_date = request.args.get('start_open_date', None, type=str)
     end_open_date = request.args.get('end_open_date', None, type=str)
+    is_open = request.args.get('is_open', None, type=parse_boolean)
 
     filtered_cases = get_filtered_cases(
         case_ids=case_ids_str,
@@ -412,7 +414,8 @@ def get_cases() -> Response:
         per_page=per_page,
         current_user_id=current_user.id,
         sort_by=order_by,
-        sort_dir=sort_dir
+        sort_dir=sort_dir,
+        is_open=is_open
     )
     if filtered_cases is None:
         return response_api_error('Filtering error')
