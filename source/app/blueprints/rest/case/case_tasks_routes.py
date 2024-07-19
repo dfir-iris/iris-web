@@ -30,7 +30,9 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.tasks import delete, create
+from app.business.tasks import delete
+from app.business.tasks import create
+from app.business.tasks import update
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -192,41 +194,8 @@ def api_case_task_view(cur_id, caseid):
 @ac_api_requires()
 def case_edit_task(cur_id, caseid):
     try:
-        task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
-        if not task:
-            return response_error("Invalid task ID for this case")
-
-        request_data = call_modules_hook('on_preload_task_update', data=request.get_json(), caseid=caseid)
-
-        if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
-            return response_error('task_assignee_id is not valid anymore since v1.5.0')
-
-        # validate before saving
-        task_assignee_list = request_data['task_assignees_id']
-        del request_data['task_assignees_id']
-        task_schema = CaseTaskSchema()
-
-        request_data['id'] = cur_id
-        task = task_schema.load(request_data, instance=task)
-
-        task.task_userid_update = current_user.id
-        task.task_last_update = datetime.utcnow()
-
-        update_task_assignees(task, task_assignee_list, caseid)
-
-        update_tasks_state(caseid=caseid)
-
-        db.session.commit()
-
-        task = call_modules_hook('on_postload_task_update', data=task, caseid=caseid)
-
-        if task:
-            track_activity(f"updated task \"{task.task_title}\" (status {task.status.status_name})",
-                           caseid=caseid)
-            return response_success("Task '{}' updated".format(task.task_title), data=task_schema.dump(task))
-
-        return response_error("Unable to update task for internal reasons")
-
+        msg = update(cur_id, caseid, request.get_json())
+        return response_success(msg)
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
 
