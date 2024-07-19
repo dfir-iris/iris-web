@@ -113,17 +113,6 @@ function refresh_client_users(customer_id) {
         })
 }
 
-function refresh_client_cases(customer_id) {
-    get_raw_request_api(`/manage/cases/filter?case_customer_id=${customer_id}`)
-        .done((data) => {
-            if (api_request_failed(data)) {
-                return;
-            }
-            cases_table.api().clear().rows.add(data.data.cases).draw();
-        })
-
-}
-
 $(document).ready(function() {
 
     let customer_id = $('#customer_id').val();
