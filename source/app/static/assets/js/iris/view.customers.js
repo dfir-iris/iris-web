@@ -264,23 +264,22 @@ $(document).ready(function() {
         ],
         "serverSide": true,
         "ajax": {
-            "url": "/manage/cases/filter",
+            "url": "/api/v2/cases",
             "type": "GET",
-            "data": function (d) {
-                let page = Math.floor(d.start / d.length) + 1;
-                d.page = page;
+            "data": function(d) {
+                d.page = Math.floor(d.start / d.length) + 1;
                 d.per_page = d.length;
                 d.case_customer_id = customer_id;
                 d.order_by = d.columns[d.order[0].column].data;
                 d.sort_dir = d.order[0].dir;
+                console.log(d)
+                d.case_name = d.search.value;
             },
-            "dataSrc": function (json) {
-                json.recordsTotal = json.data.total;
-                json.recordsFiltered = json.data.total;
-                json.draw = json.data.draw
-                json.data = json.data.cases;
+            "dataSrc": function(json) {
+                json.recordsTotal = json.total;
+                json.recordsFiltered = json.total;
 
-                return json.data;
+                return json.cases;
             }
         }
     });

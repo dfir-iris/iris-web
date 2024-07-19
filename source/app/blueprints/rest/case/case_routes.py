@@ -393,7 +393,6 @@ def get_cases() -> Response:
     case_soc_id = request.args.get('case_soc_id', None, type=str)
     start_open_date = request.args.get('start_open_date', None, type=str)
     end_open_date = request.args.get('end_open_date', None, type=str)
-    search_value = request.args.get('search[value]', type=str)  # Get the search value from the request
 
     filtered_cases = get_filtered_cases(
         case_ids=case_ids_str,
@@ -408,7 +407,7 @@ def get_cases() -> Response:
         case_soc_id=case_soc_id,
         start_open_date=start_open_date,
         end_open_date=end_open_date,
-        search_value=search_value,
+        search_value='',
         page=page,
         per_page=per_page,
         current_user_id=current_user.id,
