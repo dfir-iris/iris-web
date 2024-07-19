@@ -284,7 +284,11 @@ function get_cases_overview(silent, show_full=false) {
 
      $('#overviewTableTitle').text(show_full ? 'All cases' : 'Open cases');
 
-    get_raw_request_api('/overview/filter?cid=' + get_caseid() + (show_full ? '&show_closed=true' : ''))
+    let show_closed = '';
+    if (show_full) {
+        show_closed = '&show_closed=true'
+    }
+    get_raw_request_api(`/overview/filter?cid=${get_caseid()}${show_closed}`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
