@@ -269,3 +269,18 @@ class TestsRest(TestCase):
     def test_get_cases_should_not_fail(self):
         response = self._subject.get('/api/v2/cases')
         self.assertEqual(200, response.status_code)
+
+    def test_get_cases_should_filter_on_case_name(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'test_get_cases_should_filter_on_case_name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        case_identifier = response['case_id']
+        filters = {'case_name': 'test_get_cases_should_filter_on_case_name'}
+        response = self._subject.get('/api/v2/cases', query_parameters=filters).json()
+        identifiers = []
+        for case in response['cases']:
+            identifiers.append(case['case_id'])
+        self.assertIn(case_identifier, identifiers)
