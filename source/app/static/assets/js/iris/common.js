@@ -331,7 +331,7 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
             }
         },
         error: function(jqXHR) {
-            apî_error();
+            api_error();
         }
     });
 }
@@ -348,7 +348,7 @@ function delete_request_api(uri, data, propagate_api_error, beforeSend_fn) {
             }
         },
         error: function(jqXHR) {
-            apî_error();
+            api_error();
         }
     });
 }
