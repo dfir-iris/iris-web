@@ -1091,11 +1091,7 @@ function goto_case_number() {
     get_request_api(`/api/v2/cases/${case_id}`, true, null, case_id)
     .done(function(data, textStatus) {
         if (textStatus !== 'success') {
-            let error_message = data.message;
-            if (error_message.length === 0) {
-                error_message = 'Operation failed';
-            }
-            notify_error(error_message);
+            notify_api_request_error(data);
             return;
         }
         var url = new window.URL(document.location);
