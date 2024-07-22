@@ -60,7 +60,7 @@ function add_task() {
 
             post_request_api('/api/v2/cases/'+ get_caseid() + '/tasks', JSON.stringify(data_sent), true)
             .done((data, textStatus) => {
-                if(textStatus == 'success') {
+                if(textStatus === 'success') {
                     get_tasks();
                     $('#modal_add_task').modal('hide');
                 }
@@ -133,9 +133,9 @@ function delete_task(id) {
     do_deletion_prompt("You are about to delete task #" + id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api("tasks/delete/" + id)
-            .done((data) => {
-                if(notify_auto_api(data)) {
+            delete_request_api('/api/v2/tasks/' + id)
+            .done((data, textStatus) => {
+                 if (textStatus === 'nocontent') {
                     get_tasks();
                     $('#modal_add_task').modal('hide');
                 }
