@@ -58,9 +58,9 @@ function add_task() {
 
             data_sent['custom_attributes'] = attributes;
 
-            post_request_api('tasks/add', JSON.stringify(data_sent), true)
-            .done((data) => {
-                if(notify_auto_api(data)) {
+            post_request_api('/api/v2/cases/'+ get_caseid() + '/tasks', JSON.stringify(data_sent), true)
+            .done((data, textStatus) => {
+                if(textStatus == 'success') {
                     get_tasks();
                     $('#modal_add_task').modal('hide');
                 }
