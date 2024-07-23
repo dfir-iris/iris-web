@@ -57,8 +57,8 @@ function add_task() {
             if (has_error){return false;}
 
             data_sent['custom_attributes'] = attributes;
-
-            post_request_api('/api/v2/cases/'+ get_caseid() + '/tasks', JSON.stringify(data_sent), true)
+            case_id =  get_caseid()
+            post_request_api(`/api/v2/cases/${case_id}/tasks`, JSON.stringify(data_sent), true)
             .done((data, textStatus) => {
                 if(textStatus === 'success') {
                     get_tasks();
