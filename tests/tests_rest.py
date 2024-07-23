@@ -231,7 +231,7 @@ class TestsRest(TestCase):
         response = self._subject.add_tasks(case_identifier, body)
         self.assertEqual(400, response.status_code)
 
-    def test_get_tasks_should_return_201(self):
+    def test_get_tasks_should_return_dummy_title(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 2
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
@@ -240,7 +240,7 @@ class TestsRest(TestCase):
         response = self._subject.get_tasks(task_id).json()
         self.assertEqual("dummy title", response['task_title'])
 
-    def test_get_tasks_with_missing_ioc_identifier_should_return_400(self):
+    def test_get_tasks_with_missing_ioc_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
@@ -248,7 +248,7 @@ class TestsRest(TestCase):
         response = self._subject.get_tasks(None).json()
         self.assertEqual('error', response['status'])
 
-    def test_delete_task_should_return_201(self):
+    def test_delete_task_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
@@ -257,7 +257,7 @@ class TestsRest(TestCase):
         test = self._subject.delete_tasks(task_id)
         self.assertEqual(204, test.status_code)
 
-    def test_delete_task_with_missing_task_identifier_should_return_400(self):
+    def test_delete_task_with_missing_task_identifier_should_return_404(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
