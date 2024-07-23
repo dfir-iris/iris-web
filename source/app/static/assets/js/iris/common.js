@@ -304,7 +304,8 @@ function get_raw_request_api(uri, propagate_api_error, beforeSend_fn) {
 function set_page_warning(msg) {
     $('#page_warning').text(msg);
 }
-function api_error(){
+
+function api_error(propagate_api_error){
   if (propagate_api_error) {
                 if(jqXHR.responseJSON && jqXHR.status == 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
@@ -319,7 +320,8 @@ function api_error(){
                 }
             }
 }
-function sendBefore() {
+
+function sendBefore(beforeSend_fn, settings) {
             if (beforeSend_fn !== undefined) {
                 beforeSend_fn(jqXHR, settings);
             }
@@ -332,10 +334,10 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
         data: data,
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
-            sendBefore();
+            sendBefore(beforeSend_fn, settings);
         },
         error: function(jqXHR) {
-            api_error();
+            api_error(propagate_api_error);
         }
     });
 }
@@ -347,10 +349,10 @@ function delete_request_api(uri, data, propagate_api_error, beforeSend_fn) {
         data: data,
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
-             sendBefore();
+             sendBefore(beforeSend_fn, settings);
         },
         error: function(jqXHR) {
-            api_error();
+            api_error(propagate_api_error);
         }
     });
 }
@@ -406,10 +408,10 @@ function post_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
         contentType: false,
         processData: false,
         beforeSend: function(jqXHR, settings) {
-             sendBefore();
+             sendBefore(beforeSend_fn, settings);
         },
         error: function(jqXHR) {
-            api_error();
+            api_error(propagate_api_error);
         }
     });
 }
