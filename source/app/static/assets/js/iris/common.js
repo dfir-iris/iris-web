@@ -1093,7 +1093,7 @@ function goto_case_number() {
     get_request_api(`/api/v2/cases/${case_id}`, true, null, case_id)
     .done(function(data, textStatus) {
         if (textStatus !== 'success') {
-            notify_api_request_error(data);
+            notify_error('Operation failed');
             return;
         }
         var url = new window.URL(document.location);

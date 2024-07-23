@@ -73,7 +73,7 @@ function add_ioc() {
                     }
 
                     data['ioc_value'] = iocs_list[index];
-                    case_id =  get_caseid()
+                    case_id = get_caseid()
                     post_request_api(`/api/v2/cases/${case_id}/iocs`, JSON.stringify(data), true, function () {
                         $('#submit_new_ioc').text('Saving data..')
                             .attr("disabled", true)
@@ -83,13 +83,13 @@ function add_ioc() {
                     .done((data, textStatus) => {
                         if (textStatus === 'success') {
                                 reload_iocs();
-                                notify_success(textStatus);
+                                notify_success('IOC added');
                                 if (index == (iocs_list.length - 1)) {
                                     $('#modal_add_ioc').modal('hide');
                                 }
                         } else {
                             $('#submit_new_ioc').text('Save again');
-                            swal("Oh no !", data.message, "error")
+                            swal("Oh no !", data, "error")
                         }
                     })
                     .always(function () {
@@ -112,11 +112,11 @@ function add_ioc() {
                 .done((data, textStatus) => {
                     if (textStatus === 'success') {
                         reload_iocs();
-                        notify_success(textStatus);
+                        notify_success('IOC added');
                         $('#modal_add_ioc').modal('hide');
                     } else {
                         $('#submit_new_ioc').text('Save again');
-                        swal("Oh no !", data.message, "error")
+                        swal("Oh no !", data, "error")
                     }
                 })
                 .always(function () {
@@ -297,7 +297,7 @@ function delete_ioc(ioc_id) {
             .done((data, textStatus) => {
                 if (textStatus === 'nocontent') {
                     reload_iocs();
-                    notify_success(textStatus);
+                    notify_success(`IOC ${ioc_id} deleted`);
                     $('#modal_add_ioc').modal('hide');
 
                 } else {
