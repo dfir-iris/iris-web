@@ -56,7 +56,6 @@ def list_assets():
         row_dict['asset_icon_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'],row_dict['asset_icon_compromised'])
         row_dict['asset_icon_not_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'],row_dict['asset_icon_not_compromised'])
         data.append(row_dict)
-    # data = [row._asdict() for row in assets]
 
     # Return the assets
     return response_success("", data=data)

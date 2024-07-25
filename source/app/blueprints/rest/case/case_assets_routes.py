@@ -341,8 +341,6 @@ def case_comment_asset_list(cur_id, caseid):
     if asset_comments is None:
         return response_error('Invalid asset ID')
 
-    # CommentSchema(many=True).dump(task_comments)
-    # res = [com._asdict() for com in task_comments]
     return response_success(data=CommentSchema(many=True).dump(asset_comments))
 
 

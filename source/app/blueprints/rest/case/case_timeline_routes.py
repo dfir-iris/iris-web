@@ -1052,7 +1052,6 @@ def case_events_upload_csv(caseid):
     except Exception as e:
         return response_error(msg="Data error", data={"Error": f"{e}"})
 
-    # db.session.commit()
     try:
         session.commit()
     except:
