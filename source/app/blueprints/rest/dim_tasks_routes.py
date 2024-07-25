@@ -193,7 +193,7 @@ def list_dim_tasks(count):
         tkp['user'] = "Unknown"
 
         try:
-            tinfo = row.result
+            _ = row.result
         except AttributeError:
             # Legacy task
             data.append(tkp)
