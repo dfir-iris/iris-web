@@ -95,8 +95,7 @@ def case_ioc_state(caseid):
     os = get_ioc_state(caseid=caseid)
     if os:
         return response_success(data=os)
-    else:
-        return response_error('No IOC state for this case.')
+    return response_error('No IOC state for this case.')
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/add', methods=['POST'])
