@@ -73,9 +73,6 @@ class Iris:
     def create(self, path, body, query_parameters=None):
         return self._api.post(path, body, query_parameters)
 
-    def get(self, path, query_parameters=None):
-        return self._api.get(path, query_parameters=query_parameters)
-
     def delete(self, path):
         return self._api.delete(path)
 
