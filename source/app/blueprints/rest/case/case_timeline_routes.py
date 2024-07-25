@@ -439,7 +439,7 @@ def case_filter_timeline(caseid):
     if event_ids:
         try:
             event_ids = [int(event_id) for event_id in event_ids]
-        except Exception as e:
+        except Exception as _:
             return response_error('Invalid event id')
 
         condition = and_(condition,
