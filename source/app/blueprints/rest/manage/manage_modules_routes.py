@@ -94,7 +94,6 @@ def add_module():
 @manage_modules_rest_blueprint.route('/manage/modules/set-parameter/<param_name>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def update_module_param(param_name):
-
     if request.json is None:
         return response_error('Invalid request')
 
@@ -121,7 +120,6 @@ def update_module_param(param_name):
 @manage_modules_rest_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def enable_module(mod_id):
-
     module_name = iris_module_name_from_id(mod_id)
     if module_name is None:
         return response_error('Invalid module ID')
@@ -142,7 +140,6 @@ def enable_module(mod_id):
 @ac_api_requires(Permissions.server_administrator)
 def disable_module(module_id):
     if iris_module_disable_by_id(module_id):
-
         track_activity(f"IRIS module #{module_id} disabled", ctx_less=True)
         return response_success('Module disabled')
 
@@ -166,7 +163,6 @@ def view_delete_module(module_id):
 @manage_modules_rest_blueprint.route('/manage/modules/export-config/<int:module_id>', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
 def export_mod_config(module_id):
-
     mod_config, mod_name, _ = get_module_config_from_id(module_id)
     if mod_name:
         data = {
@@ -181,8 +177,7 @@ def export_mod_config(module_id):
 @manage_modules_rest_blueprint.route('/manage/modules/import-config/<int:module_id>', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def import_mod_config(module_id):
-
-    mod_config, mod_name, _ = get_module_config_from_id(module_id)
+    mod_config, _, _ = get_module_config_from_id(module_id)
     logs = []
     parameters_data = request.get_json().get('module_configuration')
 
