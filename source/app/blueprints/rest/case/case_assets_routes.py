@@ -296,7 +296,7 @@ def asset_update(cur_id, caseid):
         db.session.commit()
 
         if hasattr(asset_schema, 'ioc_links'):
-            errors, logs = set_ioc_links(asset_schema.ioc_links, asset.asset_id)
+            errors, _ = set_ioc_links(asset_schema.ioc_links, asset.asset_id)
             if errors:
                 return response_error(f'Encountered errors while linking IOC. Asset has still been updated.')
 
