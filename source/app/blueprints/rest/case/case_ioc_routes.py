@@ -67,8 +67,7 @@ case_ioc_rest_blueprint = Blueprint('case_ioc_rest', __name__)
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
 
-    ret = {}
-    ret['ioc'] = []
+    ret = {'ioc': []}
 
     for ioc in iocs:
         out = ioc._asdict()

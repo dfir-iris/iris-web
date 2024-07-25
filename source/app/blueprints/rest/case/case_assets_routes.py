@@ -70,8 +70,7 @@ def case_list_assets(caseid):
     assets = get_assets(caseid)
     customer_id = get_case_client_id(caseid)
 
-    ret = {}
-    ret['assets'] = []
+    ret = {'assets': []}
 
     ioc_links_req = get_assets_ioc_links(caseid)
 
