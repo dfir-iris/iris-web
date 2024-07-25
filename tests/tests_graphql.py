@@ -405,13 +405,7 @@ class TestsGraphQL(TestCase):
         case_identifier = 1
         case_identifier_2 = 2
         ioc_value = self._generate_new_dummy_ioc_value()
-        payload = {
-            'query': f''' mutation {{ 
-                                     caseCreate(name: "case2", description: "test", clientId: 1) {{
-                                     case {{ description }}
-                                }}
-                            }}'''
-        }
+        payload = {'query': ' mutation { caseCreate(name: "case2", description: "test", clientId: 1) { case { description } } }'}
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''mutation {{
@@ -454,13 +448,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_case_should_return_error_ioc_when_permission_denied(self):
         user = self._subject.create_user(self._generate_new_dummy_user_name())
-        payload = {
-            'query': f''' mutation {{
-                                                     caseCreate(name: "case", description: "test_ioc", clientId: 1) {{
-                                                     case {{ caseId }}
-                                                }}
-                                            }}'''
-        }
+        payload = { 'query': ' mutation { caseCreate(name: "case", description: "test_ioc", clientId: 1) { case { caseId } } }'}
         body = self._subject.execute_graphql_query(payload)
         case_identifier = body['data']['caseCreate']['case']['caseId']
         ioc_value = self._generate_new_dummy_ioc_value()
@@ -524,13 +512,7 @@ class TestsGraphQL(TestCase):
         self.assertIn('errors', body)
 
     def test_graphql_delete_case_should_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                                           caseCreate(name: "case2", description: "Some description", clientId: 1) {{
-                                                         case {{ caseId }}
-                                           }}
-                                       }}'''
-        }
+        payload = {'query': 'mutation {caseCreate(name: "case2", description: "Some description", clientId: 1) { case { caseId } } }'}
         response = self._subject.execute_graphql_query(payload)
         case_identifier = response['data']['caseCreate']['case']['caseId']
         payload2 = {
@@ -595,7 +577,7 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         case_identifier = response['data']['caseCreate']['case']['caseId']
         payload = {
-            'query': f'''query {{ cases {{ edges {{ node {{ caseId }} }} }} }}'''
+            'query': 'query { cases { edges { node { caseId } } } }'
         }
         response = self._subject.execute_graphql_query(payload)
         case_identifiers = []
@@ -669,13 +651,7 @@ class TestsGraphQL(TestCase):
         self.assertEqual(2, response['data']['caseUpdate']['case']['classificationId'])
 
     def test_graphql_update_case_with_optional_parameter_severityId(self):
-        payload = {
-            'query': ''' mutation {
-                         caseUpdate(caseId: 1, severityId: 1) { 
-                             case { severityId } 
-                         } 
-                    }'''
-        }
+        payload = {'query': 'mutation { caseUpdate(caseId: 1, severityId: 1) { case { severityId }  } }'}
         body = self._subject.execute_graphql_query(payload)
         self.assertEqual(1, body['data']['caseUpdate']['case']['severityId'])
 
@@ -724,14 +700,8 @@ class TestsGraphQL(TestCase):
         self.assertEqual(1, body['data']['caseUpdate']['case']['reviewStatusId'])
 
     def test_graphql_query_ioc_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                                   caseCreate(name: "case2", description: "Some description", clientId: 1,
-                                   socId: "1", classificationId : 1) {{
-                                        case {{ caseId }}
-                                   }}
-                             }}'''
-        }
+        payload = {'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
+                            'caseId } } }'}
         body = self._subject.execute_graphql_query(payload)
         case_identifier = body['data']['caseCreate']['case']['caseId']
         ioc_value = self._generate_new_dummy_ioc_value()
@@ -855,26 +825,14 @@ class TestsGraphQL(TestCase):
         self.assertEqual('"test"', response['data']['iocUpdate']['ioc']['modificationHistory'])
 
     def test_cursor_first_after(self):
-        payload = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ caseId }}
-                                                       }}
-                                                   }}'''
-        }
+        payload = {'query': 'mutation {caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) { case { '
+                            'caseId }}'}
         self._subject.execute_graphql_query(payload)
         case_id = 2
         self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''query {{ cases
-                     {{ edges {{ node {{ caseId name }} cursor }} }} }}'''
-        }
+        payload = {'query': 'query { cases { edges { node { caseId name } cursor } } }'}
         self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''query {{ cases(first:1, after:"YXJyYXljb25uZWN0aW9uOjA=")
-             {{ edges {{ node {{ caseId }} cursor }} }} }}'''
-        }
+        payload = { 'query': 'query { cases(first:1, after:"YXJyYXljb25uZWN0aW9uOjA="){ edges { node { caseId } cursor } } }'}
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
             test_case_id = case['node']['caseId']
@@ -883,31 +841,15 @@ class TestsGraphQL(TestCase):
     def test_graphql_cases_classificationId_should_not_fail(self):
         classification_id = 1
         payload = {
-            'query': f'''mutation {{
-                                 caseCreate(name: "case1", description: "Some description", clientId: 1, 
-                                            socId: "1", classificationId : {classification_id}) {{
-                                                         case {{ caseId }}
-                                                               }}
-                                                           }}'''
-        }
+            'query': f'''mutation {{ caseCreate(name: "case1", description: "Some description", clientId: 1, socId: "1", 
+                                   classificationId : {classification_id}) {{ case {{ caseId }} }}}}'''}
         self._subject.execute_graphql_query(payload)
         payload = {
-            'query': f'''mutation {{
-                                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                                    socId: "1", classificationId : 3) {{
-                                                                 case {{ caseId classificationId}}
-                                                                       }}
-                                                                   }}'''
-        }
+            'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 3) {case { caseId '
+                     'classificationId}}}'}
         self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                                         caseCreate(name: "case3", description: "Some description", clientId: 1, 
-                                                    socId: "1", classificationId : {classification_id}) {{
-                                                                 case {{ classificationId }}
-                                                                       }}
-                                                                   }}'''
-        }
+        payload = { 'query': f'''mutation {{ caseCreate(name: "case3", description: "Some description", clientId: 1, socId: "1", classificationId : 
+                                        {classification_id}) {{ case {{ classificationId }} }} }}'''}
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''query {{ cases(classificationId: {classification_id} )
@@ -919,14 +861,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(classification_id, test_classification)
 
     def test_graphql_cases_filter_clientId_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ clientId }}
-                                                       }}
-                                                   }}'''
-        }
+        payload = {'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
+                            'clientId }}}'}
         response = self._subject.execute_graphql_query(payload)
         client_id = response['data']['caseCreate']['case']['clientId']
         payload = {
@@ -938,14 +874,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(client_id, test_client)
 
     def test_graphql_cases_filter_stateId_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ stateId }}
-                                                       }}
-                                                   }}'''
-        }
+        payload = {'query': 'mutation {caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
+                            'stateId }}}'}
         response = self._subject.execute_graphql_query(payload)
         state_id = response['data']['caseCreate']['case']['stateId']
         payload = {
@@ -958,14 +888,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(state_id, test_state)
 
     def test_graphql_cases_filter_ownerId_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ ownerId }}
-                                                       }}
-                                                   }}'''
-        }
+        payload = { 'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
+                             'ownerId }}}'}
         response = self._subject.execute_graphql_query(payload)
         owner_id = response['data']['caseCreate']['case']['ownerId']
         payload = {
@@ -978,14 +902,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(owner_id, test_owner)
 
     def test_graphql_cases_filter_openDate_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ openDate }}
-                                                       }}
-                                                   }}'''
-        }
+        payload = { 'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) { case { '
+                             'openDate } } }' }
         response = self._subject.execute_graphql_query(payload)
         open_date = response['data']['caseCreate']['case']['openDate']
         payload = {
@@ -998,14 +916,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(open_date, test_date)
 
     def test_graphql_cases_filter_name_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ name }}
-                                                       }}
-                                                   }}'''
-        }
+        payload = { 'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
+                             'name }}}'}
         response = self._subject.execute_graphql_query(payload)
         name = response['data']['caseCreate']['case']['name']
         payload = {
@@ -1018,14 +930,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(name, test_name)
 
     def test_graphql_cases_filter_socId_should_not_fail(self):
-        payload = {
-            'query': f'''mutation {{
-                         caseCreate(name: "case2", description: "Some description", clientId: 1, 
-                                    socId: "1", classificationId : 1) {{
-                                                 case {{ socId }}
-                                                       }}
-                                                   }}'''
-        }
+        payload = { 'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) { case { '
+                             'socId } } }'}
         response = self._subject.execute_graphql_query(payload)
         soc_id = response['data']['caseCreate']['case']['socId']
         payload = {
