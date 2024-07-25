@@ -299,4 +299,3 @@ class TestsRest(TestCase):
         for case in response['cases']:
             identifiers.append(case['case_id'])
         self.assertNotIn(case_identifier, identifiers)
-

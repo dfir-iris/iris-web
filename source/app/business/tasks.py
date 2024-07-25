@@ -28,8 +28,8 @@ from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseTaskSchema
-from marshmallow.exceptions import ValidationError
 from app.business.errors import BusinessProcessingError
+from marshmallow.exceptions import ValidationError
 
 
 def _load(request_data):
@@ -112,7 +112,3 @@ def update(current_identifier, case_identifier, request_json):
         raise BusinessProcessingError("Unable to update task for internal reasons")
 
     raise BusinessProcessingError("Invalid task ID for this case")
-
-
-
-

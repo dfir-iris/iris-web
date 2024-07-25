@@ -172,9 +172,7 @@ def profile_refresh_permissions_and_ac():
 @profile_rest_blueprint.route('/user/whoami', methods=['GET'])
 @ac_api_requires()
 def profile_whoami():
-    """
-    Returns the current user's profile
-    """
+    """Returns the current user's profile"""
     user = get_user(current_user.id)
     if not user:
         return response_error("Invalid user ID")

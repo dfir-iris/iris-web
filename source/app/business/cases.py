@@ -231,9 +231,7 @@ def cases_update(case_identifier, request_data):
 
 
 def cases_export_to_json(case_id):
-    """
-    Fully export a case a JSON
-    """
+    """Fully export a case a JSON"""
     export = {}
     case = export_caseinfo_json(case_id)
 
@@ -257,9 +255,7 @@ def cases_export_to_json(case_id):
 
 
 def cases_export_to_report_json(case_id):
-    """
-    Fully export of a case for report generation
-    """
+    """Fully export of a case for report generation"""
     export = {}
     case = export_caseinfo_json(case_id)
 

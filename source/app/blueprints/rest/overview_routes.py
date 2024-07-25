@@ -30,9 +30,7 @@ overview_rest_blueprint = Blueprint('overview_rest', __name__)
 @overview_rest_blueprint.route('/overview/filter', methods=['GET'])
 @ac_api_requires()
 def get_overview_filter():
-    """
-    Return an overview of the cases
-    """
+    """Return an overview of the cases"""
     show_full = request.args.get('show_closed', 'false') == 'true'
     overview = get_overview_db(current_user.id, show_full)
 

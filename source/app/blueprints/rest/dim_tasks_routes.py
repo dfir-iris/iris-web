@@ -75,7 +75,7 @@ def dim_hooks_call(caseid):
     index = 0
     obj_targets = []
     for target in js_data.get('targets'):
-        if type(target) == str:
+        if type(target) is str:
             try:
                 target = int(target)
             except ValueError:

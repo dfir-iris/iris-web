@@ -415,7 +415,6 @@ def case_filter_timeline(caseid):
 
         except Exception as e:
             print(e)
-            pass
 
     if end_date:
         try:
@@ -1060,4 +1059,3 @@ def case_events_upload_csv(caseid):
     app.logger.info("======================== END_CSV_IMPORT ==========================================")
 
     return response_success(msg="Events added (CSV File)")
-
