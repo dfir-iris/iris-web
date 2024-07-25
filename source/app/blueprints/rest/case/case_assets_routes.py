@@ -134,7 +134,7 @@ def add_asset(caseid):
                              )
 
         if request_data.get('ioc_links'):
-            errors, logs = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
+            errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
             if errors:
                 return response_error(f'Encountered errors while linking IOC. Asset has still been updated.')
 
