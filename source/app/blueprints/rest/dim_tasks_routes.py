@@ -184,13 +184,7 @@ def list_dim_tasks(count):
 
     for row in tasks:
 
-        tkp = {}
-        tkp['state'] = row.status
-        tkp['case'] = "Unknown"
-        tkp['module'] = row.name
-        tkp['task_id'] = row.task_id
-        tkp['date_done'] = row.date_done
-        tkp['user'] = "Unknown"
+        tkp = {'state': row.status, 'case': "Unknown", 'module': row.name, 'task_id': row.task_id, 'date_done': row.date_done, 'user': "Unknown"}
 
         try:
             _ = row.result

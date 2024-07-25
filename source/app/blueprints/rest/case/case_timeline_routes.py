@@ -189,11 +189,8 @@ def case_getgraph_assets(caseid):
     for row in timeline:
         for asset in assets_cache:
             if asset.event_id == row.event_id:
-                tmp = {}
-                tmp['date'] = row.event_date
-                tmp['group'] = asset.asset_name
-                tmp['content'] = row.event_title
-                tmp['title'] = f"{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')} - {row.event_content}"
+                tmp = {'date': row.event_date, 'group': asset.asset_name, 'content': row.event_title,
+                       'title': f"{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')} - {row.event_content}"}
 
                 if row.event_color:
                     tmp['style'] = f'background-color: {row.event_color};'
@@ -222,11 +219,8 @@ def case_getgraph(caseid):
     tim = []
     for row in timeline:
 
-        tmp = {}
+        tmp = {'date': row.event_date, 'group': row.category[0].name if row.category else 'Uncategorized', 'content': row.event_title}
 
-        tmp['date'] = row.event_date
-        tmp['group'] = row.category[0].name if row.category else 'Uncategorized'
-        tmp['content'] = row.event_title
         if row.event_content:
             content = row.event_content.replace('\n', '<br/>')
         else:
