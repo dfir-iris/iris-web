@@ -545,9 +545,8 @@ def case_filter_timeline(caseid):
             if row.event_id not in assets_filter:
                 continue
 
-        if iocs is not None:
-            if row.event_id not in iocs_filter:
-                continue
+        if iocs is not None and row.event_id not in iocs_filter:
+            continue
 
         ras = row._asdict()
 
