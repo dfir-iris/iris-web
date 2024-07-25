@@ -332,10 +332,8 @@ def update_case_files(caseid):
         if status.is_success():
             # The job has been created, so return. The progress can be followed on the dashboard
             return response_success("Case task created")
-
-        else:
-            # We got some errors and cannot continue
-            return response_error(status.get_message(), data=status.get_data())
+        # We got some errors and cannot continue
+        return response_error(status.get_message(), data=status.get_data())
 
     except Exception as _:
         traceback.print_exc()

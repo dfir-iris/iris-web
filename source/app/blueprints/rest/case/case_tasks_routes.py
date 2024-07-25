@@ -105,8 +105,7 @@ def case_task_statusupdate(cur_id, caseid):
             task_schema = CaseTaskSchema()
 
             return response_success("Task status updated", data=task_schema.dump(task))
-        else:
-            return response_error("Invalid status")
+        return response_error("Invalid status")
 
     else:
         return response_error("Invalid request")

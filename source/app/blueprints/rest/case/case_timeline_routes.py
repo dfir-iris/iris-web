@@ -164,8 +164,7 @@ def case_get_timeline_state(caseid):
     os = get_timeline_state(caseid=caseid)
     if os:
         return response_success(data=os)
-    else:
-        return response_error('No timeline state for this case. Add an event to begin')
+    return response_error('No timeline state for this case. Add an event to begin')
 
 
 @case_timeline_rest_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])

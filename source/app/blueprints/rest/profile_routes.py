@@ -73,8 +73,7 @@ def user_has_permission():
 
     if ac_current_user_has_permission(Permissions(req_js.get('permission_value'))):
         return response_success('User has permission')
-    else:
-        return response_error('User does not have permission', status=403)
+    return response_error('User does not have permission', status=403)
 
 
 @profile_rest_blueprint.route('/user/update', methods=['POST'])

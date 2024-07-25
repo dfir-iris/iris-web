@@ -146,9 +146,7 @@ def download_template(report_id):
         resp = send_file(fpath, as_attachment=True, download_name=f"{report_template.name}.{extension}")
 
         return resp
-
-    else:
-        return response_error("Unable to download file")
+    return response_error("Unable to download file")
 
 
 @manage_templates_rest_blueprint.route('/manage/templates/delete/<report_id>', methods=['POST'])
