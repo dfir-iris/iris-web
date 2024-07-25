@@ -428,7 +428,7 @@ def case_filter_timeline(caseid):
             parsed_end_date = parse_bf_date_format(end_date[0])
             condition = and_(condition,
                              CasesEvent.event_date <= parsed_end_date)
-        except Exception as e:
+        except Exception as _:
             pass
 
     if categories:
