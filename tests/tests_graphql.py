@@ -51,7 +51,8 @@ class TestsGraphQL(TestCase):
         cls._user_count += 1
         return f'user{cls._user_count}'
 
-    def _get_first_case(self, body):
+    @staticmethod
+    def _get_first_case(body):
         for case in body['data']['cases']['edges']:
             if case['node']['name'] == '#1 - Initial Demo':
                 return case
