@@ -288,7 +288,7 @@ def case_update_status(caseid):
         return response_error('Invalid case ID')
 
     status = request.get_json().get('status_id')
-    case_status = set(item.value for item in CaseStatus)
+    case_status = {item.value for item in CaseStatus}
 
     try:
         status = int(status)
