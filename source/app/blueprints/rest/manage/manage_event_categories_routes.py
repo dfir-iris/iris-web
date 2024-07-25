@@ -31,7 +31,7 @@ manage_event_categories_rest_blueprint = Blueprint('manage_event_categories_rest
 @manage_event_categories_rest_blueprint.route('/manage/event-categories/list', methods=['GET'])
 @ac_api_requires()
 def list_event_categories():
-    lcat= EventCategory.query.with_entities(
+    lcat = EventCategory.query.with_entities(
         EventCategory.id,
         EventCategory.name
     ).all()
