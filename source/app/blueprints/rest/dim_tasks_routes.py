@@ -164,9 +164,9 @@ def list_dim_hook_options_ioc(hook_type):
         IrisHook.hook_name == f"on_manual_trigger_{hook_type}",
         IrisModule.is_active == True
     )
-    .join(IrisHook, IrisHook.id == IrisModuleHook.hook_id)
-    .join(IrisModule, IrisModule.id == IrisModuleHook.module_id)
-    .all())
+                    .join(IrisHook, IrisHook.id == IrisModuleHook.hook_id)
+                    .join(IrisModule, IrisModule.id == IrisModuleHook.module_id)
+                    .all())
 
     data = [options._asdict() for options in mods_options]
 

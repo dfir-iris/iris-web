@@ -58,7 +58,6 @@ from app.util import endpoint_removed
 from app.util import response_error
 from app.util import response_success
 
-
 case_notes_rest_blueprint = Blueprint('case_notes_rest', __name__)
 
 
@@ -115,7 +114,6 @@ def case_note_detail(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_delete(cur_id, caseid):
-
     call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
 
     note = get_note(cur_id, caseid)
@@ -189,7 +187,6 @@ def case_note_revision(cur_id, revision_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_revision_delete(cur_id, revision_id, caseid):
-
     try:
 
         notes_delete_revision(identifier=cur_id,
@@ -327,8 +324,8 @@ def case_search_notes(caseid):
 
     notes = Notes.query.filter(
         and_(Notes.note_case_id == caseid,
-        or_(Notes.note_title.ilike(f'%{search_input}%'),
-            Notes.note_content.ilike(f'%{search_input}%')))
+             or_(Notes.note_title.ilike(f'%{search_input}%'),
+                 Notes.note_content.ilike(f'%{search_input}%')))
     ).all()
 
     note_schema = CaseNoteSchema(many=True)
@@ -365,7 +362,6 @@ def case_get_notes_group(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_filter_notes_directories(caseid):
-
     if not get_case(caseid=caseid):
         return response_error("Invalid case ID")
 
@@ -386,7 +382,6 @@ def case_edit_notes_groups(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_note_list(cur_id, caseid):
-
     note_comments = get_case_note_comments(cur_id)
     if note_comments is None:
         return response_error('Invalid note ID')
@@ -398,7 +393,6 @@ def case_comment_note_list(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_note_add(cur_id, caseid):
-
     try:
         note = get_note(cur_id, caseid=caseid)
         if not note:
@@ -435,7 +429,6 @@ def case_comment_note_add(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_note_get(cur_id, com_id, caseid):
-
     comment = get_case_note_comment(cur_id, com_id)
     if not comment:
         return response_error("Invalid comment ID")
@@ -447,7 +440,6 @@ def case_comment_note_get(cur_id, com_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_note_edit(cur_id, com_id, caseid):
-
     return case_comment_update(com_id, 'notes', caseid)
 
 
@@ -455,7 +447,6 @@ def case_comment_note_edit(cur_id, com_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_note_delete(cur_id, com_id, caseid):
-
     success, msg = delete_note_comment(cur_id, com_id)
     if not success:
         return response_error(msg)
