@@ -541,9 +541,8 @@ def case_filter_timeline(caseid):
     tim = []
     events_list = []
     for row in timeline:
-        if assets is not None or assets_id is not None:
-            if row.event_id not in assets_filter:
-                continue
+        if assets is not None or assets_id is not None and row.event_id not in assets_filter:
+            continue
 
         if iocs is not None and row.event_id not in iocs_filter:
             continue
