@@ -87,8 +87,7 @@ def case_exists_r(caseid):
 
     if case_exists(caseid):
         return response_success('Case exists')
-    else:
-        return response_error('Case does not exist', 404)
+    return response_error('Case does not exist', 404)
 
 
 @case_rest_blueprint.route('/case/summary/update', methods=['POST'])

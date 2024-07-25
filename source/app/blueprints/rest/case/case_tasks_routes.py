@@ -87,8 +87,7 @@ def case_get_tasks_state(caseid):
     os = get_tasks_state(caseid=caseid)
     if os:
         return response_success(data=os)
-    else:
-        return response_error('No tasks state for this case.')
+    return response_error('No tasks state for this case.')
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
@@ -107,8 +106,7 @@ def case_task_statusupdate(cur_id, caseid):
             return response_success("Task status updated", data=task_schema.dump(task))
         return response_error("Invalid status")
 
-    else:
-        return response_error("Invalid request")
+    return response_error("Invalid request")
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/add', methods=['POST'])

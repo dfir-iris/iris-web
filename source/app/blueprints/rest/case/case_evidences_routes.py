@@ -69,8 +69,7 @@ def case_rfiles_state(caseid):
     os = get_evidences_state(caseid=caseid)
     if os:
         return response_success(data=os)
-    else:
-        return response_error('No evidences state for this case.')
+    return response_error('No evidences state for this case.')
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/add', methods=['POST'])

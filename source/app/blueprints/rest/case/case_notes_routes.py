@@ -316,8 +316,7 @@ def case_notes_state(caseid):
     os = get_notes_state(caseid=caseid)
     if os:
         return response_success(data=os)
-    else:
-        return response_error('No notes state for this case.')
+    return response_error('No notes state for this case.')
 
 
 @case_notes_rest_blueprint.route('/case/notes/search', methods=['GET', 'POST'])
