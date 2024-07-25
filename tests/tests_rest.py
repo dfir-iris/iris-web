@@ -174,7 +174,7 @@ class TestsRest(TestCase):
         self.assertEqual(204, response.status_code)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_404(self):
-        response = self._subject.delete(f'/api/v2/iocs/None')
+        response = self._subject.delete('/api/v2/iocs/None')
         self.assertEqual(404, response.status_code)
 
     def test_create_alert_should_not_fail(self):
