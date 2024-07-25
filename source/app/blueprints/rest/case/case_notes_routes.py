@@ -161,7 +161,7 @@ def case_note_list_history(cur_id, caseid):
 
         note_version = notes_list_revisions(identifier=cur_id, case_identifier=caseid)
 
-        return response_success(f"ok", data=note_version_sc.dump(note_version))
+        return response_success("ok", data=note_version_sc.dump(note_version))
 
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -179,7 +179,7 @@ def case_note_revision(cur_id, revision_id, caseid):
                                           revision_number=revision_id,
                                           case_identifier=caseid)
 
-        return response_success(f"ok", data=note_version_sc.dump(note_version))
+        return response_success("ok", data=note_version_sc.dump(note_version))
 
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())

@@ -56,7 +56,7 @@ def filters_add_route() -> Response:
         db.session.add(new_saved_filter)
         db.session.commit()
 
-        track_activity(f'Search filter added', ctx_less=True)
+        track_activity('Search filter added', ctx_less=True)
 
         return response_success(data=saved_filter_schema.dump(new_saved_filter))
 

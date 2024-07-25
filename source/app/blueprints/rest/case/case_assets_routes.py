@@ -192,7 +192,7 @@ def case_upload_ioc(caseid):
             # Asset name must not be empty
             if not row.get("asset_name"):
                 errors.append(f"Empty asset name for row {index}")
-                track_activity(f"Attempted to upload an empty asset name")
+                track_activity("Attempted to upload an empty asset name")
                 index += 1
                 continue
 
@@ -201,7 +201,7 @@ def case_upload_ioc(caseid):
 
             if not row.get('asset_type_name'):
                 errors.append(f"Empty asset type for row {index}")
-                track_activity(f"Attempted to upload an empty asset type")
+                track_activity("Attempted to upload an empty asset type")
                 index += 1
                 continue
 
@@ -230,7 +230,7 @@ def case_upload_ioc(caseid):
             asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
             if not asset:
-                errors.append(f"Unable to add asset for internal reason")
+                errors.append("Unable to add asset for internal reason")
                 index += 1
                 continue
 

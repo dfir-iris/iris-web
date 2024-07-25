@@ -372,7 +372,7 @@ def alerts_update_route(alert_id) -> Response:
             add_obj_history_entry(updated_alert, f"updated alert: {','.join(activity_data)}")
         else:
             track_activity(f"updated alert #{alert_id}", ctx_less=True)
-            add_obj_history_entry(updated_alert, f"updated alert")
+            add_obj_history_entry(updated_alert, "updated alert")
 
         db.session.commit()
 

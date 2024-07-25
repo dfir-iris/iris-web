@@ -951,7 +951,7 @@ def case_events_upload_csv(caseid):
             line += 1
 
             if len(event_title) == 0:
-                return response_error(msg=f"Data error",
+                return response_error(msg="Data error",
                                       data={"Error": f"Event Title can not be empty.\nrow number: {line}"})
 
             assets = []
@@ -962,7 +962,7 @@ def case_events_upload_csv(caseid):
                 if asset:
                     assets.append(asset.asset_id)
                 else:
-                    return response_error(msg=f"Data error", data={
+                    return response_error(msg="Data error", data={
                         "Error": f"Asset not recognized : {asset_name}.\nrow number: {line}"})
 
             row['event_assets'] = assets
@@ -975,7 +975,7 @@ def case_events_upload_csv(caseid):
                 if ioc:
                     iocs.append(ioc.ioc_id)
                 else:
-                    return response_error(msg=f"Data error",
+                    return response_error(msg="Data error",
                                           data={"Error": f"IoC not recognized : {ioc_value}.\nrow number: {line}"})
             row['event_iocs'] = iocs
 
@@ -984,7 +984,7 @@ def case_events_upload_csv(caseid):
                 if event_category:
                     row['event_category_id'] = event_category.id
                 else:
-                    return response_error(msg=f"Data error", data={
+                    return response_error(msg="Data error", data={
                         "Error": f"event_category not recognized : {event_category}.\nrow number: {line}"})
             else:
                 row['event_category_id'] = DEFAULT_CAT_ID
@@ -998,7 +998,7 @@ def case_events_upload_csv(caseid):
 
             csv_lines.append(row)
     except Exception as e:
-        return response_error(msg=f"Data error", data={"Exception": f"Unhandled error {e}.\nrow number: {line}"})
+        return response_error(msg="Data error", data={"Exception": f"Unhandled error {e}.\nrow number: {line}"})
 
     # ========================== begin saving data ============================
     session = db.session.begin_nested()
@@ -1050,7 +1050,7 @@ def case_events_upload_csv(caseid):
         return response_error(msg="Data error", data=e.normalized_messages())
 
     except Exception as e:
-        return response_error(msg=f"Data error", data={"Error": f"{e}"})
+        return response_error(msg="Data error", data={"Error": f"{e}"})
 
     # db.session.commit()
     try:

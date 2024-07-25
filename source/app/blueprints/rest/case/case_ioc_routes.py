@@ -160,7 +160,7 @@ def case_upload_ioc(caseid):
             # IOC value must not be empty
             if not row.get("ioc_value"):
                 errors.append(f"Empty IOC value for row {index}")
-                track_activity(f"Attempted to upload an empty IOC value")
+                track_activity("Attempted to upload an empty IOC value")
                 index += 1
                 continue
 
