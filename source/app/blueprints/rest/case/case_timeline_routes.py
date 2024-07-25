@@ -353,7 +353,7 @@ def case_filter_timeline(caseid):
 
         filter_d = dict(json.loads(urllib.parse.unquote_plus(query_filter)))
 
-    except Exception as e:
+    except Exception as _:
         return response_error('Invalid query string')
 
     assets = filter_d.get('asset')

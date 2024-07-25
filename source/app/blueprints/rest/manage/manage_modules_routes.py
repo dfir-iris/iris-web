@@ -184,7 +184,7 @@ def import_mod_config(module_id):
     if type(parameters_data) is not list:
         try:
             parameters = json.loads(parameters_data)
-        except Exception as e:
+        except Exception as _:
             return response_error('Invalid data', data="Not a JSON file")
     else:
         parameters = parameters_data

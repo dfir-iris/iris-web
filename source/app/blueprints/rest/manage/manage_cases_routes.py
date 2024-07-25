@@ -337,7 +337,7 @@ def update_case_files(caseid):
             # We got some errors and cannot continue
             return response_error(status.get_message(), data=status.get_data())
 
-    except Exception as e:
+    except Exception as _:
         traceback.print_exc()
         return response_error('Fail to update case', data=traceback.print_exc())
 
