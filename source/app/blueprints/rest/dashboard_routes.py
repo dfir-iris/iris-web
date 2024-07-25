@@ -83,7 +83,6 @@ def get_cases_charts():
 @dashboard_rest_blueprint.route('/global/tasks/list', methods=['GET'])
 @ac_api_requires()
 def get_gtasks():
-
     tasks_list = list_global_tasks()
 
     if tasks_list:
@@ -102,7 +101,6 @@ def get_gtasks():
 @dashboard_rest_blueprint.route('/user/cases/list', methods=['GET'])
 @ac_api_requires()
 def list_own_cases():
-
     cases = list_user_cases(
         request.args.get('show_closed', 'false', type=str).lower() == 'true'
     )
@@ -113,7 +111,6 @@ def list_own_cases():
 @dashboard_rest_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
 @ac_api_requires()
 def view_gtask(cur_id):
-
     task = get_global_task(task_id=cur_id)
     if not task:
         return response_error(f'Global task ID {cur_id} not found')
@@ -124,7 +121,6 @@ def view_gtask(cur_id):
 @dashboard_rest_blueprint.route('/user/tasks/list', methods=['GET'])
 @ac_api_requires()
 def get_utasks():
-
     ct = list_user_tasks()
 
     if ct:
@@ -143,14 +139,12 @@ def get_utasks():
 @dashboard_rest_blueprint.route('/user/reviews/list', methods=['GET'])
 @ac_api_requires()
 def get_reviews():
-
     ct = list_user_reviews()
 
     if ct:
         output = [c._asdict() for c in ct]
     else:
         output = []
-
 
     return response_success("", data=output)
 
@@ -194,7 +188,6 @@ def utask_statusupdate(caseid):
 @ac_api_requires()
 @ac_requires_case_identifier()
 def add_gtask(caseid):
-
     try:
 
         gtask_schema = GlobalTasksSchema()
@@ -229,7 +222,6 @@ def add_gtask(caseid):
 @ac_api_requires()
 @ac_requires_case_identifier()
 def edit_gtask(cur_id, caseid):
-
     form = CaseGlobalTaskForm()
     task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
     form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
@@ -264,7 +256,6 @@ def edit_gtask(cur_id, caseid):
 @ac_api_requires()
 @ac_requires_case_identifier()
 def gtask_delete(cur_id, caseid):
-
     call_modules_hook('on_preload_global_task_delete', data=cur_id, caseid=caseid)
 
     if not cur_id:

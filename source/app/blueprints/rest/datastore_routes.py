@@ -61,7 +61,6 @@ logger = app.logger
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_list_tree(caseid):
-
     data = ds_list_tree(caseid)
 
     return response_success("", data=data)
@@ -71,7 +70,6 @@ def datastore_list_tree(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_list_filter(caseid):
-
     args = request.args.to_dict()
     query_filter = args.get('q')
     try:
@@ -92,13 +90,10 @@ def datastore_list_filter(caseid):
     return response_success("", data=data)
 
 
-
-
 @datastore_rest_blueprint.route('/datastore/file/info/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_info_file(cur_id: int, caseid: int):
-
     file = datastore_get_file(cur_id, caseid)
     if not file:
         return response_error('Invalid file ID for this case')
@@ -114,7 +109,6 @@ def datastore_info_file(cur_id: int, caseid: int):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_update_file(cur_id: int, caseid: int):
-
     dsf = datastore_get_file(cur_id, caseid)
     if not dsf:
         return response_error('Invalid file ID for this case')
@@ -163,7 +157,6 @@ def datastore_update_file(cur_id: int, caseid: int):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_move_file(cur_id: int, caseid: int):
-
     if not request.json:
         return response_error("Invalid data")
 
@@ -186,7 +179,6 @@ def datastore_move_file(cur_id: int, caseid: int):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_move_folder(cur_id: int, caseid: int):
-
     if not request.json:
         return response_error("Invalid data")
 
@@ -239,7 +231,6 @@ def datastore_view_file(cur_id: int, caseid: int):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_add_file(cur_id: int, caseid: int):
-
     dsp = datastore_get_path_node(cur_id, caseid)
     if not dsp:
         return response_error('Invalid path node for this case')
@@ -291,7 +282,6 @@ def datastore_add_file(cur_id: int, caseid: int):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_add_interactive_file(caseid: int):
-
     dsp = datastore_get_interactive_path_node(caseid)
     if not dsp:
         return response_error('Invalid path node for this case')
@@ -376,7 +366,6 @@ def datastore_rename_folder(cur_id: int, caseid: int):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_delete_folder_route(cur_id: int, caseid: int):
-
     has_error, logs = datastore_delete_node(cur_id, caseid)
     if has_error:
         return response_error(logs)
@@ -389,7 +378,6 @@ def datastore_delete_folder_route(cur_id: int, caseid: int):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def datastore_delete_file_route(cur_id: int, caseid: int):
-
     has_error, logs = datastore_delete_file(cur_id, caseid)
     if has_error:
         return response_error(logs)

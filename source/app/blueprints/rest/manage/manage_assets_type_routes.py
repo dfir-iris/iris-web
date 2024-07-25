@@ -53,8 +53,8 @@ def list_assets():
     data = []
     for row in assets:
         row_dict = row._asdict()
-        row_dict['asset_icon_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'],row_dict['asset_icon_compromised'])
-        row_dict['asset_icon_not_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'],row_dict['asset_icon_not_compromised'])
+        row_dict['asset_icon_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_compromised'])
+        row_dict['asset_icon_not_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_not_compromised'])
         data.append(row_dict)
 
     # Return the assets
