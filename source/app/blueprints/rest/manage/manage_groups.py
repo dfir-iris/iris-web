@@ -117,13 +117,9 @@ def manage_groups_update(cur_id):
         data['group_id'] = cur_id
         ags_c = ags.load(data, instance=group, partial=True)
 
-        if not ac_flag_match_mask(data['group_permissions'],
-                                  Permissions.server_administrator.value):
-
-            if ac_ldp_group_update(current_user.id):
-                db.session.rollback()
-                return response_error(msg="That might not be a good idea Dave",
-                                      data="Update the group permissions will lock you out")
+        if not ac_flag_match_mask(data['group_permissions'], Permissions.server_administrator.value) and ac_ldp_group_update(current_user.id):
+            db.session.rollback()
+            return response_error(msg="That might not be a good idea Dave", data="Update the group permissions will lock you out")
 
         db.session.commit()
 
