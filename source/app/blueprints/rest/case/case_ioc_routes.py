@@ -187,9 +187,9 @@ def case_upload_ioc(caseid):
             ioc = add_ioc_schema.load(request_data)
             ioc.custom_attributes = get_default_custom_attributes('ioc')
             ioc, _ = add_ioc(ioc=ioc,
-                                   user_id=current_user.id,
-                                   caseid=caseid
-                                   )
+                             user_id=current_user.id,
+                             caseid=caseid
+                             )
             link_existed = add_ioc_link(ioc.ioc_id, caseid)
 
             if link_existed:
