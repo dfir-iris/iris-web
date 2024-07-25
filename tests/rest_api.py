@@ -31,7 +31,8 @@ class RestApi:
     def _build_url(self, path):
         return parse.urljoin(self._url, path)
 
-    def _convert_response_to_string(self, response):
+    @staticmethod
+    def _convert_response_to_string(response):
         try:
             return f'{response.status_code} {response.json()}'
         except JSONDecodeError:
