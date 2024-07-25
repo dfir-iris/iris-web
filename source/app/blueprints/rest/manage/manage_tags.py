@@ -32,7 +32,7 @@ manage_tags_rest_blueprint = Blueprint('manage_tags_rest', __name__)
 @manage_tags_rest_blueprint.route('/manage/tags/filter', methods=['GET'])
 @ac_api_requires()
 def manage_tags_filter() -> Response:
-    """ Returns a list of tags, filtered by the given parameters.
+    """Returns a list of tags, filtered by the given parameters.
 
     :param caseid: Case ID - Unused
     :return: Response

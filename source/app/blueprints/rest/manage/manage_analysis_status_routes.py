@@ -55,7 +55,7 @@ def list_compr_status():
 @manage_analysis_status_rest_blueprint.route('/manage/outcome-status/list', methods=['GET'])
 @ac_api_requires()
 def list_outcome_status() -> Response:
-    """ Returns a list of outcome status
+    """Returns a list of outcome status
 
     Args:
         caseid (int): Case ID

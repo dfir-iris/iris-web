@@ -34,7 +34,7 @@ manage_assets_rest_blueprint = Blueprint('manage_assets_rest', __name__)
 @manage_assets_rest_blueprint.route('/manage/assets/filter', methods=['GET'])
 @ac_api_requires()
 def manage_assets_filter() -> Response:
-    """ Returns a list of assets, filtered by the given parameters."""
+    """Returns a list of assets, filtered by the given parameters."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     order_by = request.args.get('order_by', 'name', type=str)
