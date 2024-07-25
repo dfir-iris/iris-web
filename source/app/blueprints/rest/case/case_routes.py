@@ -321,7 +321,7 @@ def case_review(caseid):
 
     if action == 'start':
         review_name = ReviewStatusList.review_in_progress
-    elif action == 'cancel' or action == 'request':
+    elif action in ('cancel', 'request'):
         review_name = ReviewStatusList.pending_review
     elif action == 'no_review':
         review_name = ReviewStatusList.no_review_required

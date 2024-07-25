@@ -71,7 +71,7 @@ def download_case_activity(report_id, caseid):
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_doc_report(doc_type="Activities")
 
-            elif report_format == ".md" or report_format == ".html" :
+            elif report_format in (".md", ".html"):
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Activities")
 
@@ -115,7 +115,7 @@ def generate_report(report_id, caseid):
 
             _, report_format = os.path.splitext(report.internal_reference)
 
-            if report_format == ".md" or report_format == ".html":
+            if report_format in (".md", ".html"):
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Investigation")
 
