@@ -473,13 +473,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_create_case_should_not_fail(self):
         test_description = 'description 2'
-        payload = {
-            'query': f''' mutation {{ 
-                             caseCreate(name: "case2", description: "{test_description}", clientId: 1) {{
-                             case {{ description }}
-                        }}
-                    }}'''
-        }
+        payload = {'query': f''' mutation {{ caseCreate(name: "case2", description: "{test_description}", clientId: 1) {{ case {{ description }} }} }} '''}
         body = self._subject.execute_graphql_query(payload)
         description = body['data']['caseCreate']['case']['description']
         self.assertEqual(description, test_description)
@@ -659,9 +653,9 @@ class TestsGraphQL(TestCase):
     def test_graphql_update_case_with_optional_parameter_ownerId(self):
         payload = {
             'query': ''' mutation {
-                             caseUpdate(caseId: 1, ownerId: 1) { 
-                                 case { ownerId } 
-                             } 
+                             caseUpdate(caseId: 1, ownerId: 1) {
+                                 case { ownerId }
+                             }
                         }'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -680,10 +674,10 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_case_with_optional_parameter_stateId(self):
         payload = {
-            'query': ''' mutation { 
-                             caseUpdate(caseId: 1, stateId: 1) { 
-                                 case { stateId } 
-                             } 
+            'query': ''' mutation {
+                             caseUpdate(caseId: 1, stateId: 1) {
+                                 case { stateId }
+                             }
                         }'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -692,9 +686,9 @@ class TestsGraphQL(TestCase):
     def test_graphql_update_case_with_optional_parameter_reviewStatusId(self):
         payload = {
             'query': '''mutation {
-                            caseUpdate(caseId: 1, reviewStatusId: 1) { 
-                                case { reviewStatusId } 
-                            } 
+                            caseUpdate(caseId: 1, reviewStatusId: 1) {
+                                case { reviewStatusId }
+                            }
                         }'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -1153,7 +1147,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                           case(caseId: 1) {{
-                              iocs(userId: {user_id}) {{ edges {{ node {{ userId }} }} }} }} 
+                              iocs(userId: {user_id}) {{ edges {{ node {{ userId }} }} }} }}
                             }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -1185,13 +1179,8 @@ class TestsGraphQL(TestCase):
                                  }}'''
         }
         self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                                            iocCreate(caseId: {case_identifier_2}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                                ioc {{ iocId iocValue }}
-                                            }}
-                                        }}'''
-        }
+        payload = {'query': f'''mutation {{ iocCreate(caseId: {case_identifier_2}, typeId: 1, tlpId: 1, value: "{ioc_value}") 
+                                         {{ ioc {{ iocId iocValue }} }} }}'''}
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''{{
