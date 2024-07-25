@@ -14,26 +14,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import traceback
-
-import marshmallow
 from flask import Blueprint
 from flask import render_template
-from flask import request
 from flask import url_for
 from flask_login import current_user
 from werkzeug.utils import redirect
 
-from app import db
-from app import app
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
-from app.datamgmt.manage.manage_groups_db import add_all_cases_access_to_group
-from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
-from app.datamgmt.manage.manage_groups_db import delete_group
-from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_details
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
-from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_cases_access_from_group
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
