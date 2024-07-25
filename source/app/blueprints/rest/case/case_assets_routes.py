@@ -134,7 +134,7 @@ def add_asset(caseid):
         if request_data.get('ioc_links'):
             errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
             if errors:
-                return response_error(f'Encountered errors while linking IOC. Asset has still been updated.')
+                return response_error('Encountered errors while linking IOC. Asset has still been updated.')
 
         asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
@@ -296,7 +296,7 @@ def asset_update(cur_id, caseid):
         if hasattr(asset_schema, 'ioc_links'):
             errors, _ = set_ioc_links(asset_schema.ioc_links, asset.asset_id)
             if errors:
-                return response_error(f'Encountered errors while linking IOC. Asset has still been updated.')
+                return response_error('Encountered errors while linking IOC. Asset has still been updated.')
 
         asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
 
