@@ -61,7 +61,6 @@ def get_case_state(state_id: int) -> Response:
     Returns:
         Flask Response object
     """
-
     schema = CaseStateSchema()
     case_state = get_case_state_by_id(state_id)
     if not case_state:

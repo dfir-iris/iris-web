@@ -65,7 +65,6 @@ def case_list_assets(caseid):
     Returns the list of assets from the case.
     :return: A JSON object containing the assets of the case, enhanced with assets seen on other cases.
     """
-
     # Get all assets objects from the case and the customer id
     assets = get_assets(caseid)
     customer_id = get_case_client_id(caseid)

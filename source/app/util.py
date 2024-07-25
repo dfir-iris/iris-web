@@ -581,7 +581,6 @@ def _user_has_at_least_a_required_permission(permissions: list[Permissions]):
         Returns true as soon as the user has at least one permission in the list of permissions
         Returns true if the list of required permissions is empty
     """
-
     if not permissions:
         return True
 

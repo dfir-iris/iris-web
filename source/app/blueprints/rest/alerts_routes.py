@@ -231,7 +231,6 @@ def alerts_get_route(alert_id) -> Response:
     returns:
         Response: The response
     """
-
     alert_schema = AlertSchema()
 
     # Get the alert from the database
@@ -266,7 +265,6 @@ def alerts_similarities_route(alert_id) -> Response:
     returns:
         Response: The response
     """
-
     # Get the alert from the database
     alert = get_alert_by_id(alert_id)
 
@@ -512,7 +510,6 @@ def alerts_delete_route(alert_id) -> Response:
     returns:
         Response: The response
     """
-
     alert = get_alert_by_id(alert_id)
     if not alert:
         return response_error('Alert not found')
@@ -555,7 +552,6 @@ def alerts_escalate_route(alert_id) -> Response:
     returns:
         Response: The response
     """
-
     alert = get_alert_by_id(alert_id)
     if not alert:
         return response_error('Alert not found')
@@ -1018,7 +1014,6 @@ def case_comment_add(alert_id):
     returns:
         Response: The response
     """
-
     try:
         alert = get_alert_by_id(alert_id=alert_id)
         if not alert:

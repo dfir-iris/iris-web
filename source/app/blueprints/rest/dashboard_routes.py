@@ -57,7 +57,6 @@ def get_cases_charts():
     Get case charts
     :return: JSON
     """
-
     res = Cases.query.with_entities(
         Cases.open_date
     ).filter(

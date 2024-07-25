@@ -65,7 +65,6 @@ def get_case_classification(classification_id: int) -> Response:
     Returns:
         Flask Response object
     """
-
     schema = CaseClassificationSchema()
     case_classification = get_case_classification_by_id(classification_id)
     if not case_classification:

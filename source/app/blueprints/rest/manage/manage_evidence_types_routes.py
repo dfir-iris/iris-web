@@ -62,7 +62,6 @@ def get_evidence_type(evidence_type_id: int) -> Response:
     Returns:
         Flask Response object
     """
-
     evidence_type_schema = EvidenceTypeSchema()
     evidence_type = get_evidence_type_by_id(evidence_type_id)
     if evidence_type is None:
