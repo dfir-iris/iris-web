@@ -20,6 +20,13 @@ from unittest import TestCase
 from iris import Iris
 
 
+def _get_case_with_identifier(response, identifier):
+    for case in response['cases']:
+        if identifier == case['case_id']:
+            return case
+    raise ValueError('Case not found')
+
+
 class TestsRest(TestCase):
     _subject = None
 
@@ -308,3 +315,27 @@ class TestsRest(TestCase):
         user = self._subject.create_dummy_user()
         response = user.get('/manage/users/list')
         self.assertEqual(403, response.status_code)
+
+    def test_get_cases_should_return_the_state_name(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'test_get_cases_should_filter_on_case_name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        case_identifier = response['case_id']
+        response = self._subject.get('/api/v2/cases').json()
+        case = _get_case_with_identifier(response, case_identifier)
+        self.assertEqual('Open', case['state']['state_name'])
+
+    def test_get_cases_should_return_the_owner_name(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'test_get_cases_should_filter_on_case_name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        case_identifier = response['case_id']
+        response = self._subject.get('/api/v2/cases').json()
+        case = _get_case_with_identifier(response, case_identifier)
+        self.assertEqual('administrator', case['owner']['user_name'])
