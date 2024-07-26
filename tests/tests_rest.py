@@ -299,3 +299,7 @@ class TestsRest(TestCase):
         for case in response['cases']:
             identifiers.append(case['case_id'])
         self.assertNotIn(case_identifier, identifiers)
+
+    def test_get_users_should_return_200(self):
+        response = self._subject.get('/manage/users/list')
+        self.assertEqual(200, response.status_code)
