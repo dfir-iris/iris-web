@@ -281,9 +281,8 @@ function get_cases_overview(silent, show_full=false) {
         if (!silent) {
             notify_api_request_success(data)
         }
-        overview_list = data.data;
         OverviewTable.clear();
-        OverviewTable.rows.add(overview_list);
+        OverviewTable.rows.add(data.data);
         OverviewTable.columns.adjust().draw();
         $(".truncate").on("click", function() {
             var index = $(this).index() + 1;
