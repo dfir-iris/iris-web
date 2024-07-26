@@ -1335,7 +1335,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   }
   if (modulesOptionsIocReq === null) {
     modulesOptionsIocReq = await fetchModulesOptionsIoc();
-    if (api_request_failed(modulesOptionsIocReq.status)) {
+    if (api_request_failed(modulesOptionsIocReq)) {
         return;
     }
   }
