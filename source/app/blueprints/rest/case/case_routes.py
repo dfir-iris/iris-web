@@ -358,11 +358,9 @@ def case_review(caseid):
 @case_rest_blueprint.route('/api/v2/cases', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def create_case():
-    case_schema = CaseSchema()
-
     try:
         case, _ = cases_create(request.get_json())
-        return response_api_created(case_schema.dump(case))
+        return response_api_created(CaseSchemaForAPIV2().dump(case))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
@@ -438,7 +436,7 @@ def case_routes_get(identifier):
     case = get_case(identifier)
     if not case:
         return response_api_not_found()
-    return response_api_success(CaseSchema().dump(case))
+    return response_api_success(CaseSchemaForAPIV2().dump(case))
 
 
 @case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['DELETE'])
