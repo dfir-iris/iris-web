@@ -36,6 +36,7 @@ class Iris:
         self._docker_compose = DockerCompose(_IRIS_PATH, 'docker-compose.dev.yml')
         self._api = RestApi(API_URL, _API_KEY)
         self._administrator = User(API_URL, _API_KEY)
+        self._user_count = 0
 
     def _wait(self, condition, attempts, sleep_duration=1):
         count = 0
@@ -48,9 +49,6 @@ class Iris:
 
     def _wait_until_api_is_ready(self):
         self._wait(self._api.is_ready, 60)
-
-    def get(self, path, query_parameters=None):
-        return self._api.get(path, query_parameters=query_parameters)
 
     def start(self):
         # TODO it would be preferable to have a dedicated directory with the
@@ -72,6 +70,9 @@ class Iris:
 
     def create(self, path, body, query_parameters=None):
         return self._api.post(path, body, query_parameters)
+
+    def get(self, path, query_parameters=None):
+        return self._api.get(path, query_parameters=query_parameters)
 
     def delete(self, path):
         return self._api.delete(path)
@@ -97,6 +98,7 @@ class Iris:
         response = self._api.post('/case/assets/add', body)
         return response.json()
 
+    # TODO make private => use create_dummy_user instead
     def create_user(self, user_name):
         body = {
             'user_name': user_name,
@@ -106,6 +108,10 @@ class Iris:
         }
         user = self._api.post('/manage/users/add', body).json()
         return User(API_URL, user['data']['user_api_key'])
+
+    def create_dummy_user(self):
+        self._user_count += 1
+        return self.create_user(f'user{self._user_count}')
 
     def create_dummy_case(self):
         body = {

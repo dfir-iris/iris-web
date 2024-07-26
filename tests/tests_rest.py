@@ -303,3 +303,8 @@ class TestsRest(TestCase):
     def test_get_users_should_return_200(self):
         response = self._subject.get('/manage/users/list')
         self.assertEqual(200, response.status_code)
+
+    def test_get_users_should_return_403_for_user_without_rights(self):
+        user = self._subject.create_dummy_user()
+        response = user.get('/manage/users/list')
+        self.assertEqual(403, response.status_code)

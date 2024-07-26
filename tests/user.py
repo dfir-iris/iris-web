@@ -16,15 +16,20 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from graphql_api import GraphQLApi
+from rest_api import RestApi
 
 
 class User:
 
     def __init__(self, iris_url, api_key):
         self._graphql_api = GraphQLApi(iris_url + '/graphql', api_key)
+        self._api = RestApi(iris_url, api_key)
 
     def execute_graphql_query(self, payload):
         response = self._graphql_api.execute(payload)
         body = response.json()
         print(f'{payload} => {body}')
         return body
+
+    def get(self, path, query_parameters=None):
+        return self._api.get(path, query_parameters=query_parameters)
