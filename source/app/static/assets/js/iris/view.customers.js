@@ -272,7 +272,6 @@ $(document).ready(function() {
                 d.case_customer_id = customer_id;
                 d.order_by = d.columns[d.order[0].column].data;
                 d.sort_dir = d.order[0].dir;
-                console.log(d)
                 d.case_name = d.search.value;
             },
             "dataSrc": function(json) {
