@@ -221,7 +221,12 @@ $(document).ready(function() {
         }
     });
 
-    cases_table = $('#client_cases_table').dataTable({
+    /*
+       Debugging notes
+       It is possible to show information about the state of the table by typing in the console cases_table.page.info()
+       see: https://datatables.net/reference/api/page.info()
+    */
+    cases_table = $('#client_cases_table').DataTable({
         "order": [[ 1, "asc" ]],
         "autoWidth": false,
         "columns": [
@@ -262,6 +267,7 @@ $(document).ready(function() {
                 }
             }
         ],
+        // https://datatables.net/manual/server-side
         "serverSide": true,
         "ajax": {
             "url": "/api/v2/cases",
@@ -274,6 +280,7 @@ $(document).ready(function() {
                 d.sort_dir = d.order[0].dir;
                 d.case_name = d.search.value;
             },
+            // https://datatables.net/reference/option/ajax.dataSrc
             "dataSrc": function(json) {
                 json.recordsTotal = json.total;
                 json.recordsFiltered = json.total;
