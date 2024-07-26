@@ -39,6 +39,15 @@ class TestsRest(TestCase):
     def tearDownClass(cls) -> None:
         cls._subject.stop()
 
+    def tearDown(self):
+        cases = self._subject.get('/api/v2/cases').json()
+        for case in cases['cases']:
+            identifier = case['case_id']
+            # Not erasing the default case
+            if identifier == 1:
+                continue
+            self._subject.delete(f'/api/v2/cases/{identifier}')
+
     def test_create_asset_should_not_fail(self):
         response = self._subject.create_asset()
         self.assertEqual('success', response['status'])
@@ -148,7 +157,7 @@ class TestsRest(TestCase):
     def test_update_settings_should_not_fail(self):
         body = {}
         response = self._subject.create('/manage/settings/update', body)
-        print(response)
+        self.assertEqual(200, response.status_code)
 
     def test_create_ioc_should_return_good_ioc_type_id(self):
         case_identifier = self._subject.create_dummy_case()
@@ -292,13 +301,7 @@ class TestsRest(TestCase):
         self.assertIn(case_identifier, identifiers)
 
     def test_get_cases_should_filter_on_is_open(self):
-        response = self._subject.create('/api/v2/cases', {
-            'case_name': 'test_get_cases_should_filter_on_case_name',
-            'case_description': 'description',
-            'case_customer': 1,
-            'case_soc_id': ''
-        }).json()
-        case_identifier = response['case_id']
+        case_identifier = self._subject.create_dummy_case()
         self._subject.create(f'/manage/cases/close/{case_identifier}', {})
         filters = {'is_open': 'true'}
         response = self._subject.get('/api/v2/cases', query_parameters=filters).json()
@@ -317,25 +320,18 @@ class TestsRest(TestCase):
         self.assertEqual(403, response.status_code)
 
     def test_get_cases_should_return_the_state_name(self):
-        response = self._subject.create('/api/v2/cases', {
-            'case_name': 'test_get_cases_should_filter_on_case_name',
-            'case_description': 'description',
-            'case_customer': 1,
-            'case_soc_id': ''
-        }).json()
-        case_identifier = response['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.get('/api/v2/cases').json()
         case = _get_case_with_identifier(response, case_identifier)
         self.assertEqual('Open', case['state']['state_name'])
 
     def test_get_cases_should_return_the_owner_name(self):
-        response = self._subject.create('/api/v2/cases', {
-            'case_name': 'test_get_cases_should_filter_on_case_name',
-            'case_description': 'description',
-            'case_customer': 1,
-            'case_soc_id': ''
-        }).json()
-        case_identifier = response['case_id']
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.get('/api/v2/cases').json()
         case = _get_case_with_identifier(response, case_identifier)
         self.assertEqual('administrator', case['owner']['user_name'])
+
+    def test_get_case_should_have_field_case_name(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
+        self.assertIn('case_name', response)
