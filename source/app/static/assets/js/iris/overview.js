@@ -1,6 +1,7 @@
 $.each($.find("table"), function(index, element){
     addFilterFields($(element).attr("id"));
 });
+
 let OverviewTable = $("#overview_table").DataTable({
     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
     aaData: [],
@@ -88,8 +89,9 @@ let OverviewTable = $("#overview_table").DataTable({
             return data;
         }
       },
-      { "data": "client",
-       "render": function (data, type, row, meta) {
+      {
+        "data": "client",
+        "render": function (data, type, row, meta) {
           if (type === 'display') {
             let div_anchor = $('<div>');
             let a_anchor = $('<a>');
@@ -268,7 +270,7 @@ let OverviewTable = $("#overview_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
             tableFiltering(this.api(), 'overview_table');
-        },
+    },
     drawCallback: function () {
             $('.btn-quick-view').off('click').on('click', function() {
                     show_case_view($(this).data('index'));
