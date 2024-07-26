@@ -2396,7 +2396,7 @@ class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
         model = Cases
         include_fk = True
         load_instance = True
-        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date']
+        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date', 'state_id', 'owner_id']
         unknown = EXCLUDE
 
     @pre_load
