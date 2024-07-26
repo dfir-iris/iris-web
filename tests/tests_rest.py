@@ -40,12 +40,9 @@ class TestsRest(TestCase):
         cls._subject.stop()
 
     def tearDown(self):
-        cases = self._subject.get('/api/v2/cases').json()
+        cases = self._subject.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
         for case in cases['cases']:
             identifier = case['case_id']
-            # Not erasing the default case
-            if identifier == 1:
-                continue
             self._subject.delete(f'/api/v2/cases/{identifier}')
 
     def test_create_asset_should_not_fail(self):
