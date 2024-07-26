@@ -5,47 +5,27 @@ $.each($.find("table"), function(index, element){
 let OverviewTable = $("#overview_table").DataTable({
     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
     aaData: [],
-    columnDefs: [
+    columns: [ // https://datatables.net/reference/option/columns
         {
-            targets: [0], // column index
-            visible: false, // set visibility
-            searchable: true, // set searchable
-            data: "status_name" // field in data
-        },
-        {
-            targets: [1], // column index
-            visible: false, // set visibility
-            searchable: true, // set searchable
-            data: "case_id" // field in data
-        },
-        {
-            targets: [2], // column index
-            visible: false, // set visibility
-            searchable: true, // set searchable
-            data: "severity" // field in data
-        },
-        {
-            targets: [3], // column index
-            visible: true, // set visibility
-            searchable: true, // set searchable
-            sType: 'integer'
-        }
-    ],
-    aoColumns: [
-        {
+          visible: false, // set visibility
+          searchable: true, // set searchable
           "data": "status_name",
             "render": function (data, type, row, meta) {
                 return data;
             }
         },
         {
+          visible: false, // set visibility
+          searchable: true, // set searchable
           "data": "case_id",
             "render": function (data, type, row, meta) {
                 return data;
           }
         },
       {
-          "data": "severity",
+          visible: false, // set visibility
+          searchable: true, // set searchable
+          "data": "severity", // field in data
             "render": function (data, type, row, meta) {
                   if (data != null && (type === 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
                     return data.severity_name;
@@ -54,6 +34,9 @@ let OverviewTable = $("#overview_table").DataTable({
             }
       },
       {
+        visible: true, // set visibility
+        searchable: true, // set searchable
+        type: 'integer', // type when it is filtered and sorted (https://datatables.net/reference/option/columns.type)
         "data": "name",
         "render": function (data, type, row, meta) {
             if (type === 'display' || type === 'filter') {
