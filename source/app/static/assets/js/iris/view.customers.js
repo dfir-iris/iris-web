@@ -283,6 +283,9 @@ $(document).ready(function() {
             // https://datatables.net/reference/option/ajax.dataSrc
             "dataSrc": function(json) {
                 json.recordsTotal = json.total;
+                // According to the documentation (https://datatables.net/manual/server-side#Returned-data),
+                // recordsFiltered is the number of records after filtering has been applied
+                // since there are no filters on this table, it should be OK
                 json.recordsFiltered = json.total;
 
                 return json.cases;
