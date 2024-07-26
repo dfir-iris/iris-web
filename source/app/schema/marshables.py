@@ -2365,6 +2365,90 @@ class CaseProtagonistSchema(ma.SQLAlchemyAutoSchema):
         include_relationships = True
 
 
+# This is the new schema for /api/v2/cases. It's in between CaseSchema and CaseDetailsSchema
+# The goal was to have the same type for the cases returned in the following endpoints:
+# * GET /api/v2/cases
+# * POST /api/v2/cases
+# * GET /api/v2/cases/{identifier}
+# TODO The objective could then be to remove CaseSchema and CaseDetailsSchema
+class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing Case objects.
+
+    This schema defines the fields to include when serializing and deserializing Case objects.
+    It includes fields for the case name, description, SOC ID, customer ID, organizations, protagonists, tags, CSRF token,
+    initial date, and classification ID.
+
+    """
+    case_name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    case_description: str = auto_field('description', required=True, validate=Length(min=2))
+    case_soc_id: int = auto_field('soc_id', required=True)
+    case_customer: int = auto_field('client_id', required=True)
+    case_organisations: List[int] = fields.List(fields.Integer, required=False)
+    protagonists: List[Dict[str, Any]] = fields.List(fields.Dict, required=False)
+    case_tags: Optional[str] = fields.String(required=False)
+    initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
+    classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
+    reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    state = ma.Nested(CaseStateSchema)
+
+    class Meta:
+        model = Cases
+        include_fk = True
+        load_instance = True
+        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date']
+        unknown = EXCLUDE
+
+    @pre_load
+    def classification_filter(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Filters out empty classification IDs.
+
+        This method filters out empty classification IDs from the data.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The filtered data.
+
+        """
+        if data.get('classification_id') == "":
+            del data['classification_id']
+
+        return data
+
+    @pre_load
+    def verify_customer(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the customer ID is valid.
+
+        This method verifies that the customer ID specified in the data is valid.
+        If the ID is not valid, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the customer ID is not valid.
+
+        """
+        assert_type_mml(input_var=data.get('case_customer'),
+                        field_name='case_customer',
+                        type=int,
+                        allow_none=True)
+
+        client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
+        if client:
+            return data
+
+        raise marshmallow.exceptions.ValidationError("Invalid client id",
+                                                     field_name="case_customer")
+
+
 class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing Case objects in details."""
     client = ma.Nested(CustomerSchema)

@@ -66,6 +66,7 @@ from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
+from app.schema.marshables import CaseSchemaForAPIV2
 from app.util import ac_requires_case_identifier
 from app.util import ac_api_requires
 from app.util import ac_requires_case_access
@@ -421,7 +422,7 @@ def get_cases() -> Response:
 
     cases = {
         'total': filtered_cases.total,
-        'cases': CaseDetailsSchema().dump(filtered_cases.items, many=True),
+        'cases': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
         'last_page': filtered_cases.pages,
         'current_page': filtered_cases.page,
         'next_page': filtered_cases.next_num if filtered_cases.has_next else None,

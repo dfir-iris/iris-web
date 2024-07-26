@@ -231,7 +231,7 @@ $(document).ready(function() {
         "autoWidth": false,
         "columns": [
             {
-                "data": "name",
+                "data": "case_name",
                 "render": function(data, type, row) {
                     if (type === 'display') {
                         let a_anchor = $('<a></a>');
