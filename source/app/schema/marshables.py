@@ -15,11 +15,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import datetime
 import dateutil.parser
 import marshmallow
 import os
-import psycopg2
 import pyminizip
 import random
 import re
@@ -27,7 +27,8 @@ import shutil
 import string
 import tempfile
 from flask_login import current_user
-from marshmallow import ValidationError, EXCLUDE
+from marshmallow import ValidationError
+from marshmallow import EXCLUDE
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
@@ -36,7 +37,12 @@ from marshmallow_sqlalchemy import auto_field
 from pathlib import Path
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 from werkzeug.datastructures import FileStorage
 
 from app import app
@@ -46,8 +52,17 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus, EvidenceTypes, CaseStatus, NoteDirectory, NoteRevisions
+from app.models import AnalysisStatus
+from app.models import CaseClassification
+from app.models import SavedFilter
+from app.models import DataStorePath
+from app.models import IrisModuleHook
+from app.models import Tags
+from app.models import ReviewStatus
+from app.models import EvidenceTypes
+from app.models import CaseStatus
+from app.models import NoteDirectory
+from app.models import NoteRevisions
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -68,12 +83,18 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models.alerts import Alert, Severity, AlertStatus, AlertResolutionStatus
+from app.models.alerts import Alert
+from app.models.alerts import Severity
+from app.models.alerts import AlertStatus
+from app.models.alerts import AlertResolutionStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import CaseState, CaseProtagonist
-from app.util import file_sha256sum, str_to_bool, assert_type_mml
+from app.models.cases import CaseState
+from app.models.cases import CaseProtagonist
+from app.util import file_sha256sum
+from app.util import str_to_bool
+from app.util import assert_type_mml
 from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
