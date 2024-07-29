@@ -17,9 +17,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import marshmallow
-# IMPORTS ------------------------------------------------
 from datetime import datetime
-from flask import Blueprint, jsonify
+from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -31,12 +30,18 @@ from sqlalchemy import or_, and_
 
 from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
-from app.business.errors import BusinessProcessingError, UnhandledBusinessError
-from app.business.notes import update, create, list_note_revisions, get_note_revision, delete_note_revision
+from app.business.errors import BusinessProcessingError
+from app.business.notes import notes_update
+from app.business.notes import notes_create
+from app.business.notes import notes_list_revisions
+from app.business.notes import notes_get_revision
+from app.business.notes import notes_delete_revision
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.case.case_notes_db import add_comment_to_note, get_directories_with_note_count, get_directory, \
-    delete_directory
+from app.datamgmt.case.case_notes_db import add_comment_to_note
+from app.datamgmt.case.case_notes_db import get_directories_with_note_count
+from app.datamgmt.case.case_notes_db import get_directory
+from app.datamgmt.case.case_notes_db import delete_directory
 from app.datamgmt.case.case_notes_db import delete_note
 from app.datamgmt.case.case_notes_db import delete_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comment
@@ -47,10 +52,13 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Notes
 from app.models.authorization import CaseAccessLevel
-from app.schema.marshables import CaseNoteDirectorySchema, CaseNoteRevisionSchema
+from app.schema.marshables import CaseNoteDirectorySchema
+from app.schema.marshables import CaseNoteRevisionSchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires, ac_socket_requires, endpoint_deprecated, add_obj_history_entry
+from app.util import ac_api_case_requires
+from app.util import ac_socket_requires
+from app.util import endpoint_deprecated
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
@@ -61,7 +69,6 @@ case_notes_blueprint = Blueprint('case_notes',
                                  template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @case_notes_blueprint.route('/case/notes', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_notes(caseid, url_redir):
@@ -158,9 +165,7 @@ def case_note_save(cur_id, caseid):
 
     try:
 
-        note = update(identifier=cur_id,
-                      request_json=request.get_json(),
-                      case_identifier=caseid)
+        note = notes_update(identifier=cur_id, request_json=request.get_json(), case_identifier=caseid)
 
         return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
 
@@ -175,8 +180,7 @@ def case_note_list_history(cur_id, caseid):
 
     try:
 
-        note_version = list_note_revisions(identifier=cur_id,
-                                           case_identifier=caseid)
+        note_version = notes_list_revisions(identifier=cur_id, case_identifier=caseid)
 
         return response_success(f"ok", data=note_version_sc.dump(note_version))
 
@@ -191,9 +195,9 @@ def case_note_revision(cur_id, revision_id, caseid):
 
     try:
 
-        note_version = get_note_revision(identifier=cur_id,
-                                         revision_number=revision_id,
-                                         case_identifier=caseid)
+        note_version = notes_get_revision(identifier=cur_id,
+                                          revision_number=revision_id,
+                                          case_identifier=caseid)
 
         return response_success(f"ok", data=note_version_sc.dump(note_version))
 
@@ -207,9 +211,9 @@ def case_note_revision_delete(cur_id, revision_id, caseid):
 
     try:
 
-        delete_note_revision(identifier=cur_id,
-                             revision_number=revision_id,
-                             case_identifier=caseid)
+        notes_delete_revision(identifier=cur_id,
+                              revision_number=revision_id,
+                              case_identifier=caseid)
 
         return response_success(f"Revision {revision_id} of note {cur_id} deleted")
 
@@ -224,8 +228,7 @@ def case_note_add(caseid):
 
     try:
 
-        note = create(request_json=request.get_json(),
-                      case_identifier=caseid)
+        note = notes_create(request_json=request.get_json(), case_identifier=caseid)
 
         return response_success(f"Note ID {note.note_id} created", data=addnote_schema.dump(note))
 
@@ -525,7 +528,7 @@ def socket_ping_note(data):
 
 @socket_io.on('pong-note')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def socket_ping_note(data):
+def socket_pong_note(data):
 
     emit('pong-note', {"user": current_user.name, "note_id": data['note_id']}, room=data['channel'])
 

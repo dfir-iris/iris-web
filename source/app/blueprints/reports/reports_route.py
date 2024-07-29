@@ -27,7 +27,12 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.reporter.reporter import IrisMakeDocReport
 from app.iris_engine.reporter.reporter import IrisMakeMdReport
 from app.iris_engine.utils.tracker import track_activity
+
 from app.models import CaseTemplateReport
+from app.models.authorization import CaseAccessLevel
+
+from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
+
 from app.util import FileRemover
 from app.util import ac_api_requires
 from app.util import ac_requires_case_identifier
@@ -42,6 +47,10 @@ file_remover = FileRemover()
 @ac_api_requires()
 @ac_requires_case_identifier()
 def download_case_activity(report_id, caseid):
+    # TODO should we move this up
+    # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
+    permissions_check_current_user_has_some_case_access_stricter(
+        [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     call_modules_hook('on_preload_activities_report_create', data=report_id, caseid=caseid)
     if report_id:
@@ -56,7 +65,7 @@ def download_case_activity(report_id, caseid):
 
             # Get file extension
             _, report_format = os.path.splitext(report.internal_reference)
-            
+
             # Depending on the template format, the generation process is different
             if report_format == ".docx":
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
@@ -87,7 +96,11 @@ def download_case_activity(report_id, caseid):
 @reports_blueprint.route("/case/report/generate-investigation/<int:report_id>", methods=['GET'])
 @ac_api_requires()
 @ac_requires_case_identifier()
-def _gen_report(report_id, caseid):
+def generate_report(report_id, caseid):
+    # TODO should we move this up
+    # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
+    permissions_check_current_user_has_some_case_access_stricter(
+        [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     safe_mode = False
 
@@ -101,7 +114,7 @@ def _gen_report(report_id, caseid):
                 safe_mode = True
 
             _, report_format = os.path.splitext(report.internal_reference)
-            
+
             if report_format == ".md" or report_format == ".html":
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Investigation")

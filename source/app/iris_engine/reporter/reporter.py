@@ -18,30 +18,22 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
-
-# VARS ---------------------------------------------------
-
-# CONTENT ------------------------------------------------
 import logging as log
 import os
 from datetime import datetime
-
-import jinja2
-from jinja2.sandbox import SandboxedEnvironment
-
-from app.datamgmt.reporter.report_db import export_case_json_for_report
-from app.iris_engine.utils.common import IrisJinjaEnv
 from docx_generator.docx_generator import DocxGenerator
 from docx_generator.exceptions import rendering_error
 from flask_login import current_user
 from sqlalchemy import desc
 
 from app import app
+from app.business.cases import cases_export_to_report_json
+from app.business.cases import cases_export_to_json
+
 from app.datamgmt.activities.activities_db import get_auto_activities
 from app.datamgmt.activities.activities_db import get_manual_activities
 from app.datamgmt.case.case_db import case_get_desc_crc
-from app.datamgmt.reporter.report_db import export_case_json
+
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
@@ -51,7 +43,9 @@ from app.models import CasesEvent
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocLink
+
 from app.iris_engine.reporter.ImageHandler import ImageHandler
+from app.iris_engine.utils.common import IrisJinjaEnv
 
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 log.basicConfig(level=log.INFO, format=LOG_FORMAT)
@@ -115,7 +109,7 @@ class IrisReportMaker(object):
         Retrieve information of the case
         :return:
         """
-        case_info = export_case_json(self._caseid)
+        case_info = cases_export_to_json(self._caseid)
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisReportMaker.get_docid()
@@ -361,7 +355,7 @@ class IrisMakeDocReport(IrisReportMaker):
         Retrieve information of the case
         :return:
         """
-        case_info = export_case_json_for_report(self._caseid)
+        case_info = cases_export_to_report_json(self._caseid)
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisMakeDocReport.get_docid()

@@ -31,6 +31,17 @@ from werkzeug import Response
 from werkzeug.utils import secure_filename
 
 from app import db
+
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import Permissions
+
+from app.business.permissions import permissions_check_current_user_has_some_case_access
+from app.business.cases import cases_delete
+from app.business.cases import cases_update
+from app.business.cases import cases_create
+from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDeniedError
+
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.client.client_db import get_client_list
@@ -56,8 +67,6 @@ from app.iris_engine.module_handler.module_handler import instantiate_module_fro
 from app.iris_engine.tasker.tasks import task_case_update
 from app.iris_engine.utils.common import build_upload_path
 from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import CaseAccessLevel
-from app.models.authorization import Permissions
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
 from app.util import add_obj_history_entry
@@ -67,18 +76,12 @@ from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
-from app.business.cases import delete
-from app.business.cases import update
-from app.business.cases import create
-from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
 
 manage_cases_blueprint = Blueprint('manage_case',
                                    __name__,
                                    template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @manage_cases_blueprint.route('/manage/cases', methods=['GET'])
 @ac_requires(Permissions.standard_user, no_cid_required=True)
 def manage_index_cases(caseid, url_redir):
@@ -232,12 +235,15 @@ def manage_case_filter() -> Response:
 @ac_api_requires(Permissions.standard_user)
 def api_delete_case(cur_id):
     try:
-        delete(cur_id)
+        permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+    except PermissionDeniedError:
+        return ac_api_return_access_denied(caseid=cur_id)
+
+    try:
+        cases_delete(cur_id)
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
-    except PermissionDeniedError:
-        return ac_api_return_access_denied(caseid=cur_id)
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
@@ -348,7 +354,7 @@ def api_add_case():
     case_schema = CaseSchema()
 
     try:
-        case, msg = create(request.get_json())
+        case, msg = cases_create(request.get_json())
         return response_success(msg, data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -365,9 +371,11 @@ def api_list_case():
 @manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def update_case_info(cur_id):
+    permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+
     case_schema = CaseSchema()
     try:
-        case, msg = update(cur_id, request.get_json())
+        case, msg = cases_update(cur_id, request.get_json())
         return response_success(msg, data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())

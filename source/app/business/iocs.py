@@ -20,8 +20,8 @@ from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
-from app.models import Ioc, IocLink
-from app.models.authorization import CaseAccessLevel
+from app.models import Ioc
+from app.models import IocLink
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
@@ -32,13 +32,7 @@ from app.schema.marshables import IocSchema
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.business.errors import BusinessProcessingError
-from app.business.permissions import check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_iocs_db import get_ioc
-
-
-def get_ioc_by_identifier(ioc_identifier):
-
-    return get_ioc(ioc_identifier)
 
 
 def _load(request_data):
@@ -49,7 +43,11 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def create(request_json, case_identifier):
+def iocs_get_by_identifier(ioc_identifier):
+    return get_ioc(ioc_identifier)
+
+
+def iocs_create(request_json, case_identifier):
 
     # TODO ideally schema validation should be done before, outside the business logic in the REST API
     #      for that the hook should be called after schema validation
@@ -81,7 +79,7 @@ def create(request_json, case_identifier):
 
 
 # TODO most probably this method should not require a case_identifier... Since the IOC gets modified for all cases...
-def update(identifier, request_json, case_identifier):
+def iocs_update(identifier, request_json, case_identifier):
 
     try:
         ioc = get_ioc(identifier, caseid=case_identifier)
@@ -120,7 +118,7 @@ def update(identifier, request_json, case_identifier):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def delete(identifier, case_identifier):
+def iocs_delete(identifier, case_identifier):
 
     call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
     ioc = get_ioc(identifier, case_identifier)
@@ -138,23 +136,24 @@ def delete(identifier, case_identifier):
     return f'IOC {identifier} deleted'
 
 
-def get_iocs(case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+def iocs_exports_to_json(case_id):
+    iocs = get_iocs_by_case(case_id)
 
-    return get_iocs_by_case(case_identifier)
+    iocs_serialized = IocSchema().dump(iocs, many=True)
+
+    return iocs_serialized
 
 
-def build_filter_case_ioc_query(ioc_id: int = None,
-                                ioc_uuid: str = None,
-                                ioc_value: str = None,
-                                ioc_type_id: int = None,
-                                ioc_description: str = None,
-                                ioc_tlp_id: int = None,
-                                ioc_tags: str = None,
-                                ioc_misp: str = None,
-                                user_id: float = None,
-                                linked_cases: float = None
-                                ):
+def iocs_build_filter_query(ioc_id: int = None,
+                            ioc_uuid: str = None,
+                            ioc_value: str = None,
+                            ioc_type_id: int = None,
+                            ioc_description: str = None,
+                            ioc_tlp_id: int = None,
+                            ioc_tags: str = None,
+                            ioc_misp: str = None,
+                            user_id: float = None,
+                            linked_cases: float = None):
     """
     Get a list of iocs from the database, filtered by the given parameters
     """

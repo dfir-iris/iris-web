@@ -18,7 +18,6 @@
 
 import binascii
 import marshmallow
-# IMPORTS ------------------------------------------------
 import traceback
 from flask import Blueprint
 from flask import redirect
@@ -54,19 +53,23 @@ from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.manage.manage_users_db import set_user_case_access
-from app.datamgmt.reporter.report_db import export_case_json
+from app.business.cases import cases_export_to_json
 from app.forms import PipelinesCaseForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_fast_check_current_user_has_case_access, \
-    ac_fast_check_user_has_case_access
+from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
-from app.models import CaseStatus, ReviewStatusList
+from app.models import CaseStatus
+from app.models import ReviewStatusList
 from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
-from app.schema.marshables import TaskLogSchema, CaseSchema, CaseDetailsSchema
-from app.util import ac_api_case_requires, add_obj_history_entry
+from app.schema.marshables import TaskLogSchema
+from app.schema.marshables import CaseSchema
+from app.schema.marshables import CaseDetailsSchema
+from app.util import ac_api_case_requires
+from app.util import add_obj_history_entry
 from app.util import ac_case_requires
 from app.util import ac_socket_requires
 from app.util import response_error
@@ -168,7 +171,7 @@ def socket_summary_onsave(data):
 
 @socket_io.on('clear_buffer')
 @ac_socket_requires(CaseAccessLevel.full_access)
-def socket_summary_onchange(message):
+def socket_summary_on_clear_buffer(message):
 
     emit('clear_buffer', message)
 
@@ -240,7 +243,7 @@ def activity_fetch(caseid):
 @case_blueprint.route("/case/export", methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def export_case(caseid):
-    return response_success('', data=export_case_json(caseid))
+    return response_success('', data=cases_export_to_json(caseid))
 
 
 @case_blueprint.route("/case/meta", methods=['GET'])

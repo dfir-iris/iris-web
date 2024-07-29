@@ -38,7 +38,7 @@ def _deny_permission():
 
 # When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace manual calls to ac_fast_check_current_user_has_case_access
-def check_current_user_has_some_case_access(case_identifier, access_levels):
+def permissions_check_current_user_has_some_case_access(case_identifier, access_levels):
     if not ac_fast_check_current_user_has_case_access(case_identifier, access_levels):
         _deny_permission()
 
@@ -47,7 +47,7 @@ def check_current_user_has_some_case_access(case_identifier, access_levels):
 #       This one comes from ac_api_case_requires, whereas the other one comes from the way api_delete_case was written...
 # When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace annotation ac_api_case_requires
-def check_current_user_has_some_case_access_stricter(access_levels):
+def permissions_check_current_user_has_some_case_access_stricter(access_levels):
     redir, caseid, has_access = get_case_access(request, access_levels, from_api=True)
 
     # TODO: do we really want to keep the details of the errors, when permission is denied => more work, more complex code?
@@ -60,7 +60,7 @@ def check_current_user_has_some_case_access_stricter(access_levels):
 
 # When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace annotation ac_api_requires
-def check_current_user_has_some_permission(permissions):
+def permissions_check_current_user_has_some_permission(permissions):
     if 'permissions' not in session:
         session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 

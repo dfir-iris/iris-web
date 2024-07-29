@@ -61,6 +61,7 @@ New files should be prefixed by the following license header, where `${current_y
   This allows any code maintainer to immediately spot which code elements can be freely modified
   without having to worry about the external context.
   Note: private elements are only called within the modules in which they are defined.
+* Function names should be prefixed by the module name they belong to. Example: `iocs_create` instead of `create`
 
 ## Javascript coding rules
 

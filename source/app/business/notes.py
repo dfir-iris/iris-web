@@ -19,14 +19,14 @@ from datetime import datetime
 from flask_login import current_user
 from marshmallow import ValidationError
 
-from app import db, app
+from app import db
+from app import app
 from app.business.errors import BusinessProcessingError, UnhandledBusinessError
-from app.business.permissions import check_current_user_has_some_case_access_stricter
 from app.datamgmt.case.case_notes_db import get_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import NoteRevisions
-from app.models.authorization import CaseAccessLevel, User
+from app.models.authorization import User
 from app.schema.marshables import CaseNoteSchema
 from app.util import add_obj_history_entry
 
@@ -40,14 +40,13 @@ def _load(request_data, note_schema=None):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def create(request_json, case_identifier):
+def notes_create(request_json, case_identifier):
     """
     Create a note.
 
     :param request_json: The request data.
     :param case_identifier: The case identifier.
     """
-
     try:
         request_data = call_modules_hook('on_preload_note_create', data=request_json, caseid=case_identifier)
         note_schema = CaseNoteSchema()
@@ -87,7 +86,7 @@ def create(request_json, case_identifier):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def update(identifier: int = None, request_json: dict = None, case_identifier: int = None):
+def notes_update(identifier: int = None, request_json: dict = None, case_identifier: int = None):
     """
     Update a note by its identifier.
 
@@ -95,8 +94,6 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
     :param request_json: The request data.
     :param case_identifier: The case identifier.
     """
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
-
     try:
         addnote_schema = CaseNoteSchema()
 
@@ -152,7 +149,7 @@ def update(identifier: int = None, request_json: dict = None, case_identifier: i
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def list_note_revisions(identifier: int = None, case_identifier: int = None):
+def notes_list_revisions(identifier: int = None, case_identifier: int = None):
     """
     List the revisions of a note by its identifier.
 
@@ -187,7 +184,7 @@ def list_note_revisions(identifier: int = None, case_identifier: int = None):
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def get_note_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
+def notes_get_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
     """
     Get a note revision by its identifier and revision number.
 
@@ -216,7 +213,7 @@ def get_note_revision(identifier: int = None, revision_number: int = None, case_
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def delete_note_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
+def notes_delete_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
     """
     Delete a note revision by its identifier and revision number.
 
@@ -224,8 +221,6 @@ def delete_note_revision(identifier: int = None, revision_number: int = None, ca
     :param revision_number: The revision number.
     :param case_identifier: The case identifier.
     """
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
-
     try:
         note = get_note(identifier, caseid=case_identifier)
         if not note:
