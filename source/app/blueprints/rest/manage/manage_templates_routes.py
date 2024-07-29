@@ -26,6 +26,7 @@ from flask import redirect
 from flask import request
 from flask import send_file
 from flask_login import current_user
+from werkzeug.utils import secure_filename
 
 from app import app
 from app import db
@@ -104,7 +105,8 @@ def add_template():
         return redirect(request.url)
 
     if template_file and _allowed_file(template_file.filename):
-        _, extension = os.path.splitext(template_file.filename)
+        filename = secure_filename(template_file.filename)
+        _, extension = os.path.splitext(filename)
         filename = _get_random_string(18) + extension
 
         try:
