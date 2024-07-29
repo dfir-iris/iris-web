@@ -20,7 +20,7 @@ import os
 import random
 import string
 from datetime import datetime
-from flask import Blueprint
+from flask import Blueprint, url_for
 from flask import flash
 from flask import redirect
 from flask import request
@@ -102,7 +102,7 @@ def add_template():
     template_file = request.files['file']
     if template_file.filename == '':
         flash('No selected file')
-        return redirect(request.url)
+        return redirect(url_for('manage_templates.manage_templates'))
 
     if template_file and _allowed_file(template_file.filename):
         filename = secure_filename(template_file.filename)
