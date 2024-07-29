@@ -40,8 +40,8 @@ def build_upload_path(case_customer, case_name, module, create=False):
                 module=module.replace('.', '').replace(' ', '_').replace('/', '')
             )
 
+            path = secure_filename(path)
             fpath = os.path.join(app.config['UPLOADED_PATH'], path)
-            fpath = secure_filename(fpath)
 
             if create:
                 os.makedirs(os.path.join(app.config['UPLOADED_PATH'], path), exist_ok=True)
