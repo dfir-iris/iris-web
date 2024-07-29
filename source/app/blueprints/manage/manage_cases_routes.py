@@ -121,6 +121,7 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respon
     form = FlaskForm()
 
     if res:
+        print(res.get('status_name'))
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
                                case_classifications=case_classifications, case_states=case_states, customers=customers,
                                severities=severities)
