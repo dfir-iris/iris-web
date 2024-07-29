@@ -62,6 +62,15 @@ New files should be prefixed by the following license header, where `${current_y
   without having to worry about the external context.
   Note: private elements are only called within the modules in which they are defined.
 * Function names should be prefixed by the module name they belong to. Example: `iocs_create` instead of `create`
+* have only one import per line. For instance replace:
+  ```python
+  from app import app, db
+  ```
+  with
+  ```python
+  from app import app
+  from app import db
+  ```
 
 ## Javascript coding rules
 

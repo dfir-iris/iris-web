@@ -20,11 +20,14 @@ from datetime import date
 from datetime import timedelta
 from pathlib import Path
 
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_
+from sqlalchemy import desc
+from sqlalchemy import asc
 from sqlalchemy.orm import aliased
 from functools import reduce
 
-from app import db, app
+from app import db
+from app import app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
