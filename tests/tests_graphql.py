@@ -901,15 +901,15 @@ class TestsGraphQL(TestCase):
                             'openDate clientId } } }'}
         response = self._subject.execute_graphql_query(payload)
         open_date = response['data']['caseCreate']['case']['openDate']
-        description = response['data']['caseCreate']['case']['clientId']
+        clientId = response['data']['caseCreate']['case']['clientId']
         payload = {
             'query': f'''query {{ cases(openDate: "{open_date}") 
                     {{ edges {{ node {{ openDate clientId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
-            test_date = case['node']['clientId']
-            self.assertEqual(description, test_date)
+            test_id = case['node']['clientId']
+            self.assertEqual(clientId, test_id)
 
     def test_graphql_cases_filter_name_should_not_fail(self):
         payload = {'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
