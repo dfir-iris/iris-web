@@ -364,3 +364,7 @@ class TestsRest(TestCase):
         }
         response = self._subject.create('/api/v2/cases', body).json()
         self.assertIn('case_customer', response['data'])
+
+    def test_get_iocs_should_not_fail(self):
+        response = self._subject.get('/api/v2/iocs')
+        self.assertEqual(200, response.status_code)
