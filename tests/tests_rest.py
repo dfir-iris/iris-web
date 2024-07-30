@@ -332,3 +332,7 @@ class TestsRest(TestCase):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
         self.assertIn('case_name', response)
+
+    def test_get_iocs_should_not_fail(self):
+        response = self._subject.get('/api/v2/iocs')
+        self.assertEqual(200, response.status_code)

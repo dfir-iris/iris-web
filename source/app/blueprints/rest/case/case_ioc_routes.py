@@ -62,9 +62,35 @@ case_ioc_rest_blueprint = Blueprint('case_ioc_rest', __name__)
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/list', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/iocs')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_list_ioc(caseid):
+    iocs = get_detailed_iocs(caseid)
+
+    ret = {'ioc': []}
+
+    for ioc in iocs:
+        out = ioc._asdict()
+
+        # Get links of the IoCs seen in other cases
+        ial = get_ioc_links(ioc.ioc_id, caseid)
+
+        out['link'] = [row._asdict() for row in ial]
+        # Legacy, must be changed next version
+        out['misp_link'] = None
+
+        ret['ioc'].append(out)
+
+    ret['state'] = get_ioc_state(caseid=caseid)
+
+    return response_success("", data=ret)
+
+
+@case_ioc_rest_blueprint.route('/api/v2/iocs', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
 
     ret = {'ioc': []}
