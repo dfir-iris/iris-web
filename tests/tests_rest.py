@@ -336,3 +336,24 @@ class TestsRest(TestCase):
     def test_get_iocs_should_not_fail(self):
         response = self._subject.get('/api/v2/iocs')
         self.assertEqual(200, response.status_code)
+
+    def test_get_iocs_should_filter_and_return_success(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'test_get_cases_should_filter_on_case_name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        case_identifier = response['case_id']
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
+            'ioc_type_id': 1,
+            'ioc_tlp_id': 2,
+            'ioc_value': 'test_get_iocs_should_filter_on_ioc_value',
+            'ioc_description': 'rewrw',
+            'ioc_tags': "",
+            'custom_attributes': {}
+        }).json()
+        filters = {'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'}
+        response = self._subject.get('/api/v2/iocs', query_parameters=filters).json()
+        self.assertIn(response['status'], "success")
+
