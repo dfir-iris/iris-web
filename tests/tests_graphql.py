@@ -1028,12 +1028,12 @@ class TestsGraphQL(TestCase):
             self.assertEqual(ioc_value, test_ioc_value)
 
     def test_graphql_iocs_filter_first_should_not_fail(self):
-        ioc_value = 'IOC value #1'
+        ioc_id = 1
         counting = 1
-        payload = {'query': 'mutation { iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test2") { ioc { iocValue } } } '}
+        payload = {'query': 'mutation { iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "test2") { ioc { iocValue iocId } } } '}
         self._subject.execute_graphql_query(payload)
         payload = {
-            'query': 'mutation { iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "testtest") { ioc { iocValue } }}'}
+            'query': 'mutation { iocCreate(caseId: 1, typeId: 1, tlpId: 1, value: "testtest") { ioc { iocValue iocId } }}'}
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''{{
@@ -1043,8 +1043,8 @@ class TestsGraphQL(TestCase):
         }
         body = self._subject.execute_graphql_query(payload)
         for ioc in body['data']['case']['iocs']['edges']:
-            value = ioc['node']['iocValue']
-            self.assertEqual(ioc_value, value)
+            iocid = ioc['node']['iocId']
+            self.assertEqual(ioc_id, iocid)
 
     def test_graphql_iocs_filter_iocTypeId_should_not_fail(self):
         payload = {
