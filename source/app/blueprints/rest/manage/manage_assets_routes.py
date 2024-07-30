@@ -1,4 +1,5 @@
 #  IRIS Source Code
+#  Copyright (C) 2024 - DFIR-IRIS
 #  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,16 +28,13 @@ from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import response_success
 
-manage_assets_blueprint = Blueprint('manage_assets',
-                                    __name__,
-                                    template_folder='templates')
+manage_assets_rest_blueprint = Blueprint('manage_assets_rest', __name__)
 
 
-@manage_assets_blueprint.route('/manage/assets/filter', methods=['GET'])
+@manage_assets_rest_blueprint.route('/manage/assets/filter', methods=['GET'])
 @ac_api_requires()
 def manage_assets_filter() -> Response:
-    """ Returns a list of assets, filtered by the given parameters.
-    """
+    """Returns a list of assets, filtered by the given parameters."""
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     order_by = request.args.get('order_by', 'name', type=str)

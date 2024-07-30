@@ -38,12 +38,12 @@ from app.util import ac_api_requires
 from app.util import ac_requires_case_identifier
 from app.util import response_error
 
-reports_blueprint = Blueprint('reports', __name__, template_folder='templates')
+reports_rest_blueprint = Blueprint('reports_rest', __name__)
 
 file_remover = FileRemover()
 
 
-@reports_blueprint.route('/case/report/generate-activities/<int:report_id>', methods=['GET'])
+@reports_rest_blueprint.route('/case/report/generate-activities/<int:report_id>', methods=['GET'])
 @ac_api_requires()
 @ac_requires_case_identifier()
 def download_case_activity(report_id, caseid):
@@ -71,7 +71,7 @@ def download_case_activity(report_id, caseid):
                 mreport = IrisMakeDocReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_doc_report(doc_type="Activities")
 
-            elif report_format == ".md" or report_format == ".html" :
+            elif report_format in (".md", ".html"):
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Activities")
 
@@ -93,7 +93,7 @@ def download_case_activity(report_id, caseid):
     return response_error("Unknown report", status=404)
 
 
-@reports_blueprint.route("/case/report/generate-investigation/<int:report_id>", methods=['GET'])
+@reports_rest_blueprint.route('/case/report/generate-investigation/<int:report_id>', methods=['GET'])
 @ac_api_requires()
 @ac_requires_case_identifier()
 def generate_report(report_id, caseid):
@@ -115,7 +115,7 @@ def generate_report(report_id, caseid):
 
             _, report_format = os.path.splitext(report.internal_reference)
 
-            if report_format == ".md" or report_format == ".html":
+            if report_format in (".md", ".html"):
                 mreport = IrisMakeMdReport(tmp_dir, report_id, caseid, safe_mode)
                 fpath, logs = mreport.generate_md_report(doc_type="Investigation")
 

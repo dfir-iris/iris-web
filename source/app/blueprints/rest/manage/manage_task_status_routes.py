@@ -23,10 +23,10 @@ from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 
-manage_task_status_blueprint = Blueprint('manage_task_status', __name__, template_folder='templates')
+manage_task_status_rest_blueprint = Blueprint('manage_task_status_rest', __name__)
 
 
-@manage_task_status_blueprint.route('/manage/task-status/list', methods=['GET'])
+@manage_task_status_rest_blueprint.route('/manage/task-status/list', methods=['GET'])
 @ac_api_requires()
 def list_task_status():
     lstatus = TaskStatus.query.with_entities(
@@ -41,8 +41,7 @@ def list_task_status():
     return response_success("", data=data)
 
 
-# CONTENT ------------------------------------------------
-@manage_task_status_blueprint.route('/manage/task-status/<int:cur_id>', methods=['GET'])
+@manage_task_status_rest_blueprint.route('/manage/task-status/<int:cur_id>', methods=['GET'])
 @ac_api_requires()
 def view_task_status(cur_id):
     lstatus = TaskStatus.query.with_entities(

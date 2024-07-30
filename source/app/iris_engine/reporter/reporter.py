@@ -129,7 +129,6 @@ class IrisReportMaker(object):
 
         _crc32, descr = case_get_desc_crc(caseid)
 
-        # return IrisMakeDocReport.markdown_to_text(descr)
         return descr
 
     @staticmethod
@@ -375,7 +374,6 @@ class IrisMakeDocReport(IrisReportMaker):
 
         _crc32, descr = case_get_desc_crc(caseid)
 
-        # return IrisMakeDocReport.markdown_to_text(descr)
         return descr
 
     @staticmethod

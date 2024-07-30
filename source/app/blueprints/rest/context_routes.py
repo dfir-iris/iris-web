@@ -1,6 +1,6 @@
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2024 - DFIR-IRIS
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -17,32 +17,22 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
+from flask import request
+from flask_login import current_user
 
-from app import app
+from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.util import ac_api_requires
 from app.util import response_success
 
-api_blueprint = Blueprint(
-    'api',
-    __name__,
-    template_folder='templates'
-)
+context_rest_blueprint = Blueprint('context_rest', __name__)
 
 
-# CONTENT ------------------------------------------------
-@api_blueprint.route('/api/ping', methods=['GET'])
+@context_rest_blueprint.route('/context/search-cases', methods=['GET'])
 @ac_api_requires()
-def api_ping():
-    return response_success("pong")
+def cases_context_search():
+    search = request.args.get('q')
 
+    # Get all investigations not closed
+    datao = ctx_search_user_cases(search, current_user.id, max_results=100)
 
-@api_blueprint.route('/api/versions', methods=['GET'])
-@ac_api_requires()
-def api_version():
-    versions = {
-        "iris_current": app.config.get('IRIS_VERSION'),
-        "api_min": app.config.get('API_MIN_VERSION'),
-        "api_current": app.config.get('API_MAX_VERSION')
-    }
-
-    return response_success(data=versions)
+    return response_success(data=datao)

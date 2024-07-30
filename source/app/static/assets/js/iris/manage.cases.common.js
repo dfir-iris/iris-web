@@ -74,24 +74,28 @@ function remove_case(id) {
     })
         .then((willDelete) => {
             if (willDelete) {
-                post_request_api('/manage/cases/delete/' + id)
-                .done((data) => {
-                    if (notify_auto_api(data)) {
-                        if (!refresh_case_table()) {
-                            swal({
-                                title: "Done!",
-                                text: "You will be redirected in 5 seconds",
-                                icon: "success",
-                                buttons: false,
-                                dangerMode: false
-                            })
-                            setTimeout(function () {
-                                window.location.href = '/dashboard?cid=1';
-                            }, 4500);
-                        } else {
-                            refresh_case_table();
-                            $('#modal_case_detail').modal('hide');
-                        }
+                delete_request_api(`/api/v2/cases/${id}`)
+                .done((data, textStatus) => {
+                    if (textStatus !== 'nocontent') {
+                        notify_error(data);
+                        return;
+                    }
+                    notify_success('Case successfully deleted');
+
+                    if (!refresh_case_table()) {
+                        swal({
+                            title: "Done!",
+                            text: "You will be redirected in 5 seconds",
+                            icon: "success",
+                            buttons: false,
+                            dangerMode: false
+                        })
+                        setTimeout(function () {
+                            window.location.href = '/dashboard?cid=1';
+                        }, 4500);
+                    } else {
+                        refresh_case_table();
+                        $('#modal_case_detail').modal('hide');
                     }
                 });
             } else {
@@ -281,13 +285,16 @@ function access_case_info_reload(case_id, owner_id, reviewer_id) {
 
     get_request_api('/case/users/list')
     .done((data) => {
-         has_table = $.fn.dataTable.isDataTable( '#case_access_users_list_table' );
-        if (!notify_auto_api(data, !has_table)) {
+        if (api_request_failed(data)) {
             return;
+        }
+        has_table = $.fn.dataTable.isDataTable( '#case_access_users_list_table' );
+        if (has_table) {
+            notify_api_request_success(data)
         }
 
         req_users = data.data;
-        if ( has_table ) {
+        if (has_table) {
             table = $('#case_access_users_list_table').DataTable();
             table.clear();
             table.rows.add(req_users);

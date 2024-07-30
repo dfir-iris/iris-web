@@ -229,24 +229,35 @@ function notify_success(message) {
     });
 }
 
-function notify_auto_api(data, silent_success, silent_failure) {
+function notify_api_request_success(data) {
+    if (data.message.length === 0) {
+        data.message = 'Operation succeeded';
+    }
+    notify_success(data.message);
+}
+
+function notify_api_request_error(data) {
+    if (data.message.length === 0) {
+        data.message = 'Operation failed';
+    }
+    notify_error(data.message);
+}
+
+function api_request_failed(data) {
     if (data.status === 'success') {
-        if (silent_success === undefined || silent_success === false) {
-            if (data.message.length === 0) {
-                data.message = 'Operation succeeded';
-            }
-            notify_success(data.message);
-        }
-        return true;
-    } else {
-        if (data.message.length === 0) {
-            data.message = 'Operation failed';
-        }
-        if (silent_failure === undefined || silent_failure === false) {
-            notify_error(data.message);
-        }
         return false;
     }
+    notify_api_request_error(data);
+    return true;
+}
+
+function notify_auto_api(data) {
+    if (data.status === 'success') {
+        notify_api_request_success(data);
+        return true;
+    }
+    notify_api_request_error(data);
+    return false;
 }
 
 function get_request_api(uri, propagate_api_error, beforeSend_fn, cid) {
@@ -294,19 +305,8 @@ function set_page_warning(msg) {
     $('#page_warning').text(msg);
 }
 
-function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
-    return $.ajax({
-        url: uri + case_param(),
-        type: 'GET',
-        data: data,
-        dataType: "json",
-        beforeSend: function(jqXHR, settings) {
-            if (beforeSend_fn !== undefined) {
-                beforeSend_fn(jqXHR, settings);
-            }
-        },
-        error: function(jqXHR) {
-            if (propagate_api_error) {
+function api_error(propagate_api_error){
+  if (propagate_api_error) {
                 if(jqXHR.responseJSON && jqXHR.status == 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
                 } else {
@@ -319,6 +319,40 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
                     ajax_notify_error(jqXHR, this.url);
                 }
             }
+}
+
+function sendBefore(beforeSend_fn, settings) {
+            if (beforeSend_fn !== undefined) {
+                beforeSend_fn(jqXHR, settings);
+            }
+}
+
+function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
+    return $.ajax({
+        url: uri + case_param(),
+        type: 'GET',
+        data: data,
+        dataType: "json",
+        beforeSend: function(jqXHR, settings) {
+            sendBefore(beforeSend_fn, settings);
+        },
+        error: function(jqXHR) {
+            api_error(propagate_api_error);
+        }
+    });
+}
+
+function delete_request_api(uri, data, propagate_api_error, beforeSend_fn) {
+    return $.ajax({
+        url: uri + case_param(),
+        type: 'DELETE',
+        data: data,
+        dataType: "json",
+        beforeSend: function(jqXHR, settings) {
+             sendBefore(beforeSend_fn, settings);
+        },
+        error: function(jqXHR) {
+            api_error(propagate_api_error);
         }
     });
 }
@@ -349,13 +383,13 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
         },
         error: function(jqXHR) {
             if (propagate_api_error) {
-                if(jqXHR.responseJSON && jqXHR.status == 400) {
+                if (jqXHR.responseJSON && jqXHR.status == 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
                 } else {
                     ajax_notify_error(jqXHR, this.url);
                 }
             } else {
-                if(jqXHR.responseJSON) {
+                if (jqXHR.responseJSON) {
                     notify_error(jqXHR.responseJSON.message);
                 } else {
                     ajax_notify_error(jqXHR, this.url);
@@ -374,24 +408,10 @@ function post_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
         contentType: false,
         processData: false,
         beforeSend: function(jqXHR, settings) {
-            if (beforeSend_fn !== undefined) {
-                beforeSend_fn(jqXHR, settings);
-            }
+             sendBefore(beforeSend_fn, settings);
         },
         error: function(jqXHR) {
-            if (propagate_api_error) {
-                if(jqXHR.responseJSON && jqXHR.status == 400) {
-                    propagate_form_api_errors(jqXHR.responseJSON.data);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
-                }
-            } else {
-                if(jqXHR.responseJSON) {
-                    notify_error(jqXHR.responseJSON.message);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
-                }
-            }
+            api_error(propagate_api_error);
         }
     });
 }
@@ -753,22 +773,23 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
 
 function load_menu_mod_options_modal(element_id, data_type, anchor) {
     get_request_api('/dim/hooks/options/'+ data_type +'/list')
-    .done(function (data){
-        if(notify_auto_api(data, true)) {
-            if (data.data != null) {
-                let jsdata = data.data;
-                if (jsdata.length !== 0 && anchor.children().length !== 0){
-                    anchor.append('<div class="dropdown-divider"></div>');
-                }
-
-                for (option in jsdata) {
-                    let opt = jsdata[option];
-                    let menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
-                                `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
-                    anchor.append(menu_opt);
-                }
-
+    .done(function (data) {
+        if (api_request_failed(data)) {
+            return;
+        }
+        if (data.data != null) {
+            let jsdata = data.data;
+            if (jsdata.length !== 0 && anchor.children().length !== 0){
+                anchor.append('<div class="dropdown-divider"></div>');
             }
+
+            for (option in jsdata) {
+                let opt = jsdata[option];
+                let menu_opt = `<a class="dropdown-item" href="#" onclick='init_module_processing(["${element_id}"], "${opt.hook_name}",`+
+                            `"${opt.manual_hook_ui_name}","${opt.module_name}","${data_type}");return false;'><i class="fa fa-arrow-alt-circle-right mr-2"></i> ${opt.manual_hook_ui_name}</a>`
+                anchor.append(menu_opt);
+            }
+
         }
     })
 }
@@ -1063,18 +1084,22 @@ function get_editor_headers(editor_instance, save, edition_btn) {
 
 function goto_case_number() {
     case_id = $('#goto_case_number_input').val();
-    if (case_id !== '' && isNaN(case_id) === false) {
-
-        get_request_api('/case/exists', true, null, case_id)
-        .done(function (data){
-            if(notify_auto_api(data, true)) {
-                var url = new window.URL(document.location);
-                url.searchParams.set("cid", case_id);
-                window.location.href = url.href;
-            }
-        });
-
+    if (case_id === '') {
+        return;
     }
+    if (isNaN(case_id)) {
+        return;
+    }
+    get_request_api(`/api/v2/cases/${case_id}`, true, null, case_id)
+    .done(function(data, textStatus) {
+        if (textStatus !== 'success') {
+            notify_error('Operation failed');
+            return;
+        }
+        var url = new window.URL(document.location);
+        url.searchParams.set("cid", case_id);
+        window.location.href = url.href;
+    });
 }
 
 
@@ -1113,98 +1138,99 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
 
     get_request_api("/dim/hooks/options/"+ data_type +"/list")
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-            if (data.data != null) {
-                jsdata = data.data;
+        if (api_request_failed(data)) {
+            return;
+        }
+        if (data.data != null) {
+            jsdata = data.data;
 
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Share',
-                    multi: false,
-                    iconClass: 'fas fa-share',
-                    action: function(rows){
-                        row = rows[0];
-                        copy_object_link(get_row_id(row));
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Comment',
-                    multi: false,
-                    iconClass: 'fas fa-comments',
-                    action: function(rows){
-                        row = rows[0];
-                        if (data_type in datatype_map) {
-                            comment_element(get_row_id(row), datatype_map[data_type]);
-                        }
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Markdown Link',
-                    multi: false,
-                    iconClass: 'fa-brands fa-markdown',
-                    action: function(rows){
-                        row = rows[0];
-                        copy_object_link_md(data_type, get_row_id(row));
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'option',
-                    title: 'Copy',
-                    multi: false,
-                    iconClass: 'fa-regular fa-copy',
-                    action: function(rows){
-                        row = rows[0];
-                        copy_text_clipboard(get_row_value(row));
-                    }
-                });
-
-                actionOptions.items.push({
-                    type: 'divider'
-                });
-                jdata_menu_options = jsdata;
-
-                for (option in jsdata) {
-                    opt = jsdata[option];
-
-                    actionOptions.items.push({
-                        type: 'option',
-                        title: opt.manual_hook_ui_name,
-                        multi: true,
-                        multiTitle: opt.manual_hook_ui_name,
-                        iconClass: 'fas fa-rocket',
-                        contextMenuClasses: ['text-dark'],
-                        action: function (rows, de, ke) {
-                            init_module_processing_wrap(rows, data_type, de[0].outerText);
-                        },
-                    })
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Share',
+                multi: false,
+                iconClass: 'fas fa-share',
+                action: function(rows){
+                    row = rows[0];
+                    copy_object_link(get_row_id(row));
                 }
+            });
 
-                if (deletion_fn !== undefined) {
-                    actionOptions.items.push({
-                        type: 'divider',
-                    });
-
-                    actionOptions.items.push({
-                        type: 'option',
-                        title: 'Delete',
-                        multi: false,
-                        iconClass: 'fas fa-trash',
-                        contextMenuClasses: ['text-danger'],
-                        action: function(rows){
-                            row = rows[0];
-                            deletion_fn(get_row_id(row));
-                        }
-                    });
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Comment',
+                multi: false,
+                iconClass: 'fas fa-comments',
+                action: function(rows){
+                    row = rows[0];
+                    if (data_type in datatype_map) {
+                        comment_element(get_row_id(row), datatype_map[data_type]);
+                    }
                 }
+            });
 
-                tableActions = table.contextualActions(actionOptions);
-                tableActions.update();
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Markdown Link',
+                multi: false,
+                iconClass: 'fa-brands fa-markdown',
+                action: function(rows){
+                    row = rows[0];
+                    copy_object_link_md(data_type, get_row_id(row));
+                }
+            });
+
+            actionOptions.items.push({
+                type: 'option',
+                title: 'Copy',
+                multi: false,
+                iconClass: 'fa-regular fa-copy',
+                action: function(rows){
+                    row = rows[0];
+                    copy_text_clipboard(get_row_value(row));
+                }
+            });
+
+            actionOptions.items.push({
+                type: 'divider'
+            });
+            jdata_menu_options = jsdata;
+
+            for (option in jsdata) {
+                opt = jsdata[option];
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: opt.manual_hook_ui_name,
+                    multi: true,
+                    multiTitle: opt.manual_hook_ui_name,
+                    iconClass: 'fas fa-rocket',
+                    contextMenuClasses: ['text-dark'],
+                    action: function (rows, de, ke) {
+                        init_module_processing_wrap(rows, data_type, de[0].outerText);
+                    },
+                })
             }
+
+            if (deletion_fn !== undefined) {
+                actionOptions.items.push({
+                    type: 'divider',
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Delete',
+                    multi: false,
+                    iconClass: 'fas fa-trash',
+                    contextMenuClasses: ['text-danger'],
+                    action: function(rows){
+                        row = rows[0];
+                        deletion_fn(get_row_id(row));
+                    }
+                });
+            }
+
+            tableActions = table.contextualActions(actionOptions);
+            tableActions.update();
         }
     })
 }
@@ -1398,15 +1424,15 @@ function set_suggest_tags(anchor_id) {
 
 function send_add_case(data_sent) {
 
-    post_request_api('/manage/cases/add', JSON.stringify(data_sent), true, function () {
+    post_request_api('/api/v2/cases', JSON.stringify(data_sent), true, function () {
         $('#submit_new_case_btn').text('Checking data..')
             .attr("disabled", true)
             .removeClass('bt-outline-success')
             .addClass('btn-success', 'text-dark');
     })
-    .done((data) => {
-        if (notify_auto_api(data, true)) {
-            let case_id = data.data.case_id;
+    .done((data, textStatus) => {
+        if (textStatus === 'success') {
+            let case_id = data.case_id;
             swal("That's done !",
                 "Case has been successfully created",
                 "success",
@@ -1481,36 +1507,36 @@ function load_context_switcher() {
 }
 
 function context_data_parser(data, fire_modal = true) {
-    if(notify_auto_api(data, true)) {
-        $('#user_context').empty();
-
-        $('#user_context').append('<optgroup label="Open" id="switch_case_opened_opt"></optgroup>');
-        $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
-        ocs = data.data;
-        ret_data = [];
-        for (index in ocs) {
-            case_name = sanitizeHTML(ocs[index].name);
-            cs_name = sanitizeHTML(ocs[index].customer_name);
-            ret_data.push({
-                        'value': ocs[index].case_id,
-                        'text': `${case_name} (${cs_name}) ${ocs[index].access}`
-                    });
-            if (ocs[index].close_date != null) {
-                $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
-            } else {
-                $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
-            }
-        }
-
-        if (fire_modal) {
-            $('#modal_switch_context').modal("show");
-        }
-
-        $('#user_context').selectpicker('refresh');
-        $('#user_context').selectpicker('val', get_caseid());
-        return ret_data;
-
+    if (api_request_failed(data)) {
+        return;
     }
+    $('#user_context').empty();
+
+    $('#user_context').append('<optgroup label="Open" id="switch_case_opened_opt"></optgroup>');
+    $('#user_context').append('<optgroup label="Closed" id="switch_case_closed_opt"></optgroup>');
+    ocs = data.data;
+    ret_data = [];
+    for (index in ocs) {
+        case_name = sanitizeHTML(ocs[index].name);
+        cs_name = sanitizeHTML(ocs[index].customer_name);
+        ret_data.push({
+                    'value': ocs[index].case_id,
+                    'text': `${case_name} (${cs_name}) ${ocs[index].access}`
+                });
+        if (ocs[index].close_date != null) {
+            $('#switch_case_closed_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`);
+        } else {
+            $('#switch_case_opened_opt').append(`<option value="${ocs[index].case_id}">${case_name} (${cs_name}) ${ocs[index].access}</option>`)
+        }
+    }
+
+    if (fire_modal) {
+        $('#modal_switch_context').modal("show");
+    }
+
+    $('#user_context').selectpicker('refresh');
+    $('#user_context').selectpicker('val', get_caseid());
+    return ret_data;
 }
 
 function focus_on_input_chg_case(){
@@ -1634,10 +1660,11 @@ function userWhoamiRequest(force = false) {
   if (!userWhoami || force) {
     get_request_api('/user/whoami')
       .done((data) => {
-        if (notify_auto_api(data, true)) {
-            userWhoami = data.data;
-          sessionStorage.setItem('userWhoami', JSON.stringify(userWhoami));
+        if (api_request_failed(data)) {
+            return;
         }
+          userWhoami = data.data;
+          sessionStorage.setItem('userWhoami', JSON.stringify(userWhoami));
       });
   }
 }
@@ -1647,13 +1674,17 @@ $('.toggle-sidebar').on('click', function() {
         $('.wrapper').removeClass('sidebar_minimize');
         get_request_api('/user/mini-sidebar/set/false')
             .then((data) => {
-                notify_auto_api(data, true);
+                if (data.success !== 'success') {
+                    notify_api_request_error(data);
+                }
             });
     } else {
         $('.wrapper').addClass('sidebar_minimize');
         get_request_api('/user/mini-sidebar/set/true')
             .then((data) => {
-                notify_auto_api(data, true);
+                if (data.success !== 'success') {
+                    notify_api_request_error(data);
+                }
             });
     }
 });
@@ -1764,21 +1795,22 @@ $(document).ready(function(){
     data_sent.ctx_h = $("#user_context option:selected").text();
     post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
     .done((data) => {
-            if(notify_auto_api(data, true)) {
-                $('#modal_switch_context').modal('hide');
-                swal({
-                    title: 'Context changed successfully',
-                    text: 'Reloading...',
-                    icon: 'success',
-                    timer: 500,
-                    buttons: false,
-                })
-                .then(() => {
-                    var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
-                    window.history.replaceState('', '', newURL);
-                    location.reload();
-                })
+            if (api_request_failed(data)) {
+                return true;
             }
+            $('#modal_switch_context').modal('hide');
+            swal({
+                title: 'Context changed successfully',
+                text: 'Reloading...',
+                icon: 'success',
+                timer: 500,
+                buttons: false,
+            })
+            .then(() => {
+                var newURL = updateURLParameter(window.location.href, 'cid', data_sent.ctx);
+                window.history.replaceState('', '', newURL);
+                location.reload();
+            })
         });
     });
 
@@ -1807,7 +1839,7 @@ $(document).ready(function(){
 
         post_request_api('/case/tasklog/add', JSON.stringify(data), true)
         .done(function (data){
-            if(notify_auto_api(data)){
+            if (notify_auto_api(data)){
                 $('#modal_add_tasklog').modal('hide');
             }
         });

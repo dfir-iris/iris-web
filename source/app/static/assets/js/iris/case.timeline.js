@@ -432,34 +432,35 @@ function events_set_attribute(attribute, color) {
         get_request_api("timeline/events/" + event_id)
         .done((data) => {
             original_event = data.data;
-            if(notify_auto_api(data, true)) {
-                //change attribute to selected value
-                if(attribute === 'event_in_graph' || attribute === 'event_in_summary'){
-                    attribute_value = original_event[attribute];
-                    original_event[attribute] = !attribute_value;
-                } else if(attribute === 'event_color') {
-                    // attribute value already set to color L240
-                    original_event[attribute] = attribute_value;
-                }
-
-                //add csrf token to request
-                original_event['csrf_token'] = $("#csrf_token").val();
-                delete original_event['event_comments_map'];
-
-                //send updated event to API
-                post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
-                .done(function(data) {
-                    notify_auto_api(data);
-                    if (index === selected_rows.length - 1) {
-                        get_or_filter_tm(function() {
-                            selected_rows.each(function() {
-                                var event_id = this.getAttribute('id')
-                                $('#' + event_id).addClass("timeline-selected");
-                            });
-                        });
-                    }
-                });
+            if (api_request_failed(data)) {
+                return;
             }
+            //change attribute to selected value
+            if(attribute === 'event_in_graph' || attribute === 'event_in_summary'){
+                attribute_value = original_event[attribute];
+                original_event[attribute] = !attribute_value;
+            } else if(attribute === 'event_color') {
+                // attribute value already set to color L240
+                original_event[attribute] = attribute_value;
+            }
+
+            //add csrf token to request
+            original_event['csrf_token'] = $("#csrf_token").val();
+            delete original_event['event_comments_map'];
+
+            //send updated event to API
+            post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
+            .done(function(data) {
+                notify_auto_api(data);
+                if (index === selected_rows.length - 1) {
+                    get_or_filter_tm(function() {
+                        selected_rows.each(function() {
+                            var event_id = this.getAttribute('id')
+                            $('#' + event_id).addClass("timeline-selected");
+                        });
+                    });
+                }
+            });
         });
     });
 }
@@ -1263,7 +1264,7 @@ function apply_filtering(post_req_fn) {
     show_loader();
     get_request_data_api("/case/timeline/advanced-filter",{ 'q': filter_query })
     .done((data) => {
-        if(notify_auto_api(data, true)) {
+        if (!api_request_failed(data)) {
             build_timeline(data);
             if(post_req_fn !== undefined) {
                 post_req_fn();

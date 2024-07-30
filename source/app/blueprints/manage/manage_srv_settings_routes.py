@@ -16,31 +16,18 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import marshmallow
 from flask import Blueprint
 from flask import render_template
-from flask import request
 from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
 from app import app
-from app import celery
-from app import db
 from app.datamgmt.manage.manage_srv_settings_db import get_alembic_revision
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
-from app.iris_engine.backup.backup import backup_iris_db
 from app.iris_engine.updater.updater import is_updates_available
-from app.iris_engine.updater.updater import remove_periodic_update_checks
-from app.iris_engine.updater.updater import setup_periodic_update_checks
-from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
-from app.schema.marshables import ServerSettingsSchema
-from app.util import ac_api_requires
 from app.util import ac_requires
-from app.util import response_error
-from app.util import response_success
-from dictdiffer import diff
 
 
 manage_srv_settings_blueprint = Blueprint(
@@ -58,20 +45,6 @@ def manage_update(caseid, url_redir):
 
     # Return default page of case management
     return render_template('manage_make_update.html')
-
-
-@manage_srv_settings_blueprint.route('/manage/server/backups/make-db', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
-def manage_make_db_backup():
-
-    has_error, logs = backup_iris_db()
-    if has_error:
-        rep = response_error('Backup failed', data=logs)
-
-    else:
-        rep = response_success('Backup done', data=logs)
-
-    return rep
 
 
 @manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])
@@ -107,39 +80,3 @@ def manage_settings(caseid, url_redir):
 
     # Return default page of case management
     return render_template('manage_srv_settings.html', form=form, settings=server_settings, versions=versions)
-
-
-@manage_srv_settings_blueprint.route('/manage/settings/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
-def manage_update_settings():
-    if not request.is_json:
-        return response_error('Invalid request')
-
-    srv_settings_schema = ServerSettingsSchema()
-    server_settings = get_srv_settings()
-    original_update_check = server_settings.enable_updates_check
-
-    try:
-
-        original_settings = srv_settings_schema.dump(server_settings)
-        new_settings = request.get_json()
-
-        differences = list(diff(original_settings, new_settings))
-        changes = [{difference[1]: difference[2]} for difference in differences if difference[0] == 'change']
-
-        srv_settings_sc = srv_settings_schema.load(request.get_json(), instance=server_settings)
-        db.session.commit()
-
-        if original_update_check != srv_settings_sc.enable_updates_check:
-            if srv_settings_sc.enable_updates_check:
-                setup_periodic_update_checks(celery)
-            else:
-                remove_periodic_update_checks()
-
-        if srv_settings_sc:
-            track_activity(f"Server settings updated: {changes}")
-            app.config['SERVER_SETTINGS'] = srv_settings_schema.dump(server_settings)
-            return response_success("Server settings updated", app.config['SERVER_SETTINGS'])
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)

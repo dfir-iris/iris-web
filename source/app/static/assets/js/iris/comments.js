@@ -134,16 +134,16 @@ function edit_comment(comment_id, element_id, element_type) {
     const prefix = is_alert ? '/alerts' : `/case/${element_type}`;
     get_request_api(`${prefix}/${element_id}/comments/${comment_id}`)
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-
-            $('#comment_'+comment_id).addClass('comment_editing');
-            $('#comment_'+comment_id).data('comment_id', comment_id);
-            g_comment_desc_editor.setValue(data.data.comment_text);
-            $('#comment_edition').show();
-            $('#comment_submit').hide();
-            $('#cancel_edition').show();
-
+        if (api_request_failed(data)) {
+            return;
         }
+
+        $('#comment_'+comment_id).addClass('comment_editing');
+        $('#comment_'+comment_id).data('comment_id', comment_id);
+        g_comment_desc_editor.setValue(data.data.comment_text);
+        $('#comment_edition').show();
+        $('#comment_submit').hide();
+        $('#cancel_edition').show();
     });
 
 }
@@ -188,72 +188,77 @@ function load_comments(element_id, element_type, comment_id, do_notification, is
 
     get_request_api(`${prefix}/${element_id}/comments/list`)
     .done((data) => {
-        if (notify_auto_api(data, silent_success)) {
-            $('#comments_list').empty();
-            var names = Object;
-            for (var i = 0; i < data['data'].length; i++) {
+        if (api_request_failed(data)) {
+            return;
+        }
+        if (!silent_success) {
+            notify_api_request_success(data)
+        }
 
-                comment_text = data['data'][i].comment_text;
-                converter = get_showdown_convert();
-                html = converter.makeHtml(do_md_filter_xss(comment_text));
-                comment_html = do_md_filter_xss(html);
-                const username = data['data'][i].user.user_name;
-                if (names.hasOwnProperty(username)) {
-                    avatar = names[username];
-                } else {
-                    avatar = get_avatar_initials(username);
-                    names[username] = avatar;
-                }
+        $('#comments_list').empty();
+        var names = Object;
+        for (var i = 0; i < data['data'].length; i++) {
 
-                can_edit = "";
-                current_user = $('#current_username').text();
+            comment_text = data['data'][i].comment_text;
+            converter = get_showdown_convert();
+            html = converter.makeHtml(do_md_filter_xss(comment_text));
+            comment_html = do_md_filter_xss(html);
+            const username = data['data'][i].user.user_name;
+            if (names.hasOwnProperty(username)) {
+                avatar = names[username];
+            } else {
+                avatar = get_avatar_initials(username);
+                names[username] = avatar;
+            }
 
-                if (current_user === data['data'][i].user.user_login) {
-                    can_edit = '<a href="#" class="btn btn-sm comment-edition-hidden" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
-                    can_edit += '<a href="#" class="btn btn-sm comment-edition-hidden" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
-                }
+            can_edit = "";
+            current_user = $('#current_username').text();
 
-                comment = `
-                    <div class="row mb-2 mr-1" >
-                        <div class="col-12" id="comment_${data['data'][i].comment_id}">
-                            <div class="row mt-2">
-                                <div class="col">
-                                    <div class="row mr-2">
-                                        <div class="col">
-                                            <div class="ml-2 row">
-                                                ${avatar}
-                                                <h6 class="text-uppercase fw-bold mb-1 ml-1 mt-2">${filterXSS(data['data'][i].name)}</h6>
-                                                <div class="ml-auto">
-                                                    ${can_edit} <small class="text-muted text-wrap">${data['data'][i].comment_date}</small>
-                                                </div>
+            if (current_user === data['data'][i].user.user_login) {
+                can_edit = '<a href="#" class="btn btn-sm comment-edition-hidden" title="Edit comment" onclick="edit_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-edit text-dark"></i></a>';
+                can_edit += '<a href="#" class="btn btn-sm comment-edition-hidden" title="Delete comment" onclick="delete_comment(\'' + data['data'][i].comment_id + '\', \'' + element_id + '\',\''+ element_type +'\'); return false;"><i class="fa-solid fa-trash text-dark"></i></a>';
+            }
+
+            comment = `
+                <div class="row mb-2 mr-1" >
+                    <div class="col-12" id="comment_${data['data'][i].comment_id}">
+                        <div class="row mt-2">
+                            <div class="col">
+                                <div class="row mr-2">
+                                    <div class="col">
+                                        <div class="ml-2 row">
+                                            ${avatar}
+                                            <h6 class="text-uppercase fw-bold mb-1 ml-1 mt-2">${filterXSS(data['data'][i].name)}</h6>
+                                            <div class="ml-auto">
+                                                ${can_edit} <small class="text-muted text-wrap">${data['data'][i].comment_date}</small>
                                             </div>
-                                            <div class="row" style="border-left: 3px solid #eaeaea;margin-left:30px;">
-                                                <span class="text-muted ml-2">${comment_html}</span>
-                                            </div>
+                                        </div>
+                                        <div class="row" style="border-left: 3px solid #eaeaea;margin-left:30px;">
+                                            <span class="text-muted ml-2">${comment_html}</span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                `;
-                $('#comments_list').append(comment);
-            }
-            $('#comments_list').append('<div id="last-comment"><div>');
+                </div>
+            `;
+            $('#comments_list').append(comment);
+        }
+        $('#comments_list').append('<div id="last-comment"><div>');
 
-            if (data['data'].length === 0) {
-                $('#comments_list').html('<div class="text-center">No comments yet</div>');
-            } else if (comment_id === undefined || comment_id === null) {
-                offset = document.getElementById("last-comment").offsetTop;
+        if (data['data'].length === 0) {
+            $('#comments_list').html('<div class="text-center">No comments yet</div>');
+        } else if (comment_id === undefined || comment_id === null) {
+            offset = document.getElementById("last-comment").offsetTop;
+            if (offset > 20) {
+                $('.comments-listing').animate({ scrollTop: offset});
+            }
+        } else {
+            if (document.getElementById('#comment_'+comment_id) !== null) {
+                offset = document.getElementById('#comment_'+comment_id).offsetTop;
                 if (offset > 20) {
                     $('.comments-listing').animate({ scrollTop: offset});
-                }
-            } else {
-                if (document.getElementById('#comment_'+comment_id) !== null) {
-                    offset = document.getElementById('#comment_'+comment_id).offsetTop;
-                    if (offset > 20) {
-                        $('.comments-listing').animate({ scrollTop: offset});
-                    }
                 }
             }
         }

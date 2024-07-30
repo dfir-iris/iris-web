@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from flask import Blueprint, request
 from flask_login import current_user
 from werkzeug import Response
@@ -28,11 +29,10 @@ from app.util import ac_api_requires
 from app.util import response_success
 from app.util import response_error
 
-saved_filters_blueprint = Blueprint('saved_filters', __name__,
-                                    template_folder='templates')
+saved_filters_rest_blueprint = Blueprint('saved_filters_rest', __name__)
 
 
-@saved_filters_blueprint.route('/filters/add', methods=['POST'])
+@saved_filters_rest_blueprint.route('/filters/add', methods=['POST'])
 @ac_api_requires()
 def filters_add_route() -> Response:
     """
@@ -56,7 +56,7 @@ def filters_add_route() -> Response:
         db.session.add(new_saved_filter)
         db.session.commit()
 
-        track_activity(f'Search filter added', ctx_less=True)
+        track_activity('Search filter added', ctx_less=True)
 
         return response_success(data=saved_filter_schema.dump(new_saved_filter))
 
@@ -65,7 +65,7 @@ def filters_add_route() -> Response:
         return response_error(str(e))
 
 
-@saved_filters_blueprint.route('/filters/update/<int:filter_id>', methods=['POST'])
+@saved_filters_rest_blueprint.route('/filters/update/<int:filter_id>', methods=['POST'])
 @ac_api_requires()
 def filters_update_route(filter_id) -> Response:
     """
@@ -98,7 +98,7 @@ def filters_update_route(filter_id) -> Response:
         return response_error(str(e))
 
 
-@saved_filters_blueprint.route('/filters/delete/<int:filter_id>', methods=['POST'])
+@saved_filters_rest_blueprint.route('/filters/delete/<int:filter_id>', methods=['POST'])
 @ac_api_requires()
 def filters_delete_route(filter_id) -> Response:
     """
@@ -127,7 +127,7 @@ def filters_delete_route(filter_id) -> Response:
         return response_error(str(e))
 
 
-@saved_filters_blueprint.route('/filters/<int:filter_id>', methods=['GET'])
+@saved_filters_rest_blueprint.route('/filters/<int:filter_id>', methods=['GET'])
 @ac_api_requires()
 def filters_get_route(filter_id) -> Response:
     """
@@ -153,7 +153,7 @@ def filters_get_route(filter_id) -> Response:
         return response_error(str(e))
 
 
-@saved_filters_blueprint.route('/filters/<string:filter_type>/list', methods=['GET'])
+@saved_filters_rest_blueprint.route('/filters/<string:filter_type>/list', methods=['GET'])
 @ac_api_requires()
 def filters_list_route(filter_type) -> Response:
     """

@@ -1,6 +1,6 @@
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2024 - DFIR-IRIS
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -15,35 +15,23 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask import Blueprint
 
-from app.models import Tlp
+from flask import Blueprint
+from flask import request
+from flask_login import current_user
+
+from app.datamgmt.overview.overview_db import get_overview_db
 from app.util import ac_api_requires
-from app.util import response_error
 from app.util import response_success
 
-manage_tlp_type_blueprint = Blueprint('manage_tlp_types',
-                                      __name__,
-                                      template_folder='templates')
+overview_rest_blueprint = Blueprint('overview_rest', __name__)
 
 
-# CONTENT ------------------------------------------------
-@manage_tlp_type_blueprint.route('/manage/tlp/list', methods=['GET'])
+@overview_rest_blueprint.route('/overview/filter', methods=['GET'])
 @ac_api_requires()
-def list_tlp_types():
-    lstatus = Tlp.query.all()
+def get_overview_filter():
+    """Return an overview of the cases"""
+    show_full = request.args.get('show_closed', 'false') == 'true'
+    overview = get_overview_db(current_user.id, show_full)
 
-    return response_success("", data=lstatus)
-
-
-@manage_tlp_type_blueprint.route('/manage/tlp/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
-def get_tlp_type(cur_id):
-
-    tlp_type = Tlp.query.filter(Tlp.tlp_id == cur_id).first()
-    if not tlp_type:
-        return response_error("Invalid TLP ID {type_id}".format(type_id=cur_id))
-
-    return response_success("", data=tlp_type)
-
-
+    return response_success('', data=overview)

@@ -16,17 +16,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint, request
+from flask import Blueprint
 from flask import render_template
 from flask import url_for
-from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app.datamgmt.overview.overview_db import get_overview_db
-from app.util import ac_api_requires
 from app.util import ac_requires
-from app.util import response_success
 
 overview_blueprint = Blueprint(
     'overview',
@@ -47,15 +43,3 @@ def get_overview(caseid, url_redir):
     form = FlaskForm()
 
     return render_template('overview.html', caseid=caseid, form=form)
-
-
-@overview_blueprint.route('/overview/filter', methods=['GET'])
-@ac_api_requires()
-def get_overview_filter():
-    """
-    Return an overview of the cases
-    """
-    show_full = request.args.get('show_closed', 'false') == 'true'
-    overview = get_overview_db(current_user.id, show_full)
-
-    return response_success('', data=overview)

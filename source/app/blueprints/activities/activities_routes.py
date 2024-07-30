@@ -24,12 +24,8 @@ from flask import url_for
 from flask_wtf import FlaskForm
 
 import app
-from app.datamgmt.activities.activities_db import get_all_users_activities
-from app.datamgmt.activities.activities_db import get_users_activities
 from app.models.authorization import Permissions
-from app.util import ac_api_requires
 from app.util import ac_requires
-from app.util import response_success
 
 activities_blueprint = Blueprint(
     'activities',
@@ -49,29 +45,3 @@ def activities_index(caseid: int, url_redir):
     form = FlaskForm()
 
     return render_template('activities.html', form=form)
-
-
-@activities_blueprint.route('/activities/list', methods=['GET'])
-@ac_api_requires(Permissions.activities_read, Permissions.all_activities_read)
-def list_activities():
-    # Get User activities from database
-
-    user_activities = get_users_activities()
-
-    data = [row._asdict() for row in user_activities]
-    data = sorted(data, key=lambda i: i['activity_date'], reverse=True)
-
-    return response_success("", data=data)
-
-
-@activities_blueprint.route('/activities/list-all', methods=['GET'])
-@ac_api_requires(Permissions.all_activities_read)
-def list_all_activities():
-    # Get User activities from database
-
-    user_activities = get_all_users_activities()
-
-    data = [row._asdict() for row in user_activities]
-    data = sorted(data, key=lambda i: i['activity_date'], reverse=True)
-
-    return response_success("", data=data)

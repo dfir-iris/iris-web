@@ -68,39 +68,7 @@ function send_update_case_data() {
             .removeClass('btn-success', 'text-dark');
     })
     .done((data) => {
-        if (notify_auto_api(data, true)) {
-            $('#submit_update_case').text('Saved');
-            swal("That's done !",
-                "Files are being processed in background.\nYou can follow the progress in DIM Tasks",
-                "success",
-                {
-                    buttons: {
-                        again: {
-                            text: "Import files again",
-                            value: "again"
-                        },
-                        dash: {
-                            text: "Go to dashboard",
-                            value: "dash",
-                        }
-                    }
-                }
-            ).then((value) => {
-                switch (value) {
-
-                    case "dash":
-                        window.location.replace("/dashboard" + case_param());
-                        break;
-
-                    case "again":
-                        window.location.replace("/case" + case_param());
-                        break;
-
-                    default:
-                        window.location.replace("/case" + case_param());
-                }
-            });
-        } else {
+        if (api_request_failed(data)) {
             $('#submit_update_case').text('Save');
             mdata = ""
             for (element in data.data) {
@@ -119,7 +87,39 @@ function send_update_case_data() {
                 time: 5000,
             });
             swal("Oh no !", data.message, "error")
+            return;
         }
+        $('#submit_update_case').text('Saved');
+        swal("That's done !",
+            "Files are being processed in background.\nYou can follow the progress in DIM Tasks",
+            "success",
+            {
+                buttons: {
+                    again: {
+                        text: "Import files again",
+                        value: "again"
+                    },
+                    dash: {
+                        text: "Go to dashboard",
+                        value: "dash",
+                    }
+                }
+            }
+        ).then((value) => {
+            switch (value) {
+
+                case "dash":
+                    window.location.replace("/dashboard" + case_param());
+                    break;
+
+                case "again":
+                    window.location.replace("/case" + case_param());
+                    break;
+
+                default:
+                    window.location.replace("/case" + case_param());
+            }
+        });
     })
     .fail(() => {
         $('#submit_new_case_btn').text('Save');

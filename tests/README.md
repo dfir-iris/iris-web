@@ -20,5 +20,5 @@ python -m unittest --verbose
 
 To execute only one test, suffix with the fully qualified test name. Example:
 ```
-python -m unittest tests.Tests.test_create_asset_should_not_fail
+python -m unittest tests_rest.TestsRest.test_create_asset_should_not_fail
 ```

@@ -138,51 +138,52 @@ function search() {
             $('#submit_search').text("Searching...");
     })
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-              $('#notes_msearch_list').empty();
-              Table_1.clear();
-              Table_comments.clear();
-              $('#search_table_wrapper_1').hide();
-              $('#search_table_wrapper_2').hide();
-              $('#search_table_wrapper_3').hide();
-            val = $("input[type='radio']:checked").val();
-            if (val == "ioc") {
-                Table_1.rows.add(data.data);
-                Table_1.columns.adjust().draw();
-                $('#search_table_wrapper_1').show();
+        if (api_request_failed(data)) {
+            return;
+        }
 
-                $('#search_table_wrapper_1').on('click', function(e){
-                    if($('.popover').length>1)
-                        $('.popover').popover('hide');
-                        $(e.target).popover('toggle');
-                });
+        $('#notes_msearch_list').empty();
+        Table_1.clear();
+        Table_comments.clear();
+        $('#search_table_wrapper_1').hide();
+        $('#search_table_wrapper_2').hide();
+        $('#search_table_wrapper_3').hide();
+        val = $("input[type='radio']:checked").val();
+        if (val == "ioc") {
+            Table_1.rows.add(data.data);
+            Table_1.columns.adjust().draw();
+            $('#search_table_wrapper_1').show();
+
+            $('#search_table_wrapper_1').on('click', function(e){
+                if($('.popover').length>1)
+                    $('.popover').popover('hide');
+                    $(e.target).popover('toggle');
+            });
+        } else if (val == "notes") {
+            for (e in data.data) {
+                let li_anchor = $('<i>');
+                li_anchor.addClass('list-group-item');
+                let span_anchor = $('<span>');
+                span_anchor.addClass('name');
+                span_anchor.attr('style', 'cursor:pointer');
+                span_anchor.attr('title', 'Click to open note');
+                span_anchor.attr('onclick', 'note_in_details(' + data.data[e]['note_id'] + ', ' + data.data[e]['case_id'] + ');');
+                span_anchor.text(data.data[e]['note_title'] + ' - ' + data.data[e]['case_name'] + ' - ' + data.data[e]['client_name']);
+                li_anchor.append(span_anchor);
+                $('#notes_msearch_list').append(li_anchor);
+
             }
-            else if (val == "notes") {
-                for (e in data.data) {
-                    let li_anchor = $('<i>');
-                    li_anchor.addClass('list-group-item');
-                    let span_anchor = $('<span>');
-                    span_anchor.addClass('name');
-                    span_anchor.attr('style', 'cursor:pointer');
-                    span_anchor.attr('title', 'Click to open note');
-                    span_anchor.attr('onclick', 'note_in_details(' + data.data[e]['note_id'] + ', ' + data.data[e]['case_id'] + ');');
-                    span_anchor.text(data.data[e]['note_title'] + ' - ' + data.data[e]['case_name'] + ' - ' + data.data[e]['client_name']);
-                    li_anchor.append(span_anchor);
-                    $('#notes_msearch_list').append(li_anchor);
+            $('#search_table_wrapper_2').show();
+        } else if (val == "comments") {
+            Table_comments.rows.add(data.data);
+            Table_comments.columns.adjust().draw();
+            $('#search_table_wrapper_3').show();
 
-                }
-                $('#search_table_wrapper_2').show();
-            } else if (val == "comments") {
-                Table_comments.rows.add(data.data);
-                Table_comments.columns.adjust().draw();
-                $('#search_table_wrapper_3').show();
-
-                $('#search_table_wrapper_3').on('click', function(e){
-                    if($('.popover').length>1)
-                        $('.popover').popover('hide');
-                        $(e.target).popover('toggle');
-                });
-            }
+            $('#search_table_wrapper_3').on('click', function(e){
+                if($('.popover').length>1)
+                    $('.popover').popover('hide');
+                    $(e.target).popover('toggle');
+            });
         }
     })
     .always(() => {

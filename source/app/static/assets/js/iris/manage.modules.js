@@ -231,10 +231,11 @@ function refresh_modules_hooks(silent) {
 function export_mod_config(module_id) {
     get_request_api('/manage/modules/export-config/' + module_id)
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-            download_file(data.data.module_name + "_configuration_export.json", "text/json",
-            JSON.stringify(data.data.module_configuration, null, 4));
+        if (api_request_failed(data)) {
+            return;
         }
+        download_file(data.data.module_name + "_configuration_export.json", "text/json",
+        JSON.stringify(data.data.module_configuration, null, 4));
     });
 }
 
@@ -250,13 +251,13 @@ function import_mod_config(module_id){
 
         post_request_api('/manage/modules/import-config/'+ module_id, JSON.stringify(data), true)
         .done((data) => {
-            if(notify_auto_api(data, true)) {
-                module_detail(module_id);
-                $('#modal_input_config').modal('hide');
-                swal("Got news for you", data.message, "success");
-            } else {
+            if (api_request_failed(data)) {
                 swal("Got bad news for you", data.data, "error");
+                return;
             }
+            module_detail(module_id);
+            $('#modal_input_config').modal('hide');
+            swal("Got news for you", data.message, "success");
         });
     };
     reader.readAsText(file)

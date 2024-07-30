@@ -23,14 +23,10 @@ from flask import render_template
 from flask import request
 from flask import url_for
 
-from app import db
-from app.datamgmt.manage.manage_attribute_db import update_all_attributes
-from app.datamgmt.manage.manage_attribute_db import validate_attribute
 from app.forms import AddAssetForm
 from app.forms import AttributeForm
 from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
-from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
@@ -38,7 +34,6 @@ from app.util import response_success
 manage_attributes_blueprint = Blueprint('manage_attributes', __name__, template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @manage_attributes_blueprint.route('/manage/attributes')
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_attributes(caseid, url_redir):
@@ -48,24 +43,6 @@ def manage_attributes(caseid, url_redir):
     form = AddAssetForm()
 
     return render_template('manage_attributes.html', form=form)
-
-
-@manage_attributes_blueprint.route('/manage/attributes/list')
-@ac_api_requires(Permissions.server_administrator)
-def list_attributes():
-    # Get all attributes
-    attributes = CustomAttribute.query.with_entities(
-        CustomAttribute.attribute_id,
-        CustomAttribute.attribute_content,
-        CustomAttribute.attribute_display_name,
-        CustomAttribute.attribute_description,
-        CustomAttribute.attribute_for
-    ).all()
-
-    data = [row._asdict() for row in attributes]
-
-    # Return the attributes
-    return response_success("", data=data)
 
 
 @manage_attributes_blueprint.route('/manage/attributes/<int:cur_id>/modal', methods=['GET'])
@@ -107,38 +84,3 @@ def attributes_preview(caseid, url_redir):
     templated = render_template("modal_preview_attribute.html", attributes=attribute)
 
     return response_success(data=templated)
-
-
-@manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
-def update_attribute(cur_id):
-    if not request.is_json:
-        return response_error("Invalid request")
-
-    attribute = CustomAttribute.query.filter(CustomAttribute.attribute_id == cur_id).first()
-    if not attribute:
-        return response_error(f"Invalid Attribute ID {cur_id}")
-
-    data = request.get_json()
-    attr_content = data.get('attribute_content')
-    if not attr_content:
-        return response_error("Invalid request")
-
-    attr_contents, logs = validate_attribute(attr_content)
-    if len(logs) > 0:
-        return response_error("Found errors in attribute", data=logs)
-
-    previous_attribute = attribute.attribute_content
-
-    attribute.attribute_content = attr_contents
-    db.session.commit()
-
-    # Now try to update every attributes by merging the updated ones
-    complete_overwrite = data.get('complete_overwrite')
-    complete_overwrite = complete_overwrite if complete_overwrite else False
-    partial_overwrite = data.get('partial_overwrite')
-    partial_overwrite = partial_overwrite if partial_overwrite else False
-    update_all_attributes(attribute.attribute_for, partial_overwrite=partial_overwrite,
-                          complete_overwrite=complete_overwrite, previous_attribute=previous_attribute)
-
-    return response_success("Attribute updated")

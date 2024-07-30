@@ -15,11 +15,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import datetime
 import dateutil.parser
 import marshmallow
 import os
-import psycopg2
 import pyminizip
 import random
 import re
@@ -27,7 +27,8 @@ import shutil
 import string
 import tempfile
 from flask_login import current_user
-from marshmallow import ValidationError, EXCLUDE
+from marshmallow import ValidationError
+from marshmallow import EXCLUDE
 from marshmallow import fields
 from marshmallow import post_load
 from marshmallow import pre_load
@@ -36,7 +37,12 @@ from marshmallow_sqlalchemy import auto_field
 from pathlib import Path
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Union
 from werkzeug.datastructures import FileStorage
 
 from app import app
@@ -46,8 +52,17 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus, CaseClassification, SavedFilter, DataStorePath, IrisModuleHook, Tags, \
-    ReviewStatus, EvidenceTypes, CaseStatus, NoteDirectory, NoteRevisions
+from app.models import AnalysisStatus
+from app.models import CaseClassification
+from app.models import SavedFilter
+from app.models import DataStorePath
+from app.models import IrisModuleHook
+from app.models import Tags
+from app.models import ReviewStatus
+from app.models import EvidenceTypes
+from app.models import CaseStatus
+from app.models import NoteDirectory
+from app.models import NoteRevisions
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
@@ -68,12 +83,18 @@ from app.models import NotesGroup
 from app.models import ServerSettings
 from app.models import TaskStatus
 from app.models import Tlp
-from app.models.alerts import Alert, Severity, AlertStatus, AlertResolutionStatus
+from app.models.alerts import Alert
+from app.models.alerts import Severity
+from app.models.alerts import AlertStatus
+from app.models.alerts import AlertResolutionStatus
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import CaseState, CaseProtagonist
-from app.util import file_sha256sum, str_to_bool, assert_type_mml
+from app.models.cases import CaseState
+from app.models.cases import CaseProtagonist
+from app.util import file_sha256sum
+from app.util import str_to_bool
+from app.util import assert_type_mml
 from app.util import stream_sha256sum
 
 ALLOWED_EXTENSIONS = {'png', 'svg'}
@@ -2342,6 +2363,90 @@ class CaseProtagonistSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         include_relationships = True
+
+
+# This is the new schema for /api/v2/cases. It's in between CaseSchema and CaseDetailsSchema
+# The goal was to have the same type for the cases returned in the following endpoints:
+# * GET /api/v2/cases
+# * POST /api/v2/cases
+# * GET /api/v2/cases/{identifier}
+# TODO The objective could then be to remove CaseSchema and CaseDetailsSchema
+class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing Case objects.
+
+    This schema defines the fields to include when serializing and deserializing Case objects.
+    It includes fields for the case name, description, SOC ID, customer ID, organizations, protagonists, tags, CSRF token,
+    initial date, and classification ID.
+
+    """
+    case_name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
+    case_description: str = auto_field('description', required=True, validate=Length(min=2))
+    case_soc_id: int = auto_field('soc_id', required=True)
+    case_customer: int = auto_field('client_id', required=True)
+    case_organisations: List[int] = fields.List(fields.Integer, required=False)
+    protagonists: List[Dict[str, Any]] = fields.List(fields.Dict, required=False)
+    case_tags: Optional[str] = fields.String(required=False)
+    initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
+    classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
+    reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    state = ma.Nested(CaseStateSchema)
+
+    class Meta:
+        model = Cases
+        include_fk = True
+        load_instance = True
+        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date', 'state_id', 'owner_id']
+        unknown = EXCLUDE
+
+    @pre_load
+    def classification_filter(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Filters out empty classification IDs.
+
+        This method filters out empty classification IDs from the data.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The filtered data.
+
+        """
+        if data.get('classification_id') == "":
+            del data['classification_id']
+
+        return data
+
+    @pre_load
+    def verify_customer(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies that the customer ID is valid.
+
+        This method verifies that the customer ID specified in the data is valid.
+        If the ID is not valid, it raises a validation error.
+
+        Args:
+            data: The data to load.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The loaded data.
+
+        Raises:
+            ValidationError: If the customer ID is not valid.
+
+        """
+        assert_type_mml(input_var=data.get('case_customer'),
+                        field_name='case_customer',
+                        type=int,
+                        allow_none=True)
+
+        client = Client.query.filter(Client.client_id == data.get('case_customer')).first()
+        if client:
+            return data
+
+        raise marshmallow.exceptions.ValidationError("Invalid client id",
+                                                     field_name="case_customer")
 
 
 class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):

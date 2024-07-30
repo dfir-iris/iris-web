@@ -28,12 +28,13 @@ function load_datastore() {
 
     get_request_api('/datastore/list/tree')
     .done(function (data){
-        if(notify_auto_api(data, true)){
-            $('#ds-tree-root').empty();
-            build_ds_tree(data.data, 'ds-tree-root');
-            reparse_activate_tree();
-            show_datastore();
+        if (api_request_failed(data)) {
+            return;
         }
+        $('#ds-tree-root').empty();
+        build_ds_tree(data.data, 'ds-tree-root');
+        reparse_activate_tree();
+        show_datastore();
     });
 }
 
@@ -655,12 +656,13 @@ function filter_ds_files() {
     $('#btn_filter_ds_files').text('Searching..');
     get_request_data_api("/datastore/list/filter",{ 'q': filter_query })
     .done(function (data){
-        if(notify_auto_api(data, true)){
-            $('#ds-tree-root').empty();
-            build_ds_tree(data.data, 'ds-tree-root');
-            reparse_activate_tree();
-            show_datastore();
+        if (api_request_failed(data)) {
+            return;
         }
+        $('#ds-tree-root').empty();
+        build_ds_tree(data.data, 'ds-tree-root');
+        reparse_activate_tree();
+        show_datastore();
     })
     .always(() => {
         $('#btn_filter_ds_files').text('Search');

@@ -64,39 +64,31 @@ from app.iris_engine.access_control.utils import ac_get_effective_permissions_of
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 from app.models.authorization import CaseAccessLevel
+from app.models.authorization import Permissions
 
 
-def response(msg, data):
-    rsp = {
-        "status": "success",
-        "message": msg,
-        "data": data if data is not None else []
-    }
-    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
-                              status=200,
-                              mimetype='application/json')
+def response(status, data=None):
+    if data is not None:
+        data = json.dumps(data, cls=AlchemyEncoder)
+    return app.response_class(response=data, status=status, mimetype='application/json')
 
 
 def response_error(msg, data=None, status=400):
-    rsp = {
+    content = {
         "status": "error",
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
-                              status=status,
-                              mimetype='application/json')
+    return response(status, data=content)
 
 
 def response_success(msg='', data=None):
-    rsp = {
+    content = {
         "status": "success",
         "message": msg,
         "data": data if data is not None else []
     }
-    return app.response_class(response=json.dumps(rsp, cls=AlchemyEncoder),
-                              status=200,
-                              mimetype='application/json')
+    return response(200, data=content)
 
 
 def g_db_commit():
@@ -219,23 +211,34 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
     if no_cid_required:
         return False, caseid, True
 
-    try:
-        js_d = None
+    js_d = None
 
+    try:
         if request_data.content_type == 'application/json':
             js_d = request_data.get_json()
 
         if not js_d:
-            return _set_caseid_from_current_user()
+            redir, caseid = _set_caseid_from_current_user()
+            return redir, caseid, True
+
+        if 'cid' not in js_d:
+            cookie_session = request_data.cookies.get('session')
+            if not cookie_session:
+                redir, caseid = _set_caseid_from_current_user()
+                return redir, caseid, True
 
         caseid = js_d.get('cid')
-        request_data.json.pop('cid')
 
         return False, caseid, True
 
     except Exception as e:
-        print(request_data.url)
-        return _handle_exception(e, request_data)
+        cookie_session = request_data.cookies.get('session')
+        if not cookie_session:
+            redir, caseid = _set_caseid_from_current_user()
+            return redir, caseid, True
+
+        log_exception_and_error(e)
+        return True, 0, False
 
 
 def _set_caseid_from_current_user():
@@ -244,16 +247,7 @@ def _set_caseid_from_current_user():
         redir = True
         current_user.ctx_case = 1
     caseid = current_user.ctx_case
-    return redir, caseid, True
-
-
-def _handle_exception(e, request_data):
-    cookie_session = request_data.cookies.get('session')
-    if not cookie_session:
-        return _set_caseid_from_current_user()
-
-    log_exception_and_error(e)
-    return True, 0, False
+    return redir, caseid
 
 
 def log_exception_and_error(e):
@@ -264,7 +258,6 @@ def log_exception_and_error(e):
 def _handle_no_cid_required(no_cid_required):
     if no_cid_required:
         js_d = request.get_json(silent=True)
-        caseid = None
 
         try:
 
@@ -317,6 +310,7 @@ def update_denied_case(caseid, from_api):
         }
 
 
+# TODO would be nice to remove parameter no_cid_required
 def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
     redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
@@ -326,7 +320,7 @@ def get_case_access(request_data, access_level, from_api=False, no_cid_required=
         return redir, ctmp, has_access
 
     eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
-    if eaccess_level is None and access_level != []:
+    if eaccess_level is None and access_level:
         update_denied_case(caseid, from_api)
         return redir, caseid, False
 
@@ -498,34 +492,7 @@ def regenerate_session():
     session.modified = True
 
 
-def api_login_required(f):
-    @wraps(f)
-    def wrap(*args, **kwargs):
-
-        if request.method == 'POST':
-            cookie_session = request.cookies.get('session')
-            if cookie_session:
-                form = FlaskForm()
-                if not form.validate():
-                    return response_error('Invalid CSRF token')
-                elif request.is_json:
-                    request.json.pop('csrf_token')
-
-        if not is_user_authenticated(request):
-            return response_error("Authentication required", status=401)
-
-        else:
-            redir, caseid, access = get_case_access(request, [], from_api=True)
-            if not caseid or redir:
-                return response_error("Invalid case ID", status=404)
-            kwargs.update({"caseid": caseid})
-
-            return f(*args, **kwargs)
-
-    return wrap
-
-
-def ac_return_access_denied(caseid: int = None):
+def _ac_return_access_denied(caseid: int = None):
     error_uuid = uuid.uuid4()
     log.warning(f"Access denied to case #{caseid} for user ID {current_user.id}. Error {error_uuid}")
     return render_template('pages/error-403.html', user=current_user, caseid=caseid, error_uuid=error_uuid,
@@ -544,6 +511,8 @@ def ac_api_return_access_denied(caseid: int = None):
     return response_error('Permission denied', data=data, status=403)
 
 
+# TODO try to do as the api access controls:
+#   have this method check only the case access levels and use both this method and ac_requires
 def ac_case_requires(*access_level):
     def inner_wrap(f):
         @wraps(f)
@@ -551,16 +520,34 @@ def ac_case_requires(*access_level):
             if not is_user_authenticated(request):
                 return redirect(not_authenticated_redirection_url(request.full_path))
 
-            else:
-                redir, caseid, has_access = get_case_access(request, access_level)
+            redir, caseid, has_access = get_case_access(request, access_level)
 
-                if not has_access:
-                    return ac_return_access_denied(caseid=caseid)
+            if not has_access:
+                return _ac_return_access_denied(caseid=caseid)
 
-                kwargs.update({"caseid": caseid, "url_redir": redir})
+            kwargs.update({"caseid": caseid, "url_redir": redir})
 
-                return f(*args, **kwargs)
+            return f(*args, **kwargs)
 
+        return wrap
+    return inner_wrap
+
+
+# TODO try to remove option no_cid_required
+def ac_requires(*permissions, no_cid_required=False):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            if not is_user_authenticated(request):
+                return redirect(not_authenticated_redirection_url(request.full_path))
+
+            redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
+            kwargs.update({'caseid': caseid, 'url_redir': redir})
+
+            if not _user_has_at_least_a_required_permission(permissions):
+                return _ac_return_access_denied()
+
+            return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
@@ -577,11 +564,11 @@ def ac_socket_requires(*access_level):
                 if chan_id:
                     case_id = int(chan_id.replace('case-', '').split('-')[0])
                 else:
-                    return ac_return_access_denied(caseid=0)
+                    return _ac_return_access_denied(caseid=0)
 
                 access = ac_fast_check_user_has_case_access(current_user.id, case_id, access_level)
                 if not access:
-                    return ac_return_access_denied(caseid=case_id)
+                    return _ac_return_access_denied(caseid=case_id)
 
                 return f(*args, **kwargs)
 
@@ -589,77 +576,22 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
-def _user_has_required_permissions(permissions):
+def _user_has_at_least_a_required_permission(permissions: list[Permissions]):
+    """
+        Returns true as soon as the user has at least one permission in the list of permissions
+        Returns true if the list of required permissions is empty
+    """
     if not permissions:
         return True
 
     for permission in permissions:
-        # TODO do we really want to do this?
-        #      as it is coded now, as soon as the user has one of the required
-        #      permission, the action is allowed
-        #      don't we rather want the user to have all required permissions?
         if session['permissions'] & permission.value:
             return True
 
     return False
 
 
-def ac_requires(*permissions, no_cid_required=False):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-
-            if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url(request.full_path))
-
-            else:
-                redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
-
-                kwargs.update({"caseid": caseid, "url_redir": redir})
-
-                if not _user_has_required_permissions(permissions):
-                    return ac_return_access_denied()
-
-                return f(*args, **kwargs)
-        return wrap
-    return inner_wrap
-
-
-def ac_api_case_requires(*access_level):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
-                if cookie_session and not is_api:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
-
-            if not is_user_authenticated(request):
-                return response_error("Authentication required", status=401)
-
-            else:
-                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
-
-                if not caseid or redir:
-                    return response_error("Invalid case ID", status=404)
-
-                if not has_access:
-                    return ac_api_return_access_denied(caseid=caseid)
-
-                kwargs.update({"caseid": caseid})
-
-                return f(*args, **kwargs)
-
-        return wrap
-    return inner_wrap
-
-
-def endpoint_deprecated(message, version):
+def endpoint_removed(message, version):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
@@ -687,25 +619,50 @@ def ac_requires_client_access():
         def wrap(*args, **kwargs):
             client_id = kwargs.get('client_id')
             if not user_has_client_access(current_user.id, client_id):
-                return ac_return_access_denied()
+                return _ac_return_access_denied()
 
             return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
 
-def ac_requires_case_identifier():
-    def decorate_with_requires_case_identifier(f):
+def ac_requires_case_access(*access_level):
+    def decorate(f):
         @wraps(f)
         def wrap(*args, **kwargs):
             try:
-                redir, caseid, _ = get_case_access(request, [], from_api=True)
+                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
             except Exception as e:
                 log.exception(e)
                 return response_error('Invalid data. Check server logs', status=500)
 
             if not caseid and not redir:
                 return response_error('Invalid case ID', status=404)
+
+            if not has_access:
+                return ac_api_return_access_denied(caseid=caseid)
+
+            return f(*args, **kwargs)
+
+        return wrap
+    return decorate
+
+
+def ac_requires_case_identifier(*access_level):
+    def decorate_with_requires_case_identifier(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            try:
+                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
+            except Exception as e:
+                log.exception(e)
+                return response_error('Invalid data. Check server logs', status=500)
+
+            if not caseid and not redir:
+                return response_error('Invalid case ID', status=404)
+
+            if not has_access:
+                return ac_api_return_access_denied(caseid=caseid)
 
             kwargs.update({'caseid': caseid})
 
@@ -715,27 +672,40 @@ def ac_requires_case_identifier():
     return decorate_with_requires_case_identifier
 
 
+def _is_csrf_token_valid():
+    if request.method != 'POST':
+        return True
+    if request.headers.get('X-IRIS-AUTH') is not None:
+        return True
+    if request.headers.get('Authorization') is not None:
+        return True
+    cookie_session = request.cookies.get('session')
+    # True in the absence of a session cookie, because no CSRF token is required for API calls
+    if not cookie_session:
+        return True
+    form = FlaskForm()
+    if not form.validate():
+        return False
+    # TODO not nice to have a side-effect within a 'is' method.
+    if request.is_json:
+        request.json.pop('csrf_token')
+    return True
+
+
 def ac_api_requires(*permissions):
     def inner_wrap(f):
         @wraps(f)
         def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
-                if cookie_session and not is_api:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
+            if not _is_csrf_token_valid():
+                return response_error('Invalid CSRF token')
 
             if not is_user_authenticated(request):
-                return response_error("Authentication required", status=401)
+                return response_error('Authentication required', status=401)
 
             if 'permissions' not in session:
                 session['permissions'] = ac_get_effective_permissions_of_user(current_user)
 
-            if not _user_has_required_permissions(permissions):
+            if not _user_has_at_least_a_required_permission(permissions):
                 return response_error('Permission denied', status=403)
 
             return f(*args, **kwargs)
