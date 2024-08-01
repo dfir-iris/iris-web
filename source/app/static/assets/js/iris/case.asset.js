@@ -74,8 +74,8 @@ function add_assets() {
                 }
 
                 data['custom_attributes'] = attributes;
-
-                post_request_api('assets/add', JSON.stringify(data), true, function () {
+                case_id = get_caseid()
+                post_request_api(`/api/v2/cases/${case_id}/assets`, JSON.stringify(data), true, function () {
                     $('#submit_new_assets').text('Saving data..')
                         .attr("disabled", true)
                         .removeClass('bt-outline-success')
@@ -162,7 +162,7 @@ function delete_asset(asset_id) {
     do_deletion_prompt("You are about to delete asset #" + asset_id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('assets/delete/' + asset_id)
+            delete_request_api(`/api/v2/assets/` + asset_id)
             .done((data) => {
                 if (data.status == 'success') {
                     reload_assets();
