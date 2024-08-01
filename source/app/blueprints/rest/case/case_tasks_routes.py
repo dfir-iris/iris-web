@@ -112,7 +112,7 @@ def case_task_statusupdate(cur_id, caseid):
 @endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/tasks')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_add_task(caseid):
+def deprecated_case_add_task(caseid):
     task_schema = CaseTaskSchema()
     try:
         case, msg = tasks_create(caseid, request.get_json())
@@ -124,7 +124,7 @@ def case_add_task(caseid):
 @case_tasks_rest_blueprint.route('/api/v2/cases/<int:caseid>/tasks', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_case_add_task(caseid):
+def case_add_task(caseid):
     task_schema = CaseTaskSchema()
     try:
         case, _ = tasks_create(caseid, request.get_json())
@@ -137,7 +137,7 @@ def api_case_add_task(caseid):
 @endpoint_deprecated('GET', '/api/v2/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_task_view(cur_id, caseid):
+def deprecated_case_task_view(cur_id, caseid):
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
@@ -150,7 +150,7 @@ def case_task_view(cur_id, caseid):
 @case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_case_task_view(cur_id, caseid):
+def case_task_view(cur_id, caseid):
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
         return response_api_error("Invalid task ID for this case")
@@ -175,7 +175,7 @@ def case_edit_task(cur_id, caseid):
 @endpoint_deprecated('DELETE', '/api/v2/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_delete_task(cur_id, caseid):
+def deprecated_case_delete_task(cur_id, caseid):
     try:
         msg = tasks_delete(cur_id, caseid)
         return response_success(msg)
@@ -186,7 +186,7 @@ def case_delete_task(cur_id, caseid):
 @case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['DELETE'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_case_delete_task(cur_id, caseid):
+def case_delete_task(cur_id, caseid):
     try:
         tasks_delete(cur_id, caseid)
         return response_api_deleted()
