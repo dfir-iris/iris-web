@@ -210,20 +210,11 @@ def case_delete_task(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def api_case_delete_task(cur_id, caseid):
-    call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
-    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
-    if not task:
-        return response_api_error("Invalid task ID for this case")
-
-    delete_task(task.id)
-
-    update_tasks_state(caseid=caseid)
-
-    call_modules_hook('on_postload_task_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"deleted task \"{task.task_title}\"")
-
-    return response_api_deleted()
+    try:
+        tasks_delete(cur_id, caseid)
+        return response_api_deleted()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
