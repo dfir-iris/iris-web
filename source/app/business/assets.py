@@ -15,3 +15,32 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+from marshmallow.exceptions import ValidationError
+
+from app.business.errors import BusinessProcessingError
+from app.datamgmt.case.case_assets_db import get_asset
+from app.datamgmt.case.case_assets_db import delete_asset
+from app.iris_engine.module_handler.module_handler import call_modules_hook
+from app.iris_engine.utils.tracker import track_activity
+from app.schema.marshables import CaseAssetsSchema
+
+
+def _load(request_data):
+    try:
+        add_assets_schema = CaseAssetsSchema()
+        return add_assets_schema.load(request_data)
+    except ValidationError as e:
+        raise BusinessProcessingError('Data error', e.messages)
+
+
+def assets_delete(identifier, case_identifier):
+    call_modules_hook('on_preload_asset_delete', data=identifier, caseid=case_identifier)
+    asset = get_asset(identifier, case_identifier)
+    if not asset:
+        raise BusinessProcessingError("Invalid asset ID for this case")
+    # Deletes an asset and the potential links with the IoCs from the database
+    delete_asset(identifier, case_identifier)
+    call_modules_hook('on_postload_asset_delete', data=identifier, caseid=case_identifier)
+    track_activity(f"removed asset ID {asset.asset_name}", caseid=case_identifier)
+    return "Deleted"
