@@ -152,7 +152,7 @@ def add_asset(caseid):
 @case_assets_rest_blueprint.route('/api/v2/cases/<int:caseid>/assets', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def add_asset(caseid):
+def api_add_asset(caseid):
     try:
         # validate before saving
         add_asset_schema = CaseAssetsSchema()
