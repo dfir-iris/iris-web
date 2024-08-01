@@ -30,7 +30,7 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.tasks import delete
+from app.business.tasks import delete, tasks_delete, tasks_update, tasks_create
 from app.business.tasks import create
 from app.business.tasks import update
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
@@ -116,7 +116,7 @@ def case_add_task(caseid):
 
     task_schema = CaseTaskSchema()
     try:
-        case, msg = create(caseid, request.get_json())
+        case, msg = tasks_create(caseid, request.get_json())
         return response_success(msg, data=task_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -190,7 +190,7 @@ def api_case_task_view(cur_id, caseid):
 @ac_api_requires()
 def case_edit_task(cur_id, caseid):
     try:
-        msg = update(cur_id, caseid, request.get_json())
+        msg = tasks_update(cur_id, caseid, request.get_json())
         return response_success(msg)
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
@@ -202,7 +202,7 @@ def case_edit_task(cur_id, caseid):
 @ac_api_requires()
 def case_delete_task(cur_id, caseid):
     try:
-        msg = delete(cur_id, caseid)
+        msg = tasks_delete(cur_id, caseid)
         return response_success(msg)
     except BusinessProcessingError as e:
         return response_error(e.get_message())
