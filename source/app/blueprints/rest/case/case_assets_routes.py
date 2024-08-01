@@ -25,6 +25,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset
@@ -113,6 +114,42 @@ def case_assets_state(caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/assets')
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def add_asset(caseid):
+    try:
+        # validate before saving
+        add_asset_schema = CaseAssetsSchema()
+        request_data = call_modules_hook('on_preload_asset_create', data=request.get_json(), caseid=caseid)
+
+        add_asset_schema.is_unique_for_cid(caseid, request_data)
+        asset = add_asset_schema.load(request_data)
+
+        asset = create_asset(asset=asset,
+                             caseid=caseid,
+                             user_id=current_user.id
+                             )
+
+        if request_data.get('ioc_links'):
+            errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
+            if errors:
+                return response_error('Encountered errors while linking IOC. Asset has still been updated.')
+
+        asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
+
+        if asset:
+            track_activity(f"added asset \"{asset.asset_name}\"", caseid=caseid)
+            return response_success("Asset added", data=add_asset_schema.dump(asset))
+
+        return response_error("Unable to create asset for internal reasons")
+
+    except marshmallow.exceptions.ValidationError as e:
+        db.session.rollback()
+        return response_error(msg="Data error", data=e.messages)
+
+
+@case_assets_rest_blueprint.route('/api/v2/cases/<int:caseid>/assets', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def add_asset(caseid):
