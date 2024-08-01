@@ -190,6 +190,16 @@ class TestsRest(TestCase):
         response = self._subject.delete('/api/v2/iocs/None')
         self.assertEqual(404, response.status_code)
 
+    def test_delete_asset_should_return_204(self):
+        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        self._subject.create('/case/assets/add', body).json()
+        response = self._subject.delete(f'/api/v2/assets/1')
+        self.assertEqual(204, response.status_code)
+
+    def test_delete_asset_with_missing_asset_identifier_should_return_404(self):
+        response = self._subject.delete('/api/v2/assets/None')
+        self.assertEqual(404, response.status_code)
+
     def test_create_alert_should_not_fail(self):
         body = {
             'alert_title': 'title',

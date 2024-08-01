@@ -25,10 +25,11 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.blueprints.rest.endpoints import endpoint_deprecated, response_api_deleted, response_api_error
+from app.business.assets import assets_delete
+from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
-from app.datamgmt.case.case_assets_db import delete_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import get_asset_type_id
@@ -368,41 +369,23 @@ def asset_update(cur_id, caseid):
 @endpoint_deprecated('DELETE', '/api/v2/assets/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def asset_delete(cur_id, caseid):
-    call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
-
-    asset = get_asset(cur_id, caseid)
-    if not asset:
+def deprecated_asset_delete(cur_id, caseid):
+    try:
+        assets_delete(cur_id, caseid)
+        return response_success("Deleted")
+    except BusinessProcessingError as _:
         return response_error("Invalid asset ID for this case")
-
-    # Deletes an asset and the potential links with the IoCs from the database
-    delete_asset(cur_id, caseid)
-
-    call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"removed asset ID {asset.asset_name}", caseid=caseid)
-
-    return response_success("Deleted")
 
 
 @case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['DELETE'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_asset_delete(cur_id, caseid):
-    call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
-
-    asset = get_asset(cur_id, caseid)
-    if not asset:
-        return response_error("Invalid asset ID for this case")
-
-    # Deletes an asset and the potential links with the IoCs from the database
-    delete_asset(cur_id, caseid)
-
-    call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"removed asset ID {asset.asset_name}", caseid=caseid)
-
-    return response_success("Deleted")
+def asset_delete(cur_id, caseid):
+    try:
+        assets_delete(cur_id, caseid)
+        return response_api_deleted()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
