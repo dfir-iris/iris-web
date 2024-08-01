@@ -365,9 +365,30 @@ def asset_update(cur_id, caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/assets/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def asset_delete(cur_id, caseid):
+    call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
+
+    asset = get_asset(cur_id, caseid)
+    if not asset:
+        return response_error("Invalid asset ID for this case")
+
+    # Deletes an asset and the potential links with the IoCs from the database
+    delete_asset(cur_id, caseid)
+
+    call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
+
+    track_activity(f"removed asset ID {asset.asset_name}", caseid=caseid)
+
+    return response_success("Deleted")
+
+
+@case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['DELETE'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def api_asset_delete(cur_id, caseid):
     call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
 
     asset = get_asset(cur_id, caseid)
