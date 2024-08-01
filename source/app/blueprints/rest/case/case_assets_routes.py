@@ -284,9 +284,30 @@ def case_upload_ioc(caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/assets/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def asset_view(cur_id, caseid):
+    # Get IoCs already linked to the asset
+    asset_iocs = get_linked_iocs_finfo_from_asset(cur_id)
+
+    ioc_prefill = [row._asdict() for row in asset_iocs]
+
+    asset = get_asset(cur_id, caseid)
+    if not asset:
+        return response_error("Invalid asset ID for this case")
+
+    asset_schema = CaseAssetsSchema()
+    data = asset_schema.dump(asset)
+    data['linked_ioc'] = ioc_prefill
+
+    return response_success(data=data)
+
+
+@case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def api_asset_view(cur_id, caseid):
     # Get IoCs already linked to the asset
     asset_iocs = get_linked_iocs_finfo_from_asset(cur_id)
 
