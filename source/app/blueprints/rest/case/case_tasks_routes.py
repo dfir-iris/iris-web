@@ -30,7 +30,9 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.tasks import tasks_delete, tasks_update, tasks_create
+from app.business.tasks import tasks_delete
+from app.business.tasks import tasks_create
+from app.business.tasks import tasks_update
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -111,15 +113,12 @@ def case_task_statusupdate(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_task(caseid):
-
     task_schema = CaseTaskSchema()
     try:
         case, msg = tasks_create(caseid, request.get_json())
         return response_success(msg, data=task_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
 
 
 @case_tasks_rest_blueprint.route('/api/v2/cases/<int:caseid>/tasks', methods=['POST'])

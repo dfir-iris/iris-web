@@ -239,7 +239,6 @@ def case_delete_ioc(cur_id, caseid):
 @ac_api_requires()
 def delete_case_ioc(cur_id, caseid):
     try:
-
         iocs_delete(cur_id, caseid)
         return response_api_deleted()
 
