@@ -30,9 +30,7 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.tasks import delete, tasks_delete, tasks_update, tasks_create
-from app.business.tasks import create
-from app.business.tasks import update
+from app.business.tasks import tasks_delete, tasks_update, tasks_create
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
