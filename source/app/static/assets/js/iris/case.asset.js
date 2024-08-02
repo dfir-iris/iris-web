@@ -81,8 +81,8 @@ function add_assets() {
                         .removeClass('bt-outline-success')
                         .addClass('btn-success', 'text-dark');
                 })
-                    .done((data) => {
-                        if (data.status == 'success') {
+                    .done((data, textStatus) => {
+                        if (textStatus == 'success') {
                             reload_assets();
                             if (index == (assets_list.length - 1)) {
                                 $('#modal_add_asset').modal('hide');
@@ -163,8 +163,8 @@ function delete_asset(asset_id) {
     .then((doDelete) => {
         if (doDelete) {
             delete_request_api(`/api/v2/assets/` + asset_id)
-            .done((data) => {
-                if (data.status == 'success') {
+            .done((data, textStatus) => {
+                if (textStatus === 'nocontent') {
                     reload_assets();
                     $('#modal_add_asset').modal('hide');
                     notify_success('Asset deleted');
