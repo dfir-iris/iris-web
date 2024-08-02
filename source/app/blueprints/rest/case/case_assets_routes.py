@@ -246,7 +246,7 @@ def case_upload_ioc(caseid):
 @endpoint_deprecated('GET', '/api/v2/assets/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def asset_view(cur_id, caseid):
+def deprecated_asset_view(cur_id, caseid):
     # Get IoCs already linked to the asset
     asset_iocs = get_linked_iocs_finfo_from_asset(cur_id)
 
@@ -266,7 +266,7 @@ def asset_view(cur_id, caseid):
 @case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_asset_view(cur_id, caseid):
+def asset_view(cur_id, caseid):
     # Get IoCs already linked to the asset
     asset_iocs = get_linked_iocs_finfo_from_asset(cur_id)
 
@@ -274,13 +274,13 @@ def api_asset_view(cur_id, caseid):
 
     asset = get_asset(cur_id, caseid)
     if not asset:
-        return response_error("Invalid asset ID for this case")
+        return response_api_error("Invalid asset ID for this case")
 
     asset_schema = CaseAssetsSchema()
     data = asset_schema.dump(asset)
     data['linked_ioc'] = ioc_prefill
 
-    return response_success(data=data)
+    return response_api_created(data=data)
 
 
 @case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
