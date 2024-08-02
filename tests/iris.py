@@ -144,3 +144,9 @@ class Iris:
 
     def delete_tasks(self, current_identifier):
         return self._api.delete(f'/api/v2/tasks/{current_identifier}')
+
+    def add_assets(self, case_identifier, body):
+        return self._api.post(f'/api/v2/cases/{case_identifier}/assets',  body)
+
+    def delete_assets(self, current_identifier):
+        return self._api.delete(f'/api/v2/assets/{current_identifier}')

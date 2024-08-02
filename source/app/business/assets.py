@@ -15,11 +15,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.case.case_assets_db import get_asset
+from app.datamgmt.case.case_assets_db import get_asset, create_asset, set_ioc_links
 from app.datamgmt.case.case_assets_db import delete_asset
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -32,6 +32,25 @@ def _load(request_data):
         return add_assets_schema.load(request_data)
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
+
+
+def assets_create(case_identifier, request_json):
+    request_data = call_modules_hook('on_preload_asset_create', data=request_json, caseid=case_identifier)
+    asset = _load(request_data)
+    asset = create_asset(asset=asset,
+                         caseid=case_identifier,
+                         user_id=current_user.id
+                         )
+    if request_data.get('ioc_links'):
+        errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
+        if errors:
+            raise BusinessProcessingError('Encountered errors while linking IOC. Asset has still been updated.')
+    asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=case_identifier)
+    if asset:
+        track_activity(f"added asset \"{asset.asset_name}\"", caseid=case_identifier)
+        return "Asset added", asset
+
+    raise BusinessProcessingError("Unable to create asset for internal reasons")
 
 
 def assets_delete(identifier, case_identifier):

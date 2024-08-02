@@ -45,10 +45,6 @@ class TestsRest(TestCase):
             identifier = case['case_id']
             self._subject.delete(f'/api/v2/cases/{identifier}')
 
-    def test_create_asset_should_not_fail(self):
-        response = self._subject.create_asset()
-        self.assertEqual('success', response['status'])
-
     def test_get_api_version_should_not_fail(self):
         response = self._subject.get_api_version()
         self.assertEqual('success', response['status'])
@@ -191,13 +187,25 @@ class TestsRest(TestCase):
         self.assertEqual(404, response.status_code)
 
     def test_delete_asset_should_return_204(self):
+        case_identifier = self._subject.create_dummy_case()
         body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
-        self._subject.create('/case/assets/add', body).json()
-        response = self._subject.delete(f'/api/v2/assets/1')
+        self._subject.add_assets(case_identifier, body)
+        response = self._subject.delete_assets(1)
         self.assertEqual(204, response.status_code)
 
     def test_delete_asset_with_missing_asset_identifier_should_return_404(self):
-        response = self._subject.delete('/api/v2/assets/None')
+        response = self._subject.delete_assets(None)
+        self.assertEqual(404, response.status_code)
+
+    def test_create_asset_should_work(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        response = self._subject.add_assets(case_identifier, body)
+        self.assertEqual(201, response.status_code)
+
+    def test_create_asset_with_missing_case_identifier_should_return_404(self):
+        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        response = self._subject.add_assets(None, body)
         self.assertEqual(404, response.status_code)
 
     def test_create_alert_should_not_fail(self):
