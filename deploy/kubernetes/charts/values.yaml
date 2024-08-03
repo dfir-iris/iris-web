@@ -137,6 +137,7 @@ irisworker:
    POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
    IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
    IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+   NUMBER_OF_CHILD: <number_of_child_processes>
 
 ## @section Nginx Ingress Configuration
 ##
