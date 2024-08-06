@@ -262,7 +262,7 @@ def deprecated_case_view_ioc(cur_id, caseid):
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def gcase_view_ioc(cur_id, caseid):
+def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
