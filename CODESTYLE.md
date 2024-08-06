@@ -2,6 +2,10 @@
 
 If you wish to develop in DFIR-IRIS, please make sure to read the following tips.
 
+## Versioning
+
+The project adheres to semantic versioning, see: https://semver.org/.
+
 ## Git workflow
 
 The workflow is based on the evolution of the following branches:
