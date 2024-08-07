@@ -25,9 +25,9 @@
 from app import app
 from app import lm
 # Blueprints
-from app.blueprints.pages.activities import activities_blueprint
+from app.blueprints.pages.activities.activities_routes import activities_blueprint
 from app.blueprints.rest.activities_routes import activities_rest_blueprint
-from app.blueprints.pages.alerts import alerts_blueprint
+from app.blueprints.pages.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.rest.alerts_routes import alerts_rest_blueprint
 from app.blueprints.rest.api_routes import rest_api_blueprint
 from app.blueprints.case.case_routes import case_blueprint
