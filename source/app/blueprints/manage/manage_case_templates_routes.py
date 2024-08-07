@@ -85,8 +85,11 @@ def case_template_modal(cur_id, caseid, url_redir):
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.case_templates_write)
-def add_template_modal():
+@ac_requires(Permissions.case_templates_write)
+def add_template_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_case_templates.manage_case_templates', cid=caseid))
+
     case_template = CaseTemplate()
     form = CaseTemplateForm()
     form.case_template_json.data = {
@@ -122,6 +125,9 @@ def add_template_modal():
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/upload/modal', methods=['GET'])
-@ac_api_requires(Permissions.case_templates_write)
-def upload_template_modal():
+@ac_requires(Permissions.case_templates_write)
+def upload_template_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_case_templates.manage_case_templates', cid=caseid))
+
     return render_template("modal_upload_case_template.html")
