@@ -33,8 +33,6 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.forms import AssetBasicForm
 from app.forms import ModalAddCaseAssetForm
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
 from app.util import ac_case_requires
 from app.util import response_error
 
@@ -64,9 +62,11 @@ def case_assets(caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/add/modal', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
-@ac_api_requires()
-def add_asset_modal(caseid):
+@ac_case_requires(CaseAccessLevel.full_access)
+def add_asset_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
+
     form = AssetBasicForm()
 
     form.asset_type_id.choices = get_assets_types()
