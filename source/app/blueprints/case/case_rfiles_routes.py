@@ -27,8 +27,6 @@ from app.datamgmt.case.case_rfiles_db import get_case_evidence_comments_count
 from app.datamgmt.case.case_rfiles_db import get_rfile
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
 from app.util import ac_case_requires
 from app.util import response_error
 
@@ -68,10 +66,10 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
 
 
 @case_rfiles_blueprint.route('/case/evidences/add/modal', methods=['GET'])
-# TODO remove and remove optional argument?
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
-@ac_api_requires()
-def case_add_rfile_modal(caseid):
+@ac_case_requires(CaseAccessLevel.full_access)
+def case_add_rfile_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_rfiles.case_rfile', cid=caseid, redirect=True))
 
     return render_template("modal_add_case_rfile.html", rfile=None, attributes=get_default_custom_attributes('evidence'))
 
