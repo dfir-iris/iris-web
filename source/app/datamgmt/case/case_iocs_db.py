@@ -332,9 +332,6 @@ def build_filter_ioc_query(
     if caseid is not None:
         conditions.append(Ioc.case_id == caseid)
 
-    if len(conditions) > 1:
-        conditions = [reduce(and_, conditions)]
-    conditions.append(Ioc.ioc_id.in_(user_list_cases_view(current_user_id)))
     query = Ioc.query.filter(*conditions)
 
     if sort_by is not None:
