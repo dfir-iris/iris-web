@@ -27,11 +27,12 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_deleted, response_api_success
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import endpoint_deprecated
-from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
+from app.blueprints.rest.parsing import parse_comma_separated_identifiers
+from app.datamgmt.case.case_iocs_db import add_comment_to_ioc, get_filtered_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import delete_ioc_comment
@@ -91,25 +92,43 @@ def case_list_ioc(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def list_ioc(caseid):
-    iocs = get_detailed_iocs(caseid)
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    order_by = request.args.get('order_by', type=str)
+    sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
-    ret = {'ioc': []}
+    ioc_type_id = request.args.get('ioc_type_id', None, type=int)
+    ioc_tlp_id = request.args.get('ioc_tlp_id', None, type=int)
+    ioc_value = request.args.get('ioc_value', None, type=str)
+    ioc_description = request.args.get('ioc_description', None, type=str)
+    ioc_tags = request.args.get('ioc_tags', None, type=str)
 
-    for ioc in iocs:
-        out = ioc._asdict()
+    filtered_iocs = get_filtered_iocs(
+        current_user_id=current_user.id,
+        caseid=caseid,
+        ioc_type_id=ioc_type_id,
+        ioc_tlp_id=ioc_tlp_id,
+        ioc_value=ioc_value,
+        ioc_description=ioc_description,
+        ioc_tags=ioc_tags,
+        page=page,
+        per_page=per_page,
+        sort_by=order_by,
+        sort_dir=sort_dir
+    )
 
-        # Get links of the IoCs seen in other cases
-        ial = get_ioc_links(ioc.ioc_id, caseid)
+    if filtered_iocs is None:
+        return response_api_error('Filtering error')
 
-        out['link'] = [row._asdict() for row in ial]
-        # Legacy, must be changed next version
-        out['misp_link'] = None
+    iocs = {
+        'total': filtered_iocs.total,
+        'iocs': IocSchema().dump(filtered_iocs.items, many=True),
+        'last_page': filtered_iocs.pages,
+        'current_page': filtered_iocs.page,
+        'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
+    }
 
-        ret['ioc'].append(out)
-
-    ret['state'] = get_ioc_state(caseid=caseid)
-
-    return response_success("", data=ret)
+    return response_api_success(data=iocs)
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/state', methods=['GET'])
