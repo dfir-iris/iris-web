@@ -15,15 +15,17 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import logging
 
-from flask_login import current_user
-from sqlalchemy import and_
+from functools import reduce
 
-from app import db
+from flask_login import current_user
+from sqlalchemy import and_, desc, asc
+
+from app import db, app
 from app.datamgmt.states import update_ioc_state
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
-from app.models import CaseEventsIoc
 from app.models import Cases
 from app.models import Client
 from app.models import Comments
@@ -32,7 +34,7 @@ from app.models import IocAssetLink
 from app.models import IocComments
 from app.models import IocType
 from app.models import Tlp
-from app.models.authorization import User
+from app.models.authorization import User, UserCaseEffectiveAccess, CaseAccessLevel
 
 
 def get_iocs(caseid):
@@ -285,3 +287,91 @@ def get_ioc_by_value(ioc_value, caseid=None):
         Ioc.query.filter(Ioc.ioc_value == ioc_value, Ioc.case_id == caseid).first()
 
     return Ioc.query.filter(Ioc.ioc_value == ioc_value).first()
+
+
+def user_list_cases_view(user_id):
+    res = UserCaseEffectiveAccess.query.with_entities(
+        UserCaseEffectiveAccess.case_id
+    ).filter(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.access_level != CaseAccessLevel.deny_all.value
+    )).all()
+
+    return [r.case_id for r in res]
+
+
+def build_filter_ioc_query(
+        current_user_id,
+        caseid: int = None,
+        ioc_type_id: int = None,
+        ioc_tlp_id: int = None,
+        ioc_value: str = None,
+        ioc_description: str = None,
+        ioc_tags: str = None,
+        sort_by=None,
+        sort_dir='asc'):
+    """
+    Get a list of cases from the database, filtered by the given parameters
+    """
+    conditions = []
+    if ioc_type_id is not None:
+        conditions.append(Ioc.ioc_type_id == ioc_type_id)
+
+    if ioc_tlp_id is not None:
+        conditions.append(Ioc.ioc_tlp_id == ioc_tlp_id)
+
+    if ioc_value is not None:
+        conditions.append(Ioc.ioc_value == ioc_value)
+
+    if ioc_description is not None:
+        conditions.append(Ioc.ioc_description == ioc_description)
+
+    if ioc_tags is not None:
+        conditions.append(Ioc.ioc_tags == ioc_tags)
+
+    if caseid is not None:
+        conditions.append(Ioc.case_id == caseid)
+
+    if len(conditions) > 1:
+        conditions = [reduce(and_, conditions)]
+    conditions.append(Ioc.ioc_id.in_(user_list_cases_view(current_user_id)))
+    query = Ioc.query.filter(*conditions)
+
+    if sort_by is not None:
+        order_func = desc if sort_dir == "desc" else asc
+
+        if sort_by == 'opened_by':
+            query = query.join(User, Ioc.user_id == User.id).order_by(order_func(User.name))
+
+        elif hasattr(Ioc, sort_by):
+            query = query.order_by(order_func(getattr(Ioc, sort_by)))
+
+    return query
+
+
+def get_filtered_iocs(
+        current_user_id: int = None,
+        caseid: int = None,
+        ioc_type_id: int = None,
+        ioc_tlp_id: int = None,
+        ioc_value: str = None,
+        ioc_description: str = None,
+        ioc_tags: str = None,
+        per_page: int = None,
+        page: int = None,
+        sort_by=None,
+        sort_dir='asc'
+        ):
+
+    data = build_filter_ioc_query(current_user_id=current_user_id, caseid=caseid, ioc_type_id=ioc_type_id, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
+                                  ioc_description=ioc_description, ioc_tags=ioc_tags,
+                                  sort_by=sort_by, sort_dir=sort_dir)
+
+    try:
+        filtered_iocs = data.paginate(page=page, per_page=per_page, error_out=False)
+
+    except Exception as e:
+        app.logger.exception(f"Error getting cases: {str(e)}")
+        return None
+
+    return filtered_iocs
