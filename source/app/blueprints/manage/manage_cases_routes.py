@@ -39,7 +39,6 @@ from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseDetailsSchema
-from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
@@ -112,8 +111,11 @@ def manage_details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Resp
 
 
 @manage_cases_blueprint.route('/manage/cases/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.standard_user)
-def add_case_modal():
+@ac_requires(Permissions.standard_user)
+def add_case_modal(caseid: int, url_redir: bool):
+    if url_redir:
+        return redirect(url_for('manage_case.manage_index_cases', cid=caseid))
+
     form = AddCaseForm()
     # Show only clients that the user has access to
     client_list = get_client_list(current_user_id=current_user.id,
