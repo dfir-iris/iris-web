@@ -19,19 +19,13 @@
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
-from flask import request
 from flask import url_for
-from flask_login import current_user
-from flask_socketio import emit
-from flask_socketio import join_room
 from flask_wtf import FlaskForm
 
-from app import socket_io
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import get_note
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_socket_requires
 from app.util import ac_case_requires
 from app.util import response_error
 
@@ -71,79 +65,3 @@ def case_comment_note_modal(cur_id, caseid, url_redir):
 
     return render_template("modal_conversation.html", element_id=cur_id, element_type='notes',
                            title=note.note_title)
-
-
-@socket_io.on('change-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_change_note(data):
-
-    data['last_change'] = current_user.user
-    emit('change-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
-
-
-@socket_io.on('save-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_save_note(data):
-
-    data['last_saved'] = current_user.user
-    emit('save-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
-
-
-@socket_io.on('clear_buffer-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_clear_buffer_note(message):
-
-    emit('clear_buffer-note', message, room=message['channel'])
-
-
-@socket_io.on('join-notes')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_join_note(data):
-
-    room = data['channel']
-    join_room(room=room)
-
-    emit('join-notes', {
-        'message': f"{current_user.user} just joined",
-        "user": current_user.user
-    }, room=room)
-
-
-@socket_io.on('ping-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_ping_note(data):
-
-    emit('ping-note', {"user": current_user.name, "note_id": data['note_id']}, room=data['channel'])
-
-
-@socket_io.on('pong-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_pong_note(data):
-
-    emit('pong-note', {"user": current_user.name, "note_id": data['note_id']}, room=data['channel'])
-
-
-@socket_io.on('overview-map-note')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_overview_map_note(data):
-
-    emit('overview-map-note', {"user": current_user.user, "note_id": data['note_id']}, room=data['channel'])
-
-
-@socket_io.on('join-notes-overview')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_join_overview(data):
-
-    room = data['channel']
-    join_room(room=room)
-
-    emit('join-notes-overview', {
-        'message': f"{current_user.user} just joined",
-        "user": current_user.user
-    }, room=room)
-
-
-@socket_io.on('disconnect')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_disconnect(data):
-    emit('disconnect', current_user.user, broadcast=True)
