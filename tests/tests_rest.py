@@ -208,7 +208,7 @@ class TestsRest(TestCase):
         response = self._subject.create(f'/api/v2/cases/{None}/assets', body)
         self.assertEqual(404, response.status_code)
 
-    def test_get_asset_with_missing_asset_identifier_should_return_success(self):
+    def test_get_asset_with_missing_asset_identifier_should_return_404(self):
         response = self._subject.get('/api/v2/asset/None')
         self.assertEqual(404, response.status_code)
 
