@@ -33,7 +33,6 @@ from app.iris_engine.access_control.utils import ac_get_user_case_counts
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
 from app.models.models import GlobalTasks
-from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import not_authenticated_redirection_url
 
@@ -98,8 +97,11 @@ def index(caseid, url_redir):
 
 
 @dashboard_blueprint.route('/global/tasks/add/modal', methods=['GET'])
-@ac_api_requires()
-def add_gtask_modal():
+@ac_requires(no_cid_required=True)
+def add_gtask_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid if caseid is not None else 1, redirect=True))
+
     task = GlobalTasks()
 
     form = CaseGlobalTaskForm()
@@ -111,8 +113,11 @@ def add_gtask_modal():
 
 
 @dashboard_blueprint.route('/global/tasks/update/<int:cur_id>/modal', methods=['GET'])
-@ac_api_requires()
-def edit_gtask_modal(cur_id):
+@ac_requires(no_cid_required=True)
+def edit_gtask_modal(cur_id, caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid if caseid is not None else 1, redirect=True))
+
     form = CaseGlobalTaskForm()
     task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
     form.task_assignee_id.choices = [(user.id, user.name) for user in
