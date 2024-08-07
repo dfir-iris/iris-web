@@ -19,7 +19,7 @@ from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.case.case_assets_db import get_asset, create_asset, set_ioc_links
+from app.datamgmt.case.case_assets_db import get_asset, create_asset, set_ioc_links, get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import delete_asset
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -63,3 +63,16 @@ def assets_delete(identifier, case_identifier):
     call_modules_hook('on_postload_asset_delete', data=identifier, caseid=case_identifier)
     track_activity(f"removed asset ID {asset.asset_name}", caseid=case_identifier)
     return "Deleted"
+
+
+def assets_get(identifier, case_identifier):
+    asset_iocs = get_linked_iocs_finfo_from_asset(identifier)
+    ioc_prefill = [row._asdict() for row in asset_iocs]
+
+    asset = get_asset(identifier, case_identifier)
+    if not asset:
+        raise BusinessProcessingError("Invalid asset ID for this case")
+
+    data = _load.dump(asset)
+    data['linked_ioc'] = ioc_prefill
+    return data

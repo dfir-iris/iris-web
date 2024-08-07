@@ -29,7 +29,7 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
-from app.business.assets import assets_delete, assets_create
+from app.business.assets import assets_delete, assets_create, assets_get
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
@@ -247,40 +247,22 @@ def case_upload_ioc(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_asset_view(cur_id, caseid):
-    # Get IoCs already linked to the asset
-    asset_iocs = get_linked_iocs_finfo_from_asset(cur_id)
-
-    ioc_prefill = [row._asdict() for row in asset_iocs]
-
-    asset = get_asset(cur_id, caseid)
-    if not asset:
-        return response_error("Invalid asset ID for this case")
-
-    asset_schema = CaseAssetsSchema()
-    data = asset_schema.dump(asset)
-    data['linked_ioc'] = ioc_prefill
-
-    return response_success(data=data)
+    try:
+        asset = assets_get(cur_id, caseid)
+        return response_success(asset)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
 
 
 @case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def asset_view(cur_id, caseid):
-    # Get IoCs already linked to the asset
-    asset_iocs = get_linked_iocs_finfo_from_asset(cur_id)
-
-    ioc_prefill = [row._asdict() for row in asset_iocs]
-
-    asset = get_asset(cur_id, caseid)
-    if not asset:
-        return response_api_error("Invalid asset ID for this case")
-
-    asset_schema = CaseAssetsSchema()
-    data = asset_schema.dump(asset)
-    data['linked_ioc'] = ioc_prefill
-
-    return response_api_created(data=data)
+    try:
+        asset = assets_get(cur_id, caseid)
+        return response_api_created(asset)
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
