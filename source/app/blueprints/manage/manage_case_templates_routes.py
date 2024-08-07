@@ -84,7 +84,7 @@ def case_template_modal(cur_id, caseid, url_redir):
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/add/modal', methods=['GET'])
-@ac_requires(Permissions.case_templates_write)
+@ac_requires(Permissions.case_templates_write, no_cid_required=True)
 def add_template_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case_templates.manage_case_templates', cid=caseid))
@@ -124,7 +124,7 @@ def add_template_modal(caseid, url_redir):
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/upload/modal', methods=['GET'])
-@ac_requires(Permissions.case_templates_write)
+@ac_requires(Permissions.case_templates_write, no_cid_required=True)
 def upload_template_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_case_templates.manage_case_templates', cid=caseid))
