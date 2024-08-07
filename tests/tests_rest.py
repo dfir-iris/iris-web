@@ -209,11 +209,8 @@ class TestsRest(TestCase):
         self.assertEqual(404, response.status_code)
 
     def test_get_asset_with_missing_asset_identifier_should_return_success(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
-        test = self._subject.get(f'/api/v2/asset/None').json()
-        self.assertEqual('error', test['status'])
+        response = self._subject.get('/api/v2/asset/None')
+        self.assertEqual(404, response.status_code)
 
     def test_create_alert_should_not_fail(self):
         body = {
