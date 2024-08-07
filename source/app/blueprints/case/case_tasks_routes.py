@@ -33,8 +33,6 @@ from app.forms import CaseTaskForm
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.models import CaseTasks
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
 from app.util import ac_case_requires
 from app.util import response_error
 
@@ -56,10 +54,10 @@ def case_tasks(caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/add/modal', methods=['GET'])
-# TODO remove and remove optional argument?
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
-@ac_api_requires()
-def case_add_task_modal(caseid):
+@ac_case_requires(CaseAccessLevel.full_access)
+def case_add_task_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
 
     task = CaseTasks()
     task.custom_attributes = get_default_custom_attributes('task')
