@@ -37,8 +37,6 @@ from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.util import ac_case_requires
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
 from app.util import response_error
 
 _EVENT_TAGS = ['Network', 'Server', 'ActiveDirectory', 'Computer', 'Malware', 'User Interaction']
@@ -129,9 +127,11 @@ def case_filter_help_modal(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
-@ac_api_requires()
-def case_add_event_modal(caseid):
+@ac_case_requires(CaseAccessLevel.full_access)
+def case_add_event_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case_timeline.case_timeline', cid=caseid, redirect=True))
+
     event = CasesEvent()
     event.custom_attributes = get_default_custom_attributes('event')
     form = CaseEventForm()
