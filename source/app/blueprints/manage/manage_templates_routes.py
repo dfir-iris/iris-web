@@ -26,7 +26,6 @@ from app.models.authorization import Permissions
 from app.models.models import CaseTemplateReport
 from app.models.models import Languages
 from app.models.models import ReportType
-from app.util import ac_api_requires
 from app.util import ac_requires
 
 manage_templates_blueprint = Blueprint(
@@ -50,8 +49,11 @@ def manage_report_templates(caseid, url_redir):
 
 
 @manage_templates_blueprint.route('/manage/templates/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
-def add_template_modal():
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
+def add_template_modal(caseid, url_redir):
+    if url_redir:
+        redirect(url_for('manage_templates.manage_report_templates', cid=caseid))
+
     report_template = CaseTemplateReport()
     form = AddReportTemplateForm()
     form.report_language.choices = [(c.id, c.name.capitalize()) for c in Languages.query.all()]
