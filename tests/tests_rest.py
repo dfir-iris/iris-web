@@ -337,7 +337,7 @@ class TestsRest(TestCase):
         response = self._subject.get('/api/v2/iocs')
         self.assertEqual(200, response.status_code)
 
-    def test_get_iocs_should_filter_and_return_200(self):
+    def test_get_iocs_should_filter_and_return_ioc_type_identifier(self):
         response = self._subject.create('/api/v2/cases', {
             'case_name': 'test_get_cases_should_filter_on_case_name',
             'case_description': 'description',
@@ -345,14 +345,27 @@ class TestsRest(TestCase):
             'case_soc_id': ''
         }).json()
         case_identifier = response['case_id']
+        ioc_type_identifier = 17
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
-            'ioc_type_id': 1,
+            'ioc_type_id': ioc_type_identifier,
             'ioc_tlp_id': 2,
             'ioc_value': 'test_get_iocs_should_filter_on_ioc_value',
             'ioc_description': 'rewrw',
             'ioc_tags': "",
             'custom_attributes': {}
         }).json()
-        response = self._subject.get('/api/v2/iocs',  query_parameters={'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'})
-        self.assertEqual(200, response.status_code)
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
+            'ioc_type_id': 1,
+            'ioc_tlp_id': 2,
+            'ioc_value': 'wrong_test',
+            'ioc_description': 'rewrw',
+            'ioc_tags': "",
+            'custom_attributes': {}
+        }).json()
+        filters = {'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'}
+        response = self._subject.get('/api/v2/iocs',  query_parameters=filters).json()
+        identifiers = []
+        for ioc in response['iocs']:
+            identifiers.append(ioc['ioc_type_id'])
+        self.assertIn(ioc_type_identifier, identifiers)
 
