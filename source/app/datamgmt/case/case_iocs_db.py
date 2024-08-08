@@ -313,6 +313,7 @@ def build_filter_ioc_query(
     """
     Get a list of iocs from the database, filtered by the given parameters
     """
+
     conditions = []
     if ioc_type_id is not None:
         conditions.append(Ioc.ioc_type_id == ioc_type_id)
@@ -363,7 +364,7 @@ def get_filtered_iocs(
         sort_dir='asc'
         ):
 
-    data = build_filter_ioc_query(caseid=caseid, ioc_type_id=ioc_type_id, ioc_type=ioc_type,  ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
+    data = build_filter_ioc_query(caseid=caseid, ioc_type_id=ioc_type_id, ioc_type=ioc_type, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
                                   ioc_description=ioc_description, ioc_tags=ioc_tags,
                                   sort_by=sort_by, sort_dir=sort_dir)
 

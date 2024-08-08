@@ -149,6 +149,7 @@ function get_case_ioc() {
     .done((data, textStatus) => {
         if (textStatus === 'success') {
             if (data != null) {
+                console.log(data)
                 jsdata = data;
                 Table.clear();
                 Table.rows.add(jsdata.iocs)
@@ -432,11 +433,12 @@ $(document).ready(function(){
             }
           },
           {
-            "data": "tlp_name",
+            "data": "tlp",
             "render": function(data, type, row, meta) {
                if (type === 'display') {
-                    data = sanitizeHTML(data);
-                  data = '<span class="badge badge-'+ row['tlp_bscolor'] +' ml-2">tlp:' + data + '</span>';
+                  bscolor = data.tlp_bscolor;
+                  data = sanitizeHTML(data.tlp_name);
+                  data = '<span class="badge badge-'+ bscolor +' ml-2">tlp:' + data + '</span>';
               }
               return data;
             }
