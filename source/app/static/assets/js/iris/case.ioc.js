@@ -145,13 +145,13 @@ function save_ioc() {
 function get_case_ioc() {
     show_loader();
 
-    get_request_api("/api/v2/iocs")
-    .done(function (response) {
-        if (response.status == 'success') {
-            if (response.data != null) {
-                jsdata = response.data;
+    get_request_data_api('/api/v2/iocs')
+    .done((data, textStatus) => {
+        if (textStatus === 'success') {
+            if (data != null) {
+                jsdata = data;
                 Table.clear();
-                Table.rows.add(jsdata.ioc);
+                Table.rows.add(jsdata.iocs)
 
                 set_last_state(jsdata.state);
                 $('#ioc_table_wrapper').on('click', function(e){
@@ -172,6 +172,7 @@ function get_case_ioc() {
                     .on('click', '.ioc_details_link', function(event) {
                     event.preventDefault();
                     let ioc_id = $(this).data('ioc_id');
+
                     edit_ioc(ioc_id);
                 });
 
@@ -389,7 +390,7 @@ $(document).ready(function(){
           { "data": "ioc_type",
            "render": function (data, type, row, meta) {
               if (type === 'display') {
-                data = sanitizeHTML(data);
+                data = sanitizeHTML(data.type_name);
               }
               return data;
               }
