@@ -104,7 +104,6 @@ def list_ioc(caseid):
     ioc_tags = request.args.get('ioc_tags', None, type=str)
 
     filtered_iocs = get_filtered_iocs(
-        current_user_id=current_user.id,
         caseid=caseid,
         ioc_type_id=ioc_type_id,
         ioc_tlp_id=ioc_tlp_id,
