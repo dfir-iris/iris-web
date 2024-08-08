@@ -346,7 +346,6 @@ def build_filter_ioc_query(
 
 
 def get_filtered_iocs(
-        current_user_id: int = None,
         caseid: int = None,
         ioc_type_id: int = None,
         ioc_tlp_id: int = None,
@@ -359,7 +358,7 @@ def get_filtered_iocs(
         sort_dir='asc'
         ):
 
-    data = build_filter_ioc_query(current_user_id=current_user_id, caseid=caseid, ioc_type_id=ioc_type_id, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
+    data = build_filter_ioc_query(caseid=caseid, ioc_type_id=ioc_type_id, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
                                   ioc_description=ioc_description, ioc_tags=ioc_tags,
                                   sort_by=sort_by, sort_dir=sort_dir)
 
