@@ -47,7 +47,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.states import get_ioc_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import IocType, ObjectState
+from app.models import IocType, ObjectState, Tlp
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
@@ -99,6 +99,7 @@ def list_ioc(caseid):
     sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
     ioc_type_id = request.args.get('ioc_type_id', None, type=int)
+    ioc_id = request.args.get('ioc_id', None, type=int)
     ioc_type = request.args.get('ioc_type', None, type=str)
     ioc_tlp_id = request.args.get('ioc_tlp_id', None, type=int)
     ioc_value = request.args.get('ioc_value', None, type=str)
@@ -122,11 +123,20 @@ def list_ioc(caseid):
     if filtered_iocs is None:
         return response_api_error('Filtering error')
 
+    iocs = IocSchema().dump(filtered_iocs.items, many=True)
+    print(iocs)
+
+    for ioc in iocs:
+        ial = get_ioc_links(ioc['ioc_id'], caseid)
+        ioc['link'] = [row._asdict() for row in ial]
+        ioc['tlp'] = Tlp.query.filter(Tlp.tlp_id == ioc['ioc_tlp_id']).first()
+
     iocs = {
         'total': filtered_iocs.total,
-        'iocs': IocSchema().dump(filtered_iocs.items, many=True),
+        'iocs': iocs,
         'last_page': filtered_iocs.pages,
         'current_page': filtered_iocs.page,
+        'state': get_ioc_state(caseid=caseid),
         'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
     }
 
