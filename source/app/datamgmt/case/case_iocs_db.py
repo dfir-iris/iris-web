@@ -301,7 +301,6 @@ def user_list_cases_view(user_id):
 
 
 def build_filter_ioc_query(
-        current_user_id,
         caseid: int = None,
         ioc_type_id: int = None,
         ioc_tlp_id: int = None,
@@ -311,7 +310,7 @@ def build_filter_ioc_query(
         sort_by=None,
         sort_dir='asc'):
     """
-    Get a list of cases from the database, filtered by the given parameters
+    Get a list of iocs from the database, filtered by the given parameters
     """
     conditions = []
     if ioc_type_id is not None:
