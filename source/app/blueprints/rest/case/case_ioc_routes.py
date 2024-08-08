@@ -47,6 +47,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.states import get_ioc_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import IocType, ObjectState
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
@@ -98,6 +99,7 @@ def list_ioc(caseid):
     sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
     ioc_type_id = request.args.get('ioc_type_id', None, type=int)
+    ioc_type = request.args.get('ioc_type', None, type=str)
     ioc_tlp_id = request.args.get('ioc_tlp_id', None, type=int)
     ioc_value = request.args.get('ioc_value', None, type=str)
     ioc_description = request.args.get('ioc_description', None, type=str)
@@ -106,6 +108,7 @@ def list_ioc(caseid):
     filtered_iocs = get_filtered_iocs(
         caseid=caseid,
         ioc_type_id=ioc_type_id,
+        ioc_type=ioc_type,
         ioc_tlp_id=ioc_tlp_id,
         ioc_value=ioc_value,
         ioc_description=ioc_description,
