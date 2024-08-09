@@ -76,6 +76,12 @@ def upgrade():
                 # Duplicate comments
                 comment_links = conn.execute(text("SELECT * FROM ioc_comments WHERE comment_ioc_id = :ioc_id"),
                                              {"ioc_id": ioc.ioc_id})
+
+                # Deleting the old ioc_comments links
+                conn.execute(text("DELETE FROM ioc_comments WHERE comment_ioc_id = :ioc_id"),
+                                {"ioc_id": ioc.ioc_id})
+
+                # Inserting the new comments
                 for comment_link in comment_links:
                     comment = conn.execute(text("SELECT * FROM comments WHERE comment_id = :comment_id"),
                                            {"comment_id": comment_link.comment_id}).fetchone()
@@ -99,6 +105,14 @@ def upgrade():
                                                 "JOIN case_assets ON ioc_asset_link.asset_id = case_assets.asset_id "
                                                 "WHERE ioc_id = :ioc_id AND case_id = :case_id "),
                                            {"ioc_id": ioc.ioc_id, "case_id": ioc_link.case_id})
+
+                # Deleting the old ioc_asset_link links
+                conn.execute(text("DELETE FROM ioc_asset_link "
+                                  "JOIN case_assets ON ioc_asset_link.asset_id = case_assets.asset_id "
+                                  "WHERE ioc_id = :ioc_id AND case_id = :case_id "),
+                                {"ioc_id": ioc.ioc_id, "case_id": ioc_link.case_id})
+
+                # Inserting the new ioc_asset_link links
                 for asset_link in asset_links:
                     conn.execute(text(
                         "INSERT INTO ioc_asset_link(ioc_id, asset_id)"
@@ -107,6 +121,26 @@ def upgrade():
                             "ioc_id": new_ioc_id,
                             "asset_id": asset_link.asset_id,
                         })
+
+                # duplicate case events ioc
+                case_event_links = conn.execute(text("SELECT * FROM case_event_ioc WHERE ioc_id = :ioc_id AND case_id = :case_id"),
+                                                {"ioc_id": ioc.ioc_id, "case_id": ioc_link.case_id})
+
+                # Deleting the old case_event_ioc links
+                conn.execute(text("DELETE FROM case_event_ioc WHERE ioc_id = :ioc_id AND case_id = :case_id"),
+                             {"ioc_id": ioc.ioc_id, "case_id": ioc_link.case_id})
+
+                # Inserting the new case_event_ioc links
+                for case_event_link in case_event_links:
+                    conn.execute(text(
+                        "INSERT INTO case_event_ioc(case_event_id, ioc_id, case_id)"
+                        "VALUES (:case_event_id, :ioc_id, :case_id)"),
+                        {
+                            "case_event_id": case_event_link.case_event_id,
+                            "ioc_id": new_ioc_id,
+                            "case_id": ioc_link.case_id
+                        })
+
 
             # If there is no case id, we can set the case id
             else:
@@ -117,7 +151,7 @@ def upgrade():
     # Drop old table
     # op.drop_table('ioc_link')
 
-    op.alter_column('ioc', 'case_id', nullable=False)
+    op.alter_column('ioc', 'case_id', nullable=True)
 
 
 def downgrade():
