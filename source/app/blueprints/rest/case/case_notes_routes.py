@@ -26,7 +26,7 @@ from sqlalchemy import and_
 
 from app import db
 from app import app
-from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.case_comments import case_comment_update
 from app.business.errors import BusinessProcessingError
 from app.business.notes import notes_create
 from app.business.notes import notes_list_revisions

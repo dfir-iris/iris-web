@@ -111,17 +111,24 @@ function attribute_detail(attr_id) {
         });
 
         $('#preview_attribute').on("click", function () {
-             var data_sent = Object();
+            var data_sent = Object();
             data_sent['attribute_content'] = editor.getSession().getValue();
             data_sent['csrf_token'] = $("#csrf_token").val();
 
-            post_request_api('/manage/attributes/preview', JSON.stringify(data_sent), true)
-            .done((data) => {
-                if (api_request_failed(data)) {
-                    return;
+           $.ajax({
+                url: '/manage/attributes/preview',
+                type: 'POST',
+                data: JSON.stringify(data_sent),
+                contentType: "application/json;charset=UTF-8",
+                error: function(jqXHR, textStatus) {
+                    if (jqXHR.responseJSON) {
+                        notify_error(jqXHR.responseJSON.message);
+                    } else {
+                        ajax_notify_error(jqXHR, this.url);
+                    }
                 }
-                $('#modal_preview_attribute_content').html(data.data);
-
+            }).done((data) => {
+                $('#modal_preview_attribute_content').html(data);
                 $('#modal_preview_attribute').modal({ show: true });
             });
         });
