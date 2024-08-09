@@ -175,7 +175,7 @@ class TestsRest(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        test = self._subject.get(f'/api/v2/iocs/{None}').json()
+        test = self._subject.get('/api/v2/iocs/None').json()
         self.assertEqual('error', test['status'])
 
     def test_delete_ioc_should_return_204(self):
