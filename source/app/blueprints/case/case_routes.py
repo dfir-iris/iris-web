@@ -19,15 +19,10 @@
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
-from flask import request
 from flask import url_for
-from flask_login import current_user
-from flask_socketio import emit
-from flask_socketio import join_room
 from flask_wtf import FlaskForm
 
 from app import app
-from app import socket_io
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case
@@ -40,7 +35,6 @@ from app.iris_engine.module_handler.module_handler import list_available_pipelin
 from app.models import CaseStatus
 from app.models.authorization import CaseAccessLevel
 from app.util import ac_case_requires
-from app.util import ac_socket_requires
 
 case_blueprint = Blueprint('case',
                            __name__,
@@ -99,38 +93,6 @@ def case_pipelines_modal(caseid, url_redir):
                       ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
 
     return render_template('modal_case_pipelines.html', case=case, form=form, pipeline_args=pipeline_args)
-
-
-@socket_io.on('change')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_summary_onchange(data):
-
-    data['last_change'] = current_user.user
-    emit('change', data, to=data['channel'], skip_sid=request.sid)
-
-
-@socket_io.on('save')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_summary_onsave(data):
-
-    data['last_saved'] = current_user.user
-    emit('save', data, to=data['channel'], skip_sid=request.sid)
-
-
-@socket_io.on('clear_buffer')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def socket_summary_on_clear_buffer(message):
-
-    emit('clear_buffer', message)
-
-
-@socket_io.on('join')
-@ac_socket_requires(CaseAccessLevel.full_access)
-def get_message(data):
-
-    room = data['channel']
-    join_room(room=room)
-    emit('join', {'message': f"{current_user.user} just joined"}, room=room)
 
 
 @case_blueprint.route('/case/groups/access/modal', methods=['GET'])
