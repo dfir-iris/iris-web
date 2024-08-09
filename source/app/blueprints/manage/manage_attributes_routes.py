@@ -29,7 +29,6 @@ from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
 from app.util import ac_requires
 from app.util import response_error
-from app.util import response_success
 
 manage_attributes_blueprint = Blueprint('manage_attributes', __name__, template_folder='templates')
 
@@ -62,6 +61,7 @@ def attributes_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_attribute.html", form=form, attribute=attribute)
 
 
+# TODO this endpoint should probably be a GET
 @manage_attributes_blueprint.route('/manage/attributes/preview', methods=['POST'])
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def attributes_preview(caseid, url_redir):
@@ -81,6 +81,4 @@ def attributes_preview(caseid, url_redir):
     except Exception as e:
         return response_error("Invalid JSON", data=str(e))
 
-    templated = render_template("modal_preview_attribute.html", attributes=attribute)
-
-    return response_success(data=templated)
+    return render_template("modal_preview_attribute.html", attributes=attribute)

@@ -118,6 +118,7 @@ function ellipsis_field_raw( data, cutoff, wordbreak ) {
 
 function propagate_form_api_errors(data_error) {
 
+    // TODO instead of typeof (' '), why not just put 'string'?
     if (typeof (data_error) === typeof (' ')) {
         notify_error(data_error);
         return;
@@ -1410,7 +1411,7 @@ function submit_new_case() {
 function set_suggest_tags(anchor_id) {
     $(`#${anchor_id}`).amsifySuggestags({
         suggestionsAction : {
-            url : '/manage/tags/suggest',
+            url: '/manage/tags/suggest',
             method: 'GET',
             timeout: -1,
             minChars: 2,
