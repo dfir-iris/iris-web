@@ -16,15 +16,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# Python modules
-
-# Flask modules
-
-# App modules
 
 from app import app
 from app import lm
-# Blueprints
 from app.blueprints.pages.activities.activities_routes import activities_blueprint
 from app.blueprints.pages.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.pages.case.case_routes import case_blueprint
@@ -35,7 +29,6 @@ from app.blueprints.pages.case.case_rfiles_routes import case_rfiles_blueprint
 from app.blueprints.pages.case.case_ioc_routes import case_ioc_blueprint
 from app.blueprints.pages.case.case_tasks_routes import case_tasks_blueprint
 from app.blueprints.pages.case.case_timeline_routes import case_timeline_blueprint
-from app.blueprints.context.context import ctx_blueprint
 from app.blueprints.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.demo_landing.demo_landing import demo_blueprint
@@ -159,7 +152,6 @@ app.register_blueprint(manage_assets_rest_blueprint)
 app.register_blueprint(manage_tags_rest_blueprint)
 app.register_blueprint(saved_filters_rest_blueprint)
 
-app.register_blueprint(ctx_blueprint)
 app.register_blueprint(context_rest_blueprint)
 app.register_blueprint(case_timeline_blueprint)
 app.register_blueprint(case_timeline_rest_blueprint)
