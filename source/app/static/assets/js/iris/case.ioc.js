@@ -149,7 +149,6 @@ function get_case_ioc() {
     .done((data, textStatus) => {
         if (textStatus === 'success') {
             if (data != null) {
-                console.log(data)
                 jsdata = data;
                 Table.clear();
                 Table.rows.add(jsdata.iocs)
