@@ -22,7 +22,6 @@ from flask import render_template
 from flask import url_for
 from flask_wtf import FlaskForm
 
-from app import app
 from app.datamgmt.iris_engine.modules_db import parse_module_parameter
 from app.datamgmt.iris_engine.modules_db import get_module_from_id
 from app.datamgmt.iris_engine.modules_db import is_mod_configured
@@ -31,24 +30,12 @@ from app.forms import UpdateModuleParameterForm
 from app.models.authorization import Permissions
 from app.util import ac_requires
 from app.util import response_error
-from app.util import response_success
 
 manage_modules_blueprint = Blueprint(
     'manage_module',
     __name__,
     template_folder='templates'
 )
-
-
-@manage_modules_blueprint.route("/sitemap")
-@ac_requires()
-def site_map(caseid, url_redir):
-    links = []
-    for rule in app.url_map.iter_rules():
-        methods = [m for m in rule.methods if m != 'OPTIONS' and m != 'HEAD']
-        links.append((','.join(methods), str(rule), rule.endpoint))
-
-    return response_success('', data=links)
 
 
 @manage_modules_blueprint.route('/manage/modules', methods=['GET'])

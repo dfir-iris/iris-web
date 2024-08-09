@@ -22,6 +22,7 @@ import traceback
 from flask import Blueprint
 from flask import request
 
+from app import app
 from app.datamgmt.iris_engine.modules_db import delete_module_from_id
 from app.datamgmt.iris_engine.modules_db import parse_module_parameter
 from app.datamgmt.iris_engine.modules_db import get_module_config_from_id
@@ -212,3 +213,15 @@ def view_modules_hook():
     data = [item._asdict() for item in output]
 
     return response_success('', data=data)
+
+
+# TODO is this endpoint still useful?
+@manage_modules_rest_blueprint.route("/sitemap")
+@ac_api_requires()
+def site_map():
+    links = []
+    for rule in app.url_map.iter_rules():
+        methods = [m for m in rule.methods if m != 'OPTIONS' and m != 'HEAD']
+        links.append((','.join(methods), str(rule), rule.endpoint))
+
+    return response_success('', data=links)
