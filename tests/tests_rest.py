@@ -45,10 +45,6 @@ class TestsRest(TestCase):
             identifier = case['case_id']
             self._subject.delete(f'/api/v2/cases/{identifier}')
 
-    def test_create_asset_should_not_fail(self):
-        response = self._subject.create_asset()
-        self.assertEqual('success', response['status'])
-
     def test_get_api_version_should_not_fail(self):
         response = self._subject.get_api_version()
         self.assertEqual('success', response['status'])
@@ -187,7 +183,33 @@ class TestsRest(TestCase):
         self.assertEqual(204, response.status_code)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_404(self):
-        response = self._subject.delete('/api/v2/iocs/None')
+        response = self._subject.delete(f'/api/v2/iocs/{None}')
+        self.assertEqual(404, response.status_code)
+
+    def test_delete_asset_should_return_204(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        response = self._subject.delete(f'/api/v2/assets/1')
+        self.assertEqual(204, response.status_code)
+
+    def test_delete_asset_with_missing_asset_identifier_should_return_404(self):
+        response = self._subject.delete(f'/api/v2/assets/{None}')
+        self.assertEqual(404, response.status_code)
+
+    def test_create_asset_should_work(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        self.assertEqual(201, response.status_code)
+
+    def test_create_asset_with_missing_case_identifier_should_return_404(self):
+        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        response = self._subject.create(f'/api/v2/cases/{None}/assets', body)
+        self.assertEqual(404, response.status_code)
+
+    def test_get_asset_with_missing_asset_identifier_should_return_404(self):
+        response = self._subject.get('/api/v2/asset/None')
         self.assertEqual(404, response.status_code)
 
     def test_create_alert_should_not_fail(self):
@@ -234,39 +256,39 @@ class TestsRest(TestCase):
     def test_add_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         body = {"task_assignees_id": [1], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
-        response = self._subject.add_tasks(case_identifier, body)
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         self.assertEqual(201, response.status_code)
 
     def test_add_task_with_missing_task_title_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
         body = {"task_assignees_id": [1], "task_description": "", "task_status_id": 1, "task_tags": "", "custom_attributes": {}}
-        response = self._subject.add_tasks(case_identifier, body)
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         self.assertEqual(400, response.status_code)
 
-    def test_get_tasks_should_return_dummy_title(self):
+    def test_get_tasks_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 2
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
                 "custom_attributes": {}}
-        self._subject.add_tasks(case_identifier, body)
-        response = self._subject.get_tasks(task_id).json()
-        self.assertEqual("dummy title", response['task_title'])
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        response = self._subject.get(f'/api/v2/tasks/{task_id}')
+        self.assertEqual(201, response.status_code)
 
-    def test_get_tasks_with_missing_ioc_identifier_should_return_error(self):
+    def test_get_tasks_with_missing_task_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
-        self._subject.add_tasks(case_identifier, body)
-        response = self._subject.get_tasks(None).json()
-        self.assertEqual('error', response['status'])
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        response = self._subject.get(f'/api/v2/tasks/{None}')
+        self.assertEqual(404, response.status_code)
 
     def test_delete_task_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
                 "custom_attributes": {}}
-        self._subject.add_tasks(case_identifier, body)
-        test = self._subject.delete_tasks(task_id)
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        test = self._subject.delete(f'/api/v2/tasks/{task_id}')
         self.assertEqual(204, test.status_code)
 
     def test_delete_task_with_missing_task_identifier_should_return_404(self):
@@ -274,8 +296,8 @@ class TestsRest(TestCase):
         task_id = 1
         body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
                 "custom_attributes": {}}
-        self._subject.add_tasks(case_identifier, body)
-        test = self._subject.delete_tasks(None)
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        test = self._subject.delete(f'/api/v2/tasks/{None}')
         self.assertEqual(404, test.status_code)
 
     def test_get_cases_should_not_fail(self):

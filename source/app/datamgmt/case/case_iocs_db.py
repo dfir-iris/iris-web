@@ -279,6 +279,7 @@ def delete_ioc_comment(ioc_id, comment_id):
 
     return True, "Comment deleted"
 
+
 def get_ioc_by_value(ioc_value, caseid=None):
     if caseid:
         Ioc.query.filter(Ioc.ioc_value == ioc_value, Ioc.case_id == caseid).first()
