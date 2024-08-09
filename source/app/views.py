@@ -50,7 +50,7 @@ from app.blueprints.manage.manage_srv_settings_routes import manage_srv_settings
 from app.blueprints.manage.manage_templates_routes import manage_templates_blueprint
 from app.blueprints.manage.manage_case_templates_routes import manage_case_templates_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
-from app.blueprints.overview.overview_routes import overview_blueprint
+from app.blueprints.pages.overview.overview_routes import overview_blueprint
 from app.blueprints.pages.profile.profile_routes import profile_blueprint
 from app.blueprints.pages.search.search_routes import search_blueprint
 from app.blueprints.rest.activities_routes import activities_rest_blueprint
