@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
@@ -31,7 +30,6 @@ manage_objects_blueprint = Blueprint('manage_objects',
                                           template_folder='templates')
 
 
-# CONTENT ------------------------------------------------
 @manage_objects_blueprint.route('/manage/objects')
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def manage_objects(caseid, url_redir):
