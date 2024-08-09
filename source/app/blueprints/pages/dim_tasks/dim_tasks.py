@@ -63,20 +63,19 @@ def task_status(task_id, caseid, url_redir):
         tinfo = task.info
     except AttributeError:
         # Legacy task
-        task_info = {}
-        task_info['Danger'] = 'This task was executed in a previous version of IRIS and the status cannot be read ' \
-                              'anymore.'
-        task_info['Note'] = 'All the data readable by the current IRIS version is displayed in ' \
-                            'the table.'
-        task_info['Additional information'] = 'The results of this tasks were stored in a pickled Class which does' \
-                                              ' not exists anymore in current IRIS version.'
+        task_info = {
+            'Danger': 'This task was executed in a previous version of IRIS and the status cannot be read anymore.',
+            'Note': 'All the data readable by the current IRIS version is displayed in the table.',
+            'Additional information': 'The results of this tasks were stored in a pickled Class which does not exists '
+                                      'anymore in current IRIS version.'
+        }
         return render_template("modal_task_info.html", data=task_info, task_id=task.id)
 
-    task_info = {}
-    task_info['Task ID'] = task_id
-    task_info['Task finished on'] = task.date_done
-    task_info['Task state']: task.state.lower()
-    task_info['Engine']: task.name if task.name else "No engine. Unrecoverable shadow failure"
+    task_info = {
+        'Task ID': task_id,
+        'Task finished on': task.date_done,
+        'Task state': task.state.lower(),
+        'Engine': task.name if task.name else "No engine. Unrecoverable shadow failure"}
 
     task_meta = task._get_task_meta()
 
