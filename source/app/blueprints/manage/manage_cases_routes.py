@@ -57,7 +57,7 @@ def manage_index_cases(caseid, url_redir):
     return render_template('manage_cases.html')
 
 
-def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
+def _details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     """
     Get case details
 
@@ -101,13 +101,13 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respon
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
 @ac_requires(no_cid_required=True)
 def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
-    return details_case(cur_id, caseid, url_redir)
+    return _details_case(cur_id, caseid, url_redir)
 
 
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
 @ac_requires(no_cid_required=True)
 def manage_details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
-    return details_case(cur_id, caseid, url_redir)
+    return _details_case(cur_id, caseid, url_redir)
 
 
 @manage_cases_blueprint.route('/manage/cases/add/modal', methods=['GET'])
