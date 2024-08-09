@@ -37,6 +37,7 @@ from app.schema.marshables import BasicUserSchema
 from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import endpoint_removed
 
 profile_rest_blueprint = Blueprint('profile_rest', __name__)
 
@@ -179,3 +180,9 @@ def profile_whoami():
 
     user_schema = BasicUserSchema()
     return response_success(data=user_schema.dump(user))
+
+
+@profile_rest_blueprint.route('/user/is-admin', methods=['GET'])
+@endpoint_removed('Use /user/has-permission to check permission', 'v1.5.0')
+def user_is_admin(caseid):
+    pass
