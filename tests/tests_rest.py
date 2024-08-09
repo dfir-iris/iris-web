@@ -345,7 +345,7 @@ class TestsRest(TestCase):
             'case_soc_id': ''
         }).json()
         case_identifier = response['case_id']
-        ioc_type_identifier = 17
+        ioc_type_identifier = 2
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
             'ioc_type_id': ioc_type_identifier,
             'ioc_tlp_id': 2,
