@@ -414,7 +414,7 @@ class Ioc(db.Model):
     ioc_enrichment = Column(JSONB)
     modification_history = Column(JSON)
 
-    case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+    case_id = Column(ForeignKey('cases.case_id'), nullable=True)
 
     user = relationship('User')
     tlp = relationship('Tlp')
