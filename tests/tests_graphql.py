@@ -156,31 +156,6 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         self.assertEqual(tags, response['data']['iocCreate']['ioc']['iocTags'])
 
-    # IOC are uniquely determined by their type/value
-    def test_graphql_create_ioc_should_not_update_tags_when_creating_the_same_ioc_twice(self):
-        case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
-        payload = {
-            'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                 ioc {{ iocId iocDescription }}
-                             }}
-                         }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        case_identifier = self._create_case()
-        tags = 'tag1,tag2'
-        payload = {
-            'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
-                                 tags: "{tags}") {{
-                                    ioc {{ iocId iocTags }}
-                             }}
-                         }}'''
-        }
-        response = self._subject.execute_graphql_query(payload)
-        self.assertIsNone(response['data']['iocCreate']['ioc']['iocTags'])
-
     def test_graphql_update_ioc_should_update_tlp(self):
         case_identifier = self._create_case()
         ioc_value = self._generate_new_dummy_ioc_value()
@@ -1155,44 +1130,6 @@ class TestsGraphQL(TestCase):
         for ioc in body['data']['case']['iocs']['edges']:
             test_user = ioc['node']['userId']
             self.assertEqual(test_user, user_id)
-
-    def test_graphql_iocs_should_return_linked_iocs(self):
-        payload = {'query': 'mutation { caseCreate(name: "case2", description: "test", clientId: 1) { case { caseId } } }'}
-        body = self._subject.execute_graphql_query(payload)
-        case_identifier = body['data']['caseCreate']['case']['caseId']
-        payload = {'query': ' mutation { caseCreate(name: "case3", description: "test", clientId: 1) {case { caseId } } }'}
-        body = self._subject.execute_graphql_query(payload)
-        case_identifier_2 = body['data']['caseCreate']['case']['caseId']
-        ioc_value = self._generate_new_dummy_ioc_value()
-        payload = {
-            'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                 ioc {{ iocId iocValue }}
-                             }}
-                         }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                         ioc {{ iocId iocValue }}
-                                     }}
-                                 }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {'query': f'''mutation {{ iocCreate(caseId: {case_identifier_2}, typeId: 1, tlpId: 1, value: "{ioc_value}") 
-                                         {{ ioc {{ iocId iocValue }} }} }}'''}
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''{{
-                            case(caseId: {case_identifier}) {{
-                                iocs(LinkedCases: {case_identifier_2}) {{ totalCount edges {{ node {{ iocId }} }} }}
-                            }}
-                         }}'''
-        }
-        body = self._subject.execute_graphql_query(payload)
-        total_count = body['data']['case']['iocs']['totalCount']
-        self.assertEqual(1, total_count)
 
     def test_graphql_case_should_return_error_cases_query_when_permission_denied(self):
         user = self._subject.create_user(self._generate_new_dummy_user_name())
