@@ -141,7 +141,7 @@ def add_ioc(ioc: Ioc, user_id, caseid):
         return None, False
 
     ioc.user_id = user_id
-
+    ioc.case_id = caseid
     db.session.add(ioc)
 
     update_ioc_state(caseid=caseid)

@@ -449,8 +449,23 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         for alert_ioc in alert.iocs:
             if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
+                if alert_ioc.case_id is not None:
+                    # Make a deep copy of the ioc
+                    # prevent the ioc to conflict with the existing ioc
+                    new_alert_ioc = deepcopy(alert_ioc)
+                    make_transient(new_alert_ioc)
+
+                    new_alert_ioc.ioc_id = None
+                    new_alert_ioc.ioc_uuid = ioc_uuid
+                    new_alert_ioc.user_id = current_user.id
+                    new_alert_ioc.case_id = case.case_id
+
+                    db.session.add(new_alert_ioc)
+                    db.session.commit()
+
+                    alert_ioc = new_alert_ioc
+
                 ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
-                add_ioc_link(ioc.ioc_id, case.case_id)
                 ioc_links.append(ioc.ioc_id)
 
     # Add the assets to the case
@@ -470,6 +485,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
                     db.session.add(new_alert_asset)
                     db.session.commit()
+
+                    alert_asset = new_alert_asset
 
                 asset = create_asset(asset=alert_asset,
                                      caseid=case.case_id,
