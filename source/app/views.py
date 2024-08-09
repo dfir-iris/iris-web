@@ -33,7 +33,7 @@ from app.blueprints.pages.dashboard.dashboard_routes import dashboard_blueprint
 from app.blueprints.pages.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.pages.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
-from app.blueprints.login.login_routes import login_blueprint
+from app.blueprints.pages.login.login_routes import login_blueprint
 from app.blueprints.pages.manage.manage_access_control import manage_ac_blueprint
 from app.blueprints.pages.manage.manage_assets_type_routes import manage_assets_type_blueprint
 from app.blueprints.pages.manage.manage_attributes_routes import manage_attributes_blueprint
