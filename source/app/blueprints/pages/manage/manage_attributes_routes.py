@@ -54,11 +54,11 @@ def attributes_modal(cur_id, caseid, url_redir):
 
     attribute = CustomAttribute.query.filter(CustomAttribute.attribute_id == cur_id).first()
     if not attribute:
-        return response_error(f"Invalid Attribute ID {cur_id}")
+        return response_error(f'Invalid Attribute ID {cur_id}')
 
     form.attribute_content.data = attribute.attribute_content
 
-    return render_template("modal_add_attribute.html", form=form, attribute=attribute)
+    return render_template('modal_add_attribute.html', form=form, attribute=attribute)
 
 
 # TODO this endpoint should probably be a GET
@@ -70,15 +70,15 @@ def attributes_preview(caseid, url_redir):
 
     data = request.get_json()
     if not data:
-        return response_error(f"Invalid request")
+        return response_error('Invalid request')
 
     attribute = data.get('attribute_content')
     if not attribute:
-        return response_error(f"Invalid request")
+        return response_error('Invalid request')
 
     try:
         attribute = json.loads(attribute)
     except Exception as e:
-        return response_error("Invalid JSON", data=str(e))
+        return response_error('Invalid JSON', data=str(e))
 
-    return render_template("modal_preview_attribute.html", attributes=attribute)
+    return render_template('modal_preview_attribute.html', attributes=attribute)
