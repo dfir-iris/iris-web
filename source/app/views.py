@@ -30,7 +30,7 @@ from app.blueprints.pages.case.case_ioc_routes import case_ioc_blueprint
 from app.blueprints.pages.case.case_tasks_routes import case_tasks_blueprint
 from app.blueprints.pages.case.case_timeline_routes import case_timeline_blueprint
 from app.blueprints.pages.dashboard.dashboard_routes import dashboard_blueprint
-from app.blueprints.datastore.datastore_routes import datastore_blueprint
+from app.blueprints.pages.datastore.datastore_routes import datastore_blueprint
 from app.blueprints.demo_landing.demo_landing import demo_blueprint
 from app.blueprints.dim_tasks.dim_tasks import dim_tasks_blueprint
 from app.blueprints.login.login_routes import login_blueprint
