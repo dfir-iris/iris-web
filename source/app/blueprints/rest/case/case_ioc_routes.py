@@ -32,7 +32,8 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import endpoint_deprecated
-from app.datamgmt.case.case_iocs_db import add_comment_to_ioc, get_filtered_iocs
+from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
+from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import delete_ioc_comment
@@ -47,7 +48,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.states import get_ioc_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import IocType, ObjectState, Tlp
+from app.models import Tlp
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
