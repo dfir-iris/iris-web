@@ -40,4 +40,3 @@ def manage_objects(caseid, url_redir):
 
     # Return default page of case management
     return render_template('manage_objects.html', form=form)
-

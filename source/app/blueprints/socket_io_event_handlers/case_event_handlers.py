@@ -56,4 +56,3 @@ def get_message(data):
     room = data['channel']
     join_room(room=room)
     emit('join', {'message': f"{current_user.user} just joined"}, room=room)
-

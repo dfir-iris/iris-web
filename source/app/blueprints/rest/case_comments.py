@@ -43,4 +43,3 @@ def case_comment_update(comment_id, object_type, caseid):
         return response_error(e.get_message(), data=e.get_data())
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg='Data error', data=e.normalized_messages())
-
