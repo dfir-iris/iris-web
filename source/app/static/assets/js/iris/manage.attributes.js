@@ -111,7 +111,7 @@ function attribute_detail(attr_id) {
         });
 
         $('#preview_attribute').on("click", function () {
-             var data_sent = Object();
+            var data_sent = Object();
             data_sent['attribute_content'] = editor.getSession().getValue();
             data_sent['csrf_token'] = $("#csrf_token").val();
 
