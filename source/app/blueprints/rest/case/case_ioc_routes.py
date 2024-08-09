@@ -125,7 +125,6 @@ def list_ioc(caseid):
         return response_api_error('Filtering error')
 
     iocs = IocSchema().dump(filtered_iocs.items, many=True)
-    print(iocs)
 
     for ioc in iocs:
         ial = get_ioc_links(ioc['ioc_id'], caseid)
