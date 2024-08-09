@@ -19,6 +19,18 @@ rabbitmq:
    ## @param rabbitmq.replicaCount ReplicaCount for rabbitmq
    ##
    replicaCount: 1
+   ## @param rabbitmq.limits_memory limits_memory for rabbitmq
+   ##
+   limits_memory: false
+   ## @param rabbitmq.limits_cpu limits cpu for rabbitmq
+   ##
+   limits_cpu: false
+   ## @param rabbitmq.requests_memory requests_memory for rabbitmq
+   ##
+   requests_memory: false
+   ## @param rabbitmq.requests_cpu requests_cpu for rabbitmq
+   ##
+   requests_cpu: false
    
 
 ## @section PostgreSQL Configuration
@@ -41,6 +53,19 @@ postgres:
    ## @param postgres.replicaCount PostgreSQL ReplicaCount
    ##
    replicaCount: 1
+   ## @param postgres.limits_memory limits_memory for postgres
+   ##
+   limits_memory: false
+   ## @param postgres.limits_cpu limits cpu for postgres
+   ##
+   limits_cpu: false
+   ## @param postgres.requests_memory requests_memory for postgres
+   ##
+   requests_memory: false
+   ## @param postgres.requests_cpu requests_cpu for postgres
+   ##
+   requests_cpu: false
+   
    
    ## @param postgres.service PostgreSQL Service
    ##
@@ -78,6 +103,18 @@ irisapp:
    ## @param irisapp.replicaCount Iris Frontend replicaCount
    ##
    replicaCount: 1
+   ## @param irisapp.limits_memory limits_memory for irisapp
+   ##
+   limits_memory: false
+   ## @param irisapp.limits_cpu limits cpu for irisapp
+   ##
+   limits_cpu: false
+   ## @param irisapp.requests_memory requests_memory for irisapp
+   ##
+   requests_memory: false
+   ## @param irisapp.requests_cpu requests_cpu for irisapp
+   ##
+   requests_cpu: false
 
    ## @param irisapp.service Iris Frontend Service
    ##
@@ -126,6 +163,18 @@ irisworker:
    ## @param irisworker.replicaCount Iris Backend replicaCount
    ##
    replicaCount: 1
+   ## @param irisworker.limits_memory limits_memory for irisworker
+   ##
+   limits_memory: false
+   ## @param irisworker.limits_cpu limits cpu for irisworker
+   ##
+   limits_cpu: false
+   ## @param irisworker.requests_memory requests_memory for irisworker
+   ##
+   requests_memory: false
+   ## @param irisworker.requests_cpu requests_cpu for irisworker
+   ##
+   requests_cpu: false
 
    ## @param  Iris Backend Environments
    ##

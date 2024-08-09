@@ -21,10 +21,11 @@ function add_asset_type() {
                 contentType: false,
                 processData: false,
                 success: function (data) {
-                    if(notify_auto_api(data, true)) {
-                            refresh_asset_table();
-                            $('#modal_add_type').modal('hide');
+                    if (api_request_failed(data)) {
+                        return;
                     }
+                    refresh_asset_table();
+                    $('#modal_add_type').modal('hide');
                 },
                 error: function (error) {
                     $('#modal_add_type').text('Save');
@@ -114,10 +115,11 @@ function assettype_detail(asset_id) {
                 contentType: false,
                 processData: false,
                 success: function (data) {
-                  if(notify_auto_api(data, true)) {
-                        refresh_asset_table();
-                        $('#modal_add_type').modal('hide');
-                  }
+                    if (api_request_failed(data)) {
+                        return;
+                    }
+                    refresh_asset_table();
+                    $('#modal_add_type').modal('hide');
                 },
                 error: function (jqXHR) {
                     if(jqXHR.responseJSON && jqXHR.status == 400) {

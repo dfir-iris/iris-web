@@ -42,17 +42,22 @@ from app.models.authorization import UserGroup
 from app.models.authorization import UserOrganisation
 
 
-def get_user(user_id, id_key: str = 'id'):
+def get_user(user_id, id_key: str = 'id') -> [User, None]:
     user = User.query.filter(getattr(User, id_key) == user_id).first()
     return user
 
 
-def get_active_user_by_login(username):
+def get_active_user(user_id, id_key: str = 'id') -> [User, None]:
     user = User.query.filter(
-        User.user == username,
-        User.active == True
-    ).first()
+        and_(
+            getattr(User, id_key) == user_id,
+            User.active == True
+        )).first()
     return user
+
+
+def get_active_user_by_login(username):
+    return get_active_user(user_id=username, id_key='user')
 
 
 def list_users_id():

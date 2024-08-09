@@ -57,10 +57,10 @@ function add_task() {
             if (has_error){return false;}
 
             data_sent['custom_attributes'] = attributes;
-
-            post_request_api('tasks/add', JSON.stringify(data_sent), true)
-            .done((data) => {
-                if(notify_auto_api(data)) {
+            case_id =  get_caseid()
+            post_request_api(`/api/v2/cases/${case_id}/tasks`, JSON.stringify(data_sent), true)
+            .done((data, textStatus) => {
+                if(textStatus === 'success') {
                     get_tasks();
                     $('#modal_add_task').modal('hide');
                 }
@@ -133,9 +133,9 @@ function delete_task(id) {
     do_deletion_prompt("You are about to delete task #" + id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api("tasks/delete/" + id)
-            .done((data) => {
-                if(notify_auto_api(data)) {
+            delete_request_api(`/api/v2/tasks/${id}`)
+            .done((data, textStatus) => {
+                 if (textStatus === 'nocontent') {
                     get_tasks();
                     $('#modal_add_task').modal('hide');
                 }
@@ -262,16 +262,14 @@ function refresh_users(on_finish, cur_assignees_id_list) {
 
     get_request_api('/case/users/list')
     .done((data) => {
-
-        if(notify_auto_api(data, true)) {
-            current_users_list = data.data;
-
-            if (on_finish !== undefined) {
-                on_finish(current_users_list, cur_assignees_id_list);
-            }
-
+        if (api_request_failed(data)) {
+            return;
         }
 
+        current_users_list = data.data;
+        if (on_finish !== undefined) {
+            on_finish(current_users_list, cur_assignees_id_list);
+        }
     });
 
 }

@@ -141,8 +141,12 @@
                         <div class="col-6 float-left mt-4">
                             <button class="btn btn-dark" type="button" onclick="refresh_user_permissions();" id="user_refresh_perms_btn">Refresh access</button>
                         </div>
-                        <div class="col-6 float-right mt-4">
-                                <button class="btn btn-primary float-right" type="button" onclick="update_password();">Change password</button>
+
+                        <div class="col-6 mt-4">
+                            {% if mfa_enabled %}
+                                <a class="btn btn-primary float-right mr-2" type="button" href="/auth/mfa-setup">Reset MFA</a>
+                            {% endif %}
+                            <button class="btn float-right btn-primary mr-2" type="button" onclick="update_password();">Change password</button>
                         </div>
                     </div>
                 </div>

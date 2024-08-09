@@ -73,22 +73,23 @@ function add_ioc() {
                     }
 
                     data['ioc_value'] = iocs_list[index];
-                    post_request_api('ioc/add', JSON.stringify(data), true, function () {
+                    case_id = get_caseid()
+                    post_request_api(`/api/v2/cases/${case_id}/iocs`, JSON.stringify(data), true, function () {
                         $('#submit_new_ioc').text('Saving data..')
                             .attr("disabled", true)
                             .removeClass('bt-outline-success')
                             .addClass('btn-success', 'text-dark');
                     })
-                    .done((data) => {
-                        if (data.status == 'success') {
+                    .done((data, textStatus) => {
+                        if (textStatus === 'success') {
                                 reload_iocs();
-                                notify_success(data.message);
+                                notify_success('IOC added');
                                 if (index == (iocs_list.length - 1)) {
                                     $('#modal_add_ioc').modal('hide');
                                 }
                         } else {
                             $('#submit_new_ioc').text('Save again');
-                            swal("Oh no !", data.message, "error")
+                            swal("Oh no !", data, "error")
                         }
                     })
                     .always(function () {
@@ -101,21 +102,21 @@ function add_ioc() {
             }
 
             else {
-                post_request_api('ioc/add', JSON.stringify(data), true, function () {
+                case_id =  get_caseid()
+                post_request_api(`/api/v2/cases/${case_id}/iocs` , JSON.stringify(data), true, function () {
                         $('#submit_new_ioc').text('Saving data..')
                             .attr("disabled", true)
                             .removeClass('bt-outline-success')
                             .addClass('btn-success', 'text-dark');
                     })
-                .done((data) => {
-                    if (data.status == 'success') {
-                            reload_iocs();
-                            notify_success(data.message);
-                            $('#modal_add_ioc').modal('hide');
-
+                .done((data, textStatus) => {
+                    if (textStatus === 'success') {
+                        reload_iocs();
+                        notify_success('IOC added');
+                        $('#modal_add_ioc').modal('hide');
                     } else {
                         $('#submit_new_ioc').text('Save again');
-                        swal("Oh no !", data.message, "error")
+                        swal("Oh no !", data, "error")
                     }
                 })
                 .always(function () {
@@ -195,7 +196,7 @@ function edit_ioc(ioc_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
-        
+
         g_ioc_id = ioc_id;
         g_ioc_desc_editor = get_new_ace_editor('ioc_description', 'ioc_desc_content', 'target_ioc_desc',
                             function() {
@@ -292,11 +293,11 @@ function delete_ioc(ioc_id) {
     do_deletion_prompt("You are about to delete IOC #" + ioc_id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('ioc/delete/' + ioc_id)
-            .done((data) => {
-                if (data.status == 'success') {
+            delete_request_api(`/api/v2/iocs/${ioc_id}`)
+            .done((data, textStatus) => {
+                if (textStatus === 'nocontent') {
                     reload_iocs();
-                    notify_success(data.message);
+                    notify_success(`IOC ${ioc_id} deleted`);
                     $('#modal_add_ioc').modal('hide');
 
                 } else {

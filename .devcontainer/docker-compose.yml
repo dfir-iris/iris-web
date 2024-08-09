@@ -1,0 +1,62 @@
+version: "3.8"
+
+volumes:
+  iris_data:
+  postgres_data:
+
+networks:
+  devcontainer:
+
+services:
+  # Our dev env & workspace lives in this container
+  devcontainer:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspaces/iris-web:cached
+      - iris_data:/home/vscode/iris_data
+    command: sleep infinity
+    networks:
+      - devcontainer
+    env_file:
+      - ../.env
+    environment:
+      - DOCKERIZED=1
+      - IRIS_ORGANISATION_NAME=DFIR IRIS Web DevContainer
+      - IRIS_LOGIN_BANNER_TEXT=You've successfully setup DFIR IRIS in a DevContainer! Default credentials are username "devcontainer" / password "DevContainersR0ck!".
+      - IRIS_ADM_PASSWORD=DevContainersR0ck!
+      - IRIS_ADM_API_KEY=B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594
+      - IRIS_ADM_EMAIL=admin@localhost
+      - IRIS_ADM_USERNAME=devcontainer
+      - IRIS_ASSET_STORE_PATH=/home/vscode/iris_data/custom_assets
+      - IRIS_BACKUP_PATH=/home/vscode/iris_data/backup
+      - IRIS_DATASTORE_PATH=/home/vscode/iris_data/datastore
+      - IRIS_TEMPLATES_PATH=/home/vscode/iris_data/user_templates
+      - IRIS_UPDATES_PATH=/home/vscode/iris_data/updates
+      - IRIS_UPLOADED_PATH=/home/vscode/iris_data/downloads
+
+  # ---- iris dependencies --------------------------------
+
+  # Postgres
+  db:
+    build:
+      context: ../docker/db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - devcontainer
+    environment:
+      POSTGRES_ADMIN_USER:
+      POSTGRES_ADMIN_PASSWORD:
+      POSTGRES_USER:
+      POSTGRES_DB:
+      POSTGRES_PASSWORD:
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    restart: unless-stopped
+    networks:
+      - devcontainer

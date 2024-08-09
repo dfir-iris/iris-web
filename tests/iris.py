@@ -33,9 +33,10 @@ _TEST_DATA_PATH = Path('./data')
 class Iris:
 
     def __init__(self):
-        self._docker_compose = DockerCompose(_IRIS_PATH)
+        self._docker_compose = DockerCompose(_IRIS_PATH, 'docker-compose.dev.yml')
         self._api = RestApi(API_URL, _API_KEY)
         self._administrator = User(API_URL, _API_KEY)
+        self._user_count = 0
 
     def _wait(self, condition, attempts, sleep_duration=1):
         count = 0
@@ -67,8 +68,17 @@ class Iris:
     def stop(self):
         self._docker_compose.stop()
 
+    def create(self, path, body, query_parameters=None):
+        return self._api.post(path, body, query_parameters)
+
+    def get(self, path, query_parameters=None):
+        return self._api.get(path, query_parameters=query_parameters)
+
+    def delete(self, path):
+        return self._api.delete(path)
+
     def get_api_version(self):
-        return self._api.get('api/versions')
+        return self._api.get('api/versions').json()
 
     def create_alert(self):
         body = {
@@ -77,15 +87,18 @@ class Iris:
             'alert_status_id': 3,
             'alert_customer_id': 1
         }
-        return self._api.post('/alerts/add', body)
+        response = self._api.post('/alerts/add', body)
+        return response.json()
 
     def create_asset(self):
         body = {
             'asset_type_id': '9',
             'asset_name': 'admin_laptop',
         }
-        return self._api.post('/case/assets/add', body)
+        response = self._api.post('/case/assets/add', body)
+        return response.json()
 
+    # TODO make private => use create_dummy_user instead
     def create_user(self, user_name):
         body = {
             'user_name': user_name,
@@ -93,27 +106,41 @@ class Iris:
             'user_email': f'{user_name}@aa.eu',
             'user_password': 'aA.1234567890'
         }
-        user = self._api.post('/manage/users/add', body)
+        user = self._api.post('/manage/users/add', body).json()
         return User(API_URL, user['data']['user_api_key'])
 
-    def create_case(self):
+    def create_dummy_user(self):
+        self._user_count += 1
+        return self.create_user(f'user{self._user_count}')
+
+    def create_dummy_case(self):
         body = {
             'case_name': 'case name',
             'case_description': 'description',
             'case_customer': 1,
             'case_soc_id': ''
         }
-        response = self._api.post('/manage/cases/add', body)
-        return response['data']
+        response = self._api.post('/api/v2/cases', body).json()
+        return response['case_id']
 
     def update_case(self, case_identifier, data):
-        return self._api.post(f'/manage/cases/update/{case_identifier}', data)
+        response = self._api.post(f'/manage/cases/update/{case_identifier}', data)
+        return response.json()
 
     def get_cases(self):
-        return self._api.get('/manage/cases/list')
+        return self._api.get('/manage/cases/list').json()
 
     def get_cases_filter(self):
-        return self._api.get('/manage/cases/filter')
+        return self._api.get('/manage/cases/filter').json()
 
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
+
+    def add_tasks(self, case_identifier, body):
+        return self._api.post(f'/api/v2/cases/{case_identifier}/tasks',  body)
+
+    def get_tasks(self, current_identifier):
+        return self._api.get(f'/api/v2/tasks/{current_identifier}')
+
+    def delete_tasks(self, current_identifier):
+        return self._api.delete(f'/api/v2/tasks/{current_identifier}')

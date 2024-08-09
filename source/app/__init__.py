@@ -29,6 +29,7 @@ from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
 from flask_sqlalchemy import SQLAlchemy
 from functools import partial
+
 from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 from werkzeug.middleware.proxy_fix import ProxyFix
 

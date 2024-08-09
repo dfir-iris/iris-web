@@ -20,11 +20,14 @@ from datetime import date
 from datetime import timedelta
 from pathlib import Path
 
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_
+from sqlalchemy import desc
+from sqlalchemy import asc
 from sqlalchemy.orm import aliased
 from functools import reduce
 
-from app import db, app
+from app import db
+from app import app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
@@ -394,6 +397,8 @@ def delete_case(case_id):
     return True
 
 
+# TODO is it really necessary to have both case_name and search_value
+#      as of now, it seems case_name does a case.name.ilike, whereas search_value does a case.name.like
 def build_filter_case_query(current_user_id,
                             start_open_date: str = None,
                             end_open_date: str = None,
@@ -411,7 +416,8 @@ def build_filter_case_query(current_user_id,
                             case_open_since: int = None,
                             search_value=None,
                             sort_by=None,
-                            sort_dir='asc'
+                            sort_dir='asc',
+                            is_open: bool=None
                             ):
     """
     Get a list of cases from the database, filtered by the given parameters
@@ -456,6 +462,13 @@ def build_filter_case_query(current_user_id,
     if case_open_since is not None:
         result = date.today() - timedelta(case_open_since)
         conditions.append(Cases.open_date == result)
+
+    if is_open is not None:
+
+        if is_open:
+            conditions.append(Cases.close_date.is_(None))
+        else:
+            conditions.append(Cases.close_date.is_not(None))
 
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
@@ -503,13 +516,15 @@ def get_filtered_cases(current_user_id,
                        page: int = None,
                        search_value=None,
                        sort_by=None,
-                       sort_dir='asc'
+                       sort_dir='asc',
+                       is_open: bool = None
                        ):
     data = build_filter_case_query(case_classification_id=case_classification_id, case_customer_id=case_customer_id, case_description=case_description,
                                    case_ids=case_ids, case_name=case_name, case_opening_user_id=case_opening_user_id, case_owner_id=case_owner_id,
                                    case_severity_id=case_severity_id, case_soc_id=case_soc_id, case_open_since=case_open_since,
                                    case_state_id=case_state_id, current_user_id=current_user_id, end_open_date=end_open_date,
-                                   search_value=search_value, sort_by=sort_by, sort_dir=sort_dir, start_open_date=start_open_date)
+                                   search_value=search_value, sort_by=sort_by, sort_dir=sort_dir, start_open_date=start_open_date,
+                                   is_open=is_open)
 
     try:
 

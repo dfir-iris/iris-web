@@ -1,0 +1,48 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/postgres
+{
+	"name": "iris-web",
+	"dockerComposeFile": "docker-compose.yml",
+	"service": "devcontainer",
+	"workspaceFolder": "/workspaces/iris-web",
+	// Features to add to the dev container. More info: https://containers.dev/features.
+	// "features": {},
+	// forward web app & postgres to host
+	"forwardPorts": [
+		8000,
+		5432
+	],
+	// Configure tool-specific properties.
+	// "customizations": {},
+	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+	// "remoteUser": "root"
+	// https://containers.dev/implementors/json_reference/#lifecycle-scripts
+	// prep our environment before creating & starting container
+	"initializeCommand": "sh '${localWorkspaceFolder}/.devcontainer/pre-create.sh'",
+	// setup the dev env after the container was setup
+	"postCreateCommand": "sh /workspaces/iris-web/.devcontainer/post-create.sh",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				// python-related
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"KevinRose.vsc-python-indent",
+				"njpwerner.autodocstring",
+
+				// github
+				"github.vscode-github-actions",
+				"GitHub.vscode-pull-request-github",
+
+				// yaml-related
+				"redhat.vscode-yaml",
+
+				// docker-related
+				"ms-azuretools.vscode-docker",
+
+				// utils
+				"mtxr.sqltools"
+			]
+		}
+	}
+}

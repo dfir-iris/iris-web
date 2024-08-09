@@ -99,17 +99,15 @@ function refresh_users(do_notify) {
 
     get_request_api('users/list')
     .done((data) => {
-
-        if(notify_auto_api(data, true)) {
-            current_users_list = data.data;
-            manage_users_table.api().clear().rows.add(data.data).draw();
-
-            if (do_notify !== undefined) {
-                notify_success("Refreshed");
-            }
-
+        if (api_request_failed(data)) {
+            return true;
         }
+        current_users_list = data.data;
+        manage_users_table.api().clear().rows.add(data.data).draw();
 
+        if (do_notify !== undefined) {
+            notify_success("Refreshed");
+        }
     });
 
 }
@@ -156,6 +154,18 @@ function refresh_user_ac(user_id) {
         notify_auto_api(data);
     }).always(() => {
         $('#users_refresh_ac_btn').text(ori_txt);
+    });
+}
+
+function reset_user_mfa(user_id) {
+    let users_refresh_mfa_btn = $('#users_refresh_mfa_btn');
+    let ori_txt = users_refresh_mfa_btn.text();
+    users_refresh_mfa_btn.text('Resetting..');
+    get_request_api('/manage/access-control/reset-mfa/' + user_id)
+    .done((data) => {
+        notify_auto_api(data);
+    }).always(() => {
+        users_refresh_mfa_btn.text(ori_txt);
     });
 }
 
@@ -294,9 +304,10 @@ function update_customers_membership_modal(user_customers) {
 async function refresh_customers() {
     await get_request_api('customers/list')
     .done((data) => {
-        if(notify_auto_api(data, true)) {
-            current_customers_list = data.data;
+        if (api_request_failed(data)) {
+            return;
         }
+        current_customers_list = data.data;
     });
 }
 

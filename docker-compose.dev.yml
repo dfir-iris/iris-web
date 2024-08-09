@@ -1,0 +1,81 @@
+#  IRIS Source Code
+#  contact@dfir-iris.org
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 3 of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
+services:
+
+  rabbitmq:
+    extends:
+      file: docker-compose.base.yml
+      service: rabbitmq
+
+  db:
+    extends:
+      file: docker-compose.base.yml
+      service: db
+    build:
+      context: docker/db
+    image: iriswebapp_db:v2.4.7
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  app:
+    extends:
+      file: docker-compose.base.yml
+      service: app
+    build:
+      context: .
+      dockerfile: docker/webApp/Dockerfile
+    image: iriswebapp_app:v2.4.7
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./source/app:/iriswebapp/app
+
+  worker:
+    extends:
+      file: docker-compose.base.yml
+      service: worker
+    build:
+      context: .
+      dockerfile: docker/webApp/Dockerfile
+    image: iriswebapp_app:v2.4.7
+    volumes:
+      - ./source/app:/iriswebapp/app
+
+  nginx:
+    extends:
+      file: docker-compose.base.yml
+      service: nginx
+    build:
+      context: ./docker/nginx
+      args:
+        NGINX_CONF_GID: 1234
+        NGINX_CONF_FILE: nginx.conf
+    image: iriswebapp_nginx:v2.4.7
+
+
+volumes:
+  iris-downloads:
+  user_templates:
+  server_data:
+  db_data:
+
+networks:
+  iris_backend:
+    name: iris_backend
+  iris_frontend:
+    name: iris_frontend

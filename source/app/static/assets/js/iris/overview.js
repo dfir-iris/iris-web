@@ -1,50 +1,31 @@
 $.each($.find("table"), function(index, element){
     addFilterFields($(element).attr("id"));
 });
+
 let OverviewTable = $("#overview_table").DataTable({
     dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
     aaData: [],
-    columnDefs: [
+    columns: [ // https://datatables.net/reference/option/columns
         {
-            targets: [0], // column index
-            visible: false, // set visibility
-            searchable: true, // set searchable
-            data: "status_name" // field in data
-        },
-        {
-            targets: [1], // column index
-            visible: false, // set visibility
-            searchable: true, // set searchable
-            data: "case_id" // field in data
-        },
-        {
-            targets: [2], // column index
-            visible: false, // set visibility
-            searchable: true, // set searchable
-            data: "severity" // field in data
-        },
-        {
-            targets: [3], // column index
-            visible: true, // set visibility
-            searchable: true, // set searchable
-            sType: 'integer'
-        }
-    ],
-    aoColumns: [
-        {
+          visible: false, // set visibility
+          searchable: true, // set searchable
           "data": "status_name",
             "render": function (data, type, row, meta) {
                 return data;
             }
         },
         {
+          visible: false, // set visibility
+          searchable: true, // set searchable
           "data": "case_id",
             "render": function (data, type, row, meta) {
                 return data;
           }
         },
       {
-          "data": "severity",
+          visible: false, // set visibility
+          searchable: true, // set searchable
+          "data": "severity", // field in data
             "render": function (data, type, row, meta) {
                   if (data != null && (type === 'filter'  || type === 'sort' || type === 'display' || type === 'search')) {
                     return data.severity_name;
@@ -53,6 +34,9 @@ let OverviewTable = $("#overview_table").DataTable({
             }
       },
       {
+        visible: true, // set visibility
+        searchable: true, // set searchable
+        type: 'integer', // type when it is filtered and sorted (https://datatables.net/reference/option/columns.type)
         "data": "name",
         "render": function (data, type, row, meta) {
             if (type === 'display' || type === 'filter') {
@@ -88,8 +72,9 @@ let OverviewTable = $("#overview_table").DataTable({
             return data;
         }
       },
-      { "data": "client",
-       "render": function (data, type, row, meta) {
+      {
+        "data": "client",
+        "render": function (data, type, row, meta) {
           if (type === 'display') {
             let div_anchor = $('<div>');
             let a_anchor = $('<a>');
@@ -268,7 +253,7 @@ let OverviewTable = $("#overview_table").DataTable({
     orderCellsTop: true,
     initComplete: function () {
             tableFiltering(this.api(), 'overview_table');
-        },
+    },
     drawCallback: function () {
             $('.btn-quick-view').off('click').on('click', function() {
                     show_case_view($(this).data('index'));
@@ -284,20 +269,27 @@ function get_cases_overview(silent, show_full=false) {
 
      $('#overviewTableTitle').text(show_full ? 'All cases' : 'Open cases');
 
-    get_raw_request_api('/overview/filter?cid=' + get_caseid() + (show_full ? '&show_closed=true' : ''))
+    let show_closed = '';
+    if (show_full) {
+        show_closed = '&show_closed=true'
+    }
+    get_raw_request_api(`/overview/filter?cid=${get_caseid()}${show_closed}`)
     .done((data) => {
-        if(notify_auto_api(data, silent)) {
-            overview_list = data.data;
-            OverviewTable.clear();
-            OverviewTable.rows.add(overview_list);
-            OverviewTable.columns.adjust().draw();
-            $(".truncate").on("click", function() {
-                var index = $(this).index() + 1;
-                $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
-            });
-
-            hide_loader();
+        if (api_request_failed(data)) {
+            return;
         }
+        if (!silent) {
+            notify_api_request_success(data)
+        }
+        OverviewTable.clear();
+        OverviewTable.rows.add(data.data);
+        OverviewTable.columns.adjust().draw();
+        $(".truncate").on("click", function() {
+            var index = $(this).index() + 1;
+            $('table tr td:nth-child(' + index  + ')').toggleClass("truncate");
+        });
+
+        hide_loader();
     });
 }
 

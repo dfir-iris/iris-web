@@ -33,11 +33,11 @@
                             <div class="form-group col-12">
                                 {{ form.hidden_tag() }}
                                 {{ form.mfa_secret(size=32, class="hidden", style="display:None;") }}
-                                <label for="token">Token</label>
-                                {{ form.token(size=32, class="form-control") }}
-
                                 <label for="token">Password</label>
                                 {{ form.user_password(class="form-control") }}
+
+                                <label for="token">Token</label>
+                                {{ form.token(size=32, class="form-control") }}
                             </div>
                           </div>
                           <div class="form-row ml-2">

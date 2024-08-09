@@ -24,11 +24,9 @@ from flask_login import current_user
 from app import app
 from app import cache
 from app import db
-from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
-from app.util import ac_api_requires
 from app.util import not_authenticated_redirection_url
 from app.util import response_success
 
@@ -74,17 +72,6 @@ def iris_version():
 def has_updates():
 
     return dict(has_updates=False)
-
-
-@ctx_blueprint.route('/context/search-cases', methods=['GET'])
-@ac_api_requires()
-def cases_context_search():
-    search = request.args.get('q')
-
-    # Get all investigations not closed
-    datao = ctx_search_user_cases(search, current_user.id, max_results=100)
-
-    return response_success(data=datao)
 
 
 def update_user_case_ctx():

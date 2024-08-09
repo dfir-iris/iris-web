@@ -23,14 +23,15 @@ _DOCKER_COMPOSE = ['docker', 'compose']
 
 class DockerCompose:
 
-    def __init__(self, docker_compose_path):
+    def __init__(self, docker_compose_path, docker_compose_file):
         self._docker_compose_path = docker_compose_path
+        self._docker_compose_file = docker_compose_file
 
     def start(self):
-        subprocess.check_call(_DOCKER_COMPOSE + ['up', '--detach'], cwd=self._docker_compose_path)
+        subprocess.check_call(_DOCKER_COMPOSE + ['-f', self._docker_compose_file, 'up', '--detach'], cwd=self._docker_compose_path)
 
     def extract_all_logs(self):
-        return subprocess.check_output(_DOCKER_COMPOSE + ['logs', '--no-color'], cwd=self._docker_compose_path, universal_newlines=True)
+        return subprocess.check_output(_DOCKER_COMPOSE + ['-f', self._docker_compose_file, 'logs', '--no-color'], cwd=self._docker_compose_path, universal_newlines=True)
 
     def stop(self):
-        subprocess.check_call(_DOCKER_COMPOSE + ['down', '--volumes'], cwd=self._docker_compose_path)
+        subprocess.check_call(_DOCKER_COMPOSE + ['-f', self._docker_compose_file, 'down', '--volumes'], cwd=self._docker_compose_path)

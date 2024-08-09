@@ -37,17 +37,21 @@ from app.datamgmt.manage.manage_cases_db import build_filter_case_query
 from app.util import is_user_authenticated
 from app.util import response_error
 
+from app.models.authorization import CaseAccessLevel
+
 from app.blueprints.graphql.cases import CaseObject
 from app.blueprints.graphql.iocs import IOCObject
 from app.blueprints.graphql.iocs import IOCCreate
 from app.blueprints.graphql.iocs import IOCUpdate
 from app.blueprints.graphql.iocs import IOCDelete
-from app.business.cases import get_case_by_identifier
-from app.business.iocs import get_ioc_by_identifier
 from app.blueprints.graphql.cases import CaseCreate
 from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
 from app.blueprints.graphql.cases import CaseConnection
+
+from app.business.cases import cases_get_by_identifier
+from app.business.iocs import iocs_get_by_identifier
+from app.business.permissions import permissions_check_current_user_has_some_case_access
 
 
 class Query(ObjectType):
@@ -69,11 +73,14 @@ class Query(ObjectType):
 
     @staticmethod
     def resolve_case(root, info, case_id):
-        return get_case_by_identifier(case_id)
+        permissions_check_current_user_has_some_case_access(case_id,
+                                                            [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+
+        return cases_get_by_identifier(case_id)
 
     @staticmethod
     def resolve_ioc(root, info, ioc_id):
-        return get_ioc_by_identifier(ioc_id)
+        return iocs_get_by_identifier(ioc_id)
 
 
 class Mutation(ObjectType):

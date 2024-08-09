@@ -20,7 +20,7 @@
 
     <div class="content">
 			<!-- Navbar Header -->
-			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient nav-sticky">
+			<nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient nav-sticky" id="timeline-nav">
 				{{ form.hidden_tag() }}
 				<ul class="container-fluid mt-3 mb--2">
                     <ul class="navbar-nav col-8">
@@ -89,7 +89,7 @@
                 <div class="col-md-12" id="card_main_load" style="display:none;">
                     <div id="paginator"></div>
                     <ul class="timeline" id="timeline_list">
-        
+
                     </ul>
                 </div>
             </div>
@@ -120,7 +120,7 @@
         </div>
 
 
-        <div class="modal shadow-lg" tabindex="-1" id="modal_add_event" data-backdrop="true">
+        <div class="modal shadow-lg" tabindex="-1" id="modal_add_event" data-backdrop="static">
             <div class="modal-xl modal-dialog" role="document">
                 <div class="modal-content" id="modal_add_event_content">
 

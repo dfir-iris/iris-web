@@ -533,6 +533,22 @@ class Notes(db.Model):
     user = relationship('User')
     case = relationship('Cases')
     directory = relationship('NoteDirectory', backref='notes')
+    versions = relationship('NoteRevisions', back_populates='note', cascade="all, delete-orphan")
+
+
+class NoteRevisions(db.Model):
+    __tablename__ = 'note_revisions'
+
+    revision_id = Column(BigInteger, primary_key=True)
+    note_id = Column(BigInteger, ForeignKey('notes.note_id'), nullable=False)
+    revision_number = Column(Integer, nullable=False)
+    note_title = Column(String(155))
+    note_content = Column(Text)
+    note_user = Column(ForeignKey('user.id'))
+    revision_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+
+    user = relationship('User')
+    note = relationship('Notes', back_populates='versions')
 
 
 class NoteDirectory(db.Model):

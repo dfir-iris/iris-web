@@ -255,12 +255,128 @@ function setSharedLink(id) {
     window.history.replaceState({}, '', url);
 }
 
+async function load_note_revisions(_item) {
+
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
+
+    get_request_api('/case/notes/' + _item + '/revisions/list')
+    .done((data) => {
+        if (api_request_failed(data)) {
+            return false;
+        }
+        let revisions = data.data;
+        let revisionList = $('#revisionList');
+        revisionList.empty();
+
+        revisions.forEach(function(revision) {
+            let listItem = $('<li></li>').addClass('list-group-item');
+            let link = $('<a class="btn btn-sm btn-outline-dark float-right ml-1" href="#"><i class="fa-solid fa-clock-rotate-left" style="cursor: pointer;" title="Revert"></i> Revert</a>');
+            let link_preview = $('<a class="btn btn-sm btn-outline-dark float-right ml-1" href="#"><i class="fa-solid fa-eye" style="cursor: pointer;" title="Preview"></i> Preview</a>');
+            let link_delete = $('<a class="btn btn-sm btn-outline-danger float-right ml-1" href="#"><i class="fa-solid fa-trash" style="cursor: pointer;" title="Delete"></i></a>');
+            let user = $('<span></span>').text(`#${revision.revision_number} by ${revision.user_name} on ${formatTime(revision.revision_timestamp)}`);
+            listItem.append(user);
+            listItem.append(link_delete);
+            listItem.append(link);
+            listItem.append(link_preview);
+
+            revisionList.append(listItem);
+
+            link.on('click', function(e) {
+                e.preventDefault();
+                note_revision_revert(_item, revision.revision_number);
+            });
+
+            link_delete.on('click', function(e) {
+                e.preventDefault();
+                note_revision_delete(_item, revision.revision_number);
+            });
+
+            link_preview.on('click', function(e) {
+                e.preventDefault();
+                get_request_api('/case/notes/' + _item + '/revisions/' + revision.revision_number)
+                .done((data) => {
+                    if (api_request_failed(data)) {
+                        return;
+                    }
+                    let revision = data.data;
+                    $('#previewRevisionID').text(revision.revision_number);
+                    $('#notePreviewModalTitle').text(`#${revision.revision_number} - ${revision.note_title}`);
+                    let note_prev = get_new_ace_editor('notePreviewModalContent', 'note_content', 'targetDiv');
+                    note_prev.setValue(revision.note_content, -1);
+                    note_prev.setReadOnly(true);
+                    $('#notePreviewModal').modal('show');
+                });
+            });
+
+            $('#noteModificationHistoryModal').modal('show');
+
+        });
+    });
+}
+
+function note_revision_revert(_item, _rev) {
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
+    let close_modal = false;
+    if (_rev === undefined || _rev === null) {
+        _rev = $('#previewRevisionID').text();
+        close_modal = true;
+    }
+
+    get_request_api('/case/notes/' + _item + '/revisions/' + _rev)
+    .done((data) => {
+        if (api_request_failed(data)) {
+            return;
+        }
+        let revision = data.data;
+        $('#currentNoteTitle').text(revision.note_title);
+        note_editor.setValue(revision.note_content, -1);
+        if (close_modal) {
+            $('#notePreviewModal').modal('hide');
+        }
+        $('#noteModificationHistoryModal').modal('hide');
+        notify_success('Note reverted to revision #' + _rev + '. Save to apply changes.');
+    });
+}
+
+function note_revision_delete(_item, _rev) {
+    if (_item === undefined || _item === null) {
+        _item = $('#currentNoteIDLabel').data('note_id')
+    }
+
+    let close_modal = false;
+    if (_rev === undefined || _rev === null) {
+        _rev = $('#previewRevisionID').text();
+        close_modal = true;
+    }
+
+    do_deletion_prompt("You are about to delete revision #" + _rev)
+    .then((doDelete) => {
+        if (doDelete) {
+            post_request_api('/case/notes/' + _item + '/revisions/' + _rev + '/delete')
+            .done((data) => {
+                if (notify_auto_api(data)) {
+                    load_note_revisions(_item);
+                }
+
+                if (close_modal) {
+                    $('#notePreviewModal').modal('hide');
+                }
+
+            });
+        }
+    });
+}
+
 /* Fetch the edit modal with content from server */
 async function note_detail(id) {
 
     get_request_api('/case/notes/' + id)
     .done((data) => {
-        if (notify_auto_api(data, true, true)) {
+        if (data.status === 'success') {
             let timer;
             let timeout = 10000;
             $('#form_note').keyup(function(){
@@ -299,15 +415,6 @@ async function note_detail(id) {
             previousNoteTitle = data.data.note_title;
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
                 .data('note_id', data.data.note_id);
-            let history_data = '';
-            for (let ent in data.data.modification_history) {
-                let entry = data.data.modification_history[ent];
-                let dateStr = formatTime(parseFloat(ent))
-                let i_t = $('<li></li>');
-                i_t.text(`${dateStr} - ${entry.user} ${entry.action}`);
-                history_data += i_t.prop('outerHTML');
-            }
-            $('#modalHistoryList').empty().append(history_data);
 
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
@@ -469,19 +576,22 @@ function save_note() {
         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
     })
     .done((data) => {
-        if (data.status == 'success') {
-            $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
-            $('#last_saved').removeClass('btn-danger').addClass('btn-success');
-             $("#content_last_saved_by").text('Last saved by you');
-            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
-            collaborator.save(n_id);
-            if (previousNoteTitle !== currentNoteTitle) {
-                load_directories().then(function() {
-                    $('.note').removeClass('note-highlight');
-                    $('#note-' + n_id).addClass('note-highlight');
-                });
-                previousNoteTitle = currentNoteTitle;
-            }
+        if (api_request_failed(data)) {
+            return;
+        }
+        $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
+        $('#last_saved').removeClass('btn-danger').addClass('btn-success');
+        $("#content_last_saved_by").text('Last saved by you');
+        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+        collaborator.save(n_id);
+
+        if (previousNoteTitle !== currentNoteTitle) {
+            load_directories().then(function() {
+                $('.note').removeClass('note-highlight');
+                $('#note-' + n_id).addClass('note-highlight');
+            });
+            previousNoteTitle = currentNoteTitle;
         }
     });
 }
@@ -501,31 +611,32 @@ function edit_innote() {
 async function load_directories() {
     return get_request_api('/case/notes/directories/filter')
         .done((data) => {
-            if (notify_auto_api(data, true)) {
-                data = data.data;
-                let directoriesListing = $('#directoriesListing');
-                directoriesListing.empty();
-
-                let directoryMap = new Map();
-                data.forEach(function(directory) {
-                    directoryMap.set(directory.id, directory);
-                });
-
-                let subdirectoryIds = new Set();
-                data.forEach(function(directory) {
-                    directory.subdirectories.forEach(function(subdirectory) {
-                        subdirectoryIds.add(subdirectory.id);
-                    });
-                });
-
-                let directories = data.filter(function(directory) {
-                    return !subdirectoryIds.has(directory.id);
-                });
-
-                directories.forEach(function(directory) {
-                    directoriesListing.append(createDirectoryListItem(directory, directoryMap));
-                });
+            if (api_request_failed(data)) {
+                return;
             }
+            data = data.data;
+            let directoriesListing = $('#directoriesListing');
+            directoriesListing.empty();
+
+            let directoryMap = new Map();
+            data.forEach(function(directory) {
+                directoryMap.set(directory.id, directory);
+            });
+
+            let subdirectoryIds = new Set();
+            data.forEach(function(directory) {
+                directory.subdirectories.forEach(function(subdirectory) {
+                    subdirectoryIds.add(subdirectory.id);
+                });
+            });
+
+            let directories = data.filter(function(directory) {
+                return !subdirectoryIds.has(directory.id);
+            });
+
+            directories.forEach(function(directory) {
+                directoriesListing.append(createDirectoryListItem(directory, directoryMap));
+            });
         });
 }
 
@@ -552,13 +663,14 @@ function add_note(directory_id) {
 
     post_request_api('/case/notes/add', JSON.stringify(data))
     .done((data) => {
-        if (notify_auto_api(data, true)) {
-            note_detail(data.data.note_id);
-            load_directories().then(function() {
-                $('.note').removeClass('note-highlight');
-                $('#note-' + data.data.note_id).addClass('note-highlight');
-            });
+        if (api_request_failed(data)) {
+            return;
         }
+        note_detail(data.data.note_id);
+        load_directories().then(function() {
+            $('.note').removeClass('note-highlight');
+            $('#note-' + data.data.note_id).addClass('note-highlight');
+        });
     });
 }
 
@@ -570,9 +682,10 @@ function add_folder(directory_id) {
 
     post_request_api('/case/notes/directories/add', JSON.stringify(data))
     .done((data) => {
-        if (notify_auto_api(data, true)) {
-            rename_folder(data.data.id);
+        if (api_request_failed(data)) {
+            return;
         }
+        rename_folder(data.data.id);
     });
 }
 
@@ -794,23 +907,24 @@ function fetchNotes(searchInput) {
     // Send a GET request to the server with the search input as a parameter
     get_raw_request_api('/case/notes/search?search_input=' + encodeURIComponent(searchInput) + '&cid=' + get_caseid())
         .done(data => {
-            if (notify_auto_api(data, true)) {
-                $('.directory-container').find('li').hide();
-                $('.directory').hide();
-                $('.note').hide();
-
-                data.data.forEach(note => {
-                    // Show the note
-                    $('#note-' + note.note_id).show();
-
-                    // Show all ancestor directories of the note
-                    let parentDirectory = $('#directory-' + note.directory_id);
-                    while (parentDirectory.length > 0) {
-                        parentDirectory.show();
-                        parentDirectory = parentDirectory.parents('.directory').first();
-                    }
-                });
+            if (api_request_failed(data)) {
+                return;
             }
+            $('.directory-container').find('li').hide();
+            $('.directory').hide();
+            $('.note').hide();
+
+            data.data.forEach(note => {
+                // Show the note
+                $('#note-' + note.note_id).show();
+
+                // Show all ancestor directories of the note
+                let parentDirectory = $('#directory-' + note.directory_id);
+                while (parentDirectory.length > 0) {
+                    parentDirectory.show();
+                    parentDirectory = parentDirectory.parents('.directory').first();
+                }
+            });
         });
 }
 
@@ -1090,19 +1204,17 @@ $(document).ready(function(){
         $('#currentNoteTitleInput').focus();
     });
 
-    $(document).on('blur keyup', '#currentNoteTitleInput', function(e) {
-        if (e.type === 'blur' || e.key === 'Enter') {
-            let title = $(this).val();
+    $(document).on('blur', '#currentNoteTitleInput', function(e) {
+        let title = $(this).val();
 
-            let h4 = $('<h4>');
-            h4.attr('id', 'currentNoteTitle');
-            h4.addClass('page-title mb-0');
-            h4.text(title);
+        let h4 = $('<h4>');
+        h4.attr('id', 'currentNoteTitle');
+        h4.addClass('page-title mb-0');
+        h4.text(title);
 
-            $(this).replaceWith(h4);
+        $(this).replaceWith(h4);
 
-            save_note();
-        }
+        save_note();
     });
 
     $('#search-input').keyup(function() {

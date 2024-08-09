@@ -22,7 +22,7 @@ from sqlalchemy.orm import joinedload
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
-from app.models import Comments, NoteDirectory
+from app.models import Comments, NoteDirectory, NoteRevisions
 from app.models import Notes
 from app.models import NotesComments
 from app.models import NotesGroup
@@ -91,6 +91,8 @@ def delete_note(note_id, caseid):
 
         com_ids = [c.comment_id for c in com_ids]
         NotesComments.query.filter(NotesComments.comment_id.in_(com_ids)).delete()
+
+        NoteRevisions.query.filter(NoteRevisions.note_id == note_id).delete()
 
         Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
 

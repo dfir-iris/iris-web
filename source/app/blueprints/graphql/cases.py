@@ -27,11 +27,16 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.business.iocs import build_filter_case_ioc_query
 from app.models.cases import Cases
-from app.business.cases import create
-from app.business.cases import delete
-from app.business.cases import update
+from app.models.authorization import Permissions
+from app.models.authorization import CaseAccessLevel
+
+from app.business.iocs import iocs_build_filter_query
+from app.business.cases import cases_create
+from app.business.cases import cases_delete
+from app.business.cases import cases_update
+from app.business.permissions import permissions_check_current_user_has_some_permission
+from app.business.permissions import permissions_check_current_user_has_some_case_access
 
 from app.blueprints.graphql.iocs import IOCConnection
 
@@ -48,10 +53,10 @@ class CaseObject(SQLAlchemyObjectType):
     @staticmethod
     def resolve_iocs(root, info, ioc_id=None, ioc_uuid=None, ioc_value=None, ioc_type_id=None, ioc_description=None, ioc_tlp_id=None, ioc_tags=None,
                      ioc_misp=None, user_id=None, Linked_cases=None, **kwargs):
-        return build_filter_case_ioc_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
-                                           ioc_type_id=ioc_type_id, ioc_description=ioc_description,
-                                           ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
-                                           user_id=user_id, linked_cases=Linked_cases)
+        return iocs_build_filter_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
+                                       ioc_type_id=ioc_type_id, ioc_description=ioc_description,
+                                       ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
+                                       user_id=user_id, linked_cases=Linked_cases)
 
 
 class CaseConnection(Connection):
@@ -89,7 +94,7 @@ class CaseCreate(Mutation):
             request['case_soc_id'] = soc_id
         if classification_id:
             request['classification_id'] = classification_id
-        case, _ = create(request)
+        case, _ = cases_create(request)
         return CaseCreate(case=case)
 
 
@@ -102,7 +107,9 @@ class CaseDelete(Mutation):
 
     @staticmethod
     def mutate(root, info, case_id):
-        delete(case_id)
+        permissions_check_current_user_has_some_permission([Permissions.standard_user])
+        permissions_check_current_user_has_some_case_access(case_id, [CaseAccessLevel.full_access])
+        cases_delete(case_id)
 
 
 class CaseUpdate(Mutation):
@@ -150,5 +157,8 @@ class CaseUpdate(Mutation):
             request['case_tags'] = tags
         if review_status_id:
             request['review_status_id'] = review_status_id
-        case, _ = update(case_id, request)
+        permissions_check_current_user_has_some_permission([Permissions.standard_user])
+        permissions_check_current_user_has_some_case_access(case_id, [CaseAccessLevel.full_access])
+
+        case, _ = cases_update(case_id, request)
         return CaseUpdate(case=case)
