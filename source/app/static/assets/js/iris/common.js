@@ -553,7 +553,7 @@ function check_update(url) {
     }
 }
 
-function set_last_state(state){
+function set_last_state(state) {
     if (state != null) {
         last_state = state.object_state;
     }
