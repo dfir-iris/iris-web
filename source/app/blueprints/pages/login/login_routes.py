@@ -15,15 +15,12 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import base64
-
 import io
-
 import pyotp
 import qrcode
 from urllib.parse import urlsplit
-
-# IMPORTS ------------------------------------------------
 
 from flask import Blueprint, flash
 from flask import redirect
@@ -31,7 +28,7 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
-from flask_login import current_user, login_required
+from flask_login import current_user
 from flask_login import login_user
 
 from app import app
@@ -44,7 +41,7 @@ from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.util import is_authentication_ldap, regenerate_session
+from app.util import is_authentication_ldap
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 
 
@@ -133,13 +130,10 @@ def _authenticate_password(form, username, password):
     return _render_template_login(form, 'Wrong credentials. Please try again.')
 
 
-# CONTENT ------------------------------------------------
 # Authenticate user
 if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
     @login_blueprint.route('/login', methods=['GET', 'POST'])
     def login():
-        #session.permanent = True
-
         if current_user.is_authenticated:
             return redirect(url_for('index.index'))
 
