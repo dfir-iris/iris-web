@@ -119,7 +119,6 @@ def _update_user_case_ctx():
             current_user.ctx_case = None
             current_user.ctx_human_case = "Not set"
             db.session.commit()
-            # current_user.save()
 
     app.jinja_env.globals.update({
         'cases_context_selector': data
