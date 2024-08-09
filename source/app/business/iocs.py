@@ -15,13 +15,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import logging
 
 from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
 from app.models import Ioc
-from app.models import IocLink
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
 from app.datamgmt.case.case_iocs_db import get_iocs_by_case
@@ -170,6 +170,6 @@ def iocs_build_filter_query(ioc_id: int = None,
     query = Ioc.query.filter(*conditions)
 
     if linked_cases is not None:
-        return query.join(IocLink, Ioc.ioc_id == IocLink.ioc_id).filter(IocLink.case_id == linked_cases)
+        logging.warning("Method 'iocs_build_filter_query' with providing 'linked_cases' is deprecated. It is no longer possible to query IOCs by linked cases.")
 
     return query

@@ -42,7 +42,6 @@ from app.models import CaseTemplateReport
 from app.models import CasesEvent
 from app.models import Ioc
 from app.models import IocAssetLink
-from app.models import IocLink
 
 from app.iris_engine.reporter.ImageHandler import ImageHandler
 from app.iris_engine.utils.common import IrisJinjaEnv
