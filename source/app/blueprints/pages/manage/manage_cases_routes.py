@@ -77,6 +77,9 @@ def _details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respo
 
     res = get_case(cur_id)
     res = CaseDetailsSchema().dump(res)
+    if not res:
+        return response_error("Unknown case")
+
     case_classifications = get_case_classifications_list()
     case_states = get_case_states_list()
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
@@ -89,13 +92,9 @@ def _details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respo
 
     form = FlaskForm()
 
-    if res:
-        return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
-                               case_classifications=case_classifications, case_states=case_states, customers=customers,
-                               severities=severities)
-
-    else:
-        return response_error("Unknown case")
+    return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
+                           case_classifications=case_classifications, case_states=case_states, customers=customers,
+                           severities=severities)
 
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
