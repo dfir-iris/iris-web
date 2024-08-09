@@ -37,7 +37,6 @@ from app.models import Comments
 from app.models import EventCategory
 from app.models import Ioc
 from app.models import IocAssetLink
-from app.models import IocLink
 from app.models import IocType
 from app.models import Notes
 from app.models import NotesGroup
@@ -110,7 +109,7 @@ def export_case_tm_json_extended(case_id):
 
 def export_case_iocs_json_extended(case_id):
     iocs = Ioc.query.filter(
-        IocLink.case_id == case_id
+        Ioc.case_id == case_id
     ).all()
 
     return iocs

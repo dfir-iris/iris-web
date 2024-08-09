@@ -173,8 +173,8 @@ def alerts_add_route() -> Response:
         iocs_list = data.pop('alert_iocs', [])
         assets_list = data.pop('alert_assets', [])
 
-        iocs = ioc_schema.load(iocs_list, many=True)
-        assets = asset_schema.load(assets_list, many=True)
+        iocs = ioc_schema.load(iocs_list, many=True, partial=True)
+        assets = asset_schema.load(assets_list, many=True, partial=True)
 
         # Deserialize the JSON data into an Alert object
         new_alert = alert_schema.load(data)

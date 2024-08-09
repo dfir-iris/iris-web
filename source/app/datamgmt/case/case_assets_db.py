@@ -34,7 +34,6 @@ from app.models import Comments
 from app.models import CompromiseStatus
 from app.models import Ioc
 from app.models import IocAssetLink
-from app.models import IocLink
 from app.models import IocType
 from app.models.authorization import User
 
@@ -226,8 +225,7 @@ def get_assets_ioc_links(caseid):
         IocAssetLink.asset_id
     ).filter(
         Ioc.ioc_id == IocAssetLink.ioc_id,
-        IocLink.case_id == caseid,
-        IocLink.ioc_id == Ioc.ioc_id
+        Ioc.case_id == caseid
     ).all()
 
     return ioc_links_req

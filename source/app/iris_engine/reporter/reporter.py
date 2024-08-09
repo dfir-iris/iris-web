@@ -42,7 +42,6 @@ from app.models import CaseTemplateReport
 from app.models import CasesEvent
 from app.models import Ioc
 from app.models import IocAssetLink
-from app.models import IocLink
 
 from app.iris_engine.reporter.ImageHandler import ImageHandler
 from app.iris_engine.utils.common import IrisJinjaEnv
@@ -197,15 +196,15 @@ class IrisReportMaker(object):
         Retrieve the list of IOC linked to the case
         :return:
         """
-        res = IocLink.query.distinct().with_entities(
+        res = Ioc.query.distinct().with_entities(
             Ioc.ioc_value,
             Ioc.ioc_type,
             Ioc.ioc_description,
             Ioc.ioc_tags,
             Ioc.custom_attributes
         ).filter(
-            IocLink.case_id == caseid
-        ).join(IocLink.ioc).order_by(Ioc.ioc_type).all()
+            Ioc.case_id == caseid
+        ).order_by(Ioc.ioc_type).all()
 
         if res:
             return [row._asdict() for row in res]
@@ -442,15 +441,15 @@ class IrisMakeDocReport(IrisReportMaker):
         Retrieve the list of IOC linked to the case
         :return:
         """
-        res = IocLink.query.distinct().with_entities(
+        res = Ioc.query.distinct().with_entities(
             Ioc.ioc_value,
             Ioc.ioc_type,
             Ioc.ioc_description,
             Ioc.ioc_tags,
             Ioc.custom_attributes
         ).filter(
-            IocLink.case_id == caseid
-        ).join(IocLink.ioc).order_by(Ioc.ioc_type).all()
+            Ioc.case_id == caseid
+        ).order_by(Ioc.ioc_type).all()
 
         if res:
             return [row._asdict() for row in res]
