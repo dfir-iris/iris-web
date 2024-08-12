@@ -118,7 +118,7 @@ def iocs_delete(identifier):
     if not ioc:
         raise BusinessProcessingError('Not a valid IOC for this case')
 
-    delete_ioc(ioc, ioc.case_id)
+    delete_ioc(ioc)
 
     call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=ioc.case_id)
 
