@@ -99,7 +99,7 @@ def add_template_modal(caseid, url_redir):
         "classification": "known-template-classification",
         "title_prefix": "[PREFIX]",
         "summary": "Summary to be set",
-        "tags": ["ransomware","malware"],
+        "tags": ["ransomware", "malware"],
         "tasks": [
             {
                 "title": "Task 1",
