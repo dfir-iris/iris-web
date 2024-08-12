@@ -130,13 +130,12 @@ class IOCDelete(Mutation):
 
     class Arguments:
         ioc_id = NonNull(Float)
-        case_id = NonNull(Float)
 
     message = String()
 
     @staticmethod
-    def mutate(root, info, ioc_id, case_id):
+    def mutate(root, info, ioc_id):
         permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
-        message = iocs_delete(ioc_id, case_id)
+        message = iocs_delete(ioc_id)
         return IOCDelete(message=message)

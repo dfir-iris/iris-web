@@ -75,10 +75,10 @@ def update_ioc(ioc_type, ioc_tags, ioc_value, ioc_description, ioc_tlp, userid, 
         return False
 
 
-def delete_ioc(ioc, caseid):
+def delete_ioc(ioc: Ioc, caseid):
     db.session.delete(ioc)
 
-    update_ioc_state(caseid=caseid)
+    update_ioc_state(caseid=ioc.case_id)
 
     return True
 

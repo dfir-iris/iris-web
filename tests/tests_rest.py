@@ -154,14 +154,14 @@ class TestsRest(TestCase):
 
     def test_create_ioc_should_return_good_ioc_type_id(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         self.assertEqual(1, response['ioc_type_id'])
 
     def test_get_ioc_should_return_ioc_type_id(self):
         ioc_type_id = 1
         case_identifier = self._subject.create_dummy_case()
-        body = {"ioc_type_id": ioc_type_id, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
+        body = {'ioc_type_id': ioc_type_id, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         test = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         current_id = test['ioc_id']
         response = self._subject.get(f'/api/v2/iocs/{current_id}').json()
@@ -169,14 +169,14 @@ class TestsRest(TestCase):
 
     def test_get_ioc_with_missing_ioc_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         test = self._subject.get('/api/v2/iocs/None').json()
         self.assertEqual('error', test['status'])
 
     def test_delete_ioc_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {"ioc_type_id": 1, "ioc_tlp_id": 2, "ioc_value": "8.8.8.8", "ioc_description": "rewrw", "ioc_tags": ""}
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
         response = self._subject.delete(f'/api/v2/iocs/{ioc_identifier}')
@@ -255,21 +255,21 @@ class TestsRest(TestCase):
 
     def test_add_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {"task_assignees_id": [1], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
+        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         self.assertEqual(201, response.status_code)
 
     def test_add_task_with_missing_task_title_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {"task_assignees_id": [1], "task_description": "", "task_status_id": 1, "task_tags": "", "custom_attributes": {}}
+        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         self.assertEqual(400, response.status_code)
 
     def test_get_tasks_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 2
-        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
-                "custom_attributes": {}}
+        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
+                'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         response = self._subject.get(f'/api/v2/tasks/{task_id}')
         self.assertEqual(201, response.status_code)
@@ -277,7 +277,7 @@ class TestsRest(TestCase):
     def test_get_tasks_with_missing_task_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
-        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title", "custom_attributes": {}}
+        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         response = self._subject.get(f'/api/v2/tasks/{None}')
         self.assertEqual(404, response.status_code)
@@ -285,8 +285,8 @@ class TestsRest(TestCase):
     def test_delete_task_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
-        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
-                "custom_attributes": {}}
+        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
+                'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         test = self._subject.delete(f'/api/v2/tasks/{task_id}')
         self.assertEqual(204, test.status_code)
@@ -294,8 +294,8 @@ class TestsRest(TestCase):
     def test_delete_task_with_missing_task_identifier_should_return_404(self):
         case_identifier = self._subject.create_dummy_case()
         task_id = 1
-        body = {"task_assignees_id": [task_id], "task_description": "", "task_status_id": 1, "task_tags": "", "task_title": "dummy title",
-                "custom_attributes": {}}
+        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
+                'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         test = self._subject.delete(f'/api/v2/tasks/{None}')
         self.assertEqual(404, test.status_code)
@@ -366,24 +366,26 @@ class TestsRest(TestCase):
         self.assertIn('case_customer', response['data'])
 
     def test_get_iocs_should_not_fail(self):
-        response = self._subject.get('/api/v2/iocs')
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs')
         self.assertEqual(200, response.status_code)
 
+    def test_create_ioc_should_add_the_ioc_in_the_correct_case(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
+        self.assertEqual(1, response['total'])
+
     def test_get_iocs_should_filter_and_return_ioc_type_identifier(self):
-        response = self._subject.create('/api/v2/cases', {
-            'case_name': 'test_get_cases_should_filter_on_case_name',
-            'case_description': 'description',
-            'case_customer': 1,
-            'case_soc_id': ''
-        }).json()
-        case_identifier = response['case_id']
+        case_identifier = self._subject.create_dummy_case()
         ioc_type_identifier = 2
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
             'ioc_type_id': ioc_type_identifier,
             'ioc_tlp_id': 2,
             'ioc_value': 'test_get_iocs_should_filter_on_ioc_value',
             'ioc_description': 'rewrw',
-            'ioc_tags': "",
+            'ioc_tags': '',
             'custom_attributes': {}
         }).json()
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
@@ -391,13 +393,12 @@ class TestsRest(TestCase):
             'ioc_tlp_id': 2,
             'ioc_value': 'wrong_test',
             'ioc_description': 'rewrw',
-            'ioc_tags': "",
+            'ioc_tags': '',
             'custom_attributes': {}
         }).json()
         filters = {'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'}
-        response = self._subject.get('/api/v2/iocs',  query_parameters=filters).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs',  query_parameters=filters).json()
         identifiers = []
         for ioc in response['iocs']:
             identifiers.append(ioc['ioc_type_id'])
         self.assertIn(ioc_type_identifier, identifiers)
-

@@ -110,19 +110,19 @@ def iocs_update(identifier, request_json, case_identifier):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def iocs_delete(identifier, case_identifier):
+def iocs_delete(identifier):
 
-    call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
-    ioc = get_ioc(identifier, case_identifier)
+    call_modules_hook('on_preload_ioc_delete', data=identifier)
+    ioc = get_ioc(identifier)
 
     if not ioc:
         raise BusinessProcessingError('Not a valid IOC for this case')
 
-    delete_ioc(ioc, case_identifier)
+    delete_ioc(ioc, ioc.case_id)
 
-    call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=case_identifier)
+    call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=ioc.case_id)
 
-    track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=case_identifier)
+    track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=ioc.case_id)
     return f'IOC {identifier} deleted'
 
 

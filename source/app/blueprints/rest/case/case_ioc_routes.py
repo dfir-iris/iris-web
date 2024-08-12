@@ -53,6 +53,7 @@ from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
 from app.util import ac_requires_case_identifier
+from app.util import ac_requires_case_access
 from app.util import ac_api_requires
 from app.util import response_error
 from app.util import response_success
@@ -90,17 +91,16 @@ def case_list_ioc(caseid):
     return response_success("", data=ret)
 
 
-@case_ioc_rest_blueprint.route('/api/v2/iocs', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@case_ioc_rest_blueprint.route('/api/v2/cases/<int:case_identifier>/iocs', methods=['GET'])
+@ac_requires_case_access(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def list_ioc(caseid):
+def list_ioc(case_identifier):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     order_by = request.args.get('order_by', type=str)
     sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
     ioc_type_id = request.args.get('ioc_type_id', None, type=int)
-    ioc_id = request.args.get('ioc_id', None, type=int)
     ioc_type = request.args.get('ioc_type', None, type=str)
     ioc_tlp_id = request.args.get('ioc_tlp_id', None, type=int)
     ioc_value = request.args.get('ioc_value', None, type=str)
@@ -108,7 +108,7 @@ def list_ioc(caseid):
     ioc_tags = request.args.get('ioc_tags', None, type=str)
 
     filtered_iocs = get_filtered_iocs(
-        caseid=caseid,
+        caseid=case_identifier,
         ioc_type_id=ioc_type_id,
         ioc_type=ioc_type,
         ioc_tlp_id=ioc_tlp_id,
@@ -127,7 +127,7 @@ def list_ioc(caseid):
     iocs = IocSchema().dump(filtered_iocs.items, many=True)
 
     for ioc in iocs:
-        ial = get_ioc_links(ioc['ioc_id'], caseid)
+        ial = get_ioc_links(ioc['ioc_id'], case_identifier)
         ioc['link'] = [row._asdict() for row in ial]
         ioc['tlp'] = Tlp.query.filter(Tlp.tlp_id == ioc['ioc_tlp_id']).first()
 
@@ -136,7 +136,7 @@ def list_ioc(caseid):
         'iocs': iocs,
         'last_page': filtered_iocs.pages,
         'current_page': filtered_iocs.page,
-        'state': get_ioc_state(caseid=caseid),
+        'state': get_ioc_state(caseid=case_identifier),
         'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
     }
 
@@ -169,7 +169,7 @@ def deprecated_case_add_ioc(caseid):
 
 
 @case_ioc_rest_blueprint.route('/api/v2/cases/<int:caseid>/iocs', methods=['POST'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_requires_case_access(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_ioc(caseid):
     ioc_schema = IocSchema()
@@ -284,7 +284,7 @@ def case_upload_ioc(caseid):
 def deprecated_case_delete_ioc(cur_id, caseid):
     try:
 
-        msg = iocs_delete(cur_id, caseid)
+        msg = iocs_delete(cur_id)
         return response_success(msg=msg)
 
     except BusinessProcessingError as e:
@@ -292,11 +292,12 @@ def deprecated_case_delete_ioc(cur_id, caseid):
 
 
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['DELETE'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_requires_case_access(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_delete_ioc(cur_id, caseid):
+def delete_case_ioc(cur_id):
     try:
-        iocs_delete(cur_id, caseid)
+
+        iocs_delete(cur_id)
         return response_api_deleted()
 
     except BusinessProcessingError as e:
@@ -309,21 +310,21 @@ def case_delete_ioc(cur_id, caseid):
 @ac_api_requires()
 def deprecated_case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
-    ioc = get_ioc(cur_id, caseid)
+    ioc = get_ioc(cur_id)
     if not ioc:
-        return response_error("Invalid IOC ID for this case")
+        return response_error('Invalid IOC identifier')
 
     return response_success(data=ioc_schema.dump(ioc))
 
 
-@case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['GET'])
+@ac_requires_case_access(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_view_ioc(cur_id, caseid):
+def get_case_ioc(identifier):
     ioc_schema = IocSchema()
-    ioc = get_ioc(cur_id, caseid)
+    ioc = get_ioc(identifier)
     if not ioc:
-        return response_api_error("Invalid IOC ID for this case")
+        return response_api_error('Invalid IOC identifier')
 
     return response_api_created(ioc_schema.dump(ioc))
 

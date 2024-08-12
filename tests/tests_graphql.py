@@ -118,7 +118,7 @@ class TestsGraphQL(TestCase):
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''mutation {{
-                             iocDelete(iocId: {ioc_identifier} caseId: {case_identifier}) {{
+                             iocDelete(iocId: {ioc_identifier}) {{
                                  message
                              }}
                          }}'''
