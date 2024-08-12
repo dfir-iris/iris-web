@@ -145,7 +145,7 @@ function save_ioc() {
 function get_case_ioc() {
     show_loader();
 
-    get_request_data_api('/api/v2/iocs')
+    get_request_data_api(`/api/v2/cases/${get_caseid()}/iocs`)
     .done((data, textStatus) => {
         if (textStatus === 'success') {
             if (data != null) {
