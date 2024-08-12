@@ -2,21 +2,47 @@
 
 If you wish to develop in DFIR-IRIS, please make sure to read the following tips.
 
-## Workflow
+## Versioning
 
-- development is done on branch `develop`
+The project adheres to semantic versioning, see: https://semver.org/.
+
+## Git workflow
+
+The workflow is based on the evolution of the following branches:
+- there are two long-lived branches: `master` and `develop`,
+- `master` points to the most recent delivered version,
+- development of the next version is done on branch `develop`,
+- there are two types of short-lived branches: feature branches out of `develop` and hotfix branches out of `master`.
+
+Delivered versions are tagged with their number, for instance `v2.4.11`, `v2.1.0-beta-1`.
+
+The operations which make up the workflow are the following:
+- safe and small modifications, which do not require any review, may be directly performed on branch `develop`
   ```
   git switch develop
   ```
-- safe and small modifications may be directly performed on branch `develop`
-- modifications which either imply more work or are risky, must be performed on a branch of their own
+- modifications, which either imply more work or are risky, must be performed on a branch of their own (a feature branch)
   ```
+  git switch develop
   git switch -c <branch-name>
   git push --set-upstream origin <branch-name>
   ```
-- when work on the branch is ready to be published, then a pull request (PR) is created from the github interface.
+- when work on the branch is ready to be published, then a pull request (PR) is created from the GitHub interface.
   Do not forget to choose `develop` as the base branch (by default it is set to `master`,
   more information [here](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request#changing-the-branch-range-and-destination-repository)).
+- it is preferable to rebase feature branches regularly and before opening a PR. This makes the merge into `develop` simpler.
+  ```
+  git switch -c <branch-name>
+  git rebase origin/develop
+  ```
+- it is preferable to keep feature branches short-lived (< 2 weeks)
+- when `develop` is ready to be delivered, it is tagged with the next version number (major, minor or patch), and merged into `master`
+- when a bug must be urgently fixed on the latest delivered version, a hotfix branch may be created from `master`
+- when a hotfix branch is ready to be delivered, it is tagged with the next patch version number, and merged into `master`.
+  The modification is brought back into `develop` by a merge or cherry-pick.
+- once merged, short-lived branches are deleted.
+
+Note: for the time being, there is no maintenance on old delivered versions.
 
 
 ### Commits

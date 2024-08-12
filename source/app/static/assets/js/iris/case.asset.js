@@ -24,7 +24,7 @@ function edit_in_asset_desc() {
 
 /* Fetch a modal that is compatible with the requested asset type */
 function add_assets() {
-    url = 'assets/add/modal' + case_param();
+    url = '/case/assets/add/modal' + case_param();
     $('#modal_add_asset_content').load(url, function (response, status, xhr) {
         hide_minimized_modal_box();
         if (status !== "success") {
@@ -179,10 +179,10 @@ function delete_asset(asset_id) {
 /* Fetch the details of an asset and allow modification */
 function asset_details(asset_id) {
 
-    url = 'assets/' + asset_id + '/modal' + case_param();
+    url = '/case/assets/' + asset_id + '/modal' + case_param();
     $('#modal_add_asset_content').load(url, function (response, status, xhr) {
         hide_minimized_modal_box();
-        if (status !== "success") {
+        if (status !== 'success') {
              ajax_notify_error(xhr, url);
              return false;
         }
@@ -278,7 +278,7 @@ function update_asset(do_close){
 
     data['custom_attributes'] = attributes;
 
-    post_request_api('assets/update/' + g_asset_id, JSON.stringify(data),  true)
+    post_request_api('/case/assets/update/' + g_asset_id, JSON.stringify(data),  true)
     .done((data) => {
         if (data.status == 'success') {
             reload_assets();
@@ -522,7 +522,7 @@ $(document).ready(function(){
     });
     $("#assets_table").css("font-size", 12);
 
-    Table.on( 'responsive-resize', function ( e, datatable, columns ) {
+    Table.on('responsive-resize', function ( e, datatable, columns ) {
             hide_table_search_input( columns );
     });
 
