@@ -24,7 +24,7 @@ from flask import request
 from flask_login import current_user
 
 from app import db
-from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
@@ -40,7 +40,6 @@ from app.datamgmt.case.case_assets_db import get_assets
 from app.datamgmt.case.case_assets_db import get_assets_ioc_links
 from app.datamgmt.case.case_assets_db import get_case_asset_comment
 from app.datamgmt.case.case_assets_db import get_case_asset_comments
-from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import get_similar_assets
 from app.datamgmt.case.case_assets_db import set_ioc_links
 from app.datamgmt.case.case_db import get_case_client_id
