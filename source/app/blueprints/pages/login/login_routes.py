@@ -58,7 +58,7 @@ log = app.logger
 def _retrieve_user_by_username(username):
     user = get_active_user_by_login(username)
     if not user:
-        track_activity("someone tried to log in with user '{}', which does not exist".format(username),
+        track_activity(f'someone tried to log in with user \'{username}\', which does not exist',
                        ctx_less=True, display_in_ui=False)
     return user
 
@@ -80,7 +80,7 @@ def _validate_local_login(username, password):
     if bc.check_password_hash(user.password, password):
         return user
 
-    track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True, display_in_ui=False)
+    track_activity(f'wrong login password for user \'{username}\' using local auth', ctx_less=True, display_in_ui=False)
     return None
 
 
@@ -88,10 +88,10 @@ def _validate_ldap_login(username, password, local_fallback=True):
     try:
         if ldap_authenticate(username, password) is False:
             if local_fallback is True:
-                track_activity("wrong login password for user '{}' using LDAP auth - falling back to local based on settings".format(username),
+                track_activity(f'wrong login password for user \'{username}\' using LDAP auth - falling back to local based on settings',
                                ctx_less=True, display_in_ui=False)
                 return _validate_local_login(username, password)
-            track_activity("wrong login password for user '{}' using LDAP auth".format(username), ctx_less=True, display_in_ui=False)
+            track_activity(f'wrong login password for user \'{username}\' using LDAP auth', ctx_less=True, display_in_ui=False)
             return None
 
         user = _retrieve_user_by_username(username)
@@ -125,7 +125,7 @@ def _authenticate_password(form, username, password):
     if bc.check_password_hash(user.password, password):
         return wrap_login_user(user)
 
-    track_activity("wrong login password for user '{}' using local auth".format(username), ctx_less=True,
+    track_activity(f'wrong login password for user \'{username}\' using local auth', ctx_less=True,
                    display_in_ui=False)
     return _render_template_login(form, 'Wrong credentials. Please try again.')
 
@@ -181,7 +181,7 @@ def wrap_login_user(user):
         'case_id': user.ctx_case
     }
 
-    track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
+    track_activity(f'user \'{user.user}\' successfully logged-in', ctx_less=True, display_in_ui=False)
 
     next_url = None
     if request.args.get('next'):
