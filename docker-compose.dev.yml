@@ -28,7 +28,7 @@ services:
       service: db
     build:
       context: docker/db
-    image: iriswebapp_db:v2.4.7
+    image: iriswebapp_db:develop
     ports:
       - "127.0.0.1:5432:5432"
 
@@ -39,7 +39,7 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.4.7
+    image: iriswebapp_app:develop
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -52,7 +52,7 @@ services:
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
-    image: iriswebapp_app:v2.4.7
+    image: iriswebapp_app:develop
     volumes:
       - ./source/app:/iriswebapp/app
 
@@ -65,7 +65,7 @@ services:
       args:
         NGINX_CONF_GID: 1234
         NGINX_CONF_FILE: nginx.conf
-    image: iriswebapp_nginx:v2.4.7
+    image: iriswebapp_nginx:develop
 
 
 volumes:
