@@ -79,7 +79,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = ModalAddCaseIOCForm()
-    ioc = get_ioc(cur_id, caseid)
+    ioc = get_ioc(cur_id)
     if not ioc:
         return response_error("Invalid IOC ID for this case")
 
@@ -102,7 +102,7 @@ def case_comment_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
 
-    ioc = get_ioc(cur_id, caseid=caseid)
+    ioc = get_ioc(cur_id)
     if not ioc:
         return response_error('Invalid ioc ID')
 

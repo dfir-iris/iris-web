@@ -70,34 +70,34 @@ def iocs_create(request_json, case_identifier):
 
 
 # TODO most probably this method should not require a case_identifier... Since the IOC gets modified for all cases...
-def iocs_update(identifier, request_json, case_identifier):
+def iocs_update(identifier, request_json):
 
     try:
-        ioc = get_ioc(identifier, caseid=case_identifier)
+        ioc = get_ioc(identifier)
         if not ioc:
             raise BusinessProcessingError('Invalid IOC ID for this case')
 
         # TODO ideally schema validation should be done before, outside the business logic in the REST API
         #      for that the hook should be called after schema validation
-        request_data = call_modules_hook('on_preload_ioc_update', data=request_json, caseid=case_identifier)
+        request_data = call_modules_hook('on_preload_ioc_update', data=request_json, caseid=ioc.case_id)
 
         # validate before saving
         ioc_schema = IocSchema()
         request_data['ioc_id'] = identifier
-        request_data['case_id'] = case_identifier
+        request_data['case_id'] = ioc.case_id
         ioc_sc = ioc_schema.load(request_data, instance=ioc, partial=True)
         ioc_sc.user_id = current_user.id
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             raise BusinessProcessingError('Not a valid IOC type')
 
-        update_ioc_state(case_identifier)
+        update_ioc_state(ioc.case_id)
         db.session.commit()
 
-        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=case_identifier)
+        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=ioc.case_id)
 
         if ioc_sc:
-            track_activity(f'updated ioc "{ioc_sc.ioc_value}"', caseid=case_identifier)
+            track_activity(f'updated ioc "{ioc_sc.ioc_value}"', caseid=ioc.case_id)
             return ioc, f'Updated ioc "{ioc_sc.ioc_value}"'
 
         raise BusinessProcessingError('Unable to update ioc for internal reasons')

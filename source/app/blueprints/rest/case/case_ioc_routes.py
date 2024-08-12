@@ -336,7 +336,7 @@ def case_update_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
 
     try:
-        ioc, msg = iocs_update(cur_id, request.get_json(), caseid)
+        ioc, msg = iocs_update(cur_id, request.get_json())
         return response_success(msg, data=ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -358,14 +358,14 @@ def case_comment_ioc_list(cur_id, caseid):
 @ac_api_requires()
 def case_comment_ioc_add(cur_id, caseid):
     try:
-        ioc = get_ioc(cur_id, caseid=caseid)
+        ioc = get_ioc(cur_id)
         if not ioc:
             return response_error('Invalid ioc ID')
 
         comment_schema = CommentSchema()
 
         comment = comment_schema.load(request.get_json())
-        comment.comment_case_id = caseid
+        comment.comment_case_id = ioc.case_id
         comment.comment_user_id = current_user.id
         comment.comment_date = datetime.now()
         comment.comment_update_date = datetime.now()
@@ -380,9 +380,9 @@ def case_comment_ioc_add(cur_id, caseid):
             "comment": comment_schema.dump(comment),
             "ioc": IocSchema().dump(ioc)
         }
-        call_modules_hook('on_postload_ioc_commented', data=hook_data, caseid=caseid)
+        call_modules_hook('on_postload_ioc_commented', data=hook_data, caseid=ioc.case_id)
 
-        track_activity(f"ioc \"{ioc.ioc_value}\" commented", caseid=caseid)
+        track_activity(f"ioc \"{ioc.ioc_value}\" commented", caseid=ioc.case_id)
         return response_success("Event commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:

@@ -170,9 +170,8 @@ class TestsGraphQL(TestCase):
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 typeId: 1, tlpId: 2, value: "{ioc_value}") {{
-                                     ioc {{ iocTlpId }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, value: "{ioc_value}") {{
+                                 ioc {{ iocTlpId }}
                              }}
                          }}'''
         }
@@ -194,39 +193,15 @@ class TestsGraphQL(TestCase):
         ioc_type = response['data']['iocCreate']['ioc']['iocTypeId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 tlpId:1, value: "{ioc_value}") {{
-                                     ioc {{ iocTypeId }}
+                             iocUpdate(iocId: {ioc_identifier}, tlpId:1, value: "{ioc_value}") {{
+                                 ioc {{ iocTypeId }}
                              }}
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
         self.assertEqual(ioc_type, response['data']['iocUpdate']['ioc']['iocTypeId'])
 
-    def test_graphql_update_ioc_should_not_update_caseId(self):
-        case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
-        payload = {
-            'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                ioc {{ iocId }}
-                            }}
-                         }}'''
-        }
-        response = self._subject.execute_graphql_query(payload)
-        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
-        payload = {
-            'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, typeId:1,
-                                 tlpId:1, value: "{ioc_value}") {{
-                                     ioc {{ iocTlpId }}
-                             }}
-                         }}'''
-        }
-        response = self._subject.execute_graphql_query(payload)
-        self.assertIn('errors', response)
-
-    def test_graphql_update_ioc_should_not_update_iocId(self):
+    def test_graphql_update_ioc_should_fail_when_missing_iocId(self):
         case_identifier = self._create_case()
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
@@ -239,9 +214,8 @@ class TestsGraphQL(TestCase):
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(caseId: {case_identifier}, typeId:1,
-                                 tlpId:1, value: "{ioc_value}") {{
-                                     ioc {{ iocTlpId }}
+                             iocUpdate(typeId:1, tlpId:1, value: "{ioc_value}") {{
+                                 ioc {{ iocTlpId }}
                              }}
                          }}'''
         }
@@ -263,9 +237,8 @@ class TestsGraphQL(TestCase):
         ioc_tlp = response['data']['iocCreate']['ioc']['iocTlpId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier}, typeId:1,
-                                  value: "{ioc_value}") {{
-                                     ioc {{ iocId iocTlpId }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId:1, value: "{ioc_value}") {{
+                                 ioc {{ iocId iocTlpId }}
                              }}
                          }}'''
         }
@@ -287,9 +260,8 @@ class TestsGraphQL(TestCase):
         ioc_value = response['data']['iocCreate']['ioc']['iocValue']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier}, typeId:1,
-                                  tlpId:1) {{
-                                     ioc {{ iocValue }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId:1, tlpId:1) {{
+                                 ioc {{ iocValue }}
                              }}
                          }}'''
         }
@@ -311,9 +283,9 @@ class TestsGraphQL(TestCase):
         description = 'Some description'
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 typeId: 1, tlpId: 2, value: "{ioc_value}", description: "{description}") {{
-                                     ioc {{ iocDescription }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, value: "{ioc_value}", 
+                                       description: "{description}") {{
+                                 ioc {{ iocDescription }}
                              }}
                          }}'''
         }
@@ -335,9 +307,9 @@ class TestsGraphQL(TestCase):
         tags = 'tag1,tag2'
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 typeId: 1, tlpId: 2, value: "{ioc_value}", tags: "{tags}") {{
-                                     ioc {{ iocTags }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, value: "{ioc_value}", 
+                                       tags: "{tags}") {{
+                                 ioc {{ iocTags }}
                              }}
                          }}'''
         }
@@ -716,9 +688,9 @@ class TestsGraphQL(TestCase):
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 typeId: 1, tlpId: 2, iocMisp: "test", value: "{ioc_value}") {{
-                                     ioc {{ iocMisp }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, iocMisp: "test",
+                                       value: "{ioc_value}") {{
+                                 ioc {{ iocMisp }}
                              }}
                          }}'''
         }
@@ -739,9 +711,8 @@ class TestsGraphQL(TestCase):
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 typeId: 1, tlpId: 2, userId: 1, value: "{ioc_value}") {{
-                                     ioc {{ userId }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, userId: 1, value: "{ioc_value}") {{
+                                 ioc {{ userId }}
                              }}
                          }}'''
         }
@@ -762,9 +733,9 @@ class TestsGraphQL(TestCase):
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 typeId: 1, tlpId: 2, iocEnrichment: "test", value: "{ioc_value}") {{
-                                     ioc {{ iocEnrichment }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, iocEnrichment: "test",
+                                       value: "{ioc_value}") {{
+                                 ioc {{ iocEnrichment }}
                              }}
                          }}'''
         }
@@ -785,9 +756,9 @@ class TestsGraphQL(TestCase):
         ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, caseId: {case_identifier},
-                                 typeId: 1, tlpId: 2, modificationHistory: "test", value: "{ioc_value}") {{
-                                     ioc {{ modificationHistory }}
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, modificationHistory: "test",
+                                       value: "{ioc_value}") {{
+                                 ioc {{ modificationHistory }}
                              }}
                          }}'''
         }
@@ -1044,11 +1015,10 @@ class TestsGraphQL(TestCase):
         description = 'Some description'
         payload = {
             'query': f'''mutation {{
-                                     iocUpdate(iocId:1, caseId: 1, description: "{description}", typeId:1, tlpId:1, 
-                                     value: "test") {{
-                                             ioc {{ iocDescription }}
-                                     }}
-                                 }}'''
+                             iocUpdate(iocId:1, description: "{description}", typeId:1, tlpId:1, value: "test") {{
+                                 ioc {{ iocDescription }}
+                             }}
+                         }}'''
         }
         self._subject.execute_graphql_query(payload)
         payload = {
@@ -1083,11 +1053,11 @@ class TestsGraphQL(TestCase):
         tags = "test"
         payload = {
             'query': f'''mutation {{
-                                             iocUpdate(iocId:1, caseId: 1, description: "Some description", typeId:1, 
-                                             tlpId:1, value: "test", tags :"{tags}") {{
-                                                     ioc {{ iocTags }}
-                                             }}
-                                         }}'''
+                             iocUpdate(iocId:1, description: "Some description", typeId:1, tlpId:1, value: "test",
+                                       tags :"{tags}") {{
+                                 ioc {{ iocTags }}
+                             }}
+                         }}'''
         }
         self._subject.execute_graphql_query(payload)
         payload = {

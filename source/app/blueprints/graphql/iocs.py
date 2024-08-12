@@ -84,7 +84,6 @@ class IOCUpdate(Mutation):
 
     class Arguments:
         ioc_id = NonNull(Float)
-        case_id = NonNull(Float)
         type_id = Int()
         tlp_id = Int()
         value = String()
@@ -99,7 +98,7 @@ class IOCUpdate(Mutation):
     ioc = Field(IOCObject)
 
     @staticmethod
-    def mutate(root, info, ioc_id, case_id, type_id=None, tlp_id=None, value=None, description=None, tags=None,
+    def mutate(root, info, ioc_id, type_id=None, tlp_id=None, value=None, description=None, tags=None,
                ioc_misp=None, user_id=None, ioc_enrichment=None, modification_history=None):
         permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
 
@@ -122,7 +121,7 @@ class IOCUpdate(Mutation):
             request['ioc_enrichment'] = ioc_enrichment
         if modification_history:
             request['modification_history'] = modification_history
-        ioc, _ = iocs_update(ioc_id, request, case_id)
+        ioc, _ = iocs_update(ioc_id, request)
         return IOCCreate(ioc=ioc)
 
 
