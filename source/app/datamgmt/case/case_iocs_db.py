@@ -18,23 +18,25 @@
 
 import logging
 
-from functools import reduce
-
 from flask_login import current_user
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_
+from sqlalchemy import desc
+from sqlalchemy import asc
 
-from app import db, app
+from app import db
+from app import app
 from app.datamgmt.states import update_ioc_state
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.models import Cases
 from app.models import Client
 from app.models import Comments
 from app.models import Ioc
-from app.models import IocAssetLink
 from app.models import IocComments
 from app.models import IocType
 from app.models import Tlp
-from app.models.authorization import User, UserCaseEffectiveAccess, CaseAccessLevel
+from app.models.authorization import User
+from app.models.authorization import UserCaseEffectiveAccess
+from app.models.authorization import CaseAccessLevel
 
 
 def get_iocs(caseid):
