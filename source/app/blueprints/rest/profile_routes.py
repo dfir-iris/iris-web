@@ -79,7 +79,7 @@ def user_has_permission():
 
 @profile_rest_blueprint.route('/user/update', methods=['POST'])
 @ac_api_requires()
-def update_user_view(caseid):
+def update_user_view():
     try:
         user = get_user(current_user.id)
         if not user:
@@ -99,7 +99,7 @@ def update_user_view(caseid):
         db.session.commit()
 
         if cuser:
-            track_activity("user {} updated itself".format(user.user), caseid=caseid)
+            track_activity("user {} updated itself".format(user.user))
             return response_success("User updated", data=user_schema.dump(user))
 
         return response_error("Unable to update user for internal reasons")
