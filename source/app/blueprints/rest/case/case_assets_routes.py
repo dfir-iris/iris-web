@@ -24,10 +24,15 @@ from flask import request
 from flask_login import current_user
 
 from app import db
-from app.blueprints.rest.case_comments import case_comment_update
+from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.endpoints import response_api_created
+from app.business.assets import assets_delete, assets_create, assets_get
+from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
-from app.datamgmt.case.case_assets_db import delete_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import get_asset_type_id
@@ -113,38 +118,29 @@ def case_assets_state(caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/assets')
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def deprecated_add_asset(case_identifier):
+    asset_schema = CaseAssetsSchema()
+    try:
+        asset, msg = assets_create(case_identifier, request.get_json())
+        return response_success(msg, asset_schema.dump(asset))
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
+
+
+@case_assets_rest_blueprint.route('/api/v2/cases/<int:caseid>/assets', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def add_asset(caseid):
+    asset_schema = CaseAssetsSchema()
     try:
-        # validate before saving
-        add_asset_schema = CaseAssetsSchema()
-        request_data = call_modules_hook('on_preload_asset_create', data=request.get_json(), caseid=caseid)
-
-        add_asset_schema.is_unique_for_cid(caseid, request_data)
-        asset = add_asset_schema.load(request_data)
-
-        asset = create_asset(asset=asset,
-                             caseid=caseid,
-                             user_id=current_user.id
-                             )
-
-        if request_data.get('ioc_links'):
-            errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
-            if errors:
-                return response_error('Encountered errors while linking IOC. Asset has still been updated.')
-
-        asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
-
-        if asset:
-            track_activity(f"added asset \"{asset.asset_name}\"", caseid=caseid)
-            return response_success("Asset added", data=add_asset_schema.dump(asset))
-
-        return response_error("Unable to create asset for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        db.session.rollback()
-        return response_error(msg="Data error", data=e.messages)
+        asset_schema.is_unique_for_cid(caseid, request.get_json())
+        asset, _ = assets_create(caseid, request.get_json())
+        return response_api_created(asset_schema.dump(asset))
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_assets_rest_blueprint.route('/case/assets/upload', methods=['POST'])
@@ -247,23 +243,26 @@ def case_upload_ioc(caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/assets/<int:cur_id>')
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def deprecated_asset_view(cur_id, caseid):
+    try:
+        asset = assets_get(cur_id, caseid)
+        return response_success(asset)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message())
+
+
+@case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def asset_view(cur_id, caseid):
-    # Get IoCs already linked to the asset
-    asset_iocs = get_linked_iocs_finfo_from_asset(cur_id)
-
-    ioc_prefill = [row._asdict() for row in asset_iocs]
-
-    asset = get_asset(cur_id, caseid)
-    if not asset:
-        return response_error("Invalid asset ID for this case")
-
-    asset_schema = CaseAssetsSchema()
-    data = asset_schema.dump(asset)
-    data['linked_ioc'] = ioc_prefill
-
-    return response_success(data=data)
+    try:
+        asset = assets_get(cur_id, caseid)
+        return response_api_created(asset)
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
@@ -307,23 +306,26 @@ def asset_update(cur_id, caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/assets/<int:cur_id>')
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def deprecated_asset_delete(cur_id, caseid):
+    try:
+        assets_delete(cur_id, caseid)
+        return response_success("Deleted")
+    except BusinessProcessingError as _:
+        return response_error("Invalid asset ID for this case")
+
+
+@case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['DELETE'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def asset_delete(cur_id, caseid):
-    call_modules_hook('on_preload_asset_delete', data=cur_id, caseid=caseid)
-
-    asset = get_asset(cur_id, caseid)
-    if not asset:
-        return response_error("Invalid asset ID for this case")
-
-    # Deletes an asset and the potential links with the IoCs from the database
-    delete_asset(cur_id, caseid)
-
-    call_modules_hook('on_postload_asset_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"removed asset ID {asset.asset_name}", caseid=caseid)
-
-    return response_success("Deleted")
+    try:
+        assets_delete(cur_id, caseid)
+        return response_api_deleted()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])

@@ -74,15 +74,15 @@ function add_assets() {
                 }
 
                 data['custom_attributes'] = attributes;
-
-                post_request_api('assets/add', JSON.stringify(data), true, function () {
+                case_id = get_caseid()
+                post_request_api(`/api/v2/cases/${case_id}/assets`, JSON.stringify(data), true, function () {
                     $('#submit_new_assets').text('Saving data..')
                         .attr("disabled", true)
                         .removeClass('bt-outline-success')
                         .addClass('btn-success', 'text-dark');
                 })
-                    .done((data) => {
-                        if (data.status == 'success') {
+                    .done((data, textStatus) => {
+                        if (textStatus == 'success') {
                             reload_assets();
                             if (index == (assets_list.length - 1)) {
                                 $('#modal_add_asset').modal('hide');
@@ -162,9 +162,9 @@ function delete_asset(asset_id) {
     do_deletion_prompt("You are about to delete asset #" + asset_id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api('/case/assets/delete/' + asset_id)
-            .done((data) => {
-                if (data.status == 'success') {
+            delete_request_api(`/api/v2/assets/` + asset_id)
+            .done((data, textStatus) => {
+                if (textStatus === 'nocontent') {
                     reload_assets();
                     $('#modal_add_asset').modal('hide');
                     notify_success('Asset deleted');
