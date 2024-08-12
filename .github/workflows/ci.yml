@@ -47,7 +47,7 @@ jobs:
       - name: Documentation
         run: |
           docker compose -f docker-compose.dev.yml up --detach
-          npx --package=cheerio@1.0.0-rc.12 --package=spectaql@^3.0.0 spectaql source/spectaql/config.yml
+          npx --package=cheerio@1.0.0-rc.12 --package=spectaql@^3.0.0 spectaql source/spectaql/config.yml 
           docker compose down
       - uses: actions/upload-artifact@v4
         with:
