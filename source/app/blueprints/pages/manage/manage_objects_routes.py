@@ -1,5 +1,3 @@
-#!/bin/bash
-
 #  IRIS Source Code
 #  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
 #  ir@cyberactionlab.net
@@ -18,22 +16,27 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from flask import Blueprint
+from flask import redirect
+from flask import render_template
+from flask import url_for
+
+from app.forms import AddAssetForm
+from app.models.authorization import Permissions
+from app.util import ac_requires
+
+manage_objects_blueprint = Blueprint('manage_objects',
+                                          __name__,
+                                          template_folder='templates')
 
 
+@manage_objects_blueprint.route('/manage/objects')
+@ac_requires(Permissions.server_administrator, no_cid_required=True)
+def manage_objects(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_objects.manage_objects', cid=caseid))
 
-target=${1-:app}
+    form = AddAssetForm()
 
-printf "Running ${target} ...\n"
-
-if [[ "${target}" == iris-worker ]] ; then
-    if [[ -z $NUMBER_OF_CHILD ]]; then
-        celery -A app.celery worker -E -B -l INFO &
-    else
-        celery -A app.celery worker -c $NUMBER_OF_CHILD -E -B -l INFO &
-    fi
-else
-    gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info &
-fi
-
-while true; do sleep 2; done
-
+    # Return default page of case management
+    return render_template('manage_objects.html', form=form)

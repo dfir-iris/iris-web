@@ -26,7 +26,7 @@ from flask import request
 from flask_login import current_user
 
 from app import db
-from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
@@ -224,7 +224,7 @@ def case_upload_ioc(caseid):
 @endpoint_deprecated('DELETE', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_delete_ioc(cur_id, caseid):
+def deprecated_case_delete_ioc(cur_id, caseid):
     try:
 
         msg = iocs_delete(cur_id, caseid)
@@ -237,9 +237,8 @@ def case_delete_ioc(cur_id, caseid):
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['DELETE'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def delete_case_ioc(cur_id, caseid):
+def case_delete_ioc(cur_id, caseid):
     try:
-
         iocs_delete(cur_id, caseid)
         return response_api_deleted()
 
@@ -251,7 +250,7 @@ def delete_case_ioc(cur_id, caseid):
 @endpoint_deprecated('GET', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_view_ioc(cur_id, caseid):
+def deprecated_case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:
@@ -263,7 +262,7 @@ def case_view_ioc(cur_id, caseid):
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def get_case_ioc(cur_id, caseid):
+def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
     if not ioc:

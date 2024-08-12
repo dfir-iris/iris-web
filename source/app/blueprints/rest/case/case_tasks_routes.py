@@ -24,15 +24,15 @@ from flask import request
 from flask_login import current_user
 
 from app import db
-from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.tasks import delete
-from app.business.tasks import create
-from app.business.tasks import update
+from app.business.tasks import tasks_delete
+from app.business.tasks import tasks_create
+from app.business.tasks import tasks_update
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import delete_task
@@ -112,57 +112,32 @@ def case_task_statusupdate(cur_id, caseid):
 @endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/tasks')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_add_task(caseid):
-
+def deprecated_case_add_task(caseid):
     task_schema = CaseTaskSchema()
     try:
-        case, msg = create(caseid, request.get_json())
+        case, msg = tasks_create(caseid, request.get_json())
         return response_success(msg, data=task_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
 
 
 @case_tasks_rest_blueprint.route('/api/v2/cases/<int:caseid>/tasks', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_case_add_task(caseid):
+def case_add_task(caseid):
+    task_schema = CaseTaskSchema()
     try:
-        # validate before saving
-        task_schema = CaseTaskSchema()
-        request_data = call_modules_hook('on_preload_task_create', data=request.get_json(), caseid=caseid)
-
-        if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
-            return response_api_error('task_assignee_id is not valid anymore since v1.5.0')
-
-        task_assignee_list = request_data['task_assignees_id']
-        del request_data['task_assignees_id']
-        task = task_schema.load(request_data)
-
-        ctask = add_task(task=task,
-                         assignee_id_list=task_assignee_list,
-                         user_id=current_user.id,
-                         caseid=caseid
-                         )
-
-        ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=caseid)
-
-        if ctask:
-            track_activity(f"added task \"{ctask.task_title}\"", caseid=caseid)
-            return response_api_created(task_schema.dump(ctask))
-
-        return response_api_error("Unable to create task for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_api_error(e.messages)
+        case, _ = tasks_create(caseid, request.get_json())
+        return response_api_created(task_schema.dump(case))
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
 @endpoint_deprecated('GET', '/api/v2/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_task_view(cur_id, caseid):
+def deprecated_case_task_view(cur_id, caseid):
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
@@ -175,7 +150,7 @@ def case_task_view(cur_id, caseid):
 @case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_case_task_view(cur_id, caseid):
+def case_task_view(cur_id, caseid):
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
         return response_api_error("Invalid task ID for this case")
@@ -190,7 +165,7 @@ def api_case_task_view(cur_id, caseid):
 @ac_api_requires()
 def case_edit_task(cur_id, caseid):
     try:
-        msg = update(cur_id, caseid, request.get_json())
+        msg = tasks_update(cur_id, caseid, request.get_json())
         return response_success(msg)
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
@@ -200,9 +175,9 @@ def case_edit_task(cur_id, caseid):
 @endpoint_deprecated('DELETE', '/api/v2/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_delete_task(cur_id, caseid):
+def deprecated_case_delete_task(cur_id, caseid):
     try:
-        msg = delete(cur_id, caseid)
+        msg = tasks_delete(cur_id, caseid)
         return response_success(msg)
     except BusinessProcessingError as e:
         return response_error(e.get_message())
@@ -211,21 +186,12 @@ def case_delete_task(cur_id, caseid):
 @case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['DELETE'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def api_case_delete_task(cur_id, caseid):
-    call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
-    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
-    if not task:
-        return response_api_error("Invalid task ID for this case")
-
-    delete_task(task.id)
-
-    update_tasks_state(caseid=caseid)
-
-    call_modules_hook('on_postload_task_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"deleted task \"{task.task_title}\"")
-
-    return response_api_deleted()
+def case_delete_task(cur_id, caseid):
+    try:
+        tasks_delete(cur_id, caseid)
+        return response_api_deleted()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])

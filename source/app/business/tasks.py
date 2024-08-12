@@ -40,7 +40,7 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def delete(identifier, context_case_identifier):
+def tasks_delete(identifier, context_case_identifier):
     call_modules_hook('on_preload_task_delete', data=identifier, caseid=context_case_identifier)
     task = get_task_with_assignees(task_id=identifier, case_id=context_case_identifier)
     if not task:
@@ -52,7 +52,7 @@ def delete(identifier, context_case_identifier):
     return 'Task deleted'
 
 
-def create(case_identifier, request_json):
+def tasks_create(case_identifier, request_json):
 
     request_data = call_modules_hook('on_preload_task_create', data=request_json, caseid=case_identifier)
 
@@ -77,7 +77,7 @@ def create(case_identifier, request_json):
     raise BusinessProcessingError("Unable to create task for internal reasons")
 
 
-def update(current_identifier, case_identifier, request_json):
+def tasks_update(current_identifier, case_identifier, request_json):
 
     task = get_task_with_assignees(task_id=current_identifier, case_id=case_identifier)
 

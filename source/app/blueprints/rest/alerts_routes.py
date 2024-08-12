@@ -28,7 +28,7 @@ from werkzeug import Response
 import app
 from app import db
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
-from app.blueprints.case.case_comments import case_comment_update
+from app.blueprints.rest.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.datamgmt.alerts.alerts_db import get_alert_by_id
 from app.datamgmt.alerts.alerts_db import create_case_from_alert
