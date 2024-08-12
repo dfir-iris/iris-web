@@ -52,19 +52,14 @@ spec:
       labels:
         app: {{ .Values.irisapp.app }}
     spec:
+      securityContext:
+        {{- toYaml .Values.irisapp.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Values.irisapp.name }}
+          securityContext:
+            {{- toYaml .Values.irisapp.securityContext | nindent 12 }}
           resources:
-            {{- if and .Values.irisapp.limits_memory .Values.irisapp.limits_cpu .Values.irisapp.requests_memory .Values.irisapp.requests_cpu -}}
-            limits:
-              memory: {{ .Values.irisapp.limits_memory }}
-              cpu: {{ .Values.irisapp.limits_cpu }}
-            requests:
-              memory: {{ .Values.irisapp.requests_memory }}
-              cpu: {{ .Values.irisapp.requests_cpu }}
-            {{- else -}}
-            {}
-            {{- end -}}
+            {{- toYaml .Values.irisapp.resources | nindent 12 }}
           image: "{{ .Values.irisapp.image}}:{{ .Values.irisapp.tag }}"
           imagePullPolicy: "{{ .Values.irisapp.imagePullPolicy }}"
           command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']

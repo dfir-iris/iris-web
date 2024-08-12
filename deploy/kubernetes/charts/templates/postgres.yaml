@@ -48,19 +48,14 @@ spec:
       labels:
         app: {{ .Values.postgres.app }}
     spec:
+      securityContext:
+        {{- toYaml .Values.postgres.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Values.postgres.name }}
+          securityContext:
+            {{- toYaml .Values.postgres.securityContext | nindent 12 }}
           resources:
-            {{- if and .Values.postgres.limits_memory .Values.postgres.limits_cpu .Values.postgres.requests_memory .Values.postgres.requests_cpu -}}
-            limits:
-              memory: {{ .Values.postgres.limits_memory }}
-              cpu: {{ .Values.postgres.limits_cpu }}
-            requests:
-              memory: {{ .Values.postgres.requests_memory }}
-              cpu: {{ .Values.postgres.requests_cpu }}
-            {{- else -}}
-            {}
-            {{- end -}}
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
           image: "{{ .Values.postgres.image}}:{{ .Values.postgres.tag }}"
           imagePullPolicy: "{{ .Values.postgres.imagePullPolicy }}"
 

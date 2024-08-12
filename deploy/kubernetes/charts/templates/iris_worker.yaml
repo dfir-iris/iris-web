@@ -52,18 +52,14 @@ spec:
       labels:
         app: {{ .Values.irisworker.app }}
     spec:
+      securityContext:
+        {{- toYaml .Values.irisworker.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Values.irisworker.name }}
-          {{- if and .Values.irisworker.limits_memory .Values.irisworker.limits_cpu .Values.irisworker.requests_memory .Values.irisworker.requests_cpu -}}
-            limits:
-              memory: {{ .Values.irisworker.limits_memory }}
-              cpu: {{ .Values.irisworker.limits_cpu }}
-            requests:
-              memory: {{ .Values.irisworker.requests_memory }}
-              cpu: {{ .Values.irisworker.requests_cpu }}
-            {{- else -}}
-            {}
-            {{- end -}}
+          securityContext:
+            {{- toYaml .Values.irisworker.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.irisworker.resources | nindent 12 }}
           image: "{{ .Values.irisworker.image}}:{{ .Values.irisworker.tag }}"
           imagePullPolicy: "{{ .Values.irisworker.imagePullPolicy }}"
           command: ['./wait-for-iriswebapp.sh', "{{ .Values.irisapp.name }}:{{ .Values.irisapp.service.port }}", './iris-entrypoint.sh', 'iris-worker']
