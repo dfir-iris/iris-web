@@ -476,7 +476,7 @@ $(document).ready(function(){
     });
 
     get_case_rfiles();
-    setInterval(function() { check_update('evidences/state'); }, 3000);
+    setInterval(function() { check_update('/case/evidences/state'); }, 3000);
 
     /* Modal to add rfiles is closed, clear its contents */
     $('.modal').on('hidden.bs.modal', function () {

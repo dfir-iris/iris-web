@@ -478,7 +478,7 @@ $(document).ready(function(){
 }).container().appendTo($('#tables_button'));
 
     get_case_ioc();
-    setInterval(function() { check_update('ioc/state'); }, 3000);
+    setInterval(function() { check_update('/case/ioc/state'); }, 3000);
 
     shared_id = getSharedLink();
     if (shared_id) {
