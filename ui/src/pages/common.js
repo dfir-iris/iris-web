@@ -512,7 +512,7 @@ function check_update(url) {
             url: url + case_param(),
             type: "GET",
             dataType: "json",
-            success: function (data) {
+            success: function(data) {
                     if (last_state == null || last_state < data.data.object_state) {
                         $('#last_resfresh').text("Updates available").addClass("text-warning");
                         need_check = false;
