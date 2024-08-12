@@ -145,6 +145,13 @@ function save_ioc() {
 function get_case_ioc() {
     show_loader();
 
+    get_request_data_api('/case/ioc/state').done((response, textStatus) => {
+        if (textStatus !== 'success') {
+            return;
+        }
+        set_last_state(response.data);
+    });
+
     get_request_data_api(`/api/v2/cases/${get_caseid()}/iocs`)
     .done((data, textStatus) => {
         if (textStatus !== 'success') {
@@ -159,9 +166,8 @@ function get_case_ioc() {
         }
 
         Table.clear();
-        Table.rows.add(data.iocs)
+        Table.rows.add(data.iocs);
 
-        set_last_state(data.state);
         $('#ioc_table_wrapper').on('click', function(e){
             if($('.popover').length>1)
                 $('.popover').popover('hide');
@@ -183,7 +189,7 @@ function get_case_ioc() {
 
             edit_ioc(ioc_id);
         });
-    })
+    });
 }
 
 
