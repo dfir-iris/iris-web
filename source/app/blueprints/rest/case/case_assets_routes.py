@@ -120,10 +120,10 @@ def case_assets_state(caseid):
 @endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/assets')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def deprecated_add_asset(case_identifier):
+def deprecated_add_asset(caseid):
     asset_schema = CaseAssetsSchema()
     try:
-        asset, msg = assets_create(case_identifier, request.get_json())
+        asset, msg = assets_create(caseid, request.get_json())
         return response_success(msg, asset_schema.dump(asset))
     except BusinessProcessingError as e:
         return response_error(e.get_message())
