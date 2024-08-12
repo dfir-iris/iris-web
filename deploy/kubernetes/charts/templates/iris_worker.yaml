@@ -97,6 +97,9 @@ spec:
           - name:  IRIS_SECURITY_PASSWORD_SALT
             value: {{ .Values.irisworker.IRIS_SECURITY_PASSWORD_SALT | quote }}
 
+          - name: NUMBER_OF_CHILD
+            value: {{ .Values.irisworker.NUMBER_OF_CHILD | quote }}
+
 
           volumeMounts:
             - mountPath: /home/iris/downloads
