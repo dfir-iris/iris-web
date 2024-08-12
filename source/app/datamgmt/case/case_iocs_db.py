@@ -39,15 +39,9 @@ from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import CaseAccessLevel
 
 
-def get_iocs(caseid):
-    iocs = Ioc.query.filter(Ioc.case_id == caseid).all()
-
-    return iocs
-
-
-def get_iocs_by_case(case_identifier) -> list[Ioc]:
+def get_iocs(case_identifier) -> list[Ioc]:
     return Ioc.query.filter(
-        Ioc.case_id == case_identifier,
+        Ioc.case_id == case_identifier
     ).all()
 
 

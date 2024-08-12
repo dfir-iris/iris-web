@@ -24,7 +24,7 @@ from app import db
 from app.models import Ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
-from app.datamgmt.case.case_iocs_db import get_iocs_by_case
+from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.datamgmt.states import update_ioc_state
 from app.schema.marshables import IocSchema
@@ -127,7 +127,7 @@ def iocs_delete(identifier):
 
 
 def iocs_exports_to_json(case_id):
-    iocs = get_iocs_by_case(case_id)
+    iocs = get_iocs(case_id)
 
     iocs_serialized = IocSchema().dump(iocs, many=True)
 
