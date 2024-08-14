@@ -44,10 +44,19 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
           PYTHONUNBUFFERED=true python -m unittest --verbose
-      - name: Documentation
+      - name: Start development server
         run: |
           docker compose -f docker-compose.dev.yml up --detach
-          npx --package=cheerio@1.0.0-rc.12 --package=spectaql@^3.0.0 spectaql source/spectaql/config.yml 
+      - name: Run end to end tests with cypress
+        uses: cypress-io/github-action@v6
+        with:
+          browser: firefox
+          working-directory: tests_end_to_end
+      - name: Generate GraphQL documentation
+        run: |
+          npx --package=cheerio@1.0.0-rc.12 --package=spectaql@^3.0.0 spectaql source/spectaql/config.yml
+      - name: Stop development server
+        run: |
           docker compose down
       - uses: actions/upload-artifact@v4
         with:
