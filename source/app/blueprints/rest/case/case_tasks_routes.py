@@ -34,8 +34,6 @@ from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_create
 from app.business.tasks import tasks_update
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
-from app.datamgmt.case.case_tasks_db import add_task
-from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import delete_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
@@ -45,7 +43,6 @@ from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_status
 from app.datamgmt.states import get_tasks_state
-from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
@@ -92,7 +89,7 @@ def case_get_tasks_state(caseid):
 @case_tasks_rest_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_task_statusupdate(cur_id, caseid):
+def case_task_status_update(cur_id, caseid):
     task = get_task(task_id=cur_id, caseid=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
