@@ -55,7 +55,7 @@ jobs:
           working-directory: tests_end_to_end
       - name: Generate GraphQL documentation
         run: |
-          npx --package=cheerio@1.0.0-rc.12 --package=spectaql@^3.0.0 spectaql source/spectaql/config.yml
+          npx spectaql@^3.0.2 source/spectaql/config.yml
       - name: Stop development server
         run: |
           docker compose down
