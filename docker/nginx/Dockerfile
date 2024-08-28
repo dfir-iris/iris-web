@@ -17,7 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-FROM nginx:1.25
+FROM nginx:1.27
 
 RUN apt-get update && apt-get install -y curl
 

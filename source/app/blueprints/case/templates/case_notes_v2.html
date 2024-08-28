@@ -137,7 +137,7 @@
 						<div class="row" id="noteContentScroll">
 							<div class="col-md-12 col-lg-6" id="container_note_content">
 								<div style="display: none" id="fetched_crc"></div>
-								<div id="editor_detail" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
+								<div id="editor_detail" contenteditable="true" spellcheck="true" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
 								<textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
 							</div>
 							<div class="col-md-12 col-lg-6" id="ctrd_notesum">
