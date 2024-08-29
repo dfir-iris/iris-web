@@ -75,52 +75,43 @@ def cases_get_by_identifier(case_identifier):
 
 
 def cases_create(request_json):
-    try:
-        # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
-        request_data = call_modules_hook('on_preload_case_create', request_json, None)
-        case_template_id = request_data.pop('case_template_id', None)
+    # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
+    request_data = call_modules_hook('on_preload_case_create', request_json, None)
 
-        case = _load(request_data)
-        case.owner_id = current_user.id
-        case.severity_id = 4
+    case = _load(request_data)
 
-        if case_template_id and len(case_template_id) > 0:
-            case = case_template_pre_modifier(case, case_template_id)
-            if case is None:
-                raise BusinessProcessingError(f'Invalid Case template ID {case_template_id}')
+    case.owner_id = current_user.id
+    case.severity_id = 4
 
-        case.state_id = get_case_state_by_name('Open').state_id
+    case_template_id = request_data.pop('case_template_id', None)
+    if case_template_id and len(case_template_id) > 0:
+        case = case_template_pre_modifier(case, case_template_id)
+        if case is None:
+            raise BusinessProcessingError(f'Invalid Case template ID {case_template_id}')
 
-        case.save()
+    case.state_id = get_case_state_by_name('Open').state_id
 
-        if case_template_id and len(case_template_id) > 0:
-            try:
-                case, logs = case_template_post_modifier(case, case_template_id)
-                if len(logs) > 0:
-                    raise BusinessProcessingError(f'Could not update new case with {case_template_id}', logs)
+    case.save()
 
-            except Exception as e:
-                log.error(e.__str__())
-                raise BusinessProcessingError(f'Unexpected error when loading template {case_template_id} to new case.')
+    if case_template_id and len(case_template_id) > 0:
+        try:
+            case, logs = case_template_post_modifier(case, case_template_id)
+            if len(logs) > 0:
+                raise BusinessProcessingError(f'Could not update new case with {case_template_id}', logs)
 
-        ac_set_new_case_access(None, case.case_id, case.client_id)
+        except Exception as e:
+            log.error(e.__str__())
+            raise BusinessProcessingError(f'Unexpected error when loading template {case_template_id} to new case.')
 
-        # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
-        case = call_modules_hook('on_postload_case_create', case, None)
+    ac_set_new_case_access(None, case.case_id, case.client_id)
 
-        add_obj_history_entry(case, 'created')
-        track_activity(f'new case "{case.name}" created', caseid=case.case_id, ctx_less=False)
+    # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
+    case = call_modules_hook('on_postload_case_create', case, None)
 
-        return case, 'Case created'
+    add_obj_history_entry(case, 'created')
+    track_activity(f'new case "{case.name}" created', caseid=case.case_id, ctx_less=False)
 
-    # TODO maybe remove validationerror (because unnecessary)
-    except ValidationError as e:
-        raise BusinessProcessingError('Data error', e.messages)
-
-    except Exception as e:
-        log.error(e.__str__())
-        log.error(traceback.format_exc())
-        raise BusinessProcessingError('Error creating case - check server logs')
+    return case, 'Case created'
 
 
 def cases_delete(case_identifier):

@@ -18,6 +18,7 @@
 
 from functools import wraps
 from app import app
+from app.business.errors import BusinessProcessingError
 from app.util import response
 
 logger = app.logger
@@ -35,8 +36,13 @@ def response_api_created(data):
     return response(201, data=data)
 
 
-def response_api_error(message):
-    return response(400, data=message)
+def response_api_error(message, data=None):
+    content = {
+        'message': message
+    }
+    if data:
+        content['data'] = data
+    return response(400, data=content)
 
 
 def response_api_not_found():

@@ -75,9 +75,9 @@ def response(status, data=None):
 
 def response_error(msg, data=None, status=400):
     content = {
-        "status": "error",
-        "message": msg,
-        "data": data if data is not None else []
+        'status': 'error',
+        'message': msg,
+        'data': data if data is not None else []
     }
     return response(status, data=content)
 

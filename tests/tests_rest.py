@@ -354,3 +354,13 @@ class TestsRest(TestCase):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
         self.assertIn('case_name', response)
+
+    def test_create_case_should_return_data_with_case_customer_when_case_customer_is_an_empty_string(self):
+        body = {
+            'case_name': 'case name',
+            'case_description': 'description',
+            'case_customer': '',
+            'case_soc_id': ''
+        }
+        response = self._subject.create('/api/v2/cases', body).json()
+        self.assertIn('case_customer', response['data'])
