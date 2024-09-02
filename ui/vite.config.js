@@ -24,12 +24,12 @@ function resolveInputs(directory) {
 
 
 export default defineConfig(({ mode }) => {
-    const isProductionMode = (mode === 'production');
-    const isDevelopmentMode = (mode === 'development');
+    const production = (mode === 'production');
+    const development = (mode === 'development');
 
     return {
         build: {
-            minify: isProductionMode,
+            minify: false,
             manifest: false,
             outDir: 'dist',
             rollupOptions: {
@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
                 },
                 treeshake: false,
             },
-            sourcemap: (isDevelopmentMode) ? 'inline': false,
+            sourcemap: (development) ? 'inline': false,
         },
         plugins: [
             viteStaticCopy({
