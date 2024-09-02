@@ -1,6 +1,6 @@
 
 <p align="center">
-    <img src="source/app/static/assets/img/logo.ico" />
+    <img src="ui/public/assets/img/logo.ico" />
 </p>
 
 <p align="center">

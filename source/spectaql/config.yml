@@ -1,5 +1,5 @@
 spectaql:
-  logoFile: source/app/static/assets/img/logo-full-blue.png
+  logoFile: ui/public/assets/img/logo-full-blue.png
 
 introspection:
   url: http://127.0.0.1:8000/graphql
