@@ -47,9 +47,6 @@ jobs:
         run: |
           npm ci
           npm run build
-      - name: Start development server
-        run: |
-          docker compose -f docker-compose.dev.yml up --detach
       - name: Run tests
         working-directory: tests
         run: |
@@ -57,6 +54,9 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
           PYTHONUNBUFFERED=true python -m unittest --verbose
+      - name: Start development server
+        run: |
+          docker compose -f docker-compose.dev.yml up --detach
       - name: Run end to end tests with Cypress
         uses: cypress-io/github-action@v6
         with:
