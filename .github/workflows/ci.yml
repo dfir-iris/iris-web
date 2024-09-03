@@ -37,19 +37,12 @@ jobs:
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
           docker compose -f docker-compose.dev.yml build
-      - name: Run tests
-        working-directory: tests
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          PYTHONUNBUFFERED=true python -m unittest --verbose
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: ui/package-lock.json
-      - name: Build ui for end to end tests
+      - name: Build ui to be mounted in development docker
         working-directory: ui
         run: |
           npm ci
@@ -57,6 +50,13 @@ jobs:
       - name: Start development server
         run: |
           docker compose -f docker-compose.dev.yml up --detach
+      - name: Run tests
+        working-directory: tests
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          PYTHONUNBUFFERED=true python -m unittest --verbose
       - name: Run end to end tests with Cypress
         uses: cypress-io/github-action@v6
         with:
