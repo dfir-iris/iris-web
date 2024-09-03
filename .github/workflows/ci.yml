@@ -44,6 +44,16 @@ jobs:
           source venv/bin/activate
           pip install -r requirements.txt
           PYTHONUNBUFFERED=true python -m unittest --verbose
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - name: Build ui for end to end tests
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
       - name: Start development server
         run: |
           docker compose -f docker-compose.dev.yml up --detach
