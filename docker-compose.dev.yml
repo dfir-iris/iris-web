@@ -44,6 +44,7 @@ services:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./source/app:/iriswebapp/app
+      - ./ui/dist:/iriswebapp/static
 
   worker:
     extends:

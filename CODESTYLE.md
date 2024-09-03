@@ -114,7 +114,7 @@ They are defined in `source > app > blueprints`. A route providing a web page (i
 Each page template is present in the `templates` directory of the target route. 
 - **Database requests**: we are trying to split the DB code from the routes code. This is partially done and will improve over time. The DB code is provided in `source > app > datamgmt`.
 - **HTML pages**: as specified above each page template is set in the `templates` directory of the corresponding route. These templates are based on layouts, which are defined in `source > app > templates`. 
-- **Static contents** : images, JS and CSS are defined in `source > app > static > assets`.
+- **Static contents** : images, JS and CSS are defined in `ui > public > assets` and `ui > src` for our own JS code.
 
 If your code implies database changes, please create an alembic migration script.  
 ```
