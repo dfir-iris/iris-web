@@ -484,6 +484,7 @@ $(document).ready(function(){
 }).container().appendTo($('#tables_button'));
 
     get_case_ioc();
+    // TODO instead of polling, could work with socket IO events (would maybe be more reactive timewise)
     setInterval(function() { check_update('/case/ioc/state'); }, 3000);
 
     shared_id = getSharedLink();
