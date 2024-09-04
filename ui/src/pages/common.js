@@ -515,11 +515,11 @@ function check_update(url) {
         type: "GET",
         dataType: "json",
         success: function(data) {
-                if (last_state == null || last_state < data.data.object_state) {
-                    $('#last_resfresh').text("Updates available").addClass("text-warning");
-                    need_check = false;
-                }
-            },
+            if (last_state == null || last_state < data.data.object_state) {
+                $('#last_resfresh').text("Updates available").addClass("text-warning");
+                need_check = false;
+            }
+        },
         error: function (data) {
             if (data.status == 404) {
                 swal("Stop everything !",
