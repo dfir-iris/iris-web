@@ -322,14 +322,17 @@ def deprecated_case_view_ioc(cur_id, caseid):
 
 
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['GET'])
-@ac_requires_case_access(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def get_case_ioc(identifier):
     ioc_schema = IocSchema()
     ioc = get_ioc(identifier)
     if not ioc:
+        # TODO should be response_api_not_found here => add a test
         return response_api_error('Invalid IOC identifier')
+    if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=ioc.case_id)
 
+    # TODO should be reponse_api_success here => add a test
     return response_api_created(ioc_schema.dump(ioc))
 
 
