@@ -37,3 +37,6 @@ class User:
 
     def get(self, path, query_parameters=None):
         return self._api.get(path, query_parameters=query_parameters)
+
+    def create(self, path, payload, query_parameters=None):
+        return self._api.post(path, payload, query_parameters)

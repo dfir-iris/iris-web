@@ -191,7 +191,7 @@ class TestsRest(TestCase):
 
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
         self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
         response = self._subject.delete(f'/api/v2/assets/1')
         self.assertEqual(204, response.status_code)
@@ -202,12 +202,12 @@ class TestsRest(TestCase):
 
     def test_create_asset_should_work(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
         self.assertEqual(201, response.status_code)
 
     def test_create_asset_with_missing_case_identifier_should_return_404(self):
-        body = {"asset_type_id": "1", "asset_name": "admin_laptop_test"}
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{None}/assets', body)
         self.assertEqual(404, response.status_code)
 
@@ -407,12 +407,25 @@ class TestsRest(TestCase):
         self.assertIn(ioc_type_identifier, identifiers)
 
     def test_get_case_should_return_403_when_user_has_insufficient_rights(self):
-        identifier = self._subject.create_dummy_case()
+        case_identifier = self._subject.create_dummy_case()
         user = self._subject.create_dummy_user()
         body = {
             'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
             'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
         }
         self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-        response = user.get(f'/api/v2/cases/{identifier}')
+        response = user.get(f'/api/v2/cases/{case_identifier}')
+        self.assertEqual(403, response.status_code)
+
+    def test_create_ioc_should_return_403_when_user_has_insufficient_rights(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {
+            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
+            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
+        }
+        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
+
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = user.create(f'/api/v2/cases/{case_identifier}/iocs', body)
         self.assertEqual(403, response.status_code)

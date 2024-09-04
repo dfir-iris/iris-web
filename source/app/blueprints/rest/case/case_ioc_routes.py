@@ -46,15 +46,17 @@ from app.datamgmt.case.case_iocs_db import get_ioc_type_id
 from app.datamgmt.case.case_iocs_db import get_tlps_dict
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import get_ioc_state
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Tlp
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
-from app.util import ac_requires_case_identifier
+from app.util import ac_requires_case_identifier, ac_case_requires
 from app.util import ac_requires_case_access
 from app.util import ac_api_requires
+from app.util import ac_api_return_access_denied
 from app.util import response_error
 from app.util import response_success
 from app.business.iocs import iocs_create
@@ -168,15 +170,18 @@ def deprecated_case_add_ioc(caseid):
 
 
 @case_ioc_rest_blueprint.route('/api/v2/cases/<int:case_identifier>/iocs', methods=['POST'])
-@ac_requires_case_access(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_ioc(case_identifier):
+    if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_identifier)
+
     ioc_schema = IocSchema()
 
     try:
         ioc, _ = iocs_create(request.get_json(), case_identifier)
         return response_api_created(ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
+        log.error(e)
         return response_api_error(e.get_message())
 
 
