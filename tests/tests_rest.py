@@ -444,3 +444,8 @@ class TestsRest(TestCase):
 
         response = user.get(f'/api/v2/iocs/{ioc_identifier}')
         self.assertEqual(403, response.status_code)
+
+    def test_get_ioc_should_return_404_when_not_present(self):
+        response = self._subject.get(f'/api/v2/iocs/137')
+        self.assertEqual(404, response.status_code)
+

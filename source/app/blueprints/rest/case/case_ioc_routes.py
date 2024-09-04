@@ -27,7 +27,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_deleted, response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
@@ -327,8 +327,7 @@ def get_case_ioc(identifier):
     ioc_schema = IocSchema()
     ioc = get_ioc(identifier)
     if not ioc:
-        # TODO should be response_api_not_found here => add a test
-        return response_api_error('Invalid IOC identifier')
+        return response_api_not_found()
     if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=ioc.case_id)
 
