@@ -35,7 +35,7 @@ export default defineConfig(({ mode }) => {
             manifest: false,
             outDir: 'dist',
             rollupOptions: {
-                input: resolveInputs('./src/'),
+                input: resolveInputs('./src/pages'),
                 output: {
                     manualChunks: undefined,
                     entryFileNames: 'assets/js/iris/[name].js',
