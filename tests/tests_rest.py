@@ -449,3 +449,11 @@ class TestsRest(TestCase):
         response = self._subject.get(f'/api/v2/iocs/137')
         self.assertEqual(404, response.status_code)
 
+    def test_get_ioc_should_return_200_on_success(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}')
+        self.assertEqual(200, response.status_code)
+

@@ -332,7 +332,7 @@ def get_case_ioc(identifier):
         return ac_api_return_access_denied(caseid=ioc.case_id)
 
     # TODO should be reponse_api_success here => add a test
-    return response_api_created(ioc_schema.dump(ioc))
+    return response_api_success(ioc_schema.dump(ioc))
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
