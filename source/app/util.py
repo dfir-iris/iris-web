@@ -276,16 +276,15 @@ def _handle_no_cid_required(no_cid_required):
     return None, False
 
 
-def update_session(caseid, eaccess_level, from_api):
-    if not from_api:
-        restricted_access = ''
-        if not eaccess_level:
-            eaccess_level = [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+def _update_session(caseid, eaccess_level):
+    restricted_access = ''
+    if not eaccess_level:
+        eaccess_level = [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
 
-        if CaseAccessLevel.read_only.value == eaccess_level:
-            restricted_access = '<i class="ml-2 text-warning mt-1 fa-solid fa-lock" title="Read only access"></i>'
+    if CaseAccessLevel.read_only.value == eaccess_level:
+        restricted_access = '<i class="ml-2 text-warning mt-1 fa-solid fa-lock" title="Read only access"></i>'
 
-        update_current_case(caseid, restricted_access)
+    update_current_case(caseid, restricted_access)
 
 
 def update_current_case(caseid, restricted_access):
@@ -300,18 +299,17 @@ def update_current_case(caseid, restricted_access):
             }
 
 
-def update_denied_case(caseid, from_api):
-    if not from_api:
-        session['current_case'] = {
-            'case_name': "{} to #{}".format("Access denied", caseid),
-            'case_info': "",
-            'case_id': caseid,
-            'access': '<i class="ml-2 text-danger mt-1 fa-solid fa-ban"></i>'
-        }
+def _update_denied_case(caseid):
+    session['current_case'] = {
+        'case_name': "{} to #{}".format("Access denied", caseid),
+        'case_info': "",
+        'case_id': caseid,
+        'access': '<i class="ml-2 text-danger mt-1 fa-solid fa-ban"></i>'
+    }
 
 
 # TODO would be nice to remove parameter no_cid_required
-def get_case_access(request_data, access_level, from_api=False, no_cid_required=False):
+def get_case_access(request_data, access_level, no_cid_required=False):
     redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
     ctmp, has_access = _handle_no_cid_required(no_cid_required)
@@ -321,10 +319,25 @@ def get_case_access(request_data, access_level, from_api=False, no_cid_required=
 
     eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
     if eaccess_level is None and access_level:
-        update_denied_case(caseid, from_api)
+        _update_denied_case(caseid)
         return redir, caseid, False
 
-    update_session(caseid, eaccess_level, from_api)
+    _update_session(caseid, eaccess_level)
+
+    if caseid is not None and not get_case(caseid):
+        log.warning('No case found. Using default case')
+        return True, 1, True
+
+    return redir, caseid, True
+
+
+def get_case_access_from_api(request_data, access_level):
+    redir, caseid, has_access = _get_caseid_from_request_data(request_data, False)
+    redir = False
+
+    eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
+    if eaccess_level is None and access_level:
+        return redir, caseid, False
 
     if caseid is not None and not get_case(caseid):
         log.warning('No case found. Using default case')
@@ -631,7 +644,7 @@ def ac_requires_case_access(*access_level):
         @wraps(f)
         def wrap(*args, **kwargs):
             try:
-                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
+                redir, caseid, has_access = get_case_access_from_api(request, access_level)
             except Exception as e:
                 log.exception(e)
                 return response_error('Invalid data. Check server logs', status=500)
@@ -653,7 +666,7 @@ def ac_requires_case_identifier(*access_level):
         @wraps(f)
         def wrap(*args, **kwargs):
             try:
-                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
+                redir, caseid, has_access = get_case_access_from_api(request, access_level)
             except Exception as e:
                 log.exception(e)
                 return response_error('Invalid data. Check server logs', status=500)
