@@ -44,6 +44,11 @@ export default defineConfig(({ mode }) => {
             },
             sourcemap: (development) ? 'inline': false,
         },
+        resolve: {
+            alias: {
+                "$lib": path.resolve("./src/lib"),
+            },
+        },
         plugins: [
             viteStaticCopy({
                 targets: [
