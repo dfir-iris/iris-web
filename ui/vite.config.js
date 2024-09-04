@@ -8,18 +8,20 @@ import { fileURLToPath } from "node:url";
 
 function resolveInputs(directory) {
     const inputs = fs
-        .readdirSync(directory)
-        .map(file => {
-            const filename = path.parse(file).name;
-            const filepath = path.join(directory, file);
+        .readdirSync(directory, { withFileTypes: true, })
+        .reduce((acc, entry) => {
+            if (entry.isFile()) {
+                const file = entry.name;
+                const filename = path.parse(file).name;
+                const filepath = path.join(directory, file);
 
-            return [
-                filename,
-                fileURLToPath(new URL(filepath, import.meta.url)),
-            ];
-        });
+                acc[filename] = fileURLToPath(new URL(filepath, import.meta.url));
+            }
 
-    return Object.fromEntries(inputs);
+            return acc;
+        }, {});
+
+    return inputs;
 }
 
 
