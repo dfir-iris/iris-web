@@ -294,7 +294,7 @@ def user_list_cases_view(user_id):
     return [r.case_id for r in res]
 
 
-def build_filter_ioc_query(
+def _build_filter_ioc_query(
         caseid: int = None,
         ioc_type_id: int = None,
         ioc_type: str = None,
@@ -358,12 +358,11 @@ def get_filtered_iocs(
         sort_dir='asc'
         ):
 
-    data = build_filter_ioc_query(caseid=caseid, ioc_type_id=ioc_type_id, ioc_type=ioc_type, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
-                                  ioc_description=ioc_description, ioc_tags=ioc_tags,
-                                  sort_by=sort_by, sort_dir=sort_dir)
+    query = _build_filter_ioc_query(caseid=caseid, ioc_type_id=ioc_type_id, ioc_type=ioc_type, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
+                                   ioc_description=ioc_description, ioc_tags=ioc_tags, sort_by=sort_by, sort_dir=sort_dir)
 
     try:
-        filtered_iocs = data.paginate(page=page, per_page=per_page, error_out=False)
+        filtered_iocs = query.paginate(page=page, per_page=per_page, error_out=False)
 
     except Exception as e:
         app.logger.exception(f"Error getting cases: {str(e)}")
