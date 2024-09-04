@@ -35,8 +35,11 @@ class User:
         print(f'{payload} => {body}')
         return body
 
-    def get(self, path, query_parameters=None):
-        return self._api.get(path, query_parameters=query_parameters)
+    def create(self, path, payload):
+        return self._api.post(path, payload)
 
-    def create(self, path, payload, query_parameters=None):
-        return self._api.post(path, payload, query_parameters)
+    def get(self, path):
+        return self._api.get(path)
+
+    def delete(self, path):
+        return self._api.delete(path)

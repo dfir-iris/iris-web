@@ -27,7 +27,8 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import response_api_deleted, response_api_not_found
+from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
@@ -53,8 +54,7 @@ from app.models import Tlp
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
-from app.util import ac_requires_case_identifier, ac_case_requires
-from app.util import ac_requires_case_access
+from app.util import ac_requires_case_identifier
 from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import response_error
@@ -63,6 +63,7 @@ from app.business.iocs import iocs_create
 from app.business.iocs import iocs_update
 from app.business.iocs import iocs_delete
 from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDeniedError
 
 case_ioc_rest_blueprint = Blueprint('case_ioc_rest', __name__)
 
@@ -296,9 +297,7 @@ def deprecated_case_delete_ioc(cur_id, caseid):
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
-
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['DELETE'])
-@ac_requires_case_access(CaseAccessLevel.full_access)
 @ac_api_requires()
 def delete_case_ioc(cur_id):
     try:
@@ -306,6 +305,8 @@ def delete_case_ioc(cur_id):
         iocs_delete(cur_id)
         return response_api_deleted()
 
+    except PermissionDeniedError:
+        return ac_api_return_access_denied()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
