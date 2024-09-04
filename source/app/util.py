@@ -309,7 +309,7 @@ def _update_denied_case(caseid):
 
 
 # TODO would be nice to remove parameter no_cid_required
-def get_case_access(request_data, access_level, no_cid_required=False):
+def _get_case_access(request_data, access_level, no_cid_required=False):
     redir, caseid, has_access = _get_caseid_from_request_data(request_data, no_cid_required)
 
     ctmp, has_access = _handle_no_cid_required(no_cid_required)
@@ -533,7 +533,7 @@ def ac_case_requires(*access_level):
             if not is_user_authenticated(request):
                 return redirect(not_authenticated_redirection_url(request.full_path))
 
-            redir, caseid, has_access = get_case_access(request, access_level)
+            redir, caseid, has_access = _get_case_access(request, access_level)
 
             if not has_access:
                 return _ac_return_access_denied(caseid=caseid)
@@ -554,7 +554,7 @@ def ac_requires(*permissions, no_cid_required=False):
             if not is_user_authenticated(request):
                 return redirect(not_authenticated_redirection_url(request.full_path))
 
-            redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
+            redir, caseid, _ = _get_case_access(request, [], no_cid_required=no_cid_required)
             kwargs.update({'caseid': caseid, 'url_redir': redir})
 
             if not _user_has_at_least_a_required_permission(permissions):
