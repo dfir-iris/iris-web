@@ -93,10 +93,12 @@ def case_list_ioc(caseid):
     return response_success("", data=ret)
 
 
-@case_ioc_rest_blueprint.route('/api/v2/cases/<int:case_identifier>/iocs', methods=['GET'])
-@ac_requires_case_access(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@case_ioc_rest_blueprint.route('/api/v2/cases/<int:identifier>/iocs', methods=['GET'])
 @ac_api_requires()
-def list_ioc(case_identifier):
+def list_ioc(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
+
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
     order_by = request.args.get('order_by', type=str)
@@ -110,7 +112,7 @@ def list_ioc(case_identifier):
     ioc_tags = request.args.get('ioc_tags', None, type=str)
 
     filtered_iocs = get_filtered_iocs(
-        caseid=case_identifier,
+        caseid=identifier,
         ioc_type_id=ioc_type_id,
         ioc_type=ioc_type,
         ioc_tlp_id=ioc_tlp_id,
@@ -129,7 +131,7 @@ def list_ioc(case_identifier):
     iocs = IocSchema().dump(filtered_iocs.items, many=True)
 
     for ioc in iocs:
-        ial = get_ioc_links(ioc['ioc_id'], case_identifier)
+        ial = get_ioc_links(ioc['ioc_id'], identifier)
         ioc['link'] = [row._asdict() for row in ial]
         ioc['tlp'] = Tlp.query.filter(Tlp.tlp_id == ioc['ioc_tlp_id']).first()
 
@@ -331,7 +333,6 @@ def get_case_ioc(identifier):
     if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=ioc.case_id)
 
-    # TODO should be reponse_api_success here => add a test
     return response_api_success(ioc_schema.dump(ioc))
 
 
