@@ -429,11 +429,11 @@ def get_cases() -> Response:
     return response_api_success(data=cases)
 
 
-@case_rest_blueprint.route('/api/v2/cases/<int:identifier>')
+@case_rest_blueprint.route('/api/v2/cases/<int:case_identifier>')
 @ac_requires_case_access(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_routes_get(identifier):
-    case = get_case(identifier)
+def case_routes_get(case_identifier):
+    case = get_case(case_identifier)
     if not case:
         return response_api_not_found()
     return response_api_success(CaseSchemaForAPIV2().dump(case))

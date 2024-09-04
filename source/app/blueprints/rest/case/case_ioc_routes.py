@@ -167,14 +167,14 @@ def deprecated_case_add_ioc(caseid):
         return response_error(e.get_message(), data=e.get_data())
 
 
-@case_ioc_rest_blueprint.route('/api/v2/cases/<int:caseid>/iocs', methods=['POST'])
+@case_ioc_rest_blueprint.route('/api/v2/cases/<int:case_identifier>/iocs', methods=['POST'])
 @ac_requires_case_access(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_add_ioc(caseid):
+def case_add_ioc(case_identifier):
     ioc_schema = IocSchema()
 
     try:
-        ioc, _ = iocs_create(request.get_json(), caseid)
+        ioc, _ = iocs_create(request.get_json(), case_identifier)
         return response_api_created(ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
