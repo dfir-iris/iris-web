@@ -136,7 +136,6 @@ def list_ioc(case_identifier):
         'iocs': iocs,
         'last_page': filtered_iocs.pages,
         'current_page': filtered_iocs.page,
-        'state': get_ioc_state(caseid=case_identifier),
         'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
     }
 
