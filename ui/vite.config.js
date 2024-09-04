@@ -126,7 +126,7 @@ export default defineConfig(({ mode }) => {
                     {
                         src: 'node_modules/sortablejs/Sortable.min.js',
                         dest: 'assets/js/plugin/sortable/',
-                        rename: 'sortable.min.js'
+                        rename: 'sortable.js',
                     },
                     {
                         src: 'node_modules/vis/dist/vis.min.js',
