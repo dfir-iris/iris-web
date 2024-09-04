@@ -24,6 +24,7 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
+from app.business.permissions import permissions_check_current_user_has_some_case_access
 from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
@@ -74,7 +75,7 @@ class IOCCreate(Mutation):
             'ioc_description': description,
             'ioc_tags': tags
         }
-        permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+        permissions_check_current_user_has_some_case_access(case_id, [CaseAccessLevel.full_access])
 
         ioc, _ = iocs_create(request, case_id)
         return IOCCreate(ioc=ioc)
