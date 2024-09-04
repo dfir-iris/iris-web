@@ -19,6 +19,9 @@
 from unittest import TestCase
 from iris import Iris
 
+_INITIAL_DEMO_CASE_IDENTIFIER = 1
+_CASE_ACCESS_LEVEL_FULL_ACCESS = 4
+
 
 def _get_case_with_identifier(response, identifier):
     for case in response['cases']:
@@ -402,3 +405,14 @@ class TestsRest(TestCase):
         for ioc in response['iocs']:
             identifiers.append(ioc['ioc_type_id'])
         self.assertIn(ioc_type_identifier, identifiers)
+
+    def test_get_case_should_return_403_when_user_has_insufficient_rights(self):
+        identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {
+            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
+            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
+        }
+        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
+        response = user.get(f'/api/v2/cases/{identifier}')
+        self.assertEqual(403, response.status_code)

@@ -39,6 +39,7 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.business.errors import PermissionDeniedError
@@ -430,13 +431,15 @@ def get_cases() -> Response:
 
 
 @case_rest_blueprint.route('/api/v2/cases/<int:case_identifier>')
-@ac_requires_case_access(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_routes_get(case_identifier):
     case = get_case(case_identifier)
     if not case:
         return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_identifier)
     return response_api_success(CaseSchemaForAPIV2().dump(case))
+
 
 
 @case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['DELETE'])
