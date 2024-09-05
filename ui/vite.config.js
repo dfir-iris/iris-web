@@ -39,10 +39,11 @@ export default defineConfig(({ mode }) => {
                 output: {
                     manualChunks: undefined,
                     entryFileNames: 'assets/js/iris/[name].js',
+                    sourcemapFileNames: 'assets/js/iris/[name].js.map',
                 },
                 treeshake: false,
             },
-            sourcemap: (development) ? 'inline': false,
+            sourcemap: development,
         },
         resolve: {
             alias: {
