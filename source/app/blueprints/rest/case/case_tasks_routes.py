@@ -184,19 +184,20 @@ def case_edit_task(cur_id, caseid):
 @ac_api_requires()
 def deprecated_case_delete_task(cur_id, caseid):
     try:
-        msg = tasks_delete(cur_id, caseid)
+        msg = tasks_delete(cur_id)
         return response_success(msg)
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
 
 @case_tasks_rest_blueprint.route('/api/v2/tasks/<int:identifier>', methods=['DELETE'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_delete_task(identifier, caseid):
+def case_delete_task(identifier):
     try:
-        tasks_delete(identifier, caseid)
+        tasks_delete(identifier)
         return response_api_deleted()
+    except PermissionDeniedError:
+        return ac_api_return_access_denied()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
