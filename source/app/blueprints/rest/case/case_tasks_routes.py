@@ -148,11 +148,11 @@ def deprecated_case_task_view(cur_id, caseid):
     return response_success(data=task_schema.dump(task))
 
 
-@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['GET'])
+@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:identifier>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_task_view(cur_id, caseid):
-    task = get_task_with_assignees(task_id=cur_id)
+def case_task_view(identifier, caseid):
+    task = get_task_with_assignees(task_id=identifier)
     if not task:
         return response_api_error('Invalid task ID for this case')
 
