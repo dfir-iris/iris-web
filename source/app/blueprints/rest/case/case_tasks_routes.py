@@ -184,12 +184,12 @@ def deprecated_case_delete_task(cur_id, caseid):
         return response_error(e.get_message())
 
 
-@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:cur_id>', methods=['DELETE'])
+@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:identifier>', methods=['DELETE'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_delete_task(cur_id, caseid):
+def case_delete_task(identifier, caseid):
     try:
-        tasks_delete(cur_id, caseid)
+        tasks_delete(identifier, caseid)
         return response_api_deleted()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
