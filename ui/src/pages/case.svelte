@@ -1,4 +1,4 @@
-<script>
+<script context="module">
     jQuery(document).ready(function(){
         jQuery('#case_quick_status').change(function(){
             post_request_api('/case/update-status', JSON.stringify({
