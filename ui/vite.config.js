@@ -43,7 +43,7 @@ export default defineConfig(({ mode }) => {
                     chunkFileNames: 'assets/js/chunks/[name]-[hash].js',
                     assetFileNames: 'assets/[ext]/[name].[ext]',
                 },
-                treeshake: false,                
+                treeshake: false,
             },
             sourcemap: (development) ? 'inline': false,
         },
