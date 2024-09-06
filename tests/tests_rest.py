@@ -271,11 +271,11 @@ class TestsRest(TestCase):
 
     def test_get_tasks_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        task_id = 2
-        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
+        body = {'task_assignees_id': [2], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        response = self._subject.get(f'/api/v2/tasks/{task_id}')
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body).json()
+        task_identifier = response['id']
+        response = self._subject.get(f'/api/v2/tasks/{task_identifier}')
         self.assertEqual(201, response.status_code)
 
     def test_get_tasks_with_missing_task_identifier_should_return_error(self):
