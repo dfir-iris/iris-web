@@ -92,10 +92,9 @@ def get_assets_name(caseid):
     return assets_names
 
 
-def get_asset(asset_id, caseid):
+def get_asset(asset_id) -> CaseAssets:
     asset = CaseAssets.query.filter(
         CaseAssets.asset_id == asset_id,
-        CaseAssets.case_id == caseid
     ).first()
 
     return asset
@@ -103,7 +102,7 @@ def get_asset(asset_id, caseid):
 
 def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_domain,
                  asset_compromise_status_id, asset_type, asset_id, caseid, analysis_status, asset_tags):
-    asset = get_asset(asset_id, caseid)
+    asset = get_asset(asset_id)
     asset.asset_name = asset_name
     asset.asset_description = asset_description
     asset.asset_ip = asset_ip
@@ -120,7 +119,7 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
 
 
 def delete_asset(asset_id, caseid):
-    case_asset = get_asset(asset_id, caseid)
+    case_asset = get_asset(asset_id)
     if case_asset is None:
         return
 

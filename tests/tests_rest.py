@@ -192,8 +192,9 @@ class TestsRest(TestCase):
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
-        response = self._subject.delete(f'/api/v2/assets/1')
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        response = self._subject.delete(f'/api/v2/assets/{asset_identifier}')
         self.assertEqual(204, response.status_code)
 
     def test_delete_asset_with_missing_asset_identifier_should_return_404(self):

@@ -512,6 +512,7 @@ def _ac_return_access_denied(caseid: int = None):
                            template_folder=TEMPLATE_PATH), 403
 
 
+# TODO should move this method into an util file at the root of the blueprint namespace
 def ac_api_return_access_denied(caseid: int = None):
     error_uuid = uuid.uuid4()
     log.warning(f"EID {error_uuid} - Access denied with case #{caseid} for user ID {current_user.id} "
@@ -639,6 +640,7 @@ def ac_requires_client_access():
     return inner_wrap
 
 
+# TODO should move this method into an util file at the root of the blueprint namespace
 def ac_requires_case_identifier(*access_level):
     def decorate_with_requires_case_identifier(f):
         @wraps(f)
