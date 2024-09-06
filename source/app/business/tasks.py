@@ -15,20 +15,25 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from datetime import datetime
 
 from flask_login import current_user
 
 from app import db
+from app.business.permissions import permissions_check_current_user_has_some_case_access
 from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import get_task_with_assignees
+from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 from marshmallow.exceptions import ValidationError
 
 
@@ -76,6 +81,13 @@ def tasks_create(case_identifier, request_json):
         return f'Task "{ctask.task_title}" added', ctask
     raise BusinessProcessingError("Unable to create task for internal reasons")
 
+
+def tasks_get(identifier):
+    task = get_task(identifier)
+    if not task:
+        raise ObjectNotFoundError()
+    permissions_check_current_user_has_some_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+    return task
 
 def tasks_update(current_identifier, case_identifier, request_json):
 

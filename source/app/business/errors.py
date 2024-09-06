@@ -31,6 +31,12 @@ class BusinessProcessingError(Exception):
         return self._data
 
 
+class ObjectNotFoundError(BusinessProcessingError):
+
+    def __init__(self):
+        super().__init__('Object not found')
+
+
 class UnhandledBusinessError(BusinessProcessingError):
 
     def __init__(self, message, data=None):

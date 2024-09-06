@@ -26,12 +26,16 @@ from flask_login import current_user
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDeniedError
+from app.business.errors import ObjectNotFoundError
 from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_create
+from app.business.tasks import tasks_get
 from app.business.tasks import tasks_update
 from app.datamgmt.case.case_tasks_db import add_comment_to_task
 from app.datamgmt.case.case_tasks_db import delete_task_comment
@@ -149,16 +153,18 @@ def deprecated_case_task_view(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/api/v2/tasks/<int:identifier>', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_task_view(identifier, caseid):
-    task = get_task_with_assignees(task_id=identifier)
-    if not task:
-        return response_api_error('Invalid task ID for this case')
+def case_task_view(identifier):
+    try:
+        task = tasks_get(identifier)
 
-    task_schema = CaseTaskSchema()
+        task_schema = CaseTaskSchema()
+        return response_api_created(task_schema.dump(task))
+    except PermissionDeniedError:
+        return ac_api_return_access_denied()
 
-    return response_api_created(task_schema.dump(task))
+    except ObjectNotFoundError:
+        return response_api_not_found()
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
