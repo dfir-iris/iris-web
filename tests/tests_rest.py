@@ -507,3 +507,18 @@ class TestsRest(TestCase):
 
         response = user.get(f'/api/v2/assets/{asset_identifier}')
         self.assertEqual(403, response.status_code)
+
+    def test_delete_asset_should_return_403_when_user_has_insufficient_rights(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        body = {
+            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
+            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
+        }
+        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
+
+        response = user.delete(f'/api/v2/assets/{asset_identifier}')
+        self.assertEqual(403, response.status_code)

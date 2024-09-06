@@ -335,6 +335,8 @@ def asset_delete(identifier):
         return response_api_deleted()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
+    except PermissionDeniedError:
+        return ac_api_return_access_denied()
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
