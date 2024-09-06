@@ -485,6 +485,14 @@ class TestsRest(TestCase):
         response = user.delete(f'/api/v2/iocs/{ioc_identifier}')
         self.assertEqual(403, response.status_code)
 
+    def test_get_asset_should_return_200(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
+        self.assertEqual(200, response.status_code)
+
     def test_get_asset_should_return_403_when_user_has_insufficient_rights(self):
         case_identifier = self._subject.create_dummy_case()
         user = self._subject.create_dummy_user()

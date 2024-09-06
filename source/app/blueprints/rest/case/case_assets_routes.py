@@ -27,6 +27,7 @@ from app import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.assets import assets_delete, assets_create, assets_get
@@ -264,7 +265,7 @@ def deprecated_asset_view(cur_id, caseid):
 def asset_view(identifier):
     try:
         asset = assets_get(identifier)
-        return response_api_created(asset)
+        return response_api_success(asset)
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
     except PermissionDeniedError:

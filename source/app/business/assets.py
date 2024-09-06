@@ -70,8 +70,6 @@ def assets_delete(identifier):
     return 'Deleted'
 
 
-from app import app
-
 def assets_get(identifier):
     asset_iocs = get_linked_iocs_finfo_from_asset(identifier)
     ioc_prefill = [row._asdict() for row in asset_iocs]
@@ -79,10 +77,10 @@ def assets_get(identifier):
     asset = get_asset(identifier)
     if not asset:
         raise BusinessProcessingError('Invalid asset ID for this case')
-    app.logger.error('-----------------------')
-    app.logger.error(f'Asset case identifier: {asset.case_id}')
     permissions_check_current_user_has_some_case_access(asset.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
-    data = _load.dump(asset)
+    # TODO this is a code smell: shouldn't have schemas in the business layer + the CaseAssetsSchema is instantiated twice
+    case_assets_schema = CaseAssetsSchema()
+    data = case_assets_schema.dump(asset)
     data['linked_ioc'] = ioc_prefill
     return data
