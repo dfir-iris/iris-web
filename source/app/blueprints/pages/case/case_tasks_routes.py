@@ -77,7 +77,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
 
     form = CaseTaskForm()
 
-    task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
+    task = get_task_with_assignees(task_id=cur_id)
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
     form.task_assignees_id.choices = []
 
@@ -99,7 +99,7 @@ def case_comment_task_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
 
-    task = get_task(cur_id, caseid=caseid)
+    task = get_task(cur_id)
     if not task:
         return response_error('Invalid task ID')
 

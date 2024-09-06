@@ -42,7 +42,7 @@ def _load(request_data):
 
 def tasks_delete(identifier, context_case_identifier):
     call_modules_hook('on_preload_task_delete', data=identifier, caseid=context_case_identifier)
-    task = get_task_with_assignees(task_id=identifier, case_id=context_case_identifier)
+    task = get_task_with_assignees(task_id=identifier)
     if not task:
         raise BusinessProcessingError('Invalid task ID for this case')
     delete_task(identifier)
@@ -72,14 +72,14 @@ def tasks_create(case_identifier, request_json):
     ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=case_identifier)
 
     if ctask:
-        track_activity(f"added task \"{ctask.task_title}\"", caseid=case_identifier)
-        return "Task '{}' added".format(ctask.task_title), ctask
+        track_activity(f'added task "{ctask.task_title}"', caseid=case_identifier)
+        return f'Task "{ctask.task_title}" added', ctask
     raise BusinessProcessingError("Unable to create task for internal reasons")
 
 
 def tasks_update(current_identifier, case_identifier, request_json):
 
-    task = get_task_with_assignees(task_id=current_identifier, case_id=case_identifier)
+    task = get_task_with_assignees(task_id=current_identifier)
 
     if task:
         request_data = call_modules_hook('on_preload_task_update', data=request_json, caseid=case_identifier)
