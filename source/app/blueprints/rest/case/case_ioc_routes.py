@@ -172,16 +172,16 @@ def deprecated_case_add_ioc(caseid):
         return response_error(e.get_message(), data=e.get_data())
 
 
-@case_ioc_rest_blueprint.route('/api/v2/cases/<int:case_identifier>/iocs', methods=['POST'])
+@case_ioc_rest_blueprint.route('/api/v2/cases/<int:identifier>/iocs', methods=['POST'])
 @ac_api_requires()
-def case_add_ioc(case_identifier):
-    if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=case_identifier)
+def case_add_ioc(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
 
     ioc_schema = IocSchema()
 
     try:
-        ioc, _ = iocs_create(request.get_json(), case_identifier)
+        ioc, _ = iocs_create(request.get_json(), identifier)
         return response_api_created(ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         log.error(e)
@@ -297,12 +297,12 @@ def deprecated_case_delete_ioc(cur_id, caseid):
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
-@case_ioc_rest_blueprint.route('/api/v2/iocs/<int:cur_id>', methods=['DELETE'])
+@case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['DELETE'])
 @ac_api_requires()
-def delete_case_ioc(cur_id):
+def delete_case_ioc(identifier):
     try:
 
-        iocs_delete(cur_id)
+        iocs_delete(identifier)
         return response_api_deleted()
 
     except PermissionDeniedError:
