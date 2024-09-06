@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 import fs from "node:fs";
 import path from "node:path";
@@ -24,10 +25,10 @@ function resolveInputs(directory) {
     return inputs;
 }
 
-
 export default defineConfig(({ mode }) => {
     const production = (mode === 'production');
     const development = (mode === 'development');
+
 
     return {
         build: {
@@ -39,11 +40,12 @@ export default defineConfig(({ mode }) => {
                 output: {
                     manualChunks: undefined,
                     entryFileNames: 'assets/js/iris/[name].js',
-                    sourcemapFileNames: 'assets/js/iris/[name].js.map',
+                    chunkFileNames: 'assets/js/chunks/[name]-[hash].js',
+                    assetFileNames: 'assets/[ext]/[name].[ext]',
                 },
-                treeshake: false,
+                treeshake: false,                
             },
-            sourcemap: development,
+            sourcemap: (development) ? 'inline': false,
         },
         resolve: {
             alias: {
@@ -51,6 +53,10 @@ export default defineConfig(({ mode }) => {
             },
         },
         plugins: [
+            svelte({
+                emitCss: false,
+                inspector: development,
+            }),
             viteStaticCopy({
                 targets: [
                     // Core
