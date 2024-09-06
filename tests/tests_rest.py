@@ -22,6 +22,9 @@ from iris import Iris
 _INITIAL_DEMO_CASE_IDENTIFIER = 1
 _CASE_ACCESS_LEVEL_FULL_ACCESS = 4
 
+# TODO should change None into 123456789 and maybe fix...
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
+
 
 def _get_case_with_identifier(response, identifier):
     for case in response['cases']:
@@ -186,7 +189,7 @@ class TestsRest(TestCase):
         self.assertEqual(204, response.status_code)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_404(self):
-        response = self._subject.delete(f'/api/v2/iocs/{None}')
+        response = self._subject.delete(f'/api/v2/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_delete_asset_should_return_204(self):
@@ -198,7 +201,7 @@ class TestsRest(TestCase):
         self.assertEqual(204, response.status_code)
 
     def test_delete_asset_with_missing_asset_identifier_should_return_404(self):
-        response = self._subject.delete(f'/api/v2/assets/{None}')
+        response = self._subject.delete(f'/api/v2/assets/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_create_asset_should_work(self):
@@ -209,7 +212,7 @@ class TestsRest(TestCase):
 
     def test_create_asset_with_missing_case_identifier_should_return_404(self):
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{None}/assets', body)
+        response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/assets', body)
         self.assertEqual(404, response.status_code)
 
     def test_get_asset_with_missing_asset_identifier_should_return_404(self):
@@ -282,7 +285,7 @@ class TestsRest(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        response = self._subject.get(f'/api/v2/tasks/{None}')
+        response = self._subject.get(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_delete_task_should_return_204(self):
@@ -300,7 +303,7 @@ class TestsRest(TestCase):
         body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        test = self._subject.delete(f'/api/v2/tasks/{None}')
+        test = self._subject.delete(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, test.status_code)
 
     def test_get_cases_should_not_fail(self):
