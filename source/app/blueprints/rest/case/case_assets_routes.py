@@ -31,6 +31,7 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.assets import assets_delete, assets_create, assets_get
 from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDeniedError
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
@@ -252,21 +253,22 @@ def case_upload_ioc(caseid):
 @ac_api_requires()
 def deprecated_asset_view(cur_id, caseid):
     try:
-        asset = assets_get(cur_id, caseid)
+        asset = assets_get(cur_id)
         return response_success(asset)
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
 
-@case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@case_assets_rest_blueprint.route('/api/v2/assets/<int:identifier>', methods=['GET'])
 @ac_api_requires()
-def asset_view(cur_id, caseid):
+def asset_view(identifier):
     try:
-        asset = assets_get(cur_id, caseid)
+        asset = assets_get(identifier)
         return response_api_created(asset)
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
+    except PermissionDeniedError:
+        return ac_api_return_access_denied()
 
 
 @case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
