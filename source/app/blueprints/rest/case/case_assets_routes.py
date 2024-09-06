@@ -30,7 +30,10 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
-from app.business.assets import assets_delete, assets_create, assets_get
+from app.business.assets import assets_delete
+from app.business.assets import assets_create
+from app.business.assets import assets_get_detailed
+from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
 from app.business.errors import PermissionDeniedError
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
@@ -254,7 +257,7 @@ def case_upload_ioc(caseid):
 @ac_api_requires()
 def deprecated_asset_view(cur_id, caseid):
     try:
-        asset = assets_get(cur_id)
+        asset = assets_get_detailed(cur_id)
         return response_success(asset)
     except BusinessProcessingError as e:
         return response_error(e.get_message())
