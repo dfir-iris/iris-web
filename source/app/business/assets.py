@@ -65,7 +65,6 @@ def assets_delete(identifier):
     delete_asset(identifier, asset.case_id)
     call_modules_hook('on_postload_asset_delete', data=identifier, caseid=asset.case_id)
     track_activity(f'removed asset ID {asset.asset_name}', caseid=asset.case_id)
-    return 'Deleted'
 
 
 def assets_get(identifier):
