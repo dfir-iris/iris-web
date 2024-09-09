@@ -1,6 +1,5 @@
-<script context="module">
-    import '../css/login.css';
-
+<script>
+    import '../../css/login.css';
 
     const togglePassword = document.querySelector('#togglePassword');
     const password = document.querySelector('#password');

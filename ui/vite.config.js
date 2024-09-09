@@ -17,6 +17,13 @@ function resolveInputs(directory) {
                 const filepath = path.join(directory, file);
 
                 acc[filename] = fileURLToPath(new URL(filepath, import.meta.url));
+            } else {
+                const subDirectory = entry.name;
+                const filepath = path.join(directory, subDirectory, 'index.js');
+
+                if (fs.existsSync(filepath)) {
+                    acc[subDirectory] = fileURLToPath(new URL(filepath, import.meta.url));
+                }
             }
 
             return acc;
