@@ -44,7 +44,7 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def iocs_get_by_identifier(ioc_identifier):
+def iocs_get(ioc_identifier):
     return get_ioc(ioc_identifier)
 
 

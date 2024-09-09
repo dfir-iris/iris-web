@@ -33,6 +33,12 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.business.iocs import iocs_create
+from app.business.iocs import iocs_update
+from app.business.iocs import iocs_delete
+from app.business.iocs import iocs_get
+from app.business.errors import BusinessProcessingError
+from app.business.errors import PermissionDeniedError
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
@@ -41,7 +47,6 @@ from app.datamgmt.case.case_iocs_db import delete_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comments
 from app.datamgmt.case.case_iocs_db import get_detailed_iocs
-from app.datamgmt.case.case_iocs_db import get_ioc
 from app.datamgmt.case.case_iocs_db import get_ioc_links
 from app.datamgmt.case.case_iocs_db import get_ioc_type_id
 from app.datamgmt.case.case_iocs_db import get_tlps_dict
@@ -59,11 +64,6 @@ from app.util import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import response_error
 from app.util import response_success
-from app.business.iocs import iocs_create
-from app.business.iocs import iocs_update
-from app.business.iocs import iocs_delete
-from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
 
 case_ioc_rest_blueprint = Blueprint('case_ioc_rest', __name__)
 
@@ -318,7 +318,7 @@ def delete_case_ioc(identifier):
 @ac_api_requires()
 def deprecated_case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
-    ioc = get_ioc(cur_id)
+    ioc = iocs_get(cur_id)
     if not ioc:
         return response_error('Invalid IOC identifier')
 
@@ -329,7 +329,7 @@ def deprecated_case_view_ioc(cur_id, caseid):
 @ac_api_requires()
 def get_case_ioc(identifier):
     ioc_schema = IocSchema()
-    ioc = get_ioc(identifier)
+    ioc = iocs_get(identifier)
     if not ioc:
         return response_api_not_found()
     if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
@@ -367,7 +367,7 @@ def case_comment_ioc_list(cur_id, caseid):
 @ac_api_requires()
 def case_comment_ioc_add(cur_id, caseid):
     try:
-        ioc = get_ioc(cur_id)
+        ioc = iocs_get(cur_id)
         if not ioc:
             return response_error('Invalid ioc ID')
 
