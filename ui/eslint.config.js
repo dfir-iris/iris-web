@@ -9,7 +9,10 @@ import svelteConfig from './svelte.config.js';
 export default [
     {
         languageOptions: {
-            globals: globals.browser,
+            globals: {
+                ...globals.browser,
+                ...globals.jquery,
+            },
             parserOptions: {
                 svelteConfig,
             },
