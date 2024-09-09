@@ -268,11 +268,12 @@ def deprecated_asset_view(cur_id, caseid):
 def asset_view(identifier):
     try:
         asset = assets_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=asset.case_id)
+
         return response_api_success(asset)
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
-    except PermissionDeniedError:
-        return ac_api_return_access_denied()
 
 
 @case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
