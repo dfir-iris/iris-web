@@ -31,6 +31,7 @@ from app.schema.marshables import IocSchema
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 from app.business.permissions import permissions_check_current_user_has_some_case_access
 from app.models.authorization import CaseAccessLevel
 from app.datamgmt.case.case_iocs_db import get_ioc
@@ -45,7 +46,10 @@ def _load(request_data):
 
 
 def iocs_get(ioc_identifier):
-    return get_ioc(ioc_identifier)
+    ioc = get_ioc(ioc_identifier)
+    if not ioc:
+        raise ObjectNotFoundError()
+    return ioc
 
 
 def iocs_create(request_json, case_identifier):
@@ -115,10 +119,11 @@ def iocs_update(identifier, request_json):
 def iocs_delete(identifier):
 
     call_modules_hook('on_preload_ioc_delete', data=identifier)
-    ioc = get_ioc(identifier)
-
-    if not ioc:
+    try:
+        ioc = iocs_get(identifier)
+    except ObjectNotFoundError:
         raise BusinessProcessingError('Not a valid IOC for this case')
+
     permissions_check_current_user_has_some_case_access(ioc.case_id, [CaseAccessLevel.full_access])
 
     delete_ioc(ioc)

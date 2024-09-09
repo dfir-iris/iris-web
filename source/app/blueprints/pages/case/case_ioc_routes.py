@@ -22,6 +22,7 @@ from flask import render_template
 from flask import url_for
 
 from app.business.iocs import iocs_get
+from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_assets_db import get_assets_types
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import get_case_iocs_comments_count
@@ -79,21 +80,23 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
 
     form = ModalAddCaseIOCForm()
-    ioc = iocs_get(cur_id)
-    if not ioc:
-        return response_error("Invalid IOC ID for this case")
+    try:
+        ioc = iocs_get(cur_id)
 
-    form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
-    form.ioc_tlp_id.choices = get_tlps()
+        form.ioc_type_id.choices = [(row['type_id'], row['type_name']) for row in get_ioc_types_list()]
+        form.ioc_tlp_id.choices = get_tlps()
 
-    # Render the IOC
-    form.ioc_tags.render_kw = {'value': ioc.ioc_tags}
-    form.ioc_description.data = ioc.ioc_description
-    form.ioc_value.data = ioc.ioc_value
-    comments_map = get_case_iocs_comments_count([cur_id])
+        # Render the IOC
+        form.ioc_tags.render_kw = {'value': ioc.ioc_tags}
+        form.ioc_description.data = ioc.ioc_description
+        form.ioc_value.data = ioc.ioc_value
+        comments_map = get_case_iocs_comments_count([cur_id])
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes,
-                           comments_map=comments_map)
+        return render_template('modal_add_case_ioc.html', form=form, ioc=ioc, attributes=ioc.custom_attributes,
+                               comments_map=comments_map)
+
+    except ObjectNotFoundError:
+        return response_error('Invalid IOC ID for this case')
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/modal', methods=['GET'])
@@ -102,9 +105,9 @@ def case_comment_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
 
-    ioc = iocs_get(cur_id)
-    if not ioc:
-        return response_error('Invalid ioc ID')
+    try:
+        ioc = iocs_get(cur_id)
 
-    return render_template("modal_conversation.html", element_id=cur_id, element_type='ioc',
-                           title=ioc.ioc_value)
+        return render_template('modal_conversation.html', element_id=cur_id, element_type='ioc', title=ioc.ioc_value)
+    except ObjectNotFoundError:
+        return response_error('Invalid ioc ID')

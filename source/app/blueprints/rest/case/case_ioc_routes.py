@@ -39,6 +39,7 @@ from app.business.iocs import iocs_delete
 from app.business.iocs import iocs_get
 from app.business.errors import BusinessProcessingError
 from app.business.errors import PermissionDeniedError
+from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
@@ -318,24 +319,26 @@ def delete_case_ioc(identifier):
 @ac_api_requires()
 def deprecated_case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
-    ioc = iocs_get(cur_id)
-    if not ioc:
-        return response_error('Invalid IOC identifier')
+    try:
+        ioc = iocs_get(cur_id)
 
-    return response_success(data=ioc_schema.dump(ioc))
+        return response_success(data=ioc_schema.dump(ioc))
+    except ObjectNotFoundError:
+        return response_error('Invalid IOC identifier')
 
 
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['GET'])
 @ac_api_requires()
 def get_case_ioc(identifier):
     ioc_schema = IocSchema()
-    ioc = iocs_get(identifier)
-    if not ioc:
-        return response_api_not_found()
-    if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=ioc.case_id)
+    try:
+        ioc = iocs_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=ioc.case_id)
 
-    return response_api_success(ioc_schema.dump(ioc))
+        return response_api_success(ioc_schema.dump(ioc))
+    except ObjectNotFoundError:
+        return response_api_not_found()
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
@@ -368,8 +371,6 @@ def case_comment_ioc_list(cur_id, caseid):
 def case_comment_ioc_add(cur_id, caseid):
     try:
         ioc = iocs_get(cur_id)
-        if not ioc:
-            return response_error('Invalid ioc ID')
 
         comment_schema = CommentSchema()
 
@@ -396,7 +397,8 @@ def case_comment_ioc_add(cur_id, caseid):
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages())
-
+    except ObjectNotFoundError:
+        return response_error('Invalid ioc ID')
 
 @case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
