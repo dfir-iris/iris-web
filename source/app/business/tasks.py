@@ -91,6 +91,7 @@ def tasks_get(identifier):
     permissions_check_current_user_has_some_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
     return task
 
+
 def tasks_update(current_identifier, case_identifier, request_json):
 
     task = get_task_with_assignees(task_id=current_identifier)
