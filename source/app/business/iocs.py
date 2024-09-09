@@ -116,13 +116,7 @@ def iocs_update(identifier, request_json):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def iocs_delete(identifier):
-    try:
-        ioc = iocs_get(identifier)
-    except ObjectNotFoundError:
-        raise BusinessProcessingError('Not a valid IOC for this case')
-    permissions_check_current_user_has_some_case_access(ioc.case_id, [CaseAccessLevel.full_access])
-
+def iocs_delete(ioc: Ioc):
     call_modules_hook('on_preload_ioc_delete', data=ioc.ioc_id)
 
     delete_ioc(ioc)

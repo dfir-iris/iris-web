@@ -29,6 +29,7 @@ from app.business.permissions import permissions_check_current_user_has_some_cas
 from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
 from app.business.iocs import iocs_create
+from app.business.iocs import iocs_get
 from app.business.iocs import iocs_update
 from app.business.iocs import iocs_delete
 
@@ -135,7 +136,8 @@ class IOCDelete(Mutation):
 
     @staticmethod
     def mutate(root, info, ioc_id):
-        permissions_check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+        ioc = iocs_get(ioc_id)
+        permissions_check_current_user_has_some_case_access(ioc.case_id, [CaseAccessLevel.full_access])
 
         message = iocs_delete(ioc_id)
         return IOCDelete(message=message)

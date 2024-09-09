@@ -38,7 +38,6 @@ from app.business.iocs import iocs_update
 from app.business.iocs import iocs_delete
 from app.business.iocs import iocs_get
 from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
 from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
@@ -291,10 +290,15 @@ def case_upload_ioc(caseid):
 @ac_api_requires()
 def deprecated_case_delete_ioc(cur_id, caseid):
     try:
+        ioc = iocs_get(cur_id)
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=ioc.case_id)
 
         msg = iocs_delete(cur_id)
         return response_success(msg=msg)
 
+    except ObjectNotFoundError:
+        raise BusinessProcessingError('Not a valid IOC for this case')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
@@ -303,12 +307,15 @@ def deprecated_case_delete_ioc(cur_id, caseid):
 @ac_api_requires()
 def delete_case_ioc(identifier):
     try:
+        ioc = iocs_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=ioc.case_id)
 
         iocs_delete(identifier)
         return response_api_deleted()
 
-    except PermissionDeniedError:
-        return ac_api_return_access_denied()
+    except ObjectNotFoundError:
+        raise BusinessProcessingError('Not a valid IOC for this case')
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
