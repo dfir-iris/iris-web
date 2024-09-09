@@ -21,6 +21,11 @@ import io
 import pyotp
 import qrcode
 from urllib.parse import urlsplit
+import random
+import string
+
+from oic import rndstr
+from oic.oic.message import AuthorizationResponse
 
 from flask import Blueprint, flash
 from flask import redirect
@@ -34,6 +39,7 @@ from flask_login import login_user
 from app import app
 from app import bc
 from app import db
+from app import oidc_client
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 
 from app.forms import LoginForm, MFASetupForm
@@ -42,7 +48,9 @@ from app.iris_engine.access_control.utils import ac_get_effective_permissions_of
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.util import is_authentication_ldap
+from app.util import is_authentication_oidc
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
+from app.datamgmt.manage.manage_users_db import create_user
 
 
 login_blueprint = Blueprint(
@@ -67,9 +75,10 @@ def _render_template_login(form, msg):
     organisation_name = app.config.get('ORGANISATION_NAME')
     login_banner = app.config.get('LOGIN_BANNER_TEXT')
     ptfm_contact = app.config.get('LOGIN_PTFM_CONTACT')
+    auth_type = app.config.get('AUTHENTICATION_TYPE')
 
     return render_template('login.html', form=form, msg=msg, organisation_name=organisation_name,
-                           login_banner=login_banner, ptfm_contact=ptfm_contact)
+                           login_banner=login_banner, ptfm_contact=ptfm_contact, auth_type=auth_type)
 
 
 def _validate_local_login(username, password):
@@ -131,7 +140,7 @@ def _authenticate_password(form, username, password):
 
 
 # Authenticate user
-if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
+if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap", "oidc"]:
     @login_blueprint.route('/login', methods=['GET', 'POST'])
     def login():
         if current_user.is_authenticated:
@@ -152,6 +161,75 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap"]:
 
         return _authenticate_password(form, username, password)
 
+if is_authentication_oidc():
+    @login_blueprint.route('/oidc-login')
+    def oidc_login():
+        if current_user.is_authenticated:
+            return redirect(url_for('index.index'))
+
+        session["oidc_state"] = rndstr()
+        session["oidc_nonce"] = rndstr()
+        
+        args = {
+            "client_id": oidc_client.client_id,
+            "response_type": "code",
+            "scope": app.config.get("OIDC_SCOPES"),
+            "nonce": session["oidc_nonce"],
+            "redirect_uri": url_for("login.oidc_authorise", _external=True),
+            "state": session["oidc_state"]
+        }
+
+        auth_req = oidc_client.construct_AuthorizationRequest(request_args=args)
+        login_url = auth_req.request(oidc_client.authorization_endpoint)
+
+        return redirect(login_url)
+
+if is_authentication_oidc():
+    @login_blueprint.route('/oidc-authorise')
+    def oidc_authorise():
+        auth_resp = oidc_client.parse_response(AuthorizationResponse, info=request.args,
+                                    sformat="dict")
+                
+        if auth_resp["state"] != session["oidc_state"]:
+            track_activity(
+                f"OIDC session state '{auth_resp['state']}' does not match authorization state '{session['oidc_state']}'",
+                ctx_less=True,
+                display_in_ui=False,
+            )
+            return redirect(url_for("login.login"))
+
+        args = {
+            "code": auth_resp["code"],
+        }
+
+        access_token_resp = oidc_client.do_access_token_request(state=auth_resp["state"], request_args=args)
+            
+        # not all providers set email by default, use preferred_username where it's missing
+        user_login = access_token_resp['id_token'].get("email") or access_token_resp['id_token'].get("preferred_username")
+        user_name = access_token_resp['id_token'].get("preferred_username") or access_token_resp['id_token'].get("email")
+
+        user = _retrieve_user_by_username(user_login)
+
+        if not user:
+            track_activity(
+                f"Creating OIDC user {user_login} in database",
+                ctx_less=True,
+                display_in_ui=False,
+            )
+
+            # generate random password
+            password = ''.join(random.choices(string.printable[:-6], k=16))
+
+            user = create_user(
+                        user_name=user_name,
+                        user_login=user_login,
+                        user_email=user_login,
+                        user_password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'), 
+                        user_active=True,
+                        user_is_service_account=False
+                )
+        
+        return wrap_login_user(user)
 
 def wrap_login_user(user):
 
