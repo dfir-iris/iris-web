@@ -45,7 +45,7 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def iocs_get(ioc_identifier):
+def iocs_get(ioc_identifier) -> Ioc:
     ioc = get_ioc(ioc_identifier)
     if not ioc:
         raise ObjectNotFoundError()
@@ -117,21 +117,20 @@ def iocs_update(identifier, request_json):
 
 
 def iocs_delete(identifier):
-
-    call_modules_hook('on_preload_ioc_delete', data=identifier)
     try:
         ioc = iocs_get(identifier)
     except ObjectNotFoundError:
         raise BusinessProcessingError('Not a valid IOC for this case')
-
     permissions_check_current_user_has_some_case_access(ioc.case_id, [CaseAccessLevel.full_access])
+
+    call_modules_hook('on_preload_ioc_delete', data=ioc.ioc_id)
 
     delete_ioc(ioc)
 
-    call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=ioc.case_id)
+    call_modules_hook('on_postload_ioc_delete', data=ioc.ioc_id, caseid=ioc.case_id)
 
     track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=ioc.case_id)
-    return f'IOC {identifier} deleted'
+    return f'IOC {ioc.ioc_id} deleted'
 
 
 def iocs_exports_to_json(case_id):
