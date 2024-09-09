@@ -28,6 +28,7 @@ from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import delete_asset
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import CaseAssets
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 
@@ -67,7 +68,7 @@ def assets_delete(identifier):
     track_activity(f'removed asset ID {asset.asset_name}', caseid=asset.case_id)
 
 
-def assets_get(identifier):
+def assets_get(identifier) -> CaseAssets:
     asset = get_asset(identifier)
     if not asset:
         raise BusinessProcessingError('Invalid asset ID for this case')
