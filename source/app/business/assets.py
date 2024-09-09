@@ -69,6 +69,7 @@ def assets_delete(identifier):
     track_activity(f'removed asset ID {asset.asset_name}', caseid=asset.case_id)
     return 'Deleted'
 
+
 def assets_get(identifier):
     asset = get_asset(identifier)
     if not asset:
@@ -76,6 +77,7 @@ def assets_get(identifier):
     permissions_check_current_user_has_some_case_access(asset.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     return asset
+
 
 def assets_get_detailed(identifier):
     asset = assets_get(identifier)
