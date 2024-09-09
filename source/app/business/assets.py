@@ -58,9 +58,7 @@ def assets_create(case_identifier, request_json):
 
 def assets_delete(identifier):
     call_modules_hook('on_preload_asset_delete', data=identifier)
-    asset = get_asset(identifier)
-    if not asset:
-        raise BusinessProcessingError('Invalid asset ID for this case')
+    asset = assets_get(identifier)
     permissions_check_current_user_has_some_case_access(asset.case_id, [CaseAccessLevel.full_access])
 
     # Deletes an asset and the potential links with the IoCs from the database
