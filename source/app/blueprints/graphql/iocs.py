@@ -139,5 +139,5 @@ class IOCDelete(Mutation):
         ioc = iocs_get(ioc_id)
         permissions_check_current_user_has_some_case_access(ioc.case_id, [CaseAccessLevel.full_access])
 
-        message = iocs_delete(ioc_id)
+        message = iocs_delete(ioc)
         return IOCDelete(message=message)

@@ -124,7 +124,7 @@ class TestsGraphQL(TestCase):
                          }}'''
         }
         response = self._subject.execute_graphql_query(payload)
-        self.assertEqual(f'IOC {ioc_identifier} deleted', response['data']['iocDelete']['message'])
+        self.assertEqual(f'IOC {int(ioc_identifier)} deleted', response['data']['iocDelete']['message'])
 
     def test_graphql_create_ioc_should_allow_optional_description_to_be_set(self):
         case_identifier = self._create_case()

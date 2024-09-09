@@ -311,7 +311,7 @@ def delete_case_ioc(identifier):
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
 
-        iocs_delete(identifier)
+        iocs_delete(ioc)
         return response_api_deleted()
 
     except ObjectNotFoundError:
