@@ -57,14 +57,11 @@ def assets_create(case_identifier, request_json):
     raise BusinessProcessingError("Unable to create asset for internal reasons")
 
 
-def assets_delete(identifier):
-    call_modules_hook('on_preload_asset_delete', data=identifier)
-    asset = assets_get(identifier)
-    permissions_check_current_user_has_some_case_access(asset.case_id, [CaseAccessLevel.full_access])
-
+def assets_delete(asset: CaseAssets):
+    call_modules_hook('on_preload_asset_delete', data=asset.asset_id)
     # Deletes an asset and the potential links with the IoCs from the database
-    delete_asset(identifier, asset.case_id)
-    call_modules_hook('on_postload_asset_delete', data=identifier, caseid=asset.case_id)
+    delete_asset(asset.asset_id, asset.case_id)
+    call_modules_hook('on_postload_asset_delete', data=asset.asset_id, caseid=asset.case_id)
     track_activity(f'removed asset ID {asset.asset_name}', caseid=asset.case_id)
 
 

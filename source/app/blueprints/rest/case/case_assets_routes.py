@@ -322,22 +322,28 @@ def asset_update(cur_id, caseid):
 @ac_api_requires()
 def deprecated_asset_delete(cur_id, caseid):
     try:
-        assets_delete(cur_id)
-        return response_success("Deleted")
+        asset = assets_get(cur_id)
+        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=asset.case_id)
+
+        assets_delete(asset)
+        return response_success('Deleted')
     except BusinessProcessingError as _:
-        return response_error("Invalid asset ID for this case")
+        return response_error('Invalid asset ID for this case')
 
 
 @case_assets_rest_blueprint.route('/api/v2/assets/<int:identifier>', methods=['DELETE'])
 @ac_api_requires()
 def asset_delete(identifier):
     try:
-        assets_delete(identifier)
+        asset = assets_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=asset.case_id)
+
+        assets_delete(asset)
         return response_api_deleted()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
-    except PermissionDeniedError:
-        return ac_api_return_access_denied()
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
