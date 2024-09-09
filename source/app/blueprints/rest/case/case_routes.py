@@ -440,7 +440,6 @@ def case_routes_get(identifier):
     return response_api_success(CaseSchemaForAPIV2().dump(case))
 
 
-
 @case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['DELETE'])
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
