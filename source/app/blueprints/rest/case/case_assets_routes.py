@@ -35,7 +35,6 @@ from app.business.assets import assets_create
 from app.business.assets import assets_get_detailed
 from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
