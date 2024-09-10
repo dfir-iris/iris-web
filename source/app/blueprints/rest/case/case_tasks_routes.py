@@ -31,7 +31,6 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
 from app.business.errors import ObjectNotFoundError
 from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_create
@@ -183,7 +182,8 @@ def case_edit_task(cur_id, caseid):
 @ac_api_requires()
 def deprecated_case_delete_task(cur_id, caseid):
     try:
-        tasks_delete(cur_id)
+        task = tasks_get(cur_id)
+        tasks_delete(task)
         return response_success('Task deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
@@ -193,10 +193,12 @@ def deprecated_case_delete_task(cur_id, caseid):
 @ac_api_requires()
 def case_delete_task(identifier):
     try:
-        tasks_delete(identifier)
+        task = tasks_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=identifier)
+
+        tasks_delete(task)
         return response_api_deleted()
-    except PermissionDeniedError:
-        return ac_api_return_access_denied()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 

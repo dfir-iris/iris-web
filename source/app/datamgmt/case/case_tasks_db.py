@@ -24,7 +24,8 @@ from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
-from app.models import CaseTasks, TaskAssignee
+from app.models import CaseTasks
+from app.models import TaskAssignee
 from app.models import Cases
 from app.models import Comments
 from app.models import TaskComments

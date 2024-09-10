@@ -30,6 +30,7 @@ from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import CaseTasks
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import BusinessProcessingError
@@ -45,14 +46,12 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def tasks_delete(identifier):
-    call_modules_hook('on_preload_task_delete', data=identifier)
-    task = tasks_get(identifier)
-    permissions_check_current_user_has_some_case_access(task.task_case_id, [CaseAccessLevel.full_access])
+def tasks_delete(task: CaseTasks):
+    call_modules_hook('on_preload_task_delete', data=task.id)
 
-    delete_task(identifier)
+    delete_task(task.id)
     update_tasks_state(caseid=task.task_case_id)
-    call_modules_hook('on_postload_task_delete', data=identifier, caseid=task.task_case_id)
+    call_modules_hook('on_postload_task_delete', data=task.id, caseid=task.task_case_id)
     track_activity(f'deleted task "{task.task_title}"')
 
 
@@ -81,7 +80,7 @@ def tasks_create(case_identifier, request_json):
     raise BusinessProcessingError("Unable to create task for internal reasons")
 
 
-def tasks_get(identifier):
+def tasks_get(identifier) -> CaseTasks:
     task = get_task(identifier)
     if not task:
         raise ObjectNotFoundError()
