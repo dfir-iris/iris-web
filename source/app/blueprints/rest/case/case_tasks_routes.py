@@ -157,12 +157,11 @@ def deprecated_case_task_view(cur_id, caseid):
 def case_task_view(identifier):
     try:
         task = tasks_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=task.task_case_id)
 
         task_schema = CaseTaskSchema()
         return response_api_created(task_schema.dump(task))
-    except PermissionDeniedError:
-        return ac_api_return_access_denied()
-
     except ObjectNotFoundError:
         return response_api_not_found()
 

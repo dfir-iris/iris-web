@@ -88,7 +88,6 @@ def tasks_get(identifier):
     task = get_task(identifier)
     if not task:
         raise ObjectNotFoundError()
-    permissions_check_current_user_has_some_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
     return task
 
 
