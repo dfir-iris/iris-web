@@ -4,12 +4,14 @@
   "scripts": {
     "start": "docker compose -f ../docker-compose.dev.yml up --detach && wait-on http://127.0.0.1:8000",
     "stop": "docker compose down",
-    "cy:run": "cypress run",
-    "cy:open": "cypress open",
-    "test": "npm run start && npm run cy:run && npm run stop"
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
+    "test": "npm run start && npm run e2e && npm run stop"
   },
   "devDependencies": {
-    "cypress": "^13.13.2",
+    "@playwright/test": "^1.47.0",
+    "@types/node": "^22.5.4",
     "wait-on": "^7.2.0"
   }
 }

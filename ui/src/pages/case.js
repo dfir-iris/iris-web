@@ -1,6 +1,5 @@
 $(document).ready(function(){
     $('#case_quick_status').change(function(){
-        console.log('change');
         post_request_api('/case/update-status', JSON.stringify({
             'status_id': $('#case_quick_status').val(),
             'csrf_token': $('#csrf_token').val()
