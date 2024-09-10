@@ -24,6 +24,12 @@ Then, we can build IRIS application and rebuild it on changes:
 npm run watch
 ```
 
+To execute linting of source files:
+```bash
+npm run lint
+```
+
+
 ## Production
 
 First, we need to install dependencies:
