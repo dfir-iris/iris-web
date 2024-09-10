@@ -961,7 +961,7 @@ def create_safe_auth_model():
 
     # Create new Administrator Group object
     try:
-        gadm = get_or_create(db.session, Group, group_name="Administrators", group_description="Administrators",
+        gadm = get_or_create(db.session, Group, group_name='Administrators', group_description='Administrators',
                              group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
                              group_permissions=ac_get_mask_full_permissions())
 
@@ -969,7 +969,7 @@ def create_safe_auth_model():
         db.session.rollback()
         log.warning('Administrator group integrity error. Group permissions were probably changed. Updating.')
         gadm = Group.query.filter(
-            Group.group_name == "Administrators"
+            Group.group_name == 'Administrators'
         ).first()
 
     # Update Administrator Group object attributes
@@ -986,7 +986,7 @@ def create_safe_auth_model():
 
     # Create new Analysts Group object
     try:
-        ganalysts = get_or_create(db.session, Group, group_name="Analysts", group_description="Standard Analysts",
+        ganalysts = get_or_create(db.session, Group, group_name='Analysts', group_description='Standard Analysts',
                                   group_auto_follow=False,
                                   group_auto_follow_access_level=CaseAccessLevel.full_access.value,
                                   group_permissions=ac_get_mask_analyst())
@@ -994,7 +994,7 @@ def create_safe_auth_model():
     except exc.IntegrityError:
         db.session.rollback()
         log.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
-        ganalysts = get_group_by_name("Analysts")
+        ganalysts = get_group_by_name('Analysts')
 
     # Update Analysts Group object attributes
     if ganalysts.group_permissions != ac_get_mask_analyst():
