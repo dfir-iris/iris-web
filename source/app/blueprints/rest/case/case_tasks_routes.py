@@ -183,8 +183,8 @@ def case_edit_task(cur_id, caseid):
 @ac_api_requires()
 def deprecated_case_delete_task(cur_id, caseid):
     try:
-        msg = tasks_delete(cur_id)
-        return response_success(msg)
+        tasks_delete(cur_id)
+        return response_success('Task deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 

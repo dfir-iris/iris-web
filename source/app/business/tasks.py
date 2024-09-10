@@ -47,16 +47,13 @@ def _load(request_data):
 
 def tasks_delete(identifier):
     call_modules_hook('on_preload_task_delete', data=identifier)
-    task = get_task_with_assignees(task_id=identifier)
-    if not task:
-        raise BusinessProcessingError('Invalid task ID for this case')
+    task = tasks_get(identifier)
     permissions_check_current_user_has_some_case_access(task.task_case_id, [CaseAccessLevel.full_access])
 
     delete_task(identifier)
     update_tasks_state(caseid=task.task_case_id)
     call_modules_hook('on_postload_task_delete', data=identifier, caseid=task.task_case_id)
     track_activity(f'deleted task "{task.task_title}"')
-    return 'Task deleted'
 
 
 def tasks_create(case_identifier, request_json):
