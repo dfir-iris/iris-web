@@ -21,7 +21,6 @@ from datetime import datetime
 from flask_login import current_user
 
 from app import db
-from app.business.permissions import permissions_check_current_user_has_some_case_access
 from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
@@ -31,7 +30,6 @@ from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTasks
-from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
