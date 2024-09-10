@@ -42,7 +42,6 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
-from app.business.errors import PermissionDeniedError
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
@@ -443,10 +442,11 @@ def case_routes_get(identifier):
 @case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['DELETE'])
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
+
     try:
         cases_delete(identifier)
         return response_api_deleted()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
-    except PermissionDeniedError:
-        return ac_api_return_access_denied(caseid=identifier)
