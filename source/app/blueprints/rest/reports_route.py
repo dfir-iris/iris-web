@@ -31,8 +31,6 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseTemplateReport
 from app.models.authorization import CaseAccessLevel
 
-from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
-
 from app.util import FileRemover
 from app.util import ac_api_requires
 from app.util import ac_requires_case_identifier
@@ -45,12 +43,8 @@ file_remover = FileRemover()
 
 @reports_rest_blueprint.route('/case/report/generate-activities/<int:report_id>', methods=['GET'])
 @ac_api_requires()
-@ac_requires_case_identifier()
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def download_case_activity(report_id, caseid):
-    # TODO should we move this up
-    # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
-    permissions_check_current_user_has_some_case_access_stricter(
-        [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     call_modules_hook('on_preload_activities_report_create', data=report_id, caseid=caseid)
     if report_id:
@@ -95,12 +89,8 @@ def download_case_activity(report_id, caseid):
 
 @reports_rest_blueprint.route('/case/report/generate-investigation/<int:report_id>', methods=['GET'])
 @ac_api_requires()
-@ac_requires_case_identifier()
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def generate_report(report_id, caseid):
-    # TODO should we move this up
-    # and replace by annotation @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)?
-    permissions_check_current_user_has_some_case_access_stricter(
-        [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 
     safe_mode = False
 
