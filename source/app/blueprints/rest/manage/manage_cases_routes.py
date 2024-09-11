@@ -58,7 +58,6 @@ from app.util import response_success
 from app.business.cases import cases_delete
 from app.business.cases import cases_update
 from app.business.cases import cases_create
-from app.business.permissions import permissions_check_current_user_has_some_case_access
 from app.business.errors import BusinessProcessingError
 
 manage_cases_rest_blueprint = Blueprint('manage_case_rest', __name__)
@@ -267,7 +266,8 @@ def api_list_case():
 @manage_cases_rest_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def update_case_info(cur_id):
-    permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=cur_id)
 
     case_schema = CaseSchema()
     try:
