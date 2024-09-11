@@ -24,8 +24,8 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
-from app.business.permissions import permissions_check_current_user_has_some_case_access
-from app.business.permissions import permissions_check_current_user_has_some_case_access_stricter
+from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_case_access
+from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_case_access_stricter
 from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
 from app.business.iocs import iocs_create

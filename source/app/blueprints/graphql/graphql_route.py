@@ -51,7 +51,7 @@ from app.blueprints.graphql.cases import CaseConnection
 
 from app.business.cases import cases_get_by_identifier
 from app.business.iocs import iocs_get
-from app.business.permissions import permissions_check_current_user_has_some_case_access
+from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_case_access
 
 
 class Query(ObjectType):
