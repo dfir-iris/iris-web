@@ -40,8 +40,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseEvidenceSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_requires_case_identifier, ac_api_requires
 from app.util import response_error
 from app.util import response_success
 

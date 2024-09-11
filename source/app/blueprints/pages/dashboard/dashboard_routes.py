@@ -33,7 +33,7 @@ from app.iris_engine.access_control.utils import ac_get_user_case_counts
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
 from app.models.models import GlobalTasks
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 from app.util import not_authenticated_redirection_url
 
 dashboard_blueprint = Blueprint(

@@ -24,7 +24,7 @@ from flask import url_for
 
 from app.forms import SearchForm
 from app.models.authorization import Permissions
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 search_blueprint = Blueprint('search',
                              __name__,

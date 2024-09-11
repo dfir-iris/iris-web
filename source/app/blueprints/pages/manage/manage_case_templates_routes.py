@@ -24,7 +24,7 @@ from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.forms import CaseTemplateForm, AddAssetForm
 from app.models import CaseTemplate
 from app.models.authorization import Permissions
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 from app.util import response_error
 
 manage_case_templates_blueprint = Blueprint('manage_case_templates',

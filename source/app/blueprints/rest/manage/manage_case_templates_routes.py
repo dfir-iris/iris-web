@@ -31,8 +31,7 @@ from app.models import CaseTemplate
 from app.models.authorization import Permissions
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseTemplateSchema
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_requires_case_identifier, ac_api_requires
 from app.util import response_error
 from app.util import response_success
 

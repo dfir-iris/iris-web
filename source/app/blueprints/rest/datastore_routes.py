@@ -46,8 +46,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import DSFileSchema
 from app.schema.marshables import DSPathSchema
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_requires_case_identifier, ac_api_requires
 from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success

@@ -56,7 +56,7 @@ from app.schema.marshables import CaseSchema
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import CaseAssetsSchema
 from app.schema.marshables import IocSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import add_obj_history_entry
 from app.util import response_success

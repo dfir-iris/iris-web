@@ -29,7 +29,7 @@ from app.datamgmt.alerts.alerts_db import get_alert_by_id
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.models.authorization import Permissions
 from app.util import response_error
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 alerts_blueprint = Blueprint(
     'alerts',

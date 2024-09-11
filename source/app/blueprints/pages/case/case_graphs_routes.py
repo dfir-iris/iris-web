@@ -24,7 +24,7 @@ from flask_wtf import FlaskForm
 
 from app.datamgmt.case.case_db import get_case
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_case_requires
+from app.blueprints.access_controls import ac_case_requires
 
 case_graph_blueprint = Blueprint('case_graph',
                                  __name__,

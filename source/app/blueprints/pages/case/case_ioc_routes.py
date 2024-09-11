@@ -33,7 +33,7 @@ from app.forms import ModalAddCaseAssetForm
 from app.forms import ModalAddCaseIOCForm
 from app.models.authorization import CaseAccessLevel
 from app.models.models import Ioc
-from app.util import ac_case_requires
+from app.blueprints.access_controls import ac_case_requires
 from app.util import response_error
 
 case_ioc_blueprint = Blueprint(

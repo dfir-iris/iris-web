@@ -34,7 +34,7 @@ from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.models import CaseStatus
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_case_requires
+from app.blueprints.access_controls import ac_case_requires
 
 case_blueprint = Blueprint('case',
                            __name__,

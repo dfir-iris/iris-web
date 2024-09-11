@@ -24,7 +24,7 @@ from werkzeug.utils import redirect
 from app.forms import AddIocTypeForm
 from app.models import IocType
 from app.models.authorization import Permissions
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 from app.util import response_error
 
 manage_ioc_type_blueprint = Blueprint('manage_ioc_types',

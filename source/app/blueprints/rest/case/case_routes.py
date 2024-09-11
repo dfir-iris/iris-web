@@ -67,8 +67,7 @@ from app.schema.marshables import TaskLogSchema
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import CaseSchemaForAPIV2
-from app.util import ac_requires_case_identifier
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_requires_case_identifier, ac_api_requires
 from app.util import add_obj_history_entry
 from app.util import ac_api_return_access_denied
 from app.util import response_error

@@ -28,7 +28,7 @@ from app.models import Ioc
 from app.models import IocType
 from app.models.authorization import Permissions
 from app.schema.marshables import IocTypeSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 

@@ -31,8 +31,7 @@ from app.forms import AddCustomerForm
 from app.forms import ContactForm
 from app.models.authorization import Permissions
 from app.schema.marshables import ContactSchema
-from app.util import ac_requires_client_access
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires, ac_requires_client_access
 from app.util import page_not_found
 from app.util import response_error
 

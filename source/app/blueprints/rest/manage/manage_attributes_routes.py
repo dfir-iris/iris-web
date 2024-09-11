@@ -24,7 +24,7 @@ from app.datamgmt.manage.manage_attribute_db import update_all_attributes
 from app.datamgmt.manage.manage_attribute_db import validate_attribute
 from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 

@@ -27,7 +27,7 @@ from app.datamgmt.manage.manage_evidence_types_db import get_evidence_type_by_id
 from app.forms import EvidenceTypeForm
 from app.models.authorization import Permissions
 from app.util import response_error
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 manage_evidence_types_blueprint = Blueprint('manage_evidence_types',
                                             __name__,

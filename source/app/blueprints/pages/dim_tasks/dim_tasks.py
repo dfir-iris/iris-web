@@ -26,8 +26,7 @@ from flask_wtf import FlaskForm
 import app
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.util import ac_case_requires
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_case_requires, ac_requires
 from app.util import response_error
 from iris_interface.IrisInterfaceStatus import IIStatus
 

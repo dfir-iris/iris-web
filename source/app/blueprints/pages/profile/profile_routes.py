@@ -25,7 +25,7 @@ from flask_wtf import FlaskForm
 from app import app
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 profile_blueprint = Blueprint('profile',
                               __name__,

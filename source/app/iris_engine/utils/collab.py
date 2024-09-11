@@ -3,7 +3,7 @@ from flask_socketio import join_room
 
 import app
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_socket_requires
+from app.blueprints.access_controls import ac_socket_requires
 
 
 def collab_notify(case_id: int,

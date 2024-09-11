@@ -24,8 +24,7 @@ from flask import Blueprint
 from app.datamgmt.case.case_events_db import get_case_events_assets_graph
 from app.datamgmt.case.case_events_db import get_case_events_ioc_graph
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_requires_case_identifier
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_requires_case_identifier, ac_api_requires
 from app.util import response_success
 
 case_graph_rest_blueprint = Blueprint('case_graph_rest', __name__)
