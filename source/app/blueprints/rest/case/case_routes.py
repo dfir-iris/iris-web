@@ -427,7 +427,7 @@ def get_cases() -> Response:
     return response_api_success(data=cases)
 
 
-@case_rest_blueprint.route('/api/v2/cases/<int:identifier>')
+@case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['GET'])
 @ac_api_requires()
 def case_routes_get(identifier):
     case = get_case(identifier)
