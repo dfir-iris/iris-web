@@ -1,4 +1,4 @@
-var makeCRCTable = function(){
+const makeCRCTable = function(){
     var c;
     var crcTable = [];
     for(var n =0; n < 256; n++){
@@ -11,7 +11,7 @@ var makeCRCTable = function(){
     return crcTable;
 }
 
-var crc32 = function(str) {
+const crc32 = function(str) {
     var crcTable = window.crcTable || (window.crcTable = makeCRCTable());
     var crc = 0 ^ (-1);
 
@@ -21,3 +21,6 @@ var crc32 = function(str) {
 
     return (crc ^ (-1)) >>> 0;
 };
+
+
+export default crc32;

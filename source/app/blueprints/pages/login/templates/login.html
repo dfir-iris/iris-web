@@ -5,12 +5,12 @@
 
     <link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/assets/css/atlantis.css">
-    <link rel="stylesheet" href="/static/assets/css/login/login.css">
+    <link rel="stylesheet" href="/static/assets/css/login.css">
 
 {% endblock stylesheets %}
 
 {% block content %}
-    <body class="login">
+<body class="login">
     <div class="login__wrapper row">
         <div class="login__left_part col-xs-12 col-md-8">
             <div class="login__logo">
@@ -56,18 +56,7 @@
         </div>
     </div>
 
-    <script>
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#password');
-
-        togglePassword.addEventListener('click', function (e) {
-            // toggle the type attribute
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            // toggle the eye / eye slash icon
-            this.classList.toggle('login__show_password--disabled');
-        });
-    </script>
-    </body>
+    <script type="module" src="/static/assets/js/iris/login.js"></script>
+</body>
 
 {% endblock content %}

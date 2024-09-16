@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import { viteStaticCopy } from 'vite-plugin-static-copy';
+import { svelte } from '@sveltejs/vite-plugin-svelte'
 
 import fs from "node:fs";
 import path from "node:path";
@@ -8,24 +9,33 @@ import { fileURLToPath } from "node:url";
 
 function resolveInputs(directory) {
     const inputs = fs
-        .readdirSync(directory)
-        .map(file => {
-            const filename = path.parse(file).name;
-            const filepath = path.join(directory, file);
+        .readdirSync(directory, { withFileTypes: true, })
+        .reduce((acc, entry) => {
+            if (entry.isFile()) {
+                const file = entry.name;
+                const filename = path.parse(file).name;
+                const filepath = path.join(directory, file);
 
-            return [
-                filename,
-                fileURLToPath(new URL(filepath, import.meta.url)),
-            ];
-        });
+                acc[filename] = fileURLToPath(new URL(filepath, import.meta.url));
+            } else {
+                const subDirectory = entry.name;
+                const filepath = path.join(directory, subDirectory, 'index.js');
 
-    return Object.fromEntries(inputs);
+                if (fs.existsSync(filepath)) {
+                    acc[subDirectory] = fileURLToPath(new URL(filepath, import.meta.url));
+                }
+            }
+
+            return acc;
+        }, {});
+
+    return inputs;
 }
-
 
 export default defineConfig(({ mode }) => {
     const production = (mode === 'production');
     const development = (mode === 'development');
+
 
     return {
         build: {
@@ -33,16 +43,27 @@ export default defineConfig(({ mode }) => {
             manifest: false,
             outDir: 'dist',
             rollupOptions: {
-                input: resolveInputs('./src/'),
+                input: resolveInputs('./src/pages'),
                 output: {
                     manualChunks: undefined,
                     entryFileNames: 'assets/js/iris/[name].js',
+                    chunkFileNames: 'assets/js/chunks/[name]-[hash].js',
+                    assetFileNames: 'assets/[ext]/[name].[ext]',
                 },
                 treeshake: false,
             },
             sourcemap: (development) ? 'inline': false,
         },
+        resolve: {
+            alias: {
+                "$lib": path.resolve("./src/lib"),
+            },
+        },
         plugins: [
+            svelte({
+                emitCss: false,
+                inspector: development,
+            }),
             viteStaticCopy({
                 targets: [
                     // Core
@@ -119,7 +140,7 @@ export default defineConfig(({ mode }) => {
                     {
                         src: 'node_modules/sortablejs/Sortable.min.js',
                         dest: 'assets/js/plugin/sortable/',
-                        rename: 'sortable.min.js'
+                        rename: 'sortable.js',
                     },
                     {
                         src: 'node_modules/vis/dist/vis.min.js',
