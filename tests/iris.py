@@ -28,6 +28,7 @@ API_URL = 'http://127.0.0.1:8000'
 _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
 _IRIS_PATH = Path('..')
 _TEST_DATA_PATH = Path('./data')
+_ADMINISTRATOR_USER_IDENTIFIER = 1
 
 
 class Iris:
@@ -35,7 +36,7 @@ class Iris:
     def __init__(self):
         self._docker_compose = DockerCompose(_IRIS_PATH, 'docker-compose.dev.yml')
         self._api = RestApi(API_URL, _API_KEY)
-        self._administrator = User(API_URL, _API_KEY, 1)
+        self._administrator = User(API_URL, _API_KEY, _ADMINISTRATOR_USER_IDENTIFIER)
         self._user_count = 0
 
     def _wait(self, condition, attempts, sleep_duration=1):

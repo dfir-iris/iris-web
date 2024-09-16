@@ -240,7 +240,6 @@ def view_customers(client_id):
 
 @manage_customers_rest_blueprint.route('/manage/customers/add', methods=['POST'])
 @ac_api_requires(Permissions.customers_write)
-@ac_api_requires_client_access()
 def add_customers():
     if not request.is_json:
         return response_error("Invalid request")
