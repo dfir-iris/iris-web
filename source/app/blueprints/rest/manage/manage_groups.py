@@ -68,11 +68,11 @@ def manage_groups_index():
 def manage_groups_add():
 
     if not request.is_json:
-        return response_error("Invalid request, expecting JSON")
+        return response_error('Invalid request, expecting JSON')
 
     data = request.get_json()
     if not data:
-        return response_error("Invalid request, expecting JSON")
+        return response_error('Invalid request, expecting JSON')
 
     ags = AuthorizationGroupSchema()
 
