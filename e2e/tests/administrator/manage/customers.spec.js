@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-test.use({ storageState: 'playwright/.auth/administrator.json' })
-
 test('should be able to open "Add customer" modal', async ({ page }) => {
     await page.goto('/manage/customers');
     await page.getByRole('button', { name: 'Add customer' }).click();

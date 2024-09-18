@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-test.use({ storageState: 'playwright/.auth/administrator.json' })
-
 test('create case with empty name should present error', async ({ page }) => {
     await page.goto('/dashboard');
     

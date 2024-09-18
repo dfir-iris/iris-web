@@ -1,11 +1,36 @@
 // @ts-check
-const { defineConfig, devices } = require('@playwright/test');
+import { defineConfig, devices } from '@playwright/test';
+import fs from 'node:fs';
 
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
 // require('dotenv').config({ path: path.resolve(__dirname, '.env') });
+
+const BROWSERS = ['Chrome', 'Firefox'];
+const files = fs.readdirSync('tests', { withFileTypes: true });
+const users = files.filter(file => file.isDirectory()).map(file => file.name);
+
+// setup project
+let projects = [{
+  name: 'setup',
+  testMatch: 'auth.setup.js',
+}];
+
+for (const browser of BROWSERS) {
+  for (const user of users) {
+    projects.push({
+      name: `${browser}:${user}`,
+      use: {
+        ...devices[`Desktop ${browser}`],
+        storageState: `playwright/.auth/${user}.json`,
+      },
+      testDir: `./tests/${user}`,
+      dependencies: ['setup'],
+    })
+  }
+}
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -33,52 +58,7 @@ module.exports = defineConfig({
   },
 
   /* Configure projects for major browsers */
-  projects: [
-    // Setup project
-    {
-      name: 'setup',
-      testMatch: /.*\.setup\.js/,
-    },
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
-      dependencies: ['setup'],
-    },
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-      },
-      dependencies: ['setup'],
-    },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
-  ],
+  projects: projects,
 
   /* Run your local dev server before starting the tests */
   // webServer: {
