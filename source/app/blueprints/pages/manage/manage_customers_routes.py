@@ -129,7 +129,6 @@ def view_customer_modal(client_id, caseid, url_redir):
 
 @manage_customers_blueprint.route('/manage/customers/add/modal', methods=['GET'])
 @ac_requires(Permissions.customers_read, no_cid_required=True)
-@ac_requires_client_access()
 def add_customers_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
