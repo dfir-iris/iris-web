@@ -576,7 +576,7 @@ class TestsRest(TestCase):
     def test_create_customer_should_return_200_when_user_has_customer_write_right(self):
         body = {
             'group_name': 'Customer create',
-            'group_description': 'Group with customer_write right',
+            'group_description': 'Group with customers_write right',
             'group_permissions': [_PERMISSION_CUSTOMERS_WRITE]
         }
         response = self._subject.create('/manage/groups/add', body).json()
