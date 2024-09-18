@@ -27,7 +27,7 @@ from app import app
 from app.forms import AddAssetForm
 from app.models.authorization import Permissions
 from app.models.models import AssetsType
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 from app.util import response_error
 
 manage_assets_type_blueprint = Blueprint('manage_assets_type',

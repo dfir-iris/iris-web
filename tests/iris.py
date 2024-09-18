@@ -35,7 +35,7 @@ class Iris:
     def __init__(self):
         self._docker_compose = DockerCompose(_IRIS_PATH, 'docker-compose.dev.yml')
         self._api = RestApi(API_URL, _API_KEY)
-        self._administrator = User(API_URL, _API_KEY)
+        self._administrator = User(API_URL, _API_KEY, 1)
         self._user_count = 0
 
     def _wait(self, condition, attempts, sleep_duration=1):
@@ -107,7 +107,7 @@ class Iris:
             'user_password': 'aA.1234567890'
         }
         user = self._api.post('/manage/users/add', body).json()
-        return User(API_URL, user['data']['user_api_key'])
+        return User(API_URL, user['data']['user_api_key'], user['data']['id'])
 
     def create_dummy_user(self):
         self._user_count += 1

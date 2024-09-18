@@ -27,7 +27,7 @@ from app.forms import AddAssetForm
 from app.forms import AttributeForm
 from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 from app.util import response_error
 
 manage_attributes_blueprint = Blueprint('manage_attributes', __name__, template_folder='templates')

@@ -15,32 +15,15 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import app
+from flask_socketio import join_room
+
+from app import socket_io
+from app.blueprints.access_controls import ac_socket_requires
+from app.models.authorization import CaseAccessLevel
 
 
-class BusinessProcessingError(Exception):
-
-    def __init__(self, message, data=None):
-        self._message = message
-        self._data = data
-
-    def get_message(self):
-        return self._message
-
-    def get_data(self):
-        return self._data
-
-
-class ObjectNotFoundError(BusinessProcessingError):
-
-    def __init__(self):
-        super().__init__('Object not found')
-
-
-class UnhandledBusinessError(BusinessProcessingError):
-
-    def __init__(self, message, data=None):
-        self._message = message
-        self._data = data
-        app.logger.exception(message)
-        app.logger.exception(data)
+@socket_io.on('join-case-obj-notif')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_join_case_obj_notif(data):
+    room = data['channel']
+    join_room(room=room)

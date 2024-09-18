@@ -25,7 +25,7 @@ from app.datamgmt.datastore.datastore_db import datastore_get_file
 from app.datamgmt.datastore.datastore_db import datastore_get_path_node
 from app.forms import ModalDSFileForm
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_case_requires
+from app.blueprints.access_controls import ac_case_requires
 from app.util import response_error
 
 datastore_blueprint = Blueprint(

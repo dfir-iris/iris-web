@@ -25,7 +25,7 @@ from app.datamgmt.alerts.alerts_db import get_alert_resolution_list
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.schema.marshables import AlertStatusSchema
 from app.schema.marshables import AlertResolutionSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 

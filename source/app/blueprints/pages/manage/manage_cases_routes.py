@@ -40,7 +40,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseDetailsSchema
 from app.util import ac_api_return_access_denied
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 from app.util import response_error
 
 manage_cases_blueprint = Blueprint('manage_case',

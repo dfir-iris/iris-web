@@ -50,17 +50,15 @@ from app.models.authorization import Permissions
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
 from app.util import add_obj_history_entry
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import response_error
 from app.util import response_success
 from app.business.cases import cases_delete
 from app.business.cases import cases_update
 from app.business.cases import cases_create
-from app.business.permissions import permissions_check_current_user_has_some_case_access
 from app.business.errors import BusinessProcessingError
-from app.business.errors import PermissionDeniedError
 
 manage_cases_rest_blueprint = Blueprint('manage_case_rest', __name__)
 
@@ -151,14 +149,12 @@ def manage_case_filter() -> Response:
 @manage_cases_rest_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
 @endpoint_deprecated('DELETE', '/api/v2/cases/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
-def api_delete_case(cur_id):
-    try:
-        permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
-    except PermissionDeniedError:
-        return ac_api_return_access_denied(caseid=cur_id)
+def api_delete_case(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
 
     try:
-        cases_delete(cur_id)
+        cases_delete(identifier)
         return response_success('Case successfully deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
@@ -270,7 +266,8 @@ def api_list_case():
 @manage_cases_rest_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
 def update_case_info(cur_id):
-    permissions_check_current_user_has_some_case_access(cur_id, [CaseAccessLevel.full_access])
+    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=cur_id)
 
     case_schema = CaseSchema()
     try:

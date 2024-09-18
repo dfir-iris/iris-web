@@ -35,8 +35,8 @@ from app.business.iocs import iocs_build_filter_query
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.business.cases import cases_update
-from app.business.permissions import permissions_check_current_user_has_some_permission
-from app.business.permissions import permissions_check_current_user_has_some_case_access
+from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_permission
+from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_case_access
 
 from app.blueprints.graphql.iocs import IOCConnection
 

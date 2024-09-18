@@ -33,7 +33,7 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.forms import AssetBasicForm
 from app.forms import ModalAddCaseAssetForm
 from app.models.authorization import CaseAccessLevel
-from app.util import ac_case_requires
+from app.blueprints.access_controls import ac_case_requires
 from app.util import response_error
 
 case_assets_blueprint = Blueprint('case_assets',
@@ -96,7 +96,7 @@ def asset_view_modal(cur_id, caseid, url_redir):
 
     # Build the form
     form = AssetBasicForm()
-    asset = get_asset(cur_id, caseid)
+    asset = get_asset(cur_id)
 
     form.asset_name.render_kw = {'value': asset.asset_name}
     form.asset_description.data = asset.asset_description
@@ -119,7 +119,7 @@ def case_comment_asset_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_task.case_task', cid=caseid, redirect=True))
 
-    asset = get_asset(cur_id, caseid=caseid)
+    asset = get_asset(cur_id)
     if not asset:
         return response_error('Invalid asset ID')
 

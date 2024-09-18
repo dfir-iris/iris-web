@@ -45,7 +45,7 @@ from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
 from app.schema.marshables import BasicUserSchema
 from app.schema.marshables import UserFullSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import ac_api_return_access_denied
 from app.util import is_authentication_local
 from app.util import response_error

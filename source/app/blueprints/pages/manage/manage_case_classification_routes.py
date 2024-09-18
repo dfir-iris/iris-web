@@ -27,7 +27,7 @@ from app.datamgmt.manage.manage_case_classifications_db import get_case_classifi
 from app.forms import CaseClassificationForm
 from app.models.authorization import Permissions
 from app.util import response_error
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 manage_case_classification_blueprint = Blueprint('manage_case_classifications',
                                                  __name__,

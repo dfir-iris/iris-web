@@ -469,7 +469,7 @@ $(document).ready(function(){
 
     get_tasks();
 
-    setInterval(function() { check_update('tasks/state'); }, 3000);
+    setInterval(function() { check_update('/case/tasks/state'); }, 3000);
 
     shared_id = getSharedLink();
     if (shared_id) {

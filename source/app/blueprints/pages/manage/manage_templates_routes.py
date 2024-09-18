@@ -26,7 +26,7 @@ from app.models.authorization import Permissions
 from app.models.models import CaseTemplateReport
 from app.models.models import Languages
 from app.models.models import ReportType
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 manage_templates_blueprint = Blueprint(
     'manage_templates',

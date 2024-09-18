@@ -24,7 +24,7 @@ from werkzeug.utils import redirect
 from app.iris_engine.access_control.utils import ac_trace_effective_user_permissions
 from app.iris_engine.access_control.utils import ac_trace_user_effective_cases_access_2
 from app.models.authorization import Permissions
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 manage_ac_blueprint = Blueprint(
         'access_control',

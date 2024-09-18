@@ -23,7 +23,7 @@ from app.datamgmt.manage.manage_common import get_severity_by_id
 from app.datamgmt.manage.manage_common import get_severities_list
 from app.datamgmt.manage.manage_common import search_severity_by_name
 from app.schema.marshables import SeveritySchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 

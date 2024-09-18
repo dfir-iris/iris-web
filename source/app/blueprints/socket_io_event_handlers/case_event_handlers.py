@@ -22,7 +22,7 @@ from flask_socketio import emit
 from flask_socketio import join_room
 
 from app import socket_io
-from app.util import ac_socket_requires
+from app.blueprints.access_controls import ac_socket_requires
 from app.models.authorization import CaseAccessLevel
 
 

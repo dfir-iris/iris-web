@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from datetime import datetime
 
 from flask_login import current_user
@@ -24,11 +25,14 @@ from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import get_task_with_assignees
+from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
+from app.models import CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 from marshmallow.exceptions import ValidationError
 
 
@@ -40,16 +44,13 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def tasks_delete(identifier, context_case_identifier):
-    call_modules_hook('on_preload_task_delete', data=identifier, caseid=context_case_identifier)
-    task = get_task_with_assignees(task_id=identifier, case_id=context_case_identifier)
-    if not task:
-        raise BusinessProcessingError('Invalid task ID for this case')
-    delete_task(identifier)
-    update_tasks_state(caseid=context_case_identifier)
-    call_modules_hook('on_postload_task_delete', data=identifier, caseid=context_case_identifier)
-    track_activity(f"deleted task \"{task.task_title}\"")
-    return 'Task deleted'
+def tasks_delete(task: CaseTasks):
+    call_modules_hook('on_preload_task_delete', data=task.id)
+
+    delete_task(task.id)
+    update_tasks_state(caseid=task.task_case_id)
+    call_modules_hook('on_postload_task_delete', data=task.id, caseid=task.task_case_id)
+    track_activity(f'deleted task "{task.task_title}"')
 
 
 def tasks_create(case_identifier, request_json):
@@ -72,14 +73,21 @@ def tasks_create(case_identifier, request_json):
     ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=case_identifier)
 
     if ctask:
-        track_activity(f"added task \"{ctask.task_title}\"", caseid=case_identifier)
-        return "Task '{}' added".format(ctask.task_title), ctask
+        track_activity(f'added task "{ctask.task_title}"', caseid=case_identifier)
+        return f'Task "{ctask.task_title}" added', ctask
     raise BusinessProcessingError("Unable to create task for internal reasons")
+
+
+def tasks_get(identifier) -> CaseTasks:
+    task = get_task(identifier)
+    if not task:
+        raise ObjectNotFoundError()
+    return task
 
 
 def tasks_update(current_identifier, case_identifier, request_json):
 
-    task = get_task_with_assignees(task_id=current_identifier, case_id=case_identifier)
+    task = get_task_with_assignees(task_id=current_identifier)
 
     if task:
         request_data = call_modules_hook('on_preload_task_update', data=request_json, caseid=case_identifier)

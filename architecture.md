@@ -24,6 +24,8 @@ The IRIS backend is a Flask application.
 This is the public API of the `app`. It contains all the endpoints: REST, GraphQL, Flask templates (pages and modals). 
 The requests payloads are converted to business objects from `models` and passed down to calls into the business layer.
 
+Enforcing the permissions, i.e. checking a user is allowed to perform an action, is done in this layer.
+
 Forbidden imports in this layer:
 
 * `from app.datamgmt`, as everything should go through the business layer first 

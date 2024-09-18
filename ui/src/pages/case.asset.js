@@ -538,7 +538,7 @@ $(document).ready(function(){
     }).container().appendTo($('#tables_button'));
 
     get_case_assets();
-    setInterval(function() { check_update('assets/state'); }, 3000);
+    setInterval(function() { check_update('/case/assets/state'); }, 3000);
 
     shared_id = getSharedLink();
     if (shared_id) {

@@ -22,7 +22,7 @@ from werkzeug import Response
 from app import app
 from app.datamgmt.manage.manage_tags_db import get_filtered_tags
 from app.schema.marshables import TagsSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import AlchemyEncoder
 from app.util import response_success
 

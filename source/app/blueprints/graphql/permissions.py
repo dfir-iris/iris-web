@@ -23,10 +23,13 @@ from flask import session
 from flask_login import current_user
 from flask import request
 
-from app.util import get_case_access
+from app.blueprints.access_controls import get_case_access_from_api
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
-from app.business.errors import PermissionDeniedError
+
+
+class PermissionDeniedError(Exception):
+    pass
 
 
 def _deny_permission():
@@ -43,12 +46,13 @@ def permissions_check_current_user_has_some_case_access(case_identifier, access_
         _deny_permission()
 
 
-# TODO: really this and the previous method should be merged.
+# TODO: should remove this method and use permissions_check_current_user_has_some_case_access, only
+#       I am pretty sure the access checks are done with the wrong case identifier for graphql
 #       This one comes from ac_api_case_requires, whereas the other one comes from the way api_delete_case was written...
 # When moving down permission checks from the REST layer into the business layer,
 # this method is used to replace annotation ac_api_case_requires
 def permissions_check_current_user_has_some_case_access_stricter(access_levels):
-    redir, caseid, has_access = get_case_access(request, access_levels, from_api=True)
+    redir, caseid, has_access = get_case_access_from_api(request, access_levels)
 
     # TODO: do we really want to keep the details of the errors, when permission is denied => more work, more complex code?
     if not caseid or redir:

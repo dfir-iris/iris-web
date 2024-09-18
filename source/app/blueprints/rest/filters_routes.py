@@ -25,7 +25,7 @@ from app.datamgmt.filters.filters_db import get_filter_by_id
 from app.datamgmt.filters.filters_db import list_filters_by_type
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import SavedFilterSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_success
 from app.util import response_error
 

@@ -29,7 +29,7 @@ from app.datamgmt.manage.manage_case_classifications_db import search_classifica
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseClassificationSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 

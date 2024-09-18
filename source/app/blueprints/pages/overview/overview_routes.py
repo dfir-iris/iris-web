@@ -22,7 +22,7 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 
 overview_blueprint = Blueprint(
     'overview',

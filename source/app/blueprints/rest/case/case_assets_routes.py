@@ -27,9 +27,13 @@ from app import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
-from app.business.assets import assets_delete, assets_create, assets_get
+from app.business.assets import assets_delete
+from app.business.assets import assets_create
+from app.business.assets import assets_get_detailed
+from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
@@ -47,16 +51,18 @@ from app.datamgmt.manage.manage_attribute_db import get_default_custom_attribute
 from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
 from app.datamgmt.states import update_assets_state
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import AnalysisStatus
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_requires
-from app.util import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_requires_case_identifier, ac_api_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import ac_api_return_access_denied
+
 
 case_assets_rest_blueprint = Blueprint('case_assets_rest', __name__)
 
@@ -129,14 +135,16 @@ def deprecated_add_asset(caseid):
         return response_error(e.get_message())
 
 
-@case_assets_rest_blueprint.route('/api/v2/cases/<int:caseid>/assets', methods=['POST'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@case_assets_rest_blueprint.route('/api/v2/cases/<int:identifier>/assets', methods=['POST'])
 @ac_api_requires()
-def add_asset(caseid):
+def add_asset(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
+
     asset_schema = CaseAssetsSchema()
     try:
-        asset_schema.is_unique_for_cid(caseid, request.get_json())
-        asset, _ = assets_create(caseid, request.get_json())
+        asset_schema.is_unique_for_cid(identifier, request.get_json())
+        _, asset = assets_create(identifier, request.get_json())
         return response_api_created(asset_schema.dump(asset))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
@@ -247,19 +255,21 @@ def case_upload_ioc(caseid):
 @ac_api_requires()
 def deprecated_asset_view(cur_id, caseid):
     try:
-        asset = assets_get(cur_id, caseid)
+        asset = assets_get_detailed(cur_id)
         return response_success(asset)
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
 
-@case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@case_assets_rest_blueprint.route('/api/v2/assets/<int:identifier>', methods=['GET'])
 @ac_api_requires()
-def asset_view(cur_id, caseid):
+def asset_view(identifier):
     try:
-        asset = assets_get(cur_id, caseid)
-        return response_api_created(asset)
+        asset = assets_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=asset.case_id)
+
+        return response_api_success(asset)
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
@@ -269,7 +279,7 @@ def asset_view(cur_id, caseid):
 @ac_api_requires()
 def asset_update(cur_id, caseid):
     try:
-        asset = get_asset(cur_id, caseid)
+        asset = get_asset(cur_id)
         if not asset:
             return response_error("Invalid asset ID for this case")
 
@@ -310,18 +320,25 @@ def asset_update(cur_id, caseid):
 @ac_api_requires()
 def deprecated_asset_delete(cur_id, caseid):
     try:
-        assets_delete(cur_id, caseid)
-        return response_success("Deleted")
+        asset = assets_get(cur_id)
+        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=asset.case_id)
+
+        assets_delete(asset)
+        return response_success('Deleted')
     except BusinessProcessingError as _:
-        return response_error("Invalid asset ID for this case")
+        return response_error('Invalid asset ID for this case')
 
 
-@case_assets_rest_blueprint.route('/api/v2/assets/<int:cur_id>', methods=['DELETE'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@case_assets_rest_blueprint.route('/api/v2/assets/<int:identifier>', methods=['DELETE'])
 @ac_api_requires()
-def asset_delete(cur_id, caseid):
+def asset_delete(identifier):
     try:
-        assets_delete(cur_id, caseid)
+        asset = assets_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=asset.case_id)
+
+        assets_delete(asset)
         return response_api_deleted()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
@@ -343,7 +360,7 @@ def case_comment_asset_list(cur_id, caseid):
 @ac_api_requires()
 def case_comment_asset_add(cur_id, caseid):
     try:
-        asset = get_asset(cur_id, caseid=caseid)
+        asset = get_asset(cur_id)
         if not asset:
             return response_error('Invalid asset ID')
 

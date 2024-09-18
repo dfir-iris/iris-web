@@ -145,45 +145,51 @@ function save_ioc() {
 function get_case_ioc() {
     show_loader();
 
-    get_request_api("/case/ioc/list")
-    .done(function (response) {
-        if (response.status == 'success') {
-            if (response.data != null) {
-                jsdata = response.data;
-                Table.clear();
-                Table.rows.add(jsdata.ioc);
-
-                set_last_state(jsdata.state);
-                $('#ioc_table_wrapper').on('click', function(e){
-                    if($('.popover').length>1)
-                        $('.popover').popover('hide');
-                        $(e.target).popover('toggle');
-                    });
-
-                $('#ioc_table_wrapper').show();
-                Table.columns.adjust().draw();
-                load_menu_mod_options('ioc', Table, delete_ioc);
-                hide_loader();
-                Table.responsive.recalc();
-                $('[data-toggle="popover"]').popover();
-
-                $(document)
-                    .off('click', '.ioc_details_link')
-                    .on('click', '.ioc_details_link', function(event) {
-                    event.preventDefault();
-                    let ioc_id = $(this).data('ioc_id');
-                    edit_ioc(ioc_id);
-                });
-
-
-            } else {
-                Table.clear().draw();
-                swal("Oh no !", data.message, "error")
-            }
-        } else {
-            Table.clear().draw()
+    get_request_data_api('/case/ioc/state').done((response, textStatus) => {
+        if (textStatus !== 'success') {
+            return;
         }
-    })
+        set_last_state(response.data);
+    });
+
+    get_request_data_api(`/api/v2/cases/${get_caseid()}/iocs`)
+    .done((data, textStatus) => {
+        if (textStatus !== 'success') {
+            Table.clear().draw()
+            return;
+        }
+
+        if (data == null) {
+            Table.clear().draw();
+            swal("Oh no !", data.message, "error")
+            return;
+        }
+
+        Table.clear();
+        Table.rows.add(data.iocs);
+
+        $('#ioc_table_wrapper').on('click', function(e){
+            if($('.popover').length>1)
+                $('.popover').popover('hide');
+                $(e.target).popover('toggle');
+            });
+
+        $('#ioc_table_wrapper').show();
+        Table.columns.adjust().draw();
+        load_menu_mod_options('ioc', Table, delete_ioc);
+        hide_loader();
+        Table.responsive.recalc();
+        $('[data-toggle="popover"]').popover();
+
+        $(document)
+            .off('click', '.ioc_details_link')
+            .on('click', '.ioc_details_link', function(event) {
+            event.preventDefault();
+            let ioc_id = $(this).data('ioc_id');
+
+            edit_ioc(ioc_id);
+        });
+    });
 }
 
 
@@ -389,7 +395,7 @@ $(document).ready(function(){
           { "data": "ioc_type",
            "render": function (data, type, row, meta) {
               if (type === 'display') {
-                data = sanitizeHTML(data);
+                data = sanitizeHTML(data.type_name);
               }
               return data;
               }
@@ -431,11 +437,12 @@ $(document).ready(function(){
             }
           },
           {
-            "data": "tlp_name",
+            "data": "tlp",
             "render": function(data, type, row, meta) {
                if (type === 'display') {
-                    data = sanitizeHTML(data);
-                  data = '<span class="badge badge-'+ row['tlp_bscolor'] +' ml-2">tlp:' + data + '</span>';
+                  bscolor = data.tlp_bscolor;
+                  data = sanitizeHTML(data.tlp_name);
+                  data = '<span class="badge badge-'+ bscolor +' ml-2">tlp:' + data + '</span>';
               }
               return data;
             }
@@ -477,7 +484,8 @@ $(document).ready(function(){
 }).container().appendTo($('#tables_button'));
 
     get_case_ioc();
-    setInterval(function() { check_update('ioc/state'); }, 3000);
+    // TODO instead of polling, could work with socket IO events (would maybe be more reactive timewise)
+    setInterval(function() { check_update('/case/ioc/state'); }, 3000);
 
     shared_id = getSharedLink();
     if (shared_id) {

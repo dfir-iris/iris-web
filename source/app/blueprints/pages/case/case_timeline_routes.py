@@ -36,7 +36,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.util import ac_case_requires
+from app.blueprints.access_controls import ac_case_requires
 from app.util import response_error
 
 _EVENT_TAGS = ['Network', 'Server', 'ActiveDirectory', 'Computer', 'Malware', 'User Interaction']

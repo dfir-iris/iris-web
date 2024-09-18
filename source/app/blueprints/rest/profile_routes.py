@@ -34,7 +34,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
 from app.schema.marshables import BasicUserSchema
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 from app.util import endpoint_removed

@@ -24,13 +24,14 @@ from app import db
 from app.models import Ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
-from app.datamgmt.case.case_iocs_db import get_iocs_by_case
+from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.datamgmt.states import update_ioc_state
 from app.schema.marshables import IocSchema
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_iocs_db import get_ioc
 
 
@@ -42,8 +43,11 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def iocs_get_by_identifier(ioc_identifier):
-    return get_ioc(ioc_identifier)
+def iocs_get(ioc_identifier) -> Ioc:
+    ioc = get_ioc(ioc_identifier)
+    if not ioc:
+        raise ObjectNotFoundError()
+    return ioc
 
 
 def iocs_create(request_json, case_identifier):
@@ -70,34 +74,34 @@ def iocs_create(request_json, case_identifier):
 
 
 # TODO most probably this method should not require a case_identifier... Since the IOC gets modified for all cases...
-def iocs_update(identifier, request_json, case_identifier):
+def iocs_update(identifier, request_json):
 
     try:
-        ioc = get_ioc(identifier, caseid=case_identifier)
+        ioc = get_ioc(identifier)
         if not ioc:
             raise BusinessProcessingError('Invalid IOC ID for this case')
 
         # TODO ideally schema validation should be done before, outside the business logic in the REST API
         #      for that the hook should be called after schema validation
-        request_data = call_modules_hook('on_preload_ioc_update', data=request_json, caseid=case_identifier)
+        request_data = call_modules_hook('on_preload_ioc_update', data=request_json, caseid=ioc.case_id)
 
         # validate before saving
         ioc_schema = IocSchema()
         request_data['ioc_id'] = identifier
-        request_data['case_id'] = case_identifier
+        request_data['case_id'] = ioc.case_id
         ioc_sc = ioc_schema.load(request_data, instance=ioc, partial=True)
         ioc_sc.user_id = current_user.id
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             raise BusinessProcessingError('Not a valid IOC type')
 
-        update_ioc_state(case_identifier)
+        update_ioc_state(ioc.case_id)
         db.session.commit()
 
-        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=case_identifier)
+        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=ioc.case_id)
 
         if ioc_sc:
-            track_activity(f'updated ioc "{ioc_sc.ioc_value}"', caseid=case_identifier)
+            track_activity(f'updated ioc "{ioc_sc.ioc_value}"', caseid=ioc.case_id)
             return ioc, f'Updated ioc "{ioc_sc.ioc_value}"'
 
         raise BusinessProcessingError('Unable to update ioc for internal reasons')
@@ -110,24 +114,19 @@ def iocs_update(identifier, request_json, case_identifier):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def iocs_delete(identifier, case_identifier):
+def iocs_delete(ioc: Ioc):
+    call_modules_hook('on_preload_ioc_delete', data=ioc.ioc_id)
 
-    call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
-    ioc = get_ioc(identifier, case_identifier)
+    delete_ioc(ioc)
 
-    if not ioc:
-        raise BusinessProcessingError('Not a valid IOC for this case')
+    call_modules_hook('on_postload_ioc_delete', data=ioc.ioc_id, caseid=ioc.case_id)
 
-    delete_ioc(ioc, case_identifier)
-
-    call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=case_identifier)
-
-    track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=case_identifier)
-    return f'IOC {identifier} deleted'
+    track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=ioc.case_id)
+    return f'IOC {ioc.ioc_id} deleted'
 
 
 def iocs_exports_to_json(case_id):
-    iocs = get_iocs_by_case(case_id)
+    iocs = get_iocs(case_id)
 
     iocs_serialized = IocSchema().dump(iocs, many=True)
 

@@ -28,7 +28,7 @@ from app.datamgmt.iris_engine.modules_db import is_mod_configured
 from app.forms import AddModuleForm
 from app.forms import UpdateModuleParameterForm
 from app.models.authorization import Permissions
-from app.util import ac_requires
+from app.blueprints.access_controls import ac_requires
 from app.util import response_error
 
 manage_modules_blueprint = Blueprint(

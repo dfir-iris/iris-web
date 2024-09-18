@@ -19,7 +19,7 @@
 from flask import Blueprint
 
 from app import app
-from app.util import ac_api_requires
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_success
 
 rest_api_blueprint = Blueprint('rest_api', __name__)

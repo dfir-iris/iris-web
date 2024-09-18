@@ -1402,7 +1402,7 @@ $(document).ready(function(){
 
     get_or_filter_tm();
 
-    setInterval(function() { check_update('timeline/state'); }, 3000);
+    setInterval(function() { check_update('/case/timeline/state'); }, 3000);
 
     collab_case.on('case-obj-notif', function(data) {
         let js_data = JSON.parse(data);
