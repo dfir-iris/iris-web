@@ -14,5 +14,8 @@
     "@playwright/test": "^1.47.0",
     "@types/node": "^22.5.4",
     "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
   }
 }

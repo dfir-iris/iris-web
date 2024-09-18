@@ -1,22 +1,27 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
-
-// TODO SSOT: this could be directly read from the .env file
-const _ADMINISTRATOR_USERNAME = 'administrator';
-const _ADMINISTRATOR_PASSWORD = 'MySuperAdminPassword!';
-const _ADMINISTRATOR_API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594';
-
-const _PERMISSION_CUSTOMERS_READ = 0x40;
+import dotenv from 'dotenv';
+import fs from 'node:fs';
 
 const _API_URL = 'http://127.0.0.1:8000';
 
+const _PERMISSION_CUSTOMERS_READ = 0x40;
+
+const _ADMINISTRATOR_USERNAME = 'administrator';
+
 let apiContext;
+let administrator_password;
 
 setup.beforeAll(async ({ playwright }) => {
+    const envFile = fs.readFileSync('../.env');
+    const env = dotenv.parse(envFile);
+
+    administrator_password = env.IRIS_ADM_PASSWORD
+
     apiContext = await playwright.request.newContext({
         baseURL: _API_URL,
         extraHTTPHeaders: {
-            'Authorization': `Bearer ${_ADMINISTRATOR_API_KEY}`,
+            'Authorization': `Bearer ${env.IRIS_ADM_API_KEY}`,
             'Content-Type': 'application/json'
         },
     });
@@ -35,7 +40,7 @@ async function authenticate(page, login, password) {
 }
 
 setup('authenticate as administrator', async ({ page }) => {
-    await authenticate(page, _ADMINISTRATOR_USERNAME, _ADMINISTRATOR_PASSWORD);
+    await authenticate(page, _ADMINISTRATOR_USERNAME, administrator_password);
 });
 
 setup('authenticate as user with customers read rights', async ({ page }) => {
