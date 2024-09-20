@@ -57,8 +57,8 @@ git checkout v2.4.12
 # Copy the environment file 
 cp .env.model .env
 
-# Build the dockers
-docker compose build
+# Pull the dockers
+docker compose pull
 
 # Run IRIS 
 docker compose up
