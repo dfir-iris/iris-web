@@ -59,6 +59,7 @@ from app.models import Tlp
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
+from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.util import ac_api_return_access_denied
@@ -129,12 +130,11 @@ def list_ioc(identifier):
     if filtered_iocs is None:
         return response_api_error('Filtering error')
 
-    iocs = IocSchema().dump(filtered_iocs.items, many=True)
+    iocs = IocSchemaForAPIV2().dump(filtered_iocs.items, many=True)
 
     for ioc in iocs:
         ial = get_ioc_links(ioc['ioc_id'], identifier)
         ioc['link'] = [row._asdict() for row in ial]
-        ioc['tlp'] = Tlp.query.filter(Tlp.tlp_id == ioc['ioc_tlp_id']).first()
 
     iocs = {
         'total': filtered_iocs.total,

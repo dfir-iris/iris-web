@@ -589,3 +589,11 @@ class TestsRest(TestCase):
         response = user.create('/manage/customers/add', body)
 
         self.assertEqual(200, response.status_code)
+
+    def test_get_iocs_should_include_tlp_information(self):
+        case_identifier = self._subject.create_dummy_case()
+        tlp_identifier = 2
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': tlp_identifier, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
+        self.assertEqual(tlp_identifier, response['iocs'][0]['tlp']['tlp_id'])

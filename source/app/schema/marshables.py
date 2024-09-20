@@ -967,6 +967,107 @@ class IocTypeSchema(ma.SQLAlchemyAutoSchema):
         return data
 
 
+class TlpSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Tlp
+        load_instance = True
+        include_fk = True
+        unknown = EXCLUDE
+
+
+class IocSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing IOC objects.
+
+    This schema defines the fields to include when serializing and deserializing IOC objects.
+    It includes fields for the IOC value, enrichment data, and the IOC type associated with the IOC.
+    It also includes methods for verifying the format of the IOC value and merging custom attributes.
+
+    """
+    ioc_value: str = auto_field('ioc_value', required=True, validate=Length(min=1), allow_none=False)
+    ioc_enrichment: Optional[Dict[str, Any]] = auto_field('ioc_enrichment', required=False)
+    ioc_type: Optional[IocTypeSchema] = ma.Nested(IocTypeSchema, required=False)
+    tlp = ma.Nested(TlpSchema)
+
+    class Meta:
+        model = Ioc
+        load_instance = True
+        include_fk = True
+        unknown = EXCLUDE
+
+    @pre_load
+    def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Verifies the format of the IOC value and associated IOC type.
+
+        This method verifies that the IOC value specified in the data matches the expected format for the associated
+        IOC type. If the value does not match the expected format, it raises a validation error. It also verifies that
+        the specified IOC type ID and TLP ID are valid.
+
+        Args:
+            data: The data to verify.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The verified data.
+
+        Raises:
+            ValidationError: If the IOC value does not match the expected format or if the specified IOC type ID or
+            TLP ID are invalid.
+
+        """
+        if data.get('ioc_type_id'):
+            assert_type_mml(input_var=data.get('ioc_type_id'), field_name="ioc_type_id", type=int)
+            ioc_type = IocType.query.filter(IocType.type_id == data.get('ioc_type_id')).first()
+            if not ioc_type:
+                raise marshmallow.exceptions.ValidationError("Invalid IOC type ID", field_name="ioc_type_id")
+
+            if ioc_type.type_validation_regex:
+                if not re.fullmatch(ioc_type.type_validation_regex, data.get('ioc_value'), re.IGNORECASE):
+                    error = f"The input doesn\'t match the expected format " \
+                            f"(expected: {ioc_type.type_validation_expect or ioc_type.type_validation_regex})"
+                    raise marshmallow.exceptions.ValidationError(error, field_name="ioc_ioc_value")
+
+        if data.get('ioc_tlp_id'):
+            assert_type_mml(input_var=data.get('ioc_tlp_id'), field_name="ioc_tlp_id", type=int,
+                            max_val=POSTGRES_INT_MAX)
+
+            Tlp.query.filter(Tlp.tlp_id == data.get('ioc_tlp_id')).count()
+
+        if data.get('ioc_tags'):
+            for tag in data.get('ioc_tags').split(','):
+                if not isinstance(tag, str):
+                    raise marshmallow.exceptions.ValidationError("All items in list must be strings",
+                                                                 field_name="ioc_tags")
+                add_db_tag(tag.strip())
+
+        return data
+
+    @post_load
+    def custom_attributes_merge(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        """Merges custom attributes with the IOC data.
+
+        This method merges any custom attributes specified in the data with the IOC data. If no custom attributes are
+        specified, it returns the original data.
+
+        Args:
+            data: The data to merge.
+            kwargs: Additional keyword arguments.
+
+        Returns:
+            The merged data.
+
+        """
+        new_attr = data.get('custom_attributes')
+        if new_attr is not None:
+            assert_type_mml(input_var=data.get('ioc_id'),
+                            field_name="ioc_id",
+                            type=int,
+                            allow_none=True)
+
+            data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('ioc_id'), 'ioc')
+
+        return data
+
+
 class IocSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing IOC objects.
 
