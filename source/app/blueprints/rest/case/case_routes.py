@@ -369,16 +369,10 @@ def create_case():
 def get_cases() -> Response:
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get('case_ids', None, type=str)
+    case_ids_str = request.args.get('case_ids', None, type=parse_comma_separated_identifiers)
     order_by = request.args.get('order_by', type=str)
     sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
-    if case_ids_str:
-        try:
-            case_ids_str = parse_comma_separated_identifiers(case_ids_str)
-
-        except ValueError:
-            return response_api_error('Invalid case id')
 
     case_customer_id = request.args.get('case_customer_id', None, type=str)
     case_name = request.args.get('case_name', None, type=str)
