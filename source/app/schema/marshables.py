@@ -51,6 +51,7 @@ from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
+from app.datamgmt.case.case_iocs_db import get_ioc_links
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models import AnalysisStatus
 from app.models import CaseClassification
@@ -987,6 +988,12 @@ class IocSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     ioc_enrichment: Optional[Dict[str, Any]] = auto_field('ioc_enrichment', required=False)
     ioc_type: Optional[IocTypeSchema] = ma.Nested(IocTypeSchema, required=False)
     tlp = ma.Nested(TlpSchema)
+
+    def get_link(self, ioc):
+        ial = get_ioc_links(ioc.ioc_id)
+        return [row._asdict() for row in ial]
+
+    link = ma.Method('get_link')
 
     class Meta:
         model = Ioc
@@ -2580,8 +2587,8 @@ class CaseDetailsSchema(ma.SQLAlchemyAutoSchema):
         cp = CaseProtagonistSchema(many=True).dump(cp)
         return cp
 
-    status_name = ma.Method("get_status_name")
-    protagonists = ma.Method("get_protagonists")
+    status_name = ma.Method('get_status_name')
+    protagonists = ma.Method('get_protagonists')
 
     class Meta:
         model = Cases

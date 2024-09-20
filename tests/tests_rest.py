@@ -597,3 +597,13 @@ class TestsRest(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
         self.assertEqual(tlp_identifier, response['iocs'][0]['tlp']['tlp_id'])
+
+    def test_get_iocs_should_include_link_to_other_cases_with_same_value_type_ioc(self):
+        case_identifier1 = self._subject.create_dummy_case()
+        case_identifier2 = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier1}/iocs', body).json()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 1, 'ioc_value': '8.8.8.8', 'ioc_description': 'another', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier2}/iocs', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier2}/iocs').json()
+        self.assertEqual(case_identifier1, response['iocs'][0]['link'][0]['case_id'])

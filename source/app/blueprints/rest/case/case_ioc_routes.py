@@ -55,7 +55,6 @@ from app.datamgmt.states import get_ioc_state
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Tlp
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
@@ -131,10 +130,6 @@ def list_ioc(identifier):
         return response_api_error('Filtering error')
 
     iocs = IocSchemaForAPIV2().dump(filtered_iocs.items, many=True)
-
-    for ioc in iocs:
-        ial = get_ioc_links(ioc['ioc_id'])
-        ioc['link'] = [row._asdict() for row in ial]
 
     iocs = {
         'total': filtered_iocs.total,
