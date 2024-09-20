@@ -68,11 +68,11 @@ def manage_groups_index():
 def manage_groups_add():
 
     if not request.is_json:
-        return response_error("Invalid request, expecting JSON")
+        return response_error('Invalid request, expecting JSON')
 
     data = request.get_json()
     if not data:
-        return response_error("Invalid request, expecting JSON")
+        return response_error('Invalid request, expecting JSON')
 
     ags = AuthorizationGroupSchema()
 
@@ -85,9 +85,9 @@ def manage_groups_add():
         db.session.commit()
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
-    track_activity(message=f"added group {ags_c.group_name}", ctx_less=True)
+    track_activity(message=f'added group {ags_c.group_name}', ctx_less=True)
 
     return response_success('', data=ags.dump(ags_c))
 

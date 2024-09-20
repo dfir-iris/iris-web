@@ -7,11 +7,15 @@
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:report": "playwright show-report",
+    "record": "playwright codegen",
     "test": "npm run start && npm run e2e && npm run stop"
   },
   "devDependencies": {
     "@playwright/test": "^1.47.0",
     "@types/node": "^22.5.4",
     "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
   }
 }

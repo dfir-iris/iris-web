@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('successfully loads', async ({ page }) => {
+test('create case with empty name should present error', async ({ page }) => {
     await page.goto('/dashboard');
     
     // FIXME: Should be a button instead of a link
@@ -10,4 +10,3 @@ test('successfully loads', async ({ page }) => {
     // FIXME: Locator should be: page.getByRole('alert', { name: 'Invalid data type' });
     await expect(page.getByText('Invalid data type')).toBeVisible();
 });
-
