@@ -82,7 +82,7 @@ def case_list_ioc(caseid):
         out = ioc._asdict()
 
         # Get links of the IoCs seen in other cases
-        ial = get_ioc_links(ioc.ioc_id, caseid)
+        ial = get_ioc_links(ioc.ioc_id)
 
         out['link'] = [row._asdict() for row in ial]
         # Legacy, must be changed next version
@@ -133,7 +133,7 @@ def list_ioc(identifier):
     iocs = IocSchemaForAPIV2().dump(filtered_iocs.items, many=True)
 
     for ioc in iocs:
-        ial = get_ioc_links(ioc['ioc_id'], identifier)
+        ial = get_ioc_links(ioc['ioc_id'])
         ioc['link'] = [row._asdict() for row in ial]
 
     iocs = {

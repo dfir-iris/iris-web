@@ -99,7 +99,7 @@ def get_detailed_iocs(caseid):
     return detailed_iocs
 
 
-def get_ioc_links(ioc_id, caseid):
+def get_ioc_links(ioc_id):
     search_condition = and_(Cases.case_id.in_([]))
 
     user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
