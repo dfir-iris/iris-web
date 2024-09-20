@@ -479,7 +479,7 @@ def build_filter_case_query(current_user_id,
         return query.join(Tags, Tags.tag_title.ilike(f'%{case_tags}%')).filter(CaseTags.case_id == Cases.case_id)
 
     if sort_by is not None:
-        order_func = desc if sort_dir == "desc" else asc
+        order_func = desc if sort_dir == 'desc' else asc
 
         if sort_by == 'owner':
             query = query.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
