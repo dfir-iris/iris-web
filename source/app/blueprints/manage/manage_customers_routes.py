@@ -44,6 +44,7 @@ from app.datamgmt.client.client_db import update_contact
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_users_db import add_user_to_customer
 from app.forms import AddCustomerForm
 from app.forms import ContactForm
 from app.iris_engine.utils.tracker import track_activity
@@ -363,6 +364,9 @@ def add_customers():
         return response_error(f'An error occurred during customer addition. {e}')
 
     track_activity(f"Added customer {client.name}", ctx_less=True)
+
+    # Associate the created customer with the current user
+    add_user_to_customer(current_user.id, client.client_id)
 
     # Return the customer
     client_schema = CustomerSchema()
