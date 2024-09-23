@@ -174,7 +174,7 @@ def case_add_ioc(identifier):
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=identifier)
 
-    ioc_schema = IocSchema()
+    ioc_schema = IocSchemaForAPIV2()
 
     try:
         ioc, _ = iocs_create(request.get_json(), identifier)
