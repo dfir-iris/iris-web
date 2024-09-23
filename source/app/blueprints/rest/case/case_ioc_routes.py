@@ -333,7 +333,7 @@ def deprecated_case_view_ioc(cur_id, caseid):
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['GET'])
 @ac_api_requires()
 def get_case_ioc(identifier):
-    ioc_schema = IocSchema()
+    ioc_schema = IocSchemaForAPIV2()
     try:
         ioc = iocs_get(identifier)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
