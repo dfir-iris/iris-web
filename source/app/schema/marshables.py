@@ -976,6 +976,7 @@ class TlpSchema(ma.SQLAlchemyAutoSchema):
         unknown = EXCLUDE
 
 
+# TODO try to remove IocSchema and replace it by this new schema
 class IocSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing IOC objects.
 
