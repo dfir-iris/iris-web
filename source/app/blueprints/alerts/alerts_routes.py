@@ -494,7 +494,7 @@ def alerts_batch_delete_route() -> Response:
     if not success:
         return response_error(logs)
     
-    alert = call_modules_hook('on_postload_alert_delete', data={"alert_ids": {alert_ids}})
+    alert = call_modules_hook('on_postload_alert_delete', data={"alert_ids": alert_ids})
 
     track_activity(f"deleted alerts #{','.join(str(alert_id) for alert_id in alert_ids)}", ctx_less=True)
 

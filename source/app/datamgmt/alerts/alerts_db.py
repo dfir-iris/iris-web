@@ -581,7 +581,8 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
                 tmp_asset = CaseAssets.query.filter(
-                    CaseAssets.asset_uuid == alert_asset.asset_uuid
+                    CaseAssets.asset_uuid == alert_asset.asset_uuid,
+                    CaseAssets.case_id == case.case_id
                 ).first()
 
                 if tmp_asset:
