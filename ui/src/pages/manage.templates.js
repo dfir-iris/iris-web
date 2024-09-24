@@ -1,5 +1,5 @@
 function add_report_template() {
-    url = 'templates/add/modal' + case_param();
+    url = '/manage/templates/add/modal' + case_param();
     $('#modal_report_template_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -23,8 +23,8 @@ function add_report_template() {
             var formData = new FormData(this);
 
             $.ajax({
-                url: 'templates/add' + case_param(),
-                type: "POST",
+                url: '/manage/templates/add' + case_param(),
+                type: 'POST',
                 data: formData,
                 cache: false,
                 contentType: false,
