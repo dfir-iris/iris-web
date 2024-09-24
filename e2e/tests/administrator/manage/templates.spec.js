@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-test('should not fail', async ({ page }) => {
+test('should create report template', async ({ page }) => {
     await page.goto('/manage/templates');
     await page.getByRole('button', { name: 'Add template' }).click();
 
