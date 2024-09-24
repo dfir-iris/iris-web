@@ -1,5 +1,4 @@
 import { test as setup, expect } from '@playwright/test';
-import path from 'path';
 import dotenv from 'dotenv';
 import fs from 'node:fs';
 
@@ -35,7 +34,7 @@ async function authenticate(page, login, password) {
     // FIXME: It should be: await page.waitForURL('/dashboard'); No wildcard.
     // Wait until the page receives the cookies.
     await page.waitForURL('/dashboard*');
-    const authFile = path.join(__dirname, `../playwright/.auth/${login}.json`);
+    const authFile = `./playwright/.auth/${login}.json`;
     await page.context().storageState({ path: authFile });
 }
 
