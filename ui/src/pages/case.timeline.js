@@ -92,7 +92,7 @@ function add_event(parent_event_id = null) {
 
             data_sent['custom_attributes'] = attributes;
 
-            post_request_api('timeline/events/add', JSON.stringify(data_sent), true)
+            post_request_api('/case/timeline/events/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.hash = data.data.event_id;
