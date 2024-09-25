@@ -23,7 +23,7 @@ function add_report_template() {
             var formData = new FormData(this);
 
             $.ajax({
-                url: '/manage/templates/add' + case_param(),
+                url: `/manage/templates/add${case_param()}`,
                 type: 'POST',
                 data: formData,
                 cache: false,
