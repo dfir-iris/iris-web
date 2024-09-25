@@ -1235,7 +1235,7 @@ function init_module_processing_alert(alert_id, hook_name, hook_ui_name, module_
     data['type'] = 'alert';
     data['targets'] = [alert_id];
 
-    post_request_api("/dim/hooks/call", JSON.stringify(data), true)
+    post_request_api('/dim/hooks/call', JSON.stringify(data), true)
     .done(function (data){
         notify_auto_api(data)
     });
@@ -1708,11 +1708,10 @@ async function fetchSavedFilters() {
                     do_deletion_prompt(`Are you sure you want to delete filter #${filterId}?`, true)
                         .then((do_delete) => {
                             if (!do_delete) return;
-                            const url = `/filters/delete/${filterId}`;
                             const data = {
                                 csrf_token: $('#csrf_token').val()
                             };
-                            post_request_api(url, JSON.stringify(data))
+                            post_request_api(`/filters/delete/${filterId}`, JSON.stringify(data))
                                 .then((data) => {
                                     if (notify_auto_api(data)) {
                                         fetchSavedFilters();
@@ -1768,8 +1767,7 @@ $('#saveFilterButton').on('click', function () {
 
     if (!filterName) return;
 
-    const url = '/filters/add';
-    post_request_api(url, JSON.stringify({
+    post_request_api('/filters/add', JSON.stringify({
         filter_name: filterName,
         filter_description: filterDescription,
         filter_data: filterData,
@@ -1777,11 +1775,11 @@ $('#saveFilterButton').on('click', function () {
         filter_type: 'alerts',
         csrf_token: $('#csrf_token').val()
     }))
-        .then(function (data) {
-            if (notify_auto_api(data)) {
-                fetchSavedFilters();
-            }
-        });
+    .then(function (data) {
+        if (notify_auto_api(data)) {
+            fetchSavedFilters();
+        }
+    });
 
     $('#saveFilterModal').modal('hide');
 });
