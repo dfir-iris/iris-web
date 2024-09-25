@@ -68,7 +68,7 @@ function add_new_contact(customer_id) {
 }
 
 function load_customer_stats(customer_id) {
-    get_request_api('/manage/customers/' + customer_id + '/cases')
+    get_request_api(`/manage/customers/${customer_id}/cases`)
     .done((data) => {
         if (api_request_failed(data)) {
             return false;
