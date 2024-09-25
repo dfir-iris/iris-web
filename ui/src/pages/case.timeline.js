@@ -449,7 +449,7 @@ function events_set_attribute(attribute, color) {
             delete original_event['event_comments_map'];
 
             //send updated event to API
-            post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
+            post_request_api(`/case/timeline/events/update/${event_id}`, JSON.stringify(original_event), true)
             .done(function(data) {
                 notify_auto_api(data);
                 if (index === selected_rows.length - 1) {
@@ -487,7 +487,7 @@ function events_bulk_delete() {
             selected_rows.each(function(index) {
                 var object = selected_rows[index];
                 var event_id = object.getAttribute('id').replace("event_","");
-                post_request_api("timeline/events/delete/" + event_id)
+                post_request_api(`/case/timeline/events/delete/${event_id}`)
                 .done(function(data) {
                     notify_auto_api(data);
                     if (index === selected_rows.length - 1) {
@@ -1126,7 +1126,7 @@ function time_converter(){
     data_sent['date_value'] = date_val;
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('timeline/events/convert-date', JSON.stringify(data_sent))
+    post_request_api('/case/timeline/events/convert-date', JSON.stringify(data_sent))
     .done(function(data) {
         if(notify_auto_api(data)) {
             $('#event_date').val(data.data.date);
@@ -1310,7 +1310,6 @@ function fire_upload_csv_events() {
 }
 
 function upload_csv_events() {
-    const api_path =  '/case/timeline/events/csv_upload';
     const modal_dlg = '#modal_upload_csv_events'
     const file_input = '#input_upload_csv_events'
 
@@ -1323,7 +1322,7 @@ function upload_csv_events() {
         data['csrf_token'] = $('#csrf_token').val();
         data['CSVData'] = fileData;
 
-        post_request_api(api_path, JSON.stringify(data), true)
+        post_request_api('/case/timeline/events/csv_upload', JSON.stringify(data), true)
         .done((data) => {
 
             if (notify_auto_api(data)) {
