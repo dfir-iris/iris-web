@@ -248,11 +248,6 @@ function preview_ioc_description(no_btn_update) {
 }
 
 function update_ioc(ioc_id) {
-    update_ioc_ext(ioc_id, true);
-}
-
-/* Update an ioc */
-function update_ioc_ext(ioc_id, do_close) {
     if(!$('form#form_new_ioc').valid()) {
         return false;
     }
@@ -267,11 +262,13 @@ function update_ioc_ext(ioc_id, do_close) {
     has_error = ret[0].length > 0;
     attributes = ret[1];
 
-    if (has_error){return false;}
+    if (has_error){
+        return false;
+    }
     data['ioc_description'] = g_ioc_desc_editor.getValue();
     data['custom_attributes'] = attributes;
 
-    post_request_api('ioc/update/' + ioc_id, JSON.stringify(data), true)
+    post_request_api(`/case/ioc/update/${ioc_id}`, JSON.stringify(data), true)
     .done((data) => {
         if (data.status == 'success') {
             reload_iocs();
@@ -279,10 +276,7 @@ function update_ioc_ext(ioc_id, do_close) {
             $('#submit_new_ioc').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
-
-            if (do_close !== undefined && do_close === true) {
-                $('#modal_add_ioc').modal('hide');
-            }
+            $('#modal_add_ioc').modal('hide');
 
             notify_success(data.message);
 

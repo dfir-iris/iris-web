@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import path from 'node:path';
 import crypto from 'node:crypto';
 
 test.beforeEach(async({ page }) => {
