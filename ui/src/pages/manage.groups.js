@@ -218,7 +218,7 @@ function add_members_to_group(group_id) {
 
 function refresh_group_members(group_id) {
     if (modal_group_table !== undefined) {
-        get_request_api('/manage/groups/' + group_id)
+        get_request_api(`/manage/groups/${group_id}`)
         .done((data) => {
             if(notify_auto_api(data)) {
                 modal_group_table.clear();
@@ -230,7 +230,7 @@ function refresh_group_members(group_id) {
 
 function refresh_group_cac(group_id) {
     if (modal_group_cac_table !== undefined) {
-        get_request_api('/manage/groups/' + group_id)
+        get_request_api(`/manage/groups/${group_id}`)
         .done((data) => {
             if(notify_auto_api(data)) {
                 current_group_cases_access_list = data.data.group_cases_access;

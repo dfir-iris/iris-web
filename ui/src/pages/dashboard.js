@@ -56,7 +56,7 @@ async function update_ureviews_list() {
 
 async function update_utasks_list() {
     $('#utasks_list').empty();
-    return get_request_api("/user/tasks/list")
+    return get_request_api('/user/tasks/list')
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -205,7 +205,7 @@ function edit_gtask(id) {
 async function update_gtasks_list() {
     $('#gtasks_list').empty();
     
-    return get_request_api("/global/tasks/list")
+    return get_request_api('/global/tasks/list')
     .done((data) => {
         if (api_request_failed(data)) {
             return;
