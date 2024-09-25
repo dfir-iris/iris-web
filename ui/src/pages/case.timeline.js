@@ -1262,7 +1262,7 @@ function apply_filtering(post_req_fn) {
 
     $('#timeline_list').empty();
     show_loader();
-    get_request_data_api("/case/timeline/advanced-filter",{ 'q': filter_query })
+    get_request_data_api('/case/timeline/advanced-filter', { 'q': filter_query })
     .done((data) => {
         if (!api_request_failed(data)) {
             build_timeline(data);

@@ -654,7 +654,7 @@ function filter_ds_files() {
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter_ds));
 
     $('#btn_filter_ds_files').text('Searching..');
-    get_request_data_api("/datastore/list/filter",{ 'q': filter_query })
+    get_request_data_api('/datastore/list/filter', { 'q': filter_query })
     .done(function (data){
         if (api_request_failed(data)) {
             return;
