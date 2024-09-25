@@ -110,7 +110,7 @@ function update_task_ext(task_id, do_close) {
 
     $('#update_task_btn').text('Updating..');
 
-    post_request_api('tasks/update/' + task_id, JSON.stringify(data_sent), true)
+    post_request_api(`/case/tasks/update/${task_id}`, JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             get_tasks();
@@ -300,7 +300,7 @@ function callBackEditTaskStatus(updatedCell, updatedRow, oldValue) {
   data_send['csrf_token'] = $('#csrf_token').val();
   tid = data_send['task_id'];
 
-  post_request_api("tasks/status/update/" + tid, JSON.stringify(data_send))
+  post_request_api(`/case/tasks/status/update/${tid}`, JSON.stringify(data_send))
   .done(function (data){
     if(notify_auto_api(data)) {
          get_tasks();
