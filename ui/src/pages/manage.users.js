@@ -149,7 +149,7 @@ function user_detail(user_id, goto_tab) {
 function refresh_user_ac(user_id) {
     var ori_txt = $('#users_refresh_ac_btn').text();
     $('#users_refresh_ac_btn').text('Refreshing..');
-    get_request_api('/manage/access-control/recompute-effective-user-ac/' + user_id)
+    get_request_api(`/manage/access-control/recompute-effective-user-ac/${user_id}`)
     .done((data) => {
         notify_auto_api(data);
     }).always(() => {
@@ -161,7 +161,7 @@ function reset_user_mfa(user_id) {
     let users_refresh_mfa_btn = $('#users_refresh_mfa_btn');
     let ori_txt = users_refresh_mfa_btn.text();
     users_refresh_mfa_btn.text('Resetting..');
-    get_request_api('/manage/access-control/reset-mfa/' + user_id)
+    get_request_api(`/manage/access-control/reset-mfa/${user_id}`)
     .done((data) => {
         notify_auto_api(data);
     }).always(() => {
@@ -214,7 +214,7 @@ function delete_user(id) {
 }
 
 function activate_user(user_id) {
-  get_request_api('/manage/users/activate/' + user_id)
+  get_request_api(`/manage/users/activate/${user_id}`)
   .done((data) => {
     if(notify_auto_api(data)) {
         user_detail(user_id);
@@ -224,7 +224,7 @@ function activate_user(user_id) {
 }
 
 function deactivate_user(user_id) {
-  get_request_api('/manage/users/deactivate/' + user_id)
+  get_request_api(`/manage/users/deactivate/${user_id}`)
   .done((data) => {
     if(notify_auto_api(data)) {
         user_detail(user_id);
@@ -302,7 +302,7 @@ function update_customers_membership_modal(user_customers) {
 
 
 async function refresh_customers() {
-    await get_request_api('customers/list')
+    await get_request_api('/manage/customers/list')
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -367,7 +367,7 @@ function manage_user_organisations(user_id) {
 
 function refresh_user_cac(user_id) {
     if (modal_user_cac_table !== undefined) {
-        get_request_api('/manage/users/' + user_id)
+        get_request_api(`/manage/users/${user_id}`)
         .done((data) => {
             if(notify_auto_api(data)) {
                 current_user_cases_access_list = data.data.user_cases_access;
