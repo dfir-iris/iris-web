@@ -117,7 +117,7 @@ async function update_utasks_list() {
 function callBackEditUserTaskStatus(updatedCell, updatedRow, oldValue) {
     const data_send = updatedRow.data()
     data_send['csrf_token'] = $('#csrf_token').val();
-    post_request_api("user/tasks/status/update", JSON.stringify(data_send))
+    post_request_api('/user/tasks/status/update', JSON.stringify(data_send))
     .done((data) => {
         if (notify_auto_api(data)) {
             update_utasks_list();
@@ -168,7 +168,7 @@ function update_gtask(id) {
     data_sent['task_status_id'] = $('#task_status_id').val();
     data_sent['csrf_token'] = $('#csrf_token').val();
     
-    post_request_api('/global/tasks/update/' + id, JSON.stringify(data_sent), true)
+    post_request_api(`/global/tasks/update/${id}`, JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             update_gtasks_list();
@@ -179,7 +179,7 @@ function update_gtask(id) {
 
 /* Delete an event from the timeline thank to its id */
 function delete_gtask(id) {
-    post_request_api("/global/tasks/delete/" + id)
+    post_request_api(`/global/tasks/delete/${id}`)
     .done((data) => {
         if(notify_auto_api(data)) {
             update_gtasks_list();
