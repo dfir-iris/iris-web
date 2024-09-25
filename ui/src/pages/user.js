@@ -36,7 +36,7 @@ function save_user_password() {
     var data_sent = $('#form_update_pwd').serializeObject();
     data_sent['user_password'] =  $('#user_password').val();
 
-    post_request_api('update', JSON.stringify(data_sent), true)
+    post_request_api('/user/update', JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             $('#modal_pwd_user').modal('hide');
@@ -46,7 +46,7 @@ function save_user_password() {
 
 /* Fetch the details of an user and allow modification */
 function update_password(user_id) {
-    url = 'update/modal' + case_param();
+    url = `/user/update/modal${case_param()}`;
     $('#modal_pwd_user_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
