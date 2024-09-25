@@ -26,7 +26,7 @@ function add_object_attribute() {
 
 $('#attributes_table').dataTable( {
     "ajax": {
-      "url": "/manage/attributes/list" + case_param(),
+      "url": `/manage/attributes/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {

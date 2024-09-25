@@ -89,7 +89,7 @@ function add_case_template() {
 
 $('#case_templates_table').dataTable( {
     "ajax": {
-      "url": "/manage/case-templates/list" + case_param(),
+      "url": `/manage/case-templates/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {

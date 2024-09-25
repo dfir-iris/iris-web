@@ -40,7 +40,7 @@ $(document).ready(function() {
     let cid = case_param();
     $('#customers_table').dataTable({
             "ajax": {
-                "url": "/manage/customers/list" + cid,
+                "url": `/manage/customers/list${cid}`,
                 "contentType": "application/json",
                 "type": "GET",
                 "data": function (d) {

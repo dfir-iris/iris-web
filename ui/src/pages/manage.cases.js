@@ -34,7 +34,7 @@ $.each($.find("table"), function(index, element){
 });
 $('#cases_table').dataTable({
     "ajax": {
-        "url": "/manage/cases/list" + case_param(),
+        "url": `/manage/cases/list${case_param()}`,
         "contentType": "application/json",
         "type": "GET",
         "data": function (d) {
