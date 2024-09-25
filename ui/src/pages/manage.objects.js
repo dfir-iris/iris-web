@@ -146,7 +146,7 @@ function delete_asset_type(id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            post_request_api('/manage/asset-type/delete/' + id)
+            post_request_api(`/manage/asset-type/delete/${id}`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_asset_table();
@@ -251,7 +251,7 @@ function ioc_type_detail(ioc_id) {
         $('#submit_new_ioc_type').on("click", function () {
             var form = $('form#form_new_ioc_type').serializeObject();
 
-            post_request_api('/manage/ioc-types/update/' + ioc_id, JSON.stringify(form), true)
+            post_request_api(`/manage/ioc-types/update/${ioc_id}`, JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_ioc_table();
@@ -280,7 +280,7 @@ function delete_ioc_type(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-            post_request_api('/manage/ioc-types/delete/' + id)
+            post_request_api(`/manage/ioc-types/delete/${id}`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_ioc_table();
@@ -372,7 +372,7 @@ function classification_detail(ioc_id) {
         $('#submit_new_case_classification').on("click", function () {
             var form = $('form#form_new_case_classification').serializeObject();
 
-            post_request_api('/manage/case-classifications/update/' + ioc_id, JSON.stringify(form), true)
+            post_request_api(`/manage/case-classifications/update/${ioc_id}`, JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_classification_table();
@@ -401,7 +401,7 @@ function delete_case_classification(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-            post_request_api('/manage/case-classifications/delete/' + id)
+            post_request_api(`/manage/case-classifications/delete/${id}`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_classification_table();
@@ -493,7 +493,7 @@ function state_detail(ioc_id) {
         $('#submit_new_case_state').on("click", function () {
             var form = $('form#form_new_case_state').serializeObject();
 
-            post_request_api('/manage/case-states/update/' + ioc_id, JSON.stringify(form))
+            post_request_api(`/manage/case-states/update/${ioc_id}`, JSON.stringify(form))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_state_table();
