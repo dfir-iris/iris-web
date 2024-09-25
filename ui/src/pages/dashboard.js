@@ -21,7 +21,7 @@ function task_status(id) {
 
 async function update_ucases_list(show_all=false) {
     $('#ucases_list').empty();
-    get_raw_request_api("/user/cases/list" + case_param() + "&show_closed=" + show_all)
+    get_raw_request_api(`/user/cases/list${case_param()}&show_closed=${show_all}`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -36,7 +36,7 @@ async function update_ucases_list(show_all=false) {
 }
 
 async function update_ureviews_list() {
-    get_raw_request_api("/user/reviews/list" + case_param())
+    get_raw_request_api(`/user/reviews/list${case_param()}`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
