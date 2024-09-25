@@ -191,7 +191,7 @@ function delete_ds_folder(node) {
            var data_sent = {
                 "csrf_token": $('#csrf_token').val()
             }
-            post_request_api('/datastore/folder/delete/' + node, JSON.stringify(data_sent))
+            post_request_api(`/datastore/folder/delete/${node}`, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -212,7 +212,7 @@ function save_ds_mod_folder() {
     data['csrf_token'] = $('#csrf_token').val();
 
     if ($('#ds_mod_folder_name').data('node-update')) {
-        uri = '/datastore/folder/rename/' + data['parent_node'];
+        uri = `/datastore/folder/rename/${data['parent_node']}`;
     } else {
         uri = '/datastore/folder/add';
     }
@@ -428,7 +428,7 @@ function validate_ds_file_move() {
     selected_files = $(".file-selected");
     selected_files.each((index) => {
         file_id = $(selected_files[index]).data('file-id').replace('f-', '');
-        post_request_api('/datastore/file/move/' + file_id, JSON.stringify(data_sent))
+        post_request_api(`/datastore/file/move/${file_id}`, JSON.stringify(data_sent))
         .done((data) => {
             if (notify_auto_api(data)) {
                 if (index == $(".file-selected").length - 1) {
@@ -467,7 +467,7 @@ function validate_ds_folder_move() {
     data_sent['csrf_token'] = $('#csrf_token').val();
 
     node_id = $(".node-source-selected").data('node-id').replace('d-', '');
-    post_request_api('/datastore/folder/move/' + node_id, JSON.stringify(data_sent))
+    post_request_api(`/datastore/folder/move/${node_id}`, JSON.stringify(data_sent))
     .done((data) => {
         if (notify_auto_api(data)) {
             reset_ds_file_view();
@@ -493,7 +493,7 @@ function delete_ds_file(file_id) {
             var data_sent = {
                 "csrf_token": $('#csrf_token').val()
             }
-            post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
+            post_request_api(`/datastore/file/delete/${file_id}`, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -526,7 +526,7 @@ function delete_bulk_ds_file() {
                 var data_sent = {
                     "csrf_token": $('#csrf_token').val()
                 }
-                post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
+                post_request_api(`/datastore/file/delete/${file_id}`, JSON.stringify(data_sent))
                 .done((data) => {
                     if (notify_auto_api(data)) {
                         if (index == $(".file-selected").length - 1) {
