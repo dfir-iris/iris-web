@@ -866,7 +866,7 @@ function rename_folder(directory_id, new_directory=false) {
 
 function fetchNotes(searchInput) {
     // Send a GET request to the server with the search input as a parameter
-    get_raw_request_api('/case/notes/search?search_input=' + encodeURIComponent(searchInput) + '&cid=' + get_caseid())
+    get_raw_request_api(`/case/notes/search?search_input=${encodeURIComponent(searchInput)}&cid=${get_caseid()}`)
         .done(data => {
             if (api_request_failed(data)) {
                 return;
