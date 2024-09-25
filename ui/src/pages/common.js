@@ -1795,7 +1795,7 @@ $(document).ready(function(){
     var data_sent = new Object();
     data_sent.ctx = $('#user_context').val();
     data_sent.ctx_h = $("#user_context option:selected").text();
-    post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
+    post_request_api(`/context/set?cid=${data_sent.ctx}`, data_sent)
     .done((data) => {
             if (api_request_failed(data)) {
                 return true;
