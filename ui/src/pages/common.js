@@ -774,7 +774,7 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
 }
 
 function load_menu_mod_options_modal(element_id, data_type, anchor) {
-    get_request_api('/dim/hooks/options/'+ data_type +'/list')
+    get_request_api(`/dim/hooks/options/${data_type}/list`)
     .done(function (data) {
         if (api_request_failed(data)) {
             return;
@@ -1138,7 +1138,7 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
         'event': 'timeline/events'
     }
 
-    get_request_api("/dim/hooks/options/"+ data_type +"/list")
+    get_request_api(`/dim/hooks/options/${data_type}/list`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
