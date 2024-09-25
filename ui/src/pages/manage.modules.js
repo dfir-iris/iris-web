@@ -36,7 +36,7 @@ function add_module() {
 
         $('#submit_new_module').on("click", function () {
 
-            post_request_api('modules/add', JSON.stringify($('#form_new_module').serializeObject()), true)
+            post_request_api('/manage/modules/add', JSON.stringify($('#form_new_module').serializeObject()), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_modules(true);
@@ -249,7 +249,7 @@ function import_mod_config(module_id){
         data['csrf_token'] = $('#csrf_token').val();
         data['module_configuration'] = fileData;
 
-        post_request_api('/manage/modules/import-config/'+ module_id, JSON.stringify(data), true)
+        post_request_api(`/manage/modules/import-config/${module_id}`, JSON.stringify(data), true)
         .done((data) => {
             if (api_request_failed(data)) {
                 swal("Got bad news for you", data.data, "error");
@@ -287,7 +287,8 @@ function update_param(module_id, param_name) {
                 }
             }
 
-            post_request_api('modules/set-parameter/' + decodeURIComponent(escape(window.btoa(param_name))), JSON.stringify(data))
+            const parameter_name = decodeURIComponent(escape(window.btoa(param_name)));
+            post_request_api(`/manage/modules/set-parameter/${parameter_name}`, JSON.stringify(data))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     module_detail(module_id);
@@ -312,7 +313,7 @@ function module_detail(module_id) {
         }
 
         $('#submit_new_module').on("click", function () {
-            post_request_api('modules/update/' + module_id, $('#form_new_module').serializeArray())
+            post_request_api(`/manage/modules/update/${module_id}`, $('#form_new_module').serializeArray())
             .done((data) => {
                 if(notify_auto_api(data)) {
                     module_detail(module_id);
@@ -341,7 +342,7 @@ function remove_module(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-        post_request_api('/manage/modules/remove/' + id)
+        post_request_api(`/manage/modules/remove/${id}`)
         .done((data) => {
             if(notify_auto_api(data)) {
               refresh_modules(true);
@@ -356,7 +357,7 @@ function remove_module(id) {
 }
 
 function enable_module(module_id) {
-    post_request_api('modules/enable/' + module_id)
+    post_request_api(`/manage/modules/enable/${module_id}`)
     .done((data) => {
         if(notify_auto_api(data)) {
             refresh_modules(true);
@@ -367,7 +368,7 @@ function enable_module(module_id) {
 }
 
 function disable_module(module_id) {
-    post_request_api('modules/disable/' + module_id)
+    post_request_api(`/manage/modules/disable/${module_id}`)
     .done((data) => {
         if(notify_auto_api(data)) {
             refresh_modules(true);
