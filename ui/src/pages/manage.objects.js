@@ -103,11 +103,9 @@ function assettype_detail(asset_id) {
             event.preventDefault();
             var formData = new FormData(this);
 
-            url = '/manage/asset-type/update/' + asset_id + case_param();
-
             $.ajax({
-                url: url,
-                type: "POST",
+                url: `/manage/asset-type/update/${asset_id}${case_param()}`,
+                type: 'POST',
                 data: formData,
                 cache: false,
                 contentType: false,
