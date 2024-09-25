@@ -54,10 +54,6 @@ function preview_comment() {
 }
 
 function save_comment(element_id, element_type) {
-    save_comment_ext(element_id, element_type, false);
-}
-
-function save_comment_ext(element_id, element_type, do_close){
     data = Object();
     data['comment_text'] = g_comment_desc_editor.getValue();
     data['csrf_token'] = $('#csrf_token').val();
