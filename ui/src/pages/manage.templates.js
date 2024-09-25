@@ -52,7 +52,7 @@ function add_report_template() {
 
 $('#reports_table').dataTable( {
     "ajax": {
-      "url": "templates/list" + case_param(),
+      "url": `templates/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {

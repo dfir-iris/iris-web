@@ -38,7 +38,7 @@ function add_asset_type() {
 
 $('#assets_table').dataTable( {
     "ajax": {
-      "url": "/manage/asset-type/list" + case_param(),
+      "url": `/manage/asset-type/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -189,7 +189,7 @@ function add_ioc_type() {
 
 $('#ioc_table').dataTable({
     "ajax": {
-      "url": "/manage/ioc-types/list" + case_param(),
+      "url": `/manage/ioc-types/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -318,7 +318,7 @@ function add_classification() {
 
 $('#classification_table').dataTable({
     "ajax": {
-      "url": "/manage/case-classifications/list" + case_param(),
+      "url": `/manage/case-classifications/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -440,7 +440,7 @@ function add_state() {
 
 $('#state_table').dataTable({
     "ajax": {
-      "url": "/manage/case-states/list" + case_param(),
+      "url": `/manage/case-states/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -562,7 +562,7 @@ function add_evidence_type() {
 
 $('#evidence_table').dataTable({
     "ajax": {
-      "url": "/manage/evidence-types/list" + case_param(),
+      "url": `/manage/evidence-types/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
