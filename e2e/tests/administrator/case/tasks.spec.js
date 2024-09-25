@@ -31,7 +31,7 @@ test('should be able to update task status', async ({ page }) => {
     await page.getByLabel('Task Title').fill(taskTitle);
     await page.getByRole('button', { name: 'Save' }).click();
 
-    await expect(page.getByRole('heading', { name: 'Add task' })).toBeHidden();
+    await expect(page.getByRole('heading', { name: 'Add task' })).not.toBeVisible();
 
     await page.getByLabel('Search:').fill(taskTitle);
 
