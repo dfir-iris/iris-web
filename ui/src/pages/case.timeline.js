@@ -163,7 +163,7 @@ function update_event_ext(event_id, do_close) {
 
     data_sent['custom_attributes'] = attributes;
 
-    post_request_api('timeline/events/update/' + event_id, JSON.stringify(data_sent), true)
+    post_request_api(`/case/timeline/events/update/${event_id}`, JSON.stringify(data_sent), true)
     .done(function(data) {
         if(notify_auto_api(data)) {
             apply_filtering();
