@@ -161,7 +161,7 @@ function getMD5(blob, cbProgress) {
 /* Retrieve the list of rfiles and build a datatable for each type of rfiles */
 function get_case_rfiles() {
 
-    get_request_api("/case/evidences/list")
+    get_request_api('/case/evidences/list')
     .done(function (response) {
         if (response.status == 'success') {
             if (response.data != null) {

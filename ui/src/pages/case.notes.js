@@ -122,7 +122,7 @@ let current_id = 0;
 var current_gid = 0;
 
 async function get_remote_note(note_id) {
-    return get_request_api("/case/notes/" + note_id);
+    return get_request_api(`/case/notes/${note_id}`);
 }
 
 async function sync_note(node_id) {
@@ -261,7 +261,7 @@ async function load_note_revisions(_item) {
         _item = $('#currentNoteIDLabel').data('note_id')
     }
 
-    get_request_api('/case/notes/' + _item + '/revisions/list')
+    get_request_api(`/case/notes/${_item}/revisions/list`)
     .done((data) => {
         if (api_request_failed(data)) {
             return false;
@@ -295,7 +295,7 @@ async function load_note_revisions(_item) {
 
             link_preview.on('click', function(e) {
                 e.preventDefault();
-                get_request_api('/case/notes/' + _item + '/revisions/' + revision.revision_number)
+                get_request_api(`/case/notes/${_item}/revisions/${revision.revision_number}`)
                 .done((data) => {
                     if (api_request_failed(data)) {
                         return;
@@ -326,7 +326,7 @@ function note_revision_revert(_item, _rev) {
         close_modal = true;
     }
 
-    get_request_api('/case/notes/' + _item + '/revisions/' + _rev)
+    get_request_api(`/case/notes/${_item}/revisions/${_rev}`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -374,7 +374,7 @@ function note_revision_delete(_item, _rev) {
 /* Fetch the edit modal with content from server */
 async function note_detail(id) {
 
-    get_request_api('/case/notes/' + id)
+    get_request_api(`/case/notes/${id}`)
     .done((data) => {
         if (data.status === 'success') {
             let timer;
