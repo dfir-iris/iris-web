@@ -229,7 +229,7 @@ function refresh_modules_hooks(silent) {
 
 
 function export_mod_config(module_id) {
-    get_request_api('/manage/modules/export-config/' + module_id)
+    get_request_api(`/manage/modules/export-config/${module_id}`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
