@@ -166,7 +166,7 @@ function refresh_modules(silent) {
 
 $('#hooks_table').dataTable( {
     "ajax": {
-      "url": "modules/hooks/list" + case_param(),
+      "url": `/manage/modules/hooks/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
