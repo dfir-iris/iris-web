@@ -203,7 +203,7 @@ function get_tasks() {
     $('#tasks_list').empty();
     show_loader();
 
-    get_request_api("tasks/list")
+    get_request_api('/case/tasks/list')
     .done((data) => {
         if (data.status == 'success') {
                 Table.MakeCellsEditable("destroy");

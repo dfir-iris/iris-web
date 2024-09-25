@@ -119,7 +119,7 @@ function duplicate_event(id) {
     window.location.hash = id;
     clear_api_error();
 
-    get_request_api("timeline/events/duplicate/" + id)
+    get_request_api(`/case/timeline/events/duplicate/${id}`)
     .done((data) => {
         if(notify_auto_api(data)) {
             if ("data" in data && "event_id" in data.data)
@@ -429,7 +429,7 @@ function events_set_attribute(attribute, color) {
         var original_event;
 
         //get event data
-        get_request_api("timeline/events/" + event_id)
+        get_request_api(`/case/timeline/events/${event_id}`)
         .done((data) => {
             original_event = data.data;
             if (api_request_failed(data)) {
@@ -1082,7 +1082,7 @@ function hide_time_converter(){
 }
 
 function flag_event(event_id){
-    get_request_api('timeline/events/flag/'+event_id)
+    get_request_api(`/case/timeline/events/flag/${event_id}`)
     .done(function(data) {
         if (notify_auto_api(data)) {
             uiFlagEvent(event_id, data.data.event_is_flagged)
