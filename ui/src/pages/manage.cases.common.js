@@ -37,7 +37,7 @@ function close_case(id) {
     })
     .then((willClose) => {
         if (willClose) {
-            post_request_api('/manage/cases/close/' + id)
+            post_request_api(`/manage/cases/close/${id}`)
             .done((data) => {
                 if (!refresh_case_table()) {
                     window.location.reload();
@@ -50,7 +50,7 @@ function close_case(id) {
 
 /* Reopen case function */
 function reopen_case(id) {
-    post_request_api('/manage/cases/reopen/' + id)
+    post_request_api(`/manage/cases/reopen/${id}`)
     .done((data) => {
         if (!refresh_case_table()) {
             window.location.reload();
@@ -162,7 +162,7 @@ function save_case_edit(case_id) {
 
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('/manage/cases/update/' + case_id, JSON.stringify(data_sent), true, undefined, case_id)
+    post_request_api(`/manage/cases/update/${case_id}`, JSON.stringify(data_sent), true, undefined, case_id)
     .done((data) => {
         if(notify_auto_api(data)) {
             case_detail(case_id);
@@ -194,14 +194,12 @@ function remove_case_access_from_user(user_id, case_id, on_finish) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            url = '/manage/users/' + user_id + '/case-access/delete';
-
             var data_sent = Object();
             data_sent['case'] = case_id;
             data_sent['csrf_token'] = $('#csrf_token').val();
 
 
-            post_request_api(url, JSON.stringify(data_sent))
+            post_request_api(`/manage/users/${user_id}/case-access/delete`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
 
@@ -392,14 +390,12 @@ function remove_cases_access_user(user_id, cases, on_finish) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            url = '/manage/users/' + user_id + '/cases-access/delete';
-
             var data_sent = Object();
             data_sent['cases'] = cases;
             data_sent['csrf_token'] = $('#csrf_token').val();
 
 
-            post_request_api(url, JSON.stringify(data_sent))
+            post_request_api(`/manage/users/${user_id}/cases-access/delete`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_user_cac(user_id);
