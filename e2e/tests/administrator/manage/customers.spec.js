@@ -4,7 +4,7 @@ test.beforeEach(async({ page }) => {
     await page.goto('/manage/customers');
 });
 
-test('should present intial client', async ({ page }) => {
+test('should present initial client', async ({ page }) => {
     await expect(page.getByRole('link', { name: 'IrisInitialClient' })).toBeVisible();
 });
 

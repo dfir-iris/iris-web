@@ -2,8 +2,11 @@ import { test, expect } from '@playwright/test';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-test('should create report template', async ({ page }) => {
+test.beforeEach(async({ page }) => {
     await page.goto('/manage/templates');
+});
+
+test('should create report template', async ({ page }) => {
     await page.getByRole('button', { name: 'Add template' }).click();
 
     const templateName = `The test template name - ${crypto.randomUUID()}`;

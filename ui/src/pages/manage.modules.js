@@ -85,7 +85,7 @@ function add_module() {
 
 $('#modules_table').dataTable( {
     "ajax": {
-      "url": "modules/list" + case_param(),
+      "url": `/manage/modules/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
