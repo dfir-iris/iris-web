@@ -1666,8 +1666,7 @@ function closeBatchAlerts() {
 }
 
 async function fetchSavedFilters() {
-    const url = '/filters/alerts/list';
-    return get_request_api(url)
+    return get_request_api('/filters/alerts/list')
         .then((data) => {
             if (api_request_failed(data)) {
                 return;
@@ -1728,9 +1727,7 @@ async function fetchSavedFilters() {
                 const selectedFilterId = $('#savedFilters').val();
                 if (!selectedFilterId) return;
 
-                const url = `/filters/${selectedFilterId}`;
-
-                get_request_api(url)
+                get_request_api(`/filters/${selectedFilterId}`)
                     .then((data) => {
                         if (api_request_failed(data)) {
                             return;
