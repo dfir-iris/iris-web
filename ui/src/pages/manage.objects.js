@@ -11,10 +11,8 @@ function add_asset_type() {
             event.preventDefault();
             var formData = new FormData(this);
 
-            url = '/manage/asset-type/add' + case_param();
-
             $.ajax({
-                url: url,
+                url: `/manage/asset-type/add${case_param()}`,
                 type: "POST",
                 data: formData,
                 cache: false,
