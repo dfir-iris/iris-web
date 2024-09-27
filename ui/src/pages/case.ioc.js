@@ -80,11 +80,11 @@ function add_ioc() {
                     })
                     .done((data, textStatus) => {
                         if (textStatus === 'success') {
-                                reload_iocs();
-                                notify_success('IOC added');
-                                if (index == (iocs_list.length - 1)) {
-                                    $('#modal_add_ioc').modal('hide');
-                                }
+                            reload_iocs();
+                            notify_success('IOC added');
+                            if (index == (iocs_list.length - 1)) {
+                                $('#modal_add_ioc').modal('hide');
+                            }
                         } else {
                             $('#submit_new_ioc').text('Save again');
                             swal("Oh no !", data, "error")
