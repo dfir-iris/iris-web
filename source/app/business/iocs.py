@@ -63,7 +63,7 @@ def iocs_create(request_json, case_identifier):
     if not check_ioc_type_id(type_id=ioc.ioc_type_id):
         raise BusinessProcessingError('Not a valid IOC type')
 
-    ioc = add_ioc(ioc, current_user.id, case_identifier)
+    add_ioc(ioc, current_user.id, case_identifier)
 
     ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=case_identifier)
 

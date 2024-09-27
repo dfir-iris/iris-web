@@ -337,8 +337,8 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
             for alert_ioc in alert.iocs:
                 if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
-                    ioc = add_ioc(alert_ioc, current_user.id, case.case_id)
-                    ioc_links.append(ioc.ioc_id)
+                    add_ioc(alert_ioc, current_user.id, case.case_id)
+                    ioc_links.append(alert_ioc.ioc_id)
 
         # Add the assets to the case
         for asset_uuid in assets_list:
@@ -485,8 +485,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
                     alert_ioc = new_alert_ioc
 
-                ioc = add_ioc(alert_ioc, current_user.id, case.case_id)
-                ioc_links.append(ioc.ioc_id)
+                add_ioc(alert_ioc, current_user.id, case.case_id)
+                ioc_links.append(alert_ioc.ioc_id)
 
     # Add the assets to the case
     for asset_uuid in assets_list:
@@ -606,8 +606,8 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         for alert_ioc in alert.iocs:
             if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
-                ioc = add_ioc(alert_ioc, current_user.id, case.case_id)
-                ioc_links.append(ioc.ioc_id)
+                add_ioc(alert_ioc, current_user.id, case.case_id)
+                ioc_links.append(alert_ioc.ioc_id)
 
     # Add the assets to the case
     for asset_uuid in assets_list:

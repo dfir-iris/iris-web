@@ -252,7 +252,7 @@ def case_upload_ioc(caseid):
                 log.error(f"Unable to create IOC {ioc.ioc_value} for internal reasons")
                 continue
 
-            ioc = add_ioc(ioc, current_user.id, caseid)
+            add_ioc(ioc, current_user.id, caseid)
             ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
             ret.append(request_data)
             track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)

@@ -132,7 +132,6 @@ def add_ioc(ioc: Ioc, user_id, caseid):
 
     update_ioc_state(caseid=caseid)
     db.session.commit()
-    return ioc
 
 
 def get_ioc_types_list():
