@@ -131,9 +131,7 @@ def iocs_delete(ioc: Ioc):
 def iocs_exports_to_json(case_id):
     iocs = get_iocs(case_id)
 
-    iocs_serialized = IocSchema().dump(iocs, many=True)
-
-    return iocs_serialized
+    return IocSchema().dump(iocs, many=True)
 
 
 def iocs_build_filter_query(ioc_id: int = None,
