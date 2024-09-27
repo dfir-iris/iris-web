@@ -36,7 +36,7 @@ jobs:
           #      or maybe the docker building phase should also be part of the tests 
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
-          docker compose -f docker-compose.dev.yml build
+          docker compose --file docker-compose.dev.yml build
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -55,10 +55,12 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
+          docker compose --file ../docker-compose.dev.yml --env-file data/basic.env up --detach
           PYTHONUNBUFFERED=true python -m unittest --verbose
+          docker compose down
       - name: Start development server
         run: |
-          docker compose -f docker-compose.dev.yml up --detach
+          docker compose --file docker-compose.dev.yml up --detach
       - name: Run end to end tests
         working-directory: e2e
         run: |
