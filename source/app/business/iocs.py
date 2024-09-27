@@ -55,7 +55,7 @@ def iocs_create(request_json, case_identifier):
     # TODO ideally schema validation should be done before, outside the business logic in the REST API
     #      for that the hook should be called after schema validation
     request_data = call_modules_hook('on_preload_ioc_create', data=request_json, caseid=case_identifier)
-    ioc = _load({**request_data, "case_id": case_identifier})
+    ioc = _load({**request_data, 'case_id': case_identifier})
 
     if not ioc:
         raise BusinessProcessingError('Unable to create IOC for internal reasons')
