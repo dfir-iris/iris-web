@@ -42,7 +42,6 @@ from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
-from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import delete_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comments
@@ -250,13 +249,6 @@ def case_upload_ioc(caseid):
                              user_id=current_user.id,
                              caseid=caseid
                              )
-            link_existed = add_ioc_link(ioc.ioc_id, caseid)
-
-            if link_existed:
-                errors.append(f"{ioc.ioc_value} (already exists and linked to this case)")
-                log.error(f"IOC {ioc.ioc_value} already exists and linked to this case")
-                index += 1
-                continue
 
             if ioc:
                 ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)

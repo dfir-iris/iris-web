@@ -145,16 +145,6 @@ def add_ioc(ioc: Ioc, user_id, caseid):
     return ioc, False
 
 
-def find_ioc_link(ioc_id, caseid):
-    logging.warning("Method 'find_ioc_link' is deprecated. It is no longer possible to link IOCs with cases.")
-
-
-def add_ioc_link(ioc_id, caseid):
-    logging.warning("Method 'add_ioc_link' is deprecated. It is no longer possible to link IOCs with cases.")
-
-    return False
-
-
 def get_ioc_types_list():
     ioc_types = IocType.query.with_entities(
         IocType.type_id,
