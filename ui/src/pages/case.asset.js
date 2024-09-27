@@ -81,28 +81,28 @@ function add_assets() {
                         .removeClass('bt-outline-success')
                         .addClass('btn-success', 'text-dark');
                 })
-                    .done((data, textStatus) => {
-                        if (textStatus == 'success') {
-                            reload_assets();
-                            if (index == (assets_list.length - 1)) {
-                                $('#modal_add_asset').modal('hide');
-                                notify_success("Assets created");
-                            }
-                        } else {
-                            $('#submit_new_assets').text('Save again');
-                            swal("Oh no !", data.message, "error")
+                .done((data, textStatus) => {
+                    if (textStatus == 'success') {
+                        reload_assets();
+                        if (index == (assets_list.length - 1)) {
+                            $('#modal_add_asset').modal('hide');
+                            notify_success("Assets created");
                         }
-                    })
-                    .always(function () {
-                        $('#submit_new_assets')
-                            .attr("disabled", false)
-                            .addClass('bt-outline-success')
-                            .removeClass('btn-success', 'text-dark');
-                    })
-                    .fail(function (error) {
-                        $('#submit_new_assets').text('Save');
-                        propagate_form_api_errors(error.responseJSON.data);
-                    })
+                    } else {
+                        $('#submit_new_assets').text('Save again');
+                        swal("Oh no !", data.message, "error")
+                    }
+                })
+                .always(function () {
+                    $('#submit_new_assets')
+                        .attr("disabled", false)
+                        .addClass('bt-outline-success')
+                        .removeClass('btn-success', 'text-dark');
+                })
+                .fail(function (error) {
+                    $('#submit_new_assets').text('Save');
+                    propagate_form_api_errors(error.responseJSON.data);
+                })
             }
 
             return false;
