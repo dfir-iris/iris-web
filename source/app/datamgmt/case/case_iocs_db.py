@@ -134,6 +134,12 @@ def add_ioc(ioc: Ioc, user_id, caseid):
     db.session.commit()
 
 
+def case_iocs_db_find_duplicate(ioc: Ioc):
+    return Ioc.query.filter(Ioc.case_id == ioc.case_id,
+                            Ioc.ioc_value == ioc.ioc_value,
+                            Ioc.ioc_type_id == ioc.ioc_type_id).first()
+
+
 def get_ioc_types_list():
     ioc_types = IocType.query.with_entities(
         IocType.type_id,

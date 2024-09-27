@@ -48,10 +48,7 @@ class TestsRest(TestCase):
         cls._subject.stop()
 
     def tearDown(self):
-        cases = self._subject.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
-        for case in cases['cases']:
-            identifier = case['case_id']
-            self._subject.delete(f'/api/v2/cases/{identifier}')
+        self._subject.clear_database()
 
     def test_get_api_version_should_not_fail(self):
         response = self._subject.get_api_version()
@@ -621,3 +618,10 @@ class TestsRest(TestCase):
         ioc_identifier = response['ioc_id']
         response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}').json()
         self.assertEqual([], response['link'])
+
+    def test_create_should_not_create_two_iocs_with_identical_type_and_value(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
+        self.assertEqual(400, response.status_code)
