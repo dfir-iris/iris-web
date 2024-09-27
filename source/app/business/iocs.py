@@ -142,8 +142,7 @@ def iocs_build_filter_query(ioc_id: int = None,
                             ioc_tlp_id: int = None,
                             ioc_tags: str = None,
                             ioc_misp: str = None,
-                            user_id: float = None,
-                            linked_cases: float = None):
+                            user_id: float = None):
     """
     Get a list of iocs from the database, filtered by the given parameters
     """
@@ -167,9 +166,4 @@ def iocs_build_filter_query(ioc_id: int = None,
     if user_id is not None:
         conditions.append(Ioc.user_id == user_id)
 
-    query = Ioc.query.filter(*conditions)
-
-    if linked_cases is not None:
-        logging.warning("Method 'iocs_build_filter_query' with providing 'linked_cases' is deprecated. It is no longer possible to query IOCs by linked cases.")
-
-    return query
+    return Ioc.query.filter(*conditions)

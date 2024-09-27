@@ -52,11 +52,11 @@ class CaseObject(SQLAlchemyObjectType):
 
     @staticmethod
     def resolve_iocs(root, info, ioc_id=None, ioc_uuid=None, ioc_value=None, ioc_type_id=None, ioc_description=None, ioc_tlp_id=None, ioc_tags=None,
-                     ioc_misp=None, user_id=None, Linked_cases=None, **kwargs):
+                     ioc_misp=None, user_id=None):
         return iocs_build_filter_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
                                        ioc_type_id=ioc_type_id, ioc_description=ioc_description,
                                        ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
-                                       user_id=user_id, linked_cases=Linked_cases)
+                                       user_id=user_id)
 
 
 class CaseConnection(Connection):
@@ -66,7 +66,7 @@ class CaseConnection(Connection):
     total_count = Int()
 
     @staticmethod
-    def resolve_total_count(root, info, **kwargs):
+    def resolve_total_count(root, info):
         return root.length
 
 
