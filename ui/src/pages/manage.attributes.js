@@ -26,7 +26,7 @@ function add_object_attribute() {
 
 $('#attributes_table').dataTable( {
     "ajax": {
-      "url": "/manage/attributes/list" + case_param(),
+      "url": `/manage/attributes/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -161,7 +161,7 @@ function update_attribute(attr_id, editor, partial, complete){
     $('#alert_attributes_details').hide();
     $('#attributes_err_details_list').empty();
 
-    post_request_api('/manage/attributes/update/' + attr_id, JSON.stringify(data_sent), false, function() {
+    post_request_api(`/manage/attributes/update/${attr_id}`, JSON.stringify(data_sent), false, function() {
         window.swal({
               title: "Updating and migrating...",
               text: "Please wait",

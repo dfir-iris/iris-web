@@ -11,10 +11,8 @@ function add_asset_type() {
             event.preventDefault();
             var formData = new FormData(this);
 
-            url = '/manage/asset-type/add' + case_param();
-
             $.ajax({
-                url: url,
+                url: `/manage/asset-type/add${case_param()}`,
                 type: "POST",
                 data: formData,
                 cache: false,
@@ -40,7 +38,7 @@ function add_asset_type() {
 
 $('#assets_table').dataTable( {
     "ajax": {
-      "url": "/manage/asset-type/list" + case_param(),
+      "url": `/manage/asset-type/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -105,11 +103,9 @@ function assettype_detail(asset_id) {
             event.preventDefault();
             var formData = new FormData(this);
 
-            url = '/manage/asset-type/update/' + asset_id + case_param();
-
             $.ajax({
-                url: url,
-                type: "POST",
+                url: `/manage/asset-type/update/${asset_id}${case_param()}`,
+                type: 'POST',
                 data: formData,
                 cache: false,
                 contentType: false,
@@ -150,7 +146,7 @@ function delete_asset_type(id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            post_request_api('/manage/asset-type/delete/' + id)
+            post_request_api(`/manage/asset-type/delete/${id}`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_asset_table();
@@ -193,7 +189,7 @@ function add_ioc_type() {
 
 $('#ioc_table').dataTable({
     "ajax": {
-      "url": "/manage/ioc-types/list" + case_param(),
+      "url": `/manage/ioc-types/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -255,7 +251,7 @@ function ioc_type_detail(ioc_id) {
         $('#submit_new_ioc_type').on("click", function () {
             var form = $('form#form_new_ioc_type').serializeObject();
 
-            post_request_api('/manage/ioc-types/update/' + ioc_id, JSON.stringify(form), true)
+            post_request_api(`/manage/ioc-types/update/${ioc_id}`, JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_ioc_table();
@@ -284,7 +280,7 @@ function delete_ioc_type(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-            post_request_api('/manage/ioc-types/delete/' + id)
+            post_request_api(`/manage/ioc-types/delete/${id}`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_ioc_table();
@@ -322,7 +318,7 @@ function add_classification() {
 
 $('#classification_table').dataTable({
     "ajax": {
-      "url": "/manage/case-classifications/list" + case_param(),
+      "url": `/manage/case-classifications/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -376,7 +372,7 @@ function classification_detail(ioc_id) {
         $('#submit_new_case_classification').on("click", function () {
             var form = $('form#form_new_case_classification').serializeObject();
 
-            post_request_api('/manage/case-classifications/update/' + ioc_id, JSON.stringify(form), true)
+            post_request_api(`/manage/case-classifications/update/${ioc_id}`, JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_classification_table();
@@ -405,7 +401,7 @@ function delete_case_classification(id) {
     })
     .then((willDelete) => {
       if (willDelete) {
-            post_request_api('/manage/case-classifications/delete/' + id)
+            post_request_api(`/manage/case-classifications/delete/${id}`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_classification_table();
@@ -444,7 +440,7 @@ function add_state() {
 
 $('#state_table').dataTable({
     "ajax": {
-      "url": "/manage/case-states/list" + case_param(),
+      "url": `/manage/case-states/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {
@@ -497,7 +493,7 @@ function state_detail(ioc_id) {
         $('#submit_new_case_state').on("click", function () {
             var form = $('form#form_new_case_state').serializeObject();
 
-            post_request_api('/manage/case-states/update/' + ioc_id, JSON.stringify(form))
+            post_request_api(`/manage/case-states/update/${ioc_id}`, JSON.stringify(form))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_state_table();
@@ -566,7 +562,7 @@ function add_evidence_type() {
 
 $('#evidence_table').dataTable({
     "ajax": {
-      "url": "/manage/evidence-types/list" + case_param(),
+      "url": `/manage/evidence-types/list${case_param()}`,
       "contentType": "application/json",
       "type": "GET",
       "data": function ( d ) {

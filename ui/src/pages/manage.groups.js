@@ -85,7 +85,7 @@ function group_detail(group_id) {
             clear_api_error();
 
             var data_sent = $('#form_new_group').serializeObject();
-            post_request_api('/manage/groups/update/' + group_id, JSON.stringify(data_sent))
+            post_request_api(`/manage/groups/update/${group_id}`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();
@@ -141,7 +141,7 @@ function delete_group(id) {
         var data_sent = {
             "csrf_token": $('#csrf_token').val()
         }
-        post_request_api('/manage/groups/delete/' + id, JSON.stringify(data_sent))
+        post_request_api(`/manage/groups/delete/${id}`, JSON.stringify(data_sent))
         .done((data) => {
             if(notify_auto_api(data)) {
                 refresh_groups();
@@ -166,11 +166,10 @@ function remove_members_from_group(group_id, user_id, on_finish) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            url = '/manage/groups/' + group_id + '/members/delete/' + user_id;
              var data_sent = {
-                "csrf_token": $('#csrf_token').val()
+                'csrf_token': $('#csrf_token').val()
              }
-            post_request_api(url, JSON.stringify(data_sent))
+            post_request_api(`/manage/groups/${group_id}/members/delete/${user_id}`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();
@@ -202,7 +201,7 @@ function add_members_to_group(group_id) {
             data_sent['group_members'] = $('#group_members').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('groups/' + group_id + '/members/update', JSON.stringify(data_sent))
+            post_request_api(`groups/${group_id}/members/update`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();
@@ -219,7 +218,7 @@ function add_members_to_group(group_id) {
 
 function refresh_group_members(group_id) {
     if (modal_group_table !== undefined) {
-        get_request_api('/manage/groups/' + group_id)
+        get_request_api(`/manage/groups/${group_id}`)
         .done((data) => {
             if(notify_auto_api(data)) {
                 modal_group_table.clear();
@@ -231,7 +230,7 @@ function refresh_group_members(group_id) {
 
 function refresh_group_cac(group_id) {
     if (modal_group_cac_table !== undefined) {
-        get_request_api('/manage/groups/' + group_id)
+        get_request_api(`/manage/groups/${group_id}`)
         .done((data) => {
             if(notify_auto_api(data)) {
                 current_group_cases_access_list = data.data.group_cases_access;
@@ -271,7 +270,7 @@ function manage_group_cac(group_id) {
                   allowOutsideClick: false
             });
 
-            post_request_api('groups/' + group_id + '/cases-access/update', JSON.stringify(data_sent))
+            post_request_api(`groups/${group_id}/cases-access/update`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_group_cac(group_id);
@@ -313,8 +312,6 @@ function remove_cases_access_group(group_id, cases, on_finish) {
         confirmButtonText: 'Yes, remove them!'
     }).then((willDelete) => {
         if (willDelete) {
-            url = '/manage/groups/' + group_id + '/cases-access/delete';
-
             window.swal({
               title: "Updating access",
               text: "Please wait. We are updating users access.",
@@ -326,7 +323,7 @@ function remove_cases_access_group(group_id, cases, on_finish) {
             data_sent['cases'] = cases;
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api(url, JSON.stringify(data_sent))
+            post_request_api(`/manage/groups/${group_id}/cases-access/delete`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_group_cac(group_id);

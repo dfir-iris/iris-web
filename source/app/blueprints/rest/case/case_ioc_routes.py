@@ -55,10 +55,10 @@ from app.datamgmt.states import get_ioc_state
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Tlp
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
+from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.util import ac_api_return_access_denied
@@ -81,7 +81,7 @@ def case_list_ioc(caseid):
         out = ioc._asdict()
 
         # Get links of the IoCs seen in other cases
-        ial = get_ioc_links(ioc.ioc_id, caseid)
+        ial = get_ioc_links(ioc.ioc_id)
 
         out['link'] = [row._asdict() for row in ial]
         # Legacy, must be changed next version
@@ -129,15 +129,11 @@ def list_ioc(identifier):
     if filtered_iocs is None:
         return response_api_error('Filtering error')
 
-    iocs = IocSchema().dump(filtered_iocs.items, many=True)
-
-    for ioc in iocs:
-        ial = get_ioc_links(ioc['ioc_id'], identifier)
-        ioc['link'] = [row._asdict() for row in ial]
-        ioc['tlp'] = Tlp.query.filter(Tlp.tlp_id == ioc['ioc_tlp_id']).first()
+    iocs = IocSchemaForAPIV2().dump(filtered_iocs.items, many=True)
 
     iocs = {
         'total': filtered_iocs.total,
+        # TODO should maybe really uniform all return types of paginated list and replace field iocs by field data
         'iocs': iocs,
         'last_page': filtered_iocs.pages,
         'current_page': filtered_iocs.page,
@@ -178,7 +174,7 @@ def case_add_ioc(identifier):
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=identifier)
 
-    ioc_schema = IocSchema()
+    ioc_schema = IocSchemaForAPIV2()
 
     try:
         ioc, _ = iocs_create(request.get_json(), identifier)
@@ -337,7 +333,7 @@ def deprecated_case_view_ioc(cur_id, caseid):
 @case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['GET'])
 @ac_api_requires()
 def get_case_ioc(identifier):
-    ioc_schema = IocSchema()
+    ioc_schema = IocSchemaForAPIV2()
     try:
         ioc = iocs_get(identifier)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):

@@ -15,7 +15,7 @@ function add_user() {
             var data_sent = $('#form_new_user').serializeObject()
             clear_api_error();
 
-            post_request_api('users/add', JSON.stringify(data_sent), true)
+            post_request_api('/manage/users/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();
@@ -128,7 +128,7 @@ function user_detail(user_id, goto_tab) {
             clear_api_error();
 
             var data_sent = $('#form_new_user').serializeObject();
-            post_request_api('/manage/users/update/' + user_id, JSON.stringify(data_sent), true)
+            post_request_api(`/manage/users/update/${user_id}`, JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_users();
@@ -149,7 +149,7 @@ function user_detail(user_id, goto_tab) {
 function refresh_user_ac(user_id) {
     var ori_txt = $('#users_refresh_ac_btn').text();
     $('#users_refresh_ac_btn').text('Refreshing..');
-    get_request_api('/manage/access-control/recompute-effective-user-ac/' + user_id)
+    get_request_api(`/manage/access-control/recompute-effective-user-ac/${user_id}`)
     .done((data) => {
         notify_auto_api(data);
     }).always(() => {
@@ -161,7 +161,7 @@ function reset_user_mfa(user_id) {
     let users_refresh_mfa_btn = $('#users_refresh_mfa_btn');
     let ori_txt = users_refresh_mfa_btn.text();
     users_refresh_mfa_btn.text('Resetting..');
-    get_request_api('/manage/access-control/reset-mfa/' + user_id)
+    get_request_api(`/manage/access-control/reset-mfa/${user_id}`)
     .done((data) => {
         notify_auto_api(data);
     }).always(() => {
@@ -172,7 +172,7 @@ function reset_user_mfa(user_id) {
 function renew_api_for_user(user_id) {
     var ori_txt = $('#users_renew_api_btn').text();
     $('#users_renew_api_btn').text('Renewing..');
-    post_request_api('/manage/users/renew-api-key/' + user_id)
+    post_request_api(`/manage/users/renew-api-key/${user_id}`)
     .done((data) => {
         if (notify_auto_api(data)) {
             $('#userApiKey').val(data.data.api_key);
@@ -200,7 +200,7 @@ function delete_user(id) {
         var data_sent = {
             'csrf_token': $('#csrf_token').val()
         }
-        post_request_api('/manage/users/delete/' + id, JSON.stringify(data_sent))
+        post_request_api(`/manage/users/delete/${id}`, JSON.stringify(data_sent))
         .done((data) => {
             if(notify_auto_api(data)) {
                 refresh_users();
@@ -214,7 +214,7 @@ function delete_user(id) {
 }
 
 function activate_user(user_id) {
-  get_request_api('/manage/users/activate/' + user_id)
+  get_request_api(`/manage/users/activate/${user_id}`)
   .done((data) => {
     if(notify_auto_api(data)) {
         user_detail(user_id);
@@ -224,7 +224,7 @@ function activate_user(user_id) {
 }
 
 function deactivate_user(user_id) {
-  get_request_api('/manage/users/deactivate/' + user_id)
+  get_request_api(`/manage/users/deactivate/${user_id}`)
   .done((data) => {
     if(notify_auto_api(data)) {
         user_detail(user_id);
@@ -261,7 +261,7 @@ function manage_user_groups(user_id) {
             data_sent['groups_membership'] = $('#user_groups_membership').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('/manage/users/' + user_id + '/groups/update', JSON.stringify(data_sent))
+            post_request_api(`/manage/users/${user_id}/groups/update`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_groups();
@@ -302,7 +302,7 @@ function update_customers_membership_modal(user_customers) {
 
 
 async function refresh_customers() {
-    await get_request_api('customers/list')
+    await get_request_api('/manage/customers/list')
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -327,7 +327,7 @@ function manage_user_clients(user_id) {
             data_sent['customers_membership'] = $('#user_customers_membership').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('/manage/users/' + user_id + '/customers/update', JSON.stringify(data_sent))
+            post_request_api(`/manage/users/${user_id}/customers/update`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     user_detail(user_id, 'user_clients_tab');
@@ -355,7 +355,7 @@ function manage_user_organisations(user_id) {
             data_sent['orgs_membership'] = $('#user_orgs_membership').val();
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('/manage/users/' + user_id + '/organisations/update', JSON.stringify(data_sent))
+            post_request_api(`/manage/users/${user_id}/organisations/update`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     user_detail(user_id, 'user_orgs_tab');
@@ -367,7 +367,7 @@ function manage_user_organisations(user_id) {
 
 function refresh_user_cac(user_id) {
     if (modal_user_cac_table !== undefined) {
-        get_request_api('/manage/users/' + user_id)
+        get_request_api(`/manage/users/${user_id}`)
         .done((data) => {
             if(notify_auto_api(data)) {
                 current_user_cases_access_list = data.data.user_cases_access;
@@ -401,7 +401,7 @@ function manage_user_cac(user_id) {
             data_sent['access_level'] = parseInt($('#user_case_ac_select').val());
             data_sent['csrf_token'] = $('#csrf_token').val();
 
-            post_request_api('users/' + user_id + '/cases-access/update', JSON.stringify(data_sent))
+            post_request_api(`/manage/users/${user_id}/cases-access/update`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
                     refresh_user_cac(user_id);

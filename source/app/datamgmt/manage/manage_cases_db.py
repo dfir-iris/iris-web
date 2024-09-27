@@ -479,7 +479,7 @@ def build_filter_case_query(current_user_id,
         return query.join(Tags, Tags.tag_title.ilike(f'%{case_tags}%')).filter(CaseTags.case_id == Cases.case_id)
 
     if sort_by is not None:
-        order_func = desc if sort_dir == "desc" else asc
+        order_func = desc if sort_dir == 'desc' else asc
 
         if sort_by == 'owner':
             query = query.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
@@ -531,7 +531,7 @@ def get_filtered_cases(current_user_id,
         filtered_cases = data.paginate(page=page, per_page=per_page, error_out=False)
 
     except Exception as e:
-        app.logger.exception(f"Error getting cases: {str(e)}")
+        app.logger.exception(f'Error getting cases: {str(e)}')
         return None
 
     return filtered_cases

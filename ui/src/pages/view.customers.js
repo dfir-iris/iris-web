@@ -15,7 +15,7 @@ function edit_contact(contact_id, customer_id) {
 
             const form = $('#form_new_contact').serializeObject();
 
-            post_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/update', JSON.stringify(form), true)
+            post_request_api(`/manage/customers/${customer_id}/contacts/${contact_id}/update`, JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.reload();
@@ -27,7 +27,7 @@ function edit_contact(contact_id, customer_id) {
 
 
         $('#submit_delete_contact').on("click", function () {
-            post_request_api('/manage/customers/' + customer_id + '/contacts/' + contact_id + '/delete')
+            post_request_api(`/manage/customers/${customer_id}/contacts/${contact_id}/delete`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.reload();
@@ -52,7 +52,7 @@ function add_new_contact(customer_id) {
 
             const form = $('#form_new_contact').serializeObject();
 
-            post_request_api('/manage/customers/' + customer_id + '/contacts/add', JSON.stringify(form), true)
+            post_request_api(`/manage/customers/${customer_id}/contacts/add`, JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.reload();
@@ -68,7 +68,7 @@ function add_new_contact(customer_id) {
 }
 
 function load_customer_stats(customer_id) {
-    get_request_api('/manage/customers/' + customer_id + '/cases')
+    get_request_api(`/manage/customers/${customer_id}/cases`)
     .done((data) => {
         if (api_request_failed(data)) {
             return false;

@@ -40,7 +40,7 @@ $(document).ready(function() {
     let cid = case_param();
     $('#customers_table').dataTable({
             "ajax": {
-                "url": "customers/list" + cid,
+                "url": `/manage/customers/list${cid}`,
                 "contentType": "application/json",
                 "type": "GET",
                 "data": function (d) {
@@ -107,7 +107,7 @@ function customer_detail(customer_id) {
 
             form['custom_attributes'] = attributes;
 
-            post_request_api('/manage/customers/update/' + customer_id, JSON.stringify(form), true)
+            post_request_api(`/manage/customers/update/${customer_id}`, JSON.stringify(form), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.reload();
@@ -135,7 +135,7 @@ function delete_customer(id) {
     })
     .then((willDelete) => {
         if (willDelete) {
-            post_request_api('/manage/customers/delete/' + id)
+            post_request_api(`/manage/customers/delete/${id}`)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.href = '/manage/customers' + case_param();

@@ -274,7 +274,7 @@ class TestsRest(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         self.assertEqual(400, response.status_code)
 
-    def test_get_tasks_should_return_201(self):
+    def test_get_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'task_assignees_id': [2], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
@@ -283,7 +283,7 @@ class TestsRest(TestCase):
         response = self._subject.get(f'/api/v2/tasks/{task_identifier}')
         self.assertEqual(201, response.status_code)
 
-    def test_get_tasks_with_missing_task_identifier_should_return_error(self):
+    def test_get_task_with_missing_task_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
@@ -589,3 +589,35 @@ class TestsRest(TestCase):
         response = user.create('/manage/customers/add', body)
 
         self.assertEqual(200, response.status_code)
+
+    def test_get_iocs_should_include_tlp_information(self):
+        case_identifier = self._subject.create_dummy_case()
+        tlp_identifier = 2
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': tlp_identifier, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
+        self.assertEqual(tlp_identifier, response['iocs'][0]['tlp']['tlp_id'])
+
+    def test_get_iocs_should_include_link_to_other_cases_with_same_value_type_ioc(self):
+        case_identifier1 = self._subject.create_dummy_case()
+        case_identifier2 = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier1}/iocs', body).json()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 1, 'ioc_value': '8.8.8.8', 'ioc_description': 'another', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier2}/iocs', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier2}/iocs').json()
+        self.assertEqual(case_identifier1, response['iocs'][0]['link'][0]['case_id'])
+
+    def test_create_ioc_should_include_field_link(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        self.assertEqual([], response['link'])
+
+    def test_get_ioc_should_include_field_link(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}').json()
+        self.assertEqual([], response['link'])

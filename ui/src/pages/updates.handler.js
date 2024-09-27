@@ -35,9 +35,9 @@ function case_param() {
 
 function initiate_update() {
     $.ajax({
-        url: '/manage/server/start-update' + case_param(),
-        type: "GET",
-        dataType: "json",
+        url: `/manage/server/start-update${case_param()}`,
+        type: 'GET',
+        dataType: 'json',
         beforeSend : function () {
             log_msg('Update order sent. Expecting feedback anytime soon');
         },
@@ -58,9 +58,9 @@ var no_resp_time = 0;
 
 function check_server_version() {
     $.ajax({
-        url: '/api/versions' + case_param(),
-        type: "GET",
-        dataType: "json",
+        url: `/api/versions${case_param()}`,
+        type: 'GET',
+        dataType: 'json',
         timeout: 1000,
         success: function (data) {
             server_version = data.data.iris_current;
@@ -91,7 +91,7 @@ function check_server_version() {
 function ping_check_server_online() {
 
     $.ajax({
-        url: '/api/ping' + case_param(),
+        url: `/api/ping${case_param()}`,
         type: "GET",
         dataType: "json",
         timeout: 1000,
@@ -134,17 +134,17 @@ $(document).ready(function(){
 
     update_socket = ios.connect();
 
-    update_socket.on( "update_status", function(data) {
+    update_socket.on('update_status', function(data) {
         add_update_log(data.message, data.is_error)
     }.bind() );
 
-    update_socket.on( "update_ping", function(data) {
+    update_socket.on('update_ping', function(data) {
         log_msg('Server connection verified');
         log_msg('Starting update');
         initiate_update();
     }.bind() );
 
-    update_socket.on( "server_has_updated", function(data) {
+    update_socket.on('server_has_updated', function(data) {
         log_msg('Server reported updates applied. Checking . . .');
         check_server_version();
     }.bind() );

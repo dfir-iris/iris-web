@@ -92,7 +92,7 @@ function add_event(parent_event_id = null) {
 
             data_sent['custom_attributes'] = attributes;
 
-            post_request_api('timeline/events/add', JSON.stringify(data_sent), true)
+            post_request_api('/case/timeline/events/add', JSON.stringify(data_sent), true)
             .done((data) => {
                 if(notify_auto_api(data)) {
                     window.location.hash = data.data.event_id;
@@ -119,7 +119,7 @@ function duplicate_event(id) {
     window.location.hash = id;
     clear_api_error();
 
-    get_request_api("timeline/events/duplicate/" + id)
+    get_request_api(`/case/timeline/events/duplicate/${id}`)
     .done((data) => {
         if(notify_auto_api(data)) {
             if ("data" in data && "event_id" in data.data)
@@ -163,7 +163,7 @@ function update_event_ext(event_id, do_close) {
 
     data_sent['custom_attributes'] = attributes;
 
-    post_request_api('timeline/events/update/' + event_id, JSON.stringify(data_sent), true)
+    post_request_api(`/case/timeline/events/update/${event_id}`, JSON.stringify(data_sent), true)
     .done(function(data) {
         if(notify_auto_api(data)) {
             apply_filtering();
@@ -186,7 +186,7 @@ function delete_event(id) {
     do_deletion_prompt("You are about to delete event #" + id)
     .then((doDelete) => {
         if (doDelete) {
-            post_request_api("timeline/events/delete/" + id)
+            post_request_api(`/case/timeline/events/delete/${id}`)
             .done(function(data) {
                 if(notify_auto_api(data)) {
                     apply_filtering();
@@ -429,7 +429,7 @@ function events_set_attribute(attribute, color) {
         var original_event;
 
         //get event data
-        get_request_api("timeline/events/" + event_id)
+        get_request_api(`/case/timeline/events/${event_id}`)
         .done((data) => {
             original_event = data.data;
             if (api_request_failed(data)) {
@@ -449,7 +449,7 @@ function events_set_attribute(attribute, color) {
             delete original_event['event_comments_map'];
 
             //send updated event to API
-            post_request_api('timeline/events/update/' + event_id, JSON.stringify(original_event), true)
+            post_request_api(`/case/timeline/events/update/${event_id}`, JSON.stringify(original_event), true)
             .done(function(data) {
                 notify_auto_api(data);
                 if (index === selected_rows.length - 1) {
@@ -487,7 +487,7 @@ function events_bulk_delete() {
             selected_rows.each(function(index) {
                 var object = selected_rows[index];
                 var event_id = object.getAttribute('id').replace("event_","");
-                post_request_api("timeline/events/delete/" + event_id)
+                post_request_api(`/case/timeline/events/delete/${event_id}`)
                 .done(function(data) {
                     notify_auto_api(data);
                     if (index === selected_rows.length - 1) {
@@ -1082,7 +1082,7 @@ function hide_time_converter(){
 }
 
 function flag_event(event_id){
-    get_request_api('timeline/events/flag/'+event_id)
+    get_request_api(`/case/timeline/events/flag/${event_id}`)
     .done(function(data) {
         if (notify_auto_api(data)) {
             uiFlagEvent(event_id, data.data.event_is_flagged)
@@ -1126,7 +1126,7 @@ function time_converter(){
     data_sent['date_value'] = date_val;
     data_sent['csrf_token'] = $('#csrf_token').val();
 
-    post_request_api('timeline/events/convert-date', JSON.stringify(data_sent))
+    post_request_api('/case/timeline/events/convert-date', JSON.stringify(data_sent))
     .done(function(data) {
         if(notify_auto_api(data)) {
             $('#event_date').val(data.data.date);
@@ -1262,7 +1262,7 @@ function apply_filtering(post_req_fn) {
 
     $('#timeline_list').empty();
     show_loader();
-    get_request_data_api("/case/timeline/advanced-filter",{ 'q': filter_query })
+    get_request_data_api('/case/timeline/advanced-filter', { 'q': filter_query })
     .done((data) => {
         if (!api_request_failed(data)) {
             build_timeline(data);
@@ -1310,7 +1310,6 @@ function fire_upload_csv_events() {
 }
 
 function upload_csv_events() {
-    const api_path =  '/case/timeline/events/csv_upload';
     const modal_dlg = '#modal_upload_csv_events'
     const file_input = '#input_upload_csv_events'
 
@@ -1323,7 +1322,7 @@ function upload_csv_events() {
         data['csrf_token'] = $('#csrf_token').val();
         data['CSVData'] = fileData;
 
-        post_request_api(api_path, JSON.stringify(data), true)
+        post_request_api('/case/timeline/events/csv_upload', JSON.stringify(data), true)
         .done((data) => {
 
             if (notify_auto_api(data)) {

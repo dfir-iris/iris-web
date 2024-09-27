@@ -36,7 +36,7 @@ function save_user_password() {
     var data_sent = $('#form_update_pwd').serializeObject();
     data_sent['user_password'] =  $('#user_password').val();
 
-    post_request_api('update', JSON.stringify(data_sent), true)
+    post_request_api('/user/update', JSON.stringify(data_sent), true)
     .done((data) => {
         if(notify_auto_api(data)) {
             $('#modal_pwd_user').modal('hide');
@@ -46,7 +46,7 @@ function save_user_password() {
 
 /* Fetch the details of an user and allow modification */
 function update_password(user_id) {
-    url = 'update/modal' + case_param();
+    url = `/user/update/modal${case_param()}`;
     $('#modal_pwd_user_content').load(url, function (response, status, xhr) {
         if (status !== "success") {
              ajax_notify_error(xhr, url);
@@ -59,7 +59,7 @@ function update_password(user_id) {
 function refresh_user_permissions() {
     var ori_txt = $('#user_refresh_perms_btn').text();
     $('#user_refresh_perms_btn').text('Refreshing..');
-     get_request_api('refresh-permissions')
+     get_request_api('/user/refresh-permissions')
     .done((data) => {
         notify_auto_api(data);
     }).always(() => {
@@ -77,7 +77,7 @@ $('input[type=radio][name=iris-theme]').change(function() {
     } else {
         return;
     }
-    get_request_api('theme/set/'+ theme)
+    get_request_api(`/user/theme/set/${theme}`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -95,7 +95,7 @@ $('input[type=radio][name=user-has-deletion-prompt]').change(function() {
     } else {
         return;
     }
-    get_request_api('deletion-prompt/set/'+ do_prompt)
+    get_request_api(`/user/deletion-prompt/set/${do_prompt}`)
     .then((data) => {
         if (notify_auto_api(data)) {
             userWhoamiRequest(true);

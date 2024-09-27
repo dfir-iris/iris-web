@@ -191,7 +191,7 @@ function delete_ds_folder(node) {
            var data_sent = {
                 "csrf_token": $('#csrf_token').val()
             }
-            post_request_api('/datastore/folder/delete/' + node, JSON.stringify(data_sent))
+            post_request_api(`/datastore/folder/delete/${node}`, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -212,7 +212,7 @@ function save_ds_mod_folder() {
     data['csrf_token'] = $('#csrf_token').val();
 
     if ($('#ds_mod_folder_name').data('node-update')) {
-        uri = '/datastore/folder/rename/' + data['parent_node'];
+        uri = `/datastore/folder/rename/${data['parent_node']}`;
     } else {
         uri = '/datastore/folder/add';
     }
@@ -290,8 +290,7 @@ async function save_ds_multi_files(node, index_i) {
     let file = $('#input_upload_ds_files').prop('files')[index];
     formData.append('file_content', file);
     formData.append('file_original_name', file.name);
-    let uri = '/datastore/file/add/' + node;
-    await post_request_data_api(uri, formData, true, function () {
+    await post_request_data_api(`/datastore/file/add/${node}`, formData, true, function () {
         window.swal({
             title: `File ${file.name} is uploading. (${index}/${totalFiles} files)`,
             text: "Please wait. This window will close automatically when the file is uploaded.",
@@ -315,9 +314,9 @@ function save_ds_file(node, file_id) {
     let uri = '';
 
     if (file_id === undefined) {
-        uri = '/datastore/file/add/' + node;
+        uri = `/datastore/file/add/${node}`;
     } else {
-        uri = '/datastore/file/update/' + file_id;
+        uri = `/datastore/file/update/${file_id}`;
     }
 
     post_request_data_api(uri, formData, true, function() {
@@ -428,7 +427,7 @@ function validate_ds_file_move() {
     selected_files = $(".file-selected");
     selected_files.each((index) => {
         file_id = $(selected_files[index]).data('file-id').replace('f-', '');
-        post_request_api('/datastore/file/move/' + file_id, JSON.stringify(data_sent))
+        post_request_api(`/datastore/file/move/${file_id}`, JSON.stringify(data_sent))
         .done((data) => {
             if (notify_auto_api(data)) {
                 if (index == $(".file-selected").length - 1) {
@@ -467,7 +466,7 @@ function validate_ds_folder_move() {
     data_sent['csrf_token'] = $('#csrf_token').val();
 
     node_id = $(".node-source-selected").data('node-id').replace('d-', '');
-    post_request_api('/datastore/folder/move/' + node_id, JSON.stringify(data_sent))
+    post_request_api(`/datastore/folder/move/${node_id}`, JSON.stringify(data_sent))
     .done((data) => {
         if (notify_auto_api(data)) {
             reset_ds_file_view();
@@ -493,7 +492,7 @@ function delete_ds_file(file_id) {
             var data_sent = {
                 "csrf_token": $('#csrf_token').val()
             }
-            post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
+            post_request_api(`/datastore/file/delete/${file_id}`, JSON.stringify(data_sent))
             .done((data) => {
                 if (notify_auto_api(data)) {
                     reset_ds_file_view();
@@ -526,7 +525,7 @@ function delete_bulk_ds_file() {
                 var data_sent = {
                     "csrf_token": $('#csrf_token').val()
                 }
-                post_request_api('/datastore/file/delete/' + file_id, JSON.stringify(data_sent))
+                post_request_api(`/datastore/file/delete/${file_id}`, JSON.stringify(data_sent))
                 .done((data) => {
                     if (notify_auto_api(data)) {
                         if (index == $(".file-selected").length - 1) {
@@ -654,7 +653,7 @@ function filter_ds_files() {
     filter_query = encodeURIComponent(JSON.stringify(parsed_filter_ds));
 
     $('#btn_filter_ds_files').text('Searching..');
-    get_request_data_api("/datastore/list/filter",{ 'q': filter_query })
+    get_request_data_api('/datastore/list/filter', { 'q': filter_query })
     .done(function (data){
         if (api_request_failed(data)) {
             return;

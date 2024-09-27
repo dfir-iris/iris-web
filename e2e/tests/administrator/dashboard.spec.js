@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-test('create case with empty name should present error', async ({ page }) => {
+test.beforeEach(async({ page }) => {
     await page.goto('/dashboard');
-    
+});
+
+test('create case with empty name should present error', async ({ page }) => {
     // FIXME: Should be a button instead of a link
     await page.getByRole('link', { name: 'Create new case'}).click();
     await page.getByRole('button', { name: 'Create' }).click();

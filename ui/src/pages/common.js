@@ -774,7 +774,7 @@ function init_module_processing(rows, hook_name, hook_ui_name, module_name, data
 }
 
 function load_menu_mod_options_modal(element_id, data_type, anchor) {
-    get_request_api('/dim/hooks/options/'+ data_type +'/list')
+    get_request_api(`/dim/hooks/options/${data_type}/list`)
     .done(function (data) {
         if (api_request_failed(data)) {
             return;
@@ -1138,7 +1138,7 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
         'event': 'timeline/events'
     }
 
-    get_request_api("/dim/hooks/options/"+ data_type +"/list")
+    get_request_api(`/dim/hooks/options/${data_type}/list`)
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -1795,7 +1795,7 @@ $(document).ready(function(){
     var data_sent = new Object();
     data_sent.ctx = $('#user_context').val();
     data_sent.ctx_h = $("#user_context option:selected").text();
-    post_request_api('/context/set?cid=' + data_sent.ctx, data_sent)
+    post_request_api(`/context/set?cid=${data_sent.ctx}`, data_sent)
     .done((data) => {
             if (api_request_failed(data)) {
                 return true;
