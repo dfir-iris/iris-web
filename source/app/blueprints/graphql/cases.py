@@ -48,11 +48,12 @@ class CaseObject(SQLAlchemyObjectType):
 
     iocs = SQLAlchemyConnectionField(IOCConnection, ioc_id=Int(), ioc_uuid=String(), ioc_value=String(), ioc_type_id=Int(),
                                      ioc_description=String(), ioc_tlp_id=Int(), ioc_tags=String(), ioc_misp=String(),
-                                     user_id=Float(), Linked_cases=Float())
+                                     user_id=Float())
 
+    # TODO why is kwargs necessary? Should investigate and try to remove
     @staticmethod
     def resolve_iocs(root, info, ioc_id=None, ioc_uuid=None, ioc_value=None, ioc_type_id=None, ioc_description=None, ioc_tlp_id=None, ioc_tags=None,
-                     ioc_misp=None, user_id=None):
+                     ioc_misp=None, user_id=None, **kwargs):
         return iocs_build_filter_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
                                        ioc_type_id=ioc_type_id, ioc_description=ioc_description,
                                        ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
@@ -65,8 +66,9 @@ class CaseConnection(Connection):
 
     total_count = Int()
 
+    # TODO why is kwargs necessary? Should investigate and try to remove
     @staticmethod
-    def resolve_total_count(root, info):
+    def resolve_total_count(root, info, **kwargs):
         return root.length
 
 

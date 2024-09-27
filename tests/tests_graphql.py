@@ -349,38 +349,6 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         self.assertNotIn('errors', response)
 
-    def test_graphql_iocs_should_return_linked_iocs_of_a_case(self):
-        case_identifier = 1
-        case_identifier_2 = 2
-        ioc_value = self._generate_new_dummy_ioc_value()
-        payload = {'query': ' mutation { caseCreate(name: "case2", description: "Some description", clientId: 1) { case { description } } }'}
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                 ioc {{ iocId }}
-                             }}
-                         }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''mutation {{
-                                    iocCreate(caseId: {case_identifier_2}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
-                                        ioc {{ iocId }}
-                                    }}
-                                }}'''
-        }
-        self._subject.execute_graphql_query(payload)
-        payload = {
-            'query': f'''{{
-                            case(caseId: {case_identifier}) {{
-                                iocs(LinkedCases: 1) {{ edges {{ node {{ iocId }} }} }}
-                            }}
-                         }}'''
-        }
-        response = self._subject.execute_graphql_query(payload)
-        self.assertNotIn('errors', response)
-
     def test_graphql_case_should_return_error_log_uuid_when_permission_denied(self):
         user = self._subject.create_user(self._generate_new_dummy_user_name())
         case_identifier = self._create_case()
