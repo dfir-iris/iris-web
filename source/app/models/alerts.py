@@ -11,6 +11,7 @@ from sqlalchemy import Text
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from app import db
 from app.models import Base, alert_assets_association, alert_iocs_association
@@ -50,6 +51,8 @@ class Alert(db.Model):
     alert_resolution_status_id = Column(ForeignKey('alert_resolution_status.resolution_status_id'), nullable=True)
 
     owner = relationship('User', foreign_keys=[alert_owner_id])
+    # 'owner_email' is available via association_proxy accessed through 'owner.email'
+    owner_email = association_proxy('owner', 'email')
     severity = relationship('Severity')
     status = relationship('AlertStatus')
     customer = relationship('Client')
