@@ -138,3 +138,9 @@ class Iris:
 
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
+
+    def clear_database(self):
+        cases = self.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
+        for case in cases['cases']:
+            identifier = case['case_id']
+            self.delete(f'/api/v2/cases/{identifier}')

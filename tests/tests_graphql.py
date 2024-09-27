@@ -37,6 +37,9 @@ class TestsGraphQL(TestCase):
     def tearDownClass(cls) -> None:
         cls._subject.stop()
 
+    def tearDown(self):
+        self._subject.clear_database()
+
     # Note: this method is necessary because the state of the database is not reset between each test
     #       and we want to work with distinct object in each test
     @classmethod
@@ -895,12 +898,12 @@ class TestsGraphQL(TestCase):
         query = f'mutation {{ iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "33") {{ ioc {{ iocId }} }} }}'
         payload = {'query': query}
         response = self._subject.execute_graphql_query(payload)
-        ioc_id = response['data']['iocCreate']['ioc']['iocId']
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {'query': f'{{ case(caseId: {case_identifier}) {{ iocs(iocId: 11) {{ edges {{ node {{ iocId }} }} }} }} }}'}
         body = self._subject.execute_graphql_query(payload)
         for ioc in body['data']['case']['iocs']['edges']:
-            test_ioc_id = ioc['node']['iocId']
-            self.assertEqual(ioc_id, test_ioc_id)
+            test_ioc_identifier = ioc['node']['iocId']
+            self.assertEqual(ioc_identifier, test_ioc_identifier)
 
     def test_graphql_iocs_filter_iocUuid_should_not_fail(self):
         case_identifier = self._create_case()
@@ -953,23 +956,22 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_iocs_filter_first_should_not_fail(self):
         case_identifier = self._create_case()
-        ioc_id = 1
-        counting = 1
         payload = {'query': f'mutation {{ iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "test2") {{ ioc {{ iocValue iocId }} }} }}'}
-        self._subject.execute_graphql_query(payload)
+        response = self._subject.execute_graphql_query(payload)
+        ioc_identifier = response['data']['iocCreate']['ioc']['iocId']
         payload = {
             'query': f'mutation {{ iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "testtest") {{ ioc {{ iocValue iocId }} }} }}'}
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': f'''{{
                case(caseId: {case_identifier}) {{
-                     iocs(first: {counting}) {{ edges {{ node {{ iocValue iocId }} }} }} }} 
+                     iocs(first: 1) {{ edges {{ node {{ iocValue iocId }} }} }} }} 
                   }}'''
         }
         body = self._subject.execute_graphql_query(payload)
         for ioc in body['data']['case']['iocs']['edges']:
             iocid = ioc['node']['iocId']
-            self.assertEqual(ioc_id, iocid)
+            self.assertEqual(ioc_identifier, iocid)
 
     def test_graphql_iocs_filter_iocTypeId_should_not_fail(self):
         case_identifier = self._create_case()
