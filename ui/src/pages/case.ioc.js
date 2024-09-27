@@ -58,7 +58,9 @@ function add_ioc() {
             has_error = ret[0].length > 0;
             attributes = ret[1];
 
-            if (has_error){return false;}
+            if (has_error) {
+                return false;
+            }
 
             data['custom_attributes'] = attributes;
 
