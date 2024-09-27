@@ -245,10 +245,7 @@ def case_upload_ioc(caseid):
 
             ioc = add_ioc_schema.load(request_data)
             ioc.custom_attributes = get_default_custom_attributes('ioc')
-            ioc, _ = add_ioc(ioc=ioc,
-                             user_id=current_user.id,
-                             caseid=caseid
-                             )
+            ioc = add_ioc(ioc, current_user.id, caseid)
 
             if ioc:
                 ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)

@@ -125,16 +125,9 @@ def get_ioc_links(ioc_id):
     return related_iocs
 
 
-def find_ioc(ioc_value, ioc_type_id):
-    ioc = Ioc.query.filter(Ioc.ioc_value == ioc_value,
-                           Ioc.ioc_type_id == ioc_type_id).first()
-
-    return ioc
-
-
 def add_ioc(ioc: Ioc, user_id, caseid):
     if not ioc:
-        return None, False
+        return None
 
     ioc.user_id = user_id
     ioc.case_id = caseid
@@ -142,7 +135,7 @@ def add_ioc(ioc: Ioc, user_id, caseid):
 
     update_ioc_state(caseid=caseid)
     db.session.commit()
-    return ioc, False
+    return ioc
 
 
 def get_ioc_types_list():
