@@ -68,12 +68,8 @@ function add_ioc() {
             
             if ($('#ioc_one_per_line').is(':checked')) {
                 let iocs_values = $('#ioc_value').val();
-                let iocs_list = iocs_values.split(/\r?\n/);
+                let iocs_list = iocs_values.split(/\r?\n/).filter((value) => value !== '' && value !== '\n');
                 for (let index in iocs_list) {
-                    if (iocs_list[index] === '' || iocs_list[index] === '\n') {
-                        continue;
-                    }
-
                     data['ioc_value'] = iocs_list[index];
                     case_id = get_caseid()
                     post_request_api(`/api/v2/cases/${case_id}/iocs`, JSON.stringify(data), true, function () {
