@@ -126,9 +126,6 @@ def get_ioc_links(ioc_id):
 
 
 def add_ioc(ioc: Ioc, user_id, caseid):
-    if not ioc:
-        return None
-
     ioc.user_id = user_id
     ioc.case_id = caseid
     db.session.add(ioc)

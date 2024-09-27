@@ -57,6 +57,9 @@ def iocs_create(request_json, case_identifier):
     request_data = call_modules_hook('on_preload_ioc_create', data=request_json, caseid=case_identifier)
     ioc = _load({**request_data, "case_id": case_identifier})
 
+    if not ioc:
+        raise BusinessProcessingError('Unable to create IOC for internal reasons')
+
     if not check_ioc_type_id(type_id=ioc.ioc_type_id):
         raise BusinessProcessingError('Not a valid IOC type')
 

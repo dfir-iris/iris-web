@@ -245,18 +245,18 @@ def case_upload_ioc(caseid):
 
             ioc = add_ioc_schema.load(request_data)
             ioc.custom_attributes = get_default_custom_attributes('ioc')
-            ioc = add_ioc(ioc, current_user.id, caseid)
+            index += 1
 
-            if ioc:
-                ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
-                ret.append(request_data)
-                track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)
-
-            else:
+            if not ioc:
                 errors.append(f"{ioc.ioc_value} (internal reasons)")
                 log.error(f"Unable to create IOC {ioc.ioc_value} for internal reasons")
+                continue
 
-            index += 1
+            ioc = add_ioc(ioc, current_user.id, caseid)
+            ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
+            ret.append(request_data)
+            track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)
+
 
         if len(errors) == 0:
             msg = "Successfully imported data."
