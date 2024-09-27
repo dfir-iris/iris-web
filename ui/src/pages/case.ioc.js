@@ -98,8 +98,11 @@ function add_ioc() {
                         swal("Oh no !", data, "error")
                     }
                 })
+                .fail((error) => {
+                    notify_error(error.responseJSON.message);
+                })
                 .always(function () {
-                    $('#submit_new_ioc')
+                    $('#submit_new_ioc').text('Save')
                         .attr("disabled", false)
                         .addClass('bt-outline-success')
                         .removeClass('btn-success', 'text-dark');

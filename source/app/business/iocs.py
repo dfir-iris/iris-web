@@ -65,7 +65,7 @@ def iocs_create(request_json, case_identifier):
         raise BusinessProcessingError('Not a valid IOC type')
 
     if case_iocs_db_find_duplicate(ioc):
-        raise BusinessProcessingError('IOC with same value and type already exist on case')
+        raise BusinessProcessingError('IOC with same value and type already exists')
 
     add_ioc(ioc, current_user.id, case_identifier)
 
