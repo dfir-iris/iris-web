@@ -21,6 +21,15 @@ function edit_in_ioc_desc() {
     }
 }
 
+function _parse_ioc_values() {
+    const ioc_value = $('#ioc_value').val();
+    if (!$('#ioc_one_per_line').is(':checked')) {
+        return [ioc_value];
+    } else {
+        return ioc_value.split(/\r?\n/).filter((value) => value !== '' && value !== '\n');
+    }
+}
+
 /* Fetch a modal that is compatible with the requested ioc type */ 
 function add_ioc() {
     url = 'ioc/add/modal' + case_param();
@@ -65,51 +74,25 @@ function add_ioc() {
             data['custom_attributes'] = attributes;
 
             id = $('#ioc_id').val();
-            
-            if ($('#ioc_one_per_line').is(':checked')) {
-                let iocs_values = $('#ioc_value').val();
-                let iocs_list = iocs_values.split(/\r?\n/).filter((value) => value !== '' && value !== '\n');
-                for (let index in iocs_list) {
-                    data['ioc_value'] = iocs_list[index];
-                    case_id = get_caseid()
-                    post_request_api(`/api/v2/cases/${case_id}/iocs`, JSON.stringify(data), true, function () {
-                        $('#submit_new_ioc').text('Saving data..')
-                            .attr("disabled", true)
-                            .removeClass('bt-outline-success')
-                            .addClass('btn-success', 'text-dark');
-                    })
-                    .done((data, textStatus) => {
-                        if (textStatus === 'success') {
-                            reload_iocs();
-                            notify_success('IOC added');
-                            if (index == (iocs_list.length - 1)) {
-                                $('#modal_add_ioc').modal('hide');
-                            }
-                        } else {
-                            $('#submit_new_ioc').text('Save again');
-                            swal("Oh no !", data, "error")
-                        }
-                    })
-                    .always(function () {
-                        $('#submit_new_ioc')
-                            .attr("disabled", false)
-                            .addClass('bt-outline-success')
-                            .removeClass('btn-success', 'text-dark');
-                    })
-                }
-            } else {
+
+            const iocs_values = _parse_ioc_values();
+            iocs_values.forEach((ioc_value, index) => {
+                data['ioc_value'] = ioc_value;
                 case_id = get_caseid()
-                post_request_api(`/api/v2/cases/${case_id}/iocs` , JSON.stringify(data), true, function () {
-                        $('#submit_new_ioc').text('Saving data..')
-                            .attr("disabled", true)
-                            .removeClass('bt-outline-success')
-                            .addClass('btn-success', 'text-dark');
-                    })
+                post_request_api(`/api/v2/cases/${case_id}/iocs`, JSON.stringify(data), true, function () {
+                    $('#submit_new_ioc').text('Saving data..')
+                        .attr("disabled", true)
+                        .removeClass('bt-outline-success')
+                        .addClass('btn-success', 'text-dark');
+                })
                 .done((data, textStatus) => {
                     if (textStatus === 'success') {
                         reload_iocs();
                         notify_success('IOC added');
-                        $('#modal_add_ioc').modal('hide');
+                        // TODO would better to close the modal if all requests succeed (should combine the results? promises...)
+                        if (index == (iocs_values.length - 1)) {
+                            $('#modal_add_ioc').modal('hide');
+                        }
                     } else {
                         $('#submit_new_ioc').text('Save again');
                         swal("Oh no !", data, "error")
@@ -121,7 +104,7 @@ function add_ioc() {
                         .addClass('bt-outline-success')
                         .removeClass('btn-success', 'text-dark');
                 })
-            }
+            })
             return false;
         });
 
