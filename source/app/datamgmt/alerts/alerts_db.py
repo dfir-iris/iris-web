@@ -996,8 +996,13 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             .join(IocLink.ioc)
             .join(IocLink.case)
             .filter(
-                Ioc.ioc_value.in_(added_iocs),
-                close_condition
+                and_(
+                    and_(
+                        Ioc.ioc_value.in_(added_iocs),
+                        close_condition,
+                    ),
+                    Cases.client_id == customer_id
+                )
             )
             .distinct()
             .all()
@@ -1008,8 +1013,13 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             .with_entities(CaseAssets.case_id, CaseAssets.asset_name, Cases.name, Cases.close_date)
             .join(CaseAssets.case)
             .filter(
-                CaseAssets.asset_name.in_(added_assets),
-                close_condition
+                and_(
+                    and_(
+                        CaseAssets.asset_name.in_(added_assets),
+                        close_condition
+                    ),
+                    Cases.client_id == customer_id
+                )
             )
             .distinct(CaseAssets.case_id)
             .all()
