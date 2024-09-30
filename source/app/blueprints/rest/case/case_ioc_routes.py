@@ -68,7 +68,7 @@ case_ioc_rest_blueprint = Blueprint('case_ioc_rest', __name__)
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/list', methods=['GET'])
-@endpoint_deprecated('GET', '/api/v2/iocs')
+@endpoint_deprecated('GET', '/api/v2/cases/<int:identifier>/iocs')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_list_ioc(caseid):
@@ -391,6 +391,7 @@ def case_comment_ioc_add(cur_id, caseid):
         return response_error(msg="Data error", data=e.normalized_messages())
     except ObjectNotFoundError:
         return response_error('Invalid ioc ID')
+
 
 @case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
