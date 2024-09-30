@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test } from '../../restFixture.js';
+import { expect } from '@playwright/test';
 import crypto from 'node:crypto';
 
 test.beforeEach(async({ page }) => {
@@ -39,4 +40,33 @@ test('should not be able to create an IOC with the same type and value', async (
 
     await expect(page.getByText('IOC with same value and type already exists')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
+});
+
+test('should paginate the IOCs', async ({ page, rest }) => {
+    const caseName = `Case - ${crypto.randomUUID()}`;
+
+    // TODO maybe should remove cases between each tests (like in the backend tests)
+    let response = await rest.post('/api/v2/cases', {
+        data: {
+            case_name: caseName,
+            case_description: 'Case description',
+            case_customer: 1,
+            case_soc_id: ''
+        }
+    });
+    const caseIdentifier = (await response.json()).case_id;
+    for (let i = 0; i < 11; i++) {
+        await rest.post(`/api/v2/cases/${caseIdentifier}/iocs`, {
+            data: {
+                ioc_type_id: 1,
+                ioc_value: `IOC value - ${crypto.randomUUID()}`,
+                ioc_tlp_id: 2,
+                ioc_description: 'rewrw',
+                ioc_tags: ''
+            }
+        })
+    }
+
+    await page.goto(`/case/ioc?cid=${caseIdentifier}`);
+    await expect(page.getByRole('link', { name: '2', exact: true })).toBeVisible();
 });
