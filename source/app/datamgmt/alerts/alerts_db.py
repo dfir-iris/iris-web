@@ -895,6 +895,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         db.session.query(Alert, SimilarAlertsCache.asset_name, SimilarAlertsCache.ioc_value,
                          asset_type_alias.asset_icon_not_compromised)
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
+        .outerjoin(Alert.resolution_status)
         .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
         .filter(conditions)
         .limit(number_of_results)
@@ -924,10 +925,12 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     for alert_id, alert_info in alerts_dict.items():
         alert_color = '#c95029' if alert_info['alert'].status.status_name in ['Closed', 'Merged', 'Escalated'] else ''
 
+        alert_resolution_title = f'[{alert_info["alert"].resolution_status.resolution_status_name}]\n' if alert_info["alert"].resolution_status else ""
+
         nodes.append({
             'id': f'alert_{alert_id}',
-            'label': f'[Closed] Alert #{alert_id}' if alert_color != '' else f'Alert #{alert_id}',
-            'title': alert_info['alert'].alert_title,
+            'label': f'[Closed]{alert_resolution_title} {alert_info["alert"].alert_title}' if alert_color != '' else f'{alert_resolution_title}{alert_info["alert"].alert_title}',
+            'title': f'{alert_info["alert"].alert_description}',
             'group': 'alert',
             'shape': 'icon',
             'icon': {
@@ -992,7 +995,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         matching_ioc_cases = (
             db.session.query(IocLink)
-            .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
+            .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date, Cases.description)
             .join(IocLink.ioc)
             .join(IocLink.case)
             .filter(
@@ -1010,7 +1013,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         matching_asset_cases = (
             db.session.query(CaseAssets)
-            .with_entities(CaseAssets.case_id, CaseAssets.asset_name, Cases.name, Cases.close_date)
+            .with_entities(CaseAssets.case_id, CaseAssets.asset_name, Cases.name, Cases.close_date, Cases.description)
             .join(CaseAssets.case)
             .filter(
                 and_(
@@ -1027,16 +1030,16 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         cases_data = {}
 
-        for case_id, ioc_value, case_name, close_date in matching_ioc_cases:
+        for case_id, ioc_value, case_name, close_date, case_desc in matching_ioc_cases:
             if case_id not in cases_data:
                 cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': [],
-                                       'close_date': close_date}
+                                       'close_date': close_date, 'description': case_desc}
             cases_data[case_id]['matching_ioc'].append(ioc_value)
 
-        for case_id, asset_name, case_name, close_date in matching_asset_cases:
+        for case_id, asset_name, case_name, close_date, case_desc in matching_asset_cases:
             if case_id not in cases_data:
                 cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': [],
-                                       'close_date': close_date}
+                                       'close_date': close_date, 'description': case_desc}
             cases_data[case_id]['matching_assets'].append(asset_name)
 
         for case_id in cases_data:
@@ -1044,7 +1047,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                 nodes.append({
                     'id': f'case_{case_id}',
                     'label': f'[Closed] Case #{case_id}' if cases_data[case_id].get('close_date') else f'Case #{case_id}',
-                    'title': cases_data[case_id]['name'],
+                    'title': cases_data[case_id].get("description"),
                     'group': 'case',
                     'shape': 'icon',
                     'icon': {
