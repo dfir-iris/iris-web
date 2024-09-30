@@ -37,6 +37,7 @@ from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id, \
     case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
+from app.iris_engine.utils.common import parse_bf_date_format
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
@@ -54,6 +55,8 @@ def db_list_all_alerts():
 def get_filtered_alerts(
         start_date: str = None,
         end_date: str = None,
+        source_start_date: str = None,
+        source_end_date: str = None,
         title: str = None,
         description: str = None,
         status: int = None,
@@ -105,7 +108,16 @@ def get_filtered_alerts(
     conditions = []
 
     if start_date is not None and end_date is not None:
-        conditions.append(Alert.alert_creation_time.between(start_date, end_date))
+        start_date = parse_bf_date_format(start_date)
+        end_date = parse_bf_date_format(end_date)
+        if start_date and end_date:
+            conditions.append(Alert.alert_creation_time.between(start_date, end_date))
+
+    if source_start_date is not None and source_end_date is not None:
+        source_start_date = parse_bf_date_format(source_start_date)
+        source_end_date = parse_bf_date_format(source_end_date)
+        if source_start_date and source_end_date:
+            conditions.append(Alert.alert_source_event_time.between(source_start_date, source_end_date))
 
     if title is not None:
         conditions.append(Alert.alert_title.ilike(f'%{title}%'))
