@@ -723,6 +723,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
 
         return None
 
+    # TODO is this code dead? Remove?
     def is_unique_for_customer_from_cid(self, case_id, request_data):
         """
         Check if the asset is unique for the customer
