@@ -154,7 +154,7 @@ def case_ioc_state(caseid):
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/add', methods=['POST'])
-@endpoint_deprecated('POST', '/api/v2/cases/{identifier}/iocs')
+@endpoint_deprecated('POST', '/api/v2/cases/<int:identifier>/iocs')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_case_add_ioc(caseid):
