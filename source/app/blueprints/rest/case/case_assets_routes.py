@@ -129,10 +129,13 @@ def case_assets_state(caseid):
 def deprecated_add_asset(caseid):
     asset_schema = CaseAssetsSchema()
     try:
+        asset_schema.is_unique_for_cid(caseid, request.get_json())
         asset, msg = assets_create(caseid, request.get_json())
         return response_success(msg, asset_schema.dump(asset))
     except BusinessProcessingError as e:
         return response_error(e.get_message())
+    except marshmallow.exceptions.ValidationError as e:
+        return response_error('Data error', data=e.messages)
 
 
 @case_assets_rest_blueprint.route('/api/v2/cases/<int:identifier>/assets', methods=['POST'])
@@ -148,6 +151,8 @@ def add_asset(identifier):
         return response_api_created(asset_schema.dump(asset))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
+    except marshmallow.exceptions.ValidationError as e:
+        return response_api_error('Data error', e.messages)
 
 
 @case_assets_rest_blueprint.route('/case/assets/upload', methods=['POST'])

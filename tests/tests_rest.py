@@ -625,3 +625,17 @@ class TestsRest(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
         self.assertEqual(400, response.status_code)
+
+    def test_create_asset_in_old_api_with_same_type_and_name_should_return_400(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        self._subject.create('/case/assets/add', body, {'cid': case_identifier})
+        response = self._subject.create('/case/assets/add', body, {'cid': case_identifier})
+        self.assertEqual(400, response.status_code)
+
+    def test_create_asset_with_same_type_and_name_should_return_400(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        self.assertEqual(400, response.status_code)
