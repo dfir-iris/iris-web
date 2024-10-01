@@ -32,22 +32,24 @@ from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseAssetsSchema
 
 
-def _load(request_data):
+def _load(case_identifier, request_data):
     try:
         add_assets_schema = CaseAssetsSchema()
-        return add_assets_schema.load(request_data)
+        asset = add_assets_schema.load(request_data)
+        asset.case_id = case_identifier
+        return asset
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
 
 
 def assets_create(case_identifier, request_json):
     request_data = call_modules_hook('on_preload_asset_create', data=request_json, caseid=case_identifier)
-    asset = _load(request_data)
-    asset.case_id = case_identifier
+    asset = _load(case_identifier, request_data)
 
     if case_assets_db_exists(asset):
         raise BusinessProcessingError('Asset with same value and type already exists')
     asset = create_asset(asset=asset, caseid=case_identifier, user_id=current_user.id)
+    # TODO should the custom attributes be set?
     if request_data.get('ioc_links'):
         errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
         if errors:

@@ -216,6 +216,7 @@ def case_upload_ioc(caseid):
 
             row['analysis_status_id'] = analysis_status_id
 
+            # TODO from here
             request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
 
             asset_sc = add_asset_schema.load(request_data)
@@ -231,12 +232,14 @@ def case_upload_ioc(caseid):
             asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
             if not asset:
-                errors.append("Unable to add asset for internal reason")
+                errors.append('Unable to add asset for internal reason')
                 index += 1
                 continue
 
+            # to here: should call assets_create from the business layer.
+            #          But should the custom_attributes always be called?
+            track_activity(f'added asset {asset.asset_name}', caseid=caseid)
             ret.append(request_data)
-            track_activity(f"added asset {asset.asset_name}", caseid=caseid)
 
             index += 1
 
