@@ -32,6 +32,7 @@ class TestsGraphQL(TestCase):
     def setUpClass(cls) -> None:
         cls._subject = Iris()
         cls._subject.start()
+        cls._subject.wait_until_api_is_ready()
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -46,13 +47,6 @@ class TestsGraphQL(TestCase):
     def _generate_new_dummy_ioc_value(cls):
         cls._ioc_count += 1
         return f'IOC value #{cls._ioc_count}'
-
-    # Note: this method is necessary because the state of the database is not reset between each test
-    #       and we want to work with distinct object in each test
-    @classmethod
-    def _generate_new_dummy_user_name(cls):
-        cls._user_count += 1
-        return f'user{cls._user_count}'
 
     @staticmethod
     def _get_first_case(body):
@@ -353,7 +347,7 @@ class TestsGraphQL(TestCase):
         self.assertNotIn('errors', response)
 
     def test_graphql_case_should_return_error_log_uuid_when_permission_denied(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
+        user = self._subject.create_dummy_user()
         case_identifier = self._create_case()
         payload = {
             'query': f'''{{
@@ -366,7 +360,7 @@ class TestsGraphQL(TestCase):
         self.assertRegex(response['errors'][0]['message'], r'Permission denied \(EID [0-9a-f-]{36}\)')
 
     def test_graphql_case_should_return_error_ioc_when_permission_denied(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
+        user = self._subject.create_dummy_user()
         payload = {'query': ' mutation { caseCreate(name: "case", description: "Some description", clientId: 1) { case { caseId } } }'}
         body = self._subject.execute_graphql_query(payload)
         case_identifier = body['data']['caseCreate']['case']['caseId']
@@ -1089,7 +1083,7 @@ class TestsGraphQL(TestCase):
             self.assertEqual(test_user, user_id)
 
     def test_graphql_case_should_return_error_cases_query_when_permission_denied(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
+        user = self._subject.create_dummy_user()
         name = "cases_query_permission_denied"
         case_id = None
         payload = {
@@ -1110,8 +1104,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(case_id, test_case_id)
 
     def test_graphql_case_should_return_success_cases_query(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
-        name = "cases_query_permission_denied"
+        user = self._subject.create_dummy_user()
+        name = 'cases_query_permission_denied'
         payload = {
             'query': f'''mutation {{
                                     caseCreate(name: "{name}", description: "Some description", clientId: 1) {{

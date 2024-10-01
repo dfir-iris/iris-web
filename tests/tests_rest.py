@@ -42,6 +42,7 @@ class TestsRest(TestCase):
     def setUpClass(cls) -> None:
         cls._subject = Iris()
         cls._subject.start()
+        cls._subject.wait_until_api_is_ready()
 
     @classmethod
     def tearDownClass(cls) -> None:

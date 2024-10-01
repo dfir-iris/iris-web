@@ -51,6 +51,7 @@ class Iris:
                 raise ServerTimeoutError()
 
     def wait_until_api_is_ready(self):
+        print('Waiting for DFIR-IRIS to start...')
         self._wait(self._api.is_ready, 60)
 
     def start(self):
@@ -65,8 +66,6 @@ class Iris:
         #      for the database)
         shutil.copy2(_TEST_DATA_PATH.joinpath('basic.env'), _IRIS_PATH.joinpath('.env'))
         self._docker_compose.start()
-        print('Waiting for DFIR-IRIS to start...')
-        self.wait_until_api_is_ready()
 
     def stop(self):
         self._docker_compose.stop()
