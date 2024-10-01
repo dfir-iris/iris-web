@@ -758,8 +758,8 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
         ).first()
 
         if asset is not None:
-            raise marshmallow.exceptions.ValidationError("Asset name already exists in this case",
-                                                         field_name="asset_name")
+            raise marshmallow.exceptions.ValidationError('Asset name already exists in this case',
+                                                         field_name='asset_name')
 
         return True
 

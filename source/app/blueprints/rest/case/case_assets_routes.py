@@ -35,6 +35,7 @@ from app.business.assets import assets_create
 from app.business.assets import assets_get_detailed
 from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
+from app.datamgmt.case.case_assets_db import case_assets_db_exists
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
@@ -217,8 +218,10 @@ def case_upload_ioc(caseid):
 
             request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
 
-            add_asset_schema.is_unique_for_cid(caseid, request_data)
             asset_sc = add_asset_schema.load(request_data)
+            asset_sc.case_id = caseid
+            if case_assets_db_exists(asset_sc):
+                return response_error('Asset with same value and type already exists')
             asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
@@ -245,7 +248,7 @@ def case_upload_ioc(caseid):
         return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
