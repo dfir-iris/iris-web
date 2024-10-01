@@ -222,7 +222,7 @@ def case_upload_ioc(caseid):
             asset_sc = add_asset_schema.load(request_data)
             asset_sc.case_id = caseid
             if case_assets_db_exists(asset_sc):
-                return response_error('Asset with same value and type already exists')
+                return response_error('Data error', data='Asset with same value and type already exists')
             asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
@@ -297,8 +297,10 @@ def asset_update(cur_id, caseid):
 
         request_data['asset_id'] = cur_id
 
-        add_asset_schema.is_unique_for_cid(caseid, request_data)
         asset_schema = add_asset_schema.load(request_data, instance=asset)
+        asset_schema.case_id = caseid
+        if case_assets_db_exists(asset_schema):
+            return response_error('Data error', data='Asset with same value and type already exists')
 
         update_assets_state(caseid=caseid)
         db.session.commit()
@@ -318,7 +320,7 @@ def asset_update(cur_id, caseid):
         return response_error("Unable to update asset for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_assets_rest_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
