@@ -361,9 +361,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_case_should_return_error_ioc_when_permission_denied(self):
         user = self._subject.create_dummy_user()
-        payload = {'query': ' mutation { caseCreate(name: "case", description: "Some description", clientId: 1) { case { caseId } } }'}
-        body = self._subject.execute_graphql_query(payload)
-        case_identifier = body['data']['caseCreate']['case']['caseId']
+        case_identifier = self._create_case()
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
@@ -613,10 +611,7 @@ class TestsGraphQL(TestCase):
         self.assertEqual(1, body['data']['caseUpdate']['case']['reviewStatusId'])
 
     def test_graphql_query_ioc_should_not_fail(self):
-        payload = {'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
-                            'caseId } } }'}
-        body = self._subject.execute_graphql_query(payload)
-        case_identifier = body['data']['caseCreate']['case']['caseId']
+        case_identifier = self._create_case()
         ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
