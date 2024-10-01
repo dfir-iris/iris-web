@@ -40,6 +40,7 @@ from app.models.authorization import User
 
 log = app.logger
 
+
 def create_asset(asset, caseid, user_id):
 
     asset.date_added = datetime.datetime.utcnow()
@@ -53,6 +54,17 @@ def create_asset(asset, caseid, user_id):
     db.session.commit()
 
     return asset
+
+
+def case_assets_db_exists(asset: CaseAssets):
+    assets = CaseAssets.query.filter(
+        func.lower(CaseAssets.asset_name) == func.lower(asset.asset_name),
+        CaseAssets.asset_type_id == asset.asset_type_id,
+        CaseAssets.asset_id != asset.asset_id,
+        CaseAssets.case_id == asset.case_id
+    )
+
+    return assets.first() is not None
 
 
 def get_assets(caseid):

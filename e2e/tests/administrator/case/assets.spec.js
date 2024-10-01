@@ -20,6 +20,6 @@ test('should not be able to create an asset with the same type and value', async
     await page.getByPlaceholder('One asset per line').fill(assetValue);
     await page.getByRole('button', { name: 'Save' }).click();
 
-    await expect(page.getByText('Asset name already exists')).toBeVisible();
+    await expect(page.getByText('Asset with same value and type already exists')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
 });

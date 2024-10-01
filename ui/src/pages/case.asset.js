@@ -101,6 +101,7 @@ function add_assets() {
                 })
                 .fail(function (error) {
                     $('#submit_new_assets').text('Save');
+                    notify_error(error.responseJSON.message);
                 })
             }
 
