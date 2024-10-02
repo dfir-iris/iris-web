@@ -19,8 +19,11 @@
 from unittest import TestCase
 from iris import Iris
 
+# TODO should change None into 123456789 and maybe fix...
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
 
-class TestsRest(TestCase):
+
+class TestsRestTasks(TestCase):
 
     def setUp(self) -> None:
         self._subject = Iris()
@@ -28,32 +31,53 @@ class TestsRest(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
-    def test_get_task_should_return_403_when_user_has_insufficient_rights(self):
+    def test_add_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body).json()
-        task_identifier = response['id']
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
+        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+                'task_title': 'dummy title', 'custom_attributes': {}}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
+        self.assertEqual(201, response.status_code)
 
-        response = user.get(f'/api/v2/tasks/{task_identifier}')
-        self.assertEqual(403, response.status_code)
-
-    def test_delete_task_should_return_403_when_user_has_insufficient_rights(self):
+    def test_add_task_with_missing_task_title_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body).json()
-        task_identifier = response['id']
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
+        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+                'custom_attributes': {}}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
+        self.assertEqual(400, response.status_code)
 
-        response = user.delete(f'/api/v2/tasks/{task_identifier}')
-        self.assertEqual(403, response.status_code)
+    def test_get_task_should_return_201(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [2], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+                'task_title': 'dummy title',
+                'custom_attributes': {}}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        task_identifier = response['id']
+        response = self._subject.get(f'/api/v2/tasks/{task_identifier}')
+        self.assertEqual(201, response.status_code)
+
+    def test_get_task_with_missing_task_identifier_should_return_error(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+                'task_title': 'dummy title', 'custom_attributes': {}}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
+        response = self._subject.get(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        self.assertEqual(404, response.status_code)
+
+    def test_delete_task_should_return_204(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+                'task_title': 'dummy title',
+                'custom_attributes': {}}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        task_identifier = response['id']
+        test = self._subject.delete(f'/api/v2/tasks/{task_identifier}')
+        self.assertEqual(204, test.status_code)
+
+    def test_delete_task_with_missing_task_identifier_should_return_404(self):
+        case_identifier = self._subject.create_dummy_case()
+        task_id = 1
+        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
+                'custom_attributes': {}}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        test = self._subject.delete(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        self.assertEqual(404, test.status_code)

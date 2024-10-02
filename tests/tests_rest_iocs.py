@@ -20,7 +20,7 @@ from unittest import TestCase
 from iris import Iris
 
 
-class TestsRest(TestCase):
+class TestsRestIocs(TestCase):
 
     def setUp(self) -> None:
         self._subject = Iris()

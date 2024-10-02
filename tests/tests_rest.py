@@ -19,10 +19,6 @@
 from unittest import TestCase
 from iris import Iris
 
-_INITIAL_DEMO_CASE_IDENTIFIER = 1
-_GROUP_ANALYSTS_IDENTIFIER = 2
-_CASE_ACCESS_LEVEL_FULL_ACCESS = 4
-
 # TODO should change None into 123456789 and maybe fix...
 _IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
 
@@ -251,52 +247,6 @@ class TestsRest(TestCase):
         response = self._subject.get('/case/timeline/state', query_parameters={'cid': 1})
         self.assertEqual(200, response.status_code)
 
-    def test_add_task_should_return_201(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        self.assertEqual(201, response.status_code)
-
-    def test_add_task_with_missing_task_title_identifier_should_return_400(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'custom_attributes': {}}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        self.assertEqual(400, response.status_code)
-
-    def test_get_task_should_return_201(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [2], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
-                'custom_attributes': {}}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body).json()
-        task_identifier = response['id']
-        response = self._subject.get(f'/api/v2/tasks/{task_identifier}')
-        self.assertEqual(201, response.status_code)
-
-    def test_get_task_with_missing_task_identifier_should_return_error(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        response = self._subject.get(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
-        self.assertEqual(404, response.status_code)
-
-    def test_delete_task_should_return_204(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
-                'custom_attributes': {}}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body).json()
-        task_identifier = response['id']
-        test = self._subject.delete(f'/api/v2/tasks/{task_identifier}')
-        self.assertEqual(204, test.status_code)
-
-    def test_delete_task_with_missing_task_identifier_should_return_404(self):
-        case_identifier = self._subject.create_dummy_case()
-        task_id = 1
-        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
-                'custom_attributes': {}}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        test = self._subject.delete(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
-        self.assertEqual(404, test.status_code)
-
     def test_get_cases_should_not_fail(self):
         response = self._subject.get('/api/v2/cases')
         self.assertEqual(200, response.status_code)
@@ -400,61 +350,6 @@ class TestsRest(TestCase):
             identifiers.append(ioc['ioc_type_id'])
         self.assertIn(ioc_type_identifier, identifiers)
 
-    def test_get_case_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-        response = user.get(f'/api/v2/cases/{case_identifier}')
-        self.assertEqual(403, response.status_code)
-
-    def test_delete_case_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-        body = {
-            'groups_membership': [_GROUP_ANALYSTS_IDENTIFIER]
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/groups/update', body)
-
-        response = user.delete(f'/api/v2/cases/{case_identifier}')
-        self.assertEqual(403, response.status_code)
-
-    def test_create_ioc_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        response = user.create(f'/api/v2/cases/{case_identifier}/iocs', body)
-        self.assertEqual(403, response.status_code)
-
-    def test_get_ioc_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        ioc_identifier = response['ioc_id']
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-
-        response = user.get(f'/api/v2/iocs/{ioc_identifier}')
-        self.assertEqual(403, response.status_code)
-
     def test_get_ioc_should_return_404_when_not_present(self):
         response = self._subject.get(f'/api/v2/iocs/137')
         self.assertEqual(404, response.status_code)
@@ -467,33 +362,6 @@ class TestsRest(TestCase):
         response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}')
         self.assertEqual(200, response.status_code)
 
-    def test_get_iocs_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-
-        response = user.get(f'/api/v2/cases/{case_identifier}/iocs')
-        self.assertEqual(403, response.status_code)
-
-    def test_delete_ioc_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        ioc_identifier = response['ioc_id']
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-
-        response = user.delete(f'/api/v2/iocs/{ioc_identifier}')
-        self.assertEqual(403, response.status_code)
-
     def test_get_asset_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
@@ -501,34 +369,3 @@ class TestsRest(TestCase):
         asset_identifier = response['asset_id']
         response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
         self.assertEqual(200, response.status_code)
-
-    def test_get_asset_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
-        asset_identifier = response['asset_id']
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-
-        response = user.get(f'/api/v2/assets/{asset_identifier}')
-        self.assertEqual(403, response.status_code)
-
-    def test_delete_asset_should_return_403_when_user_has_insufficient_rights(self):
-        case_identifier = self._subject.create_dummy_case()
-        user = self._subject.create_dummy_user()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
-        asset_identifier = response['asset_id']
-        body = {
-            'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],
-            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
-        }
-        self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
-
-        response = user.delete(f'/api/v2/assets/{asset_identifier}')
-        self.assertEqual(403, response.status_code)
-

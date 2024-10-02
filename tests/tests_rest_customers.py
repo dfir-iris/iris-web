@@ -22,7 +22,7 @@ from iris import Iris
 _PERMISSION_CUSTOMERS_WRITE = 0x80
 
 
-class TestsRest(TestCase):
+class TestsRestCustomers(TestCase):
 
     def setUp(self) -> None:
         self._subject = Iris()
