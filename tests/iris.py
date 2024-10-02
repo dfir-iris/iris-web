@@ -50,8 +50,7 @@ class Iris:
     def get_api_version(self):
         return self._api.get('api/versions').json()
 
-    # TODO make private => use create_dummy_user instead
-    def create_user(self, user_name):
+    def _create_user(self, user_name):
         body = {
             'user_name': user_name,
             'user_login': user_name,
@@ -62,7 +61,7 @@ class Iris:
         return User(API_URL, user['data']['user_api_key'], user['data']['id'])
 
     def create_dummy_user(self):
-        return self.create_user(f'user{uuid4()}')
+        return self._create_user(f'user{uuid4()}')
 
     def create_dummy_case(self):
         body = {
