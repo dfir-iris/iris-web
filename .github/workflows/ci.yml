@@ -55,7 +55,7 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
-          docker compose --file ../docker-compose.dev.yml --env-file data/basic.env up --detach
+          docker compose --file ../docker-compose.dev.yml --env-file data/basic.env up --detach --wait
           PYTHONUNBUFFERED=true python -m unittest --verbose
           docker compose down
       - name: Start development server
