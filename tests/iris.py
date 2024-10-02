@@ -50,16 +50,6 @@ class Iris:
     def get_api_version(self):
         return self._api.get('api/versions').json()
 
-    def create_alert(self):
-        body = {
-            'alert_title': 'alert title',
-            'alert_severity_id': 4,
-            'alert_status_id': 3,
-            'alert_customer_id': 1
-        }
-        response = self._api.post('/alerts/add', body)
-        return response.json()
-
     def create_asset(self):
         body = {
             'asset_type_id': '9',
