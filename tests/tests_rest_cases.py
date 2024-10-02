@@ -35,6 +35,11 @@ class TestsRestCases(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
+    def test_manage_case_filter_api_rest_should_fail(self):
+        self._subject.create_dummy_case()
+        response = self._subject.get('/manage/cases/filter').json()
+        self.assertEqual('success', response['status'])
+
     def test_get_cases_should_not_fail(self):
         response = self._subject.get('/api/v2/cases')
         self.assertEqual(200, response.status_code)

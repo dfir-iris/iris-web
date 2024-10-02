@@ -31,6 +31,10 @@ class TestsRestIocs(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
+    def test_get_ioc_should_not_fail(self):
+        response = self._subject.get('/case/ioc/list').json()
+        self.assertEqual('success', response['status'])
+
     def test_create_ioc_should_return_good_ioc_type_id(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}

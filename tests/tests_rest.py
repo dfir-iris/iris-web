@@ -19,9 +19,6 @@
 from unittest import TestCase
 from iris import Iris
 
-# TODO should change None into 123456789 and maybe fix...
-_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
-
 
 class TestsRest(TestCase):
 
@@ -109,17 +106,8 @@ class TestsRest(TestCase):
         response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
         self.assertEqual('success', response['status'])
 
-    def test_manage_case_filter_api_rest_should_fail(self):
-        self._subject.create_dummy_case()
-        response = self._subject.get_cases_filter()
-        self.assertEqual('success', response['status'])
-
     def test_get_case_graph_should_not_fail(self):
         response = self._subject.get('/case/graph/getdata').json()
-        self.assertEqual('success', response['status'])
-
-    def test_get_ioc_should_not_fail(self):
-        response = self._subject.get('/case/ioc/list').json()
         self.assertEqual('success', response['status'])
 
     def test_create_case_template_should_not_be_forbidden_to_administrator(self):

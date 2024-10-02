@@ -1101,15 +1101,23 @@ class TestsGraphQL(TestCase):
             'query': 'mutation { caseCreate(name: "test_case_tag", description: "Some description", clientId: 1) { case { caseId } } }'
         }
         body = self._subject.execute_graphql_query(payload)
-        case_id = body['data']['caseCreate']['case']['caseId']
-        self._subject.update_case(case_id, {'case_tags': 'test_case_number1'})
+        case_identifier = body['data']['caseCreate']['case']['caseId']
+
+        payload = {
+            'query': f'''mutation {{
+                             caseUpdate(caseId: {case_identifier}, tags: "test_case_number1") {{
+                                  case {{ name }}
+                             }} 
+                        }}'''
+        }
+        self._subject.execute_graphql_query(payload)
         payload = {
             'query': 'query { cases (tags :"test_case_number1"){ edges { node { caseId } } } }'
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
             test_case_id = case['node']['caseId']
-            self.assertEqual(case_id, test_case_id)
+            self.assertEqual(case_identifier, test_case_id)
 
     def test_graphql_case_should_work_with_open_since(self):
         payload = {
