@@ -19,6 +19,9 @@
 from unittest import TestCase
 from iris import Iris
 
+# TODO should change None into 123456789 and maybe fix...
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
+
 
 class TestsRestIocs(TestCase):
 
@@ -27,6 +30,40 @@ class TestsRestIocs(TestCase):
 
     def tearDown(self):
         self._subject.clear_database()
+
+    def test_create_ioc_should_return_good_ioc_type_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        self.assertEqual(1, response['ioc_type_id'])
+
+    def test_get_ioc_should_return_ioc_type_id(self):
+        ioc_type_id = 1
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': ioc_type_id, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        test = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        current_id = test['ioc_id']
+        response = self._subject.get(f'/api/v2/iocs/{current_id}').json()
+        self.assertEqual(ioc_type_id, response['ioc_type_id'])
+
+    def test_get_ioc_with_missing_ioc_identifier_should_return_error(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        test = self._subject.get('/api/v2/iocs/None').json()
+        self.assertEqual('error', test['status'])
+
+    def test_delete_ioc_should_return_204(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        response = self._subject.delete(f'/api/v2/iocs/{ioc_identifier}')
+        self.assertEqual(204, response.status_code)
+
+    def test_delete_ioc_with_missing_ioc_identifier_should_return_404(self):
+        response = self._subject.delete(f'/api/v2/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        self.assertEqual(404, response.status_code)
 
     def test_get_iocs_should_not_fail(self):
         case_identifier = self._subject.create_dummy_case()

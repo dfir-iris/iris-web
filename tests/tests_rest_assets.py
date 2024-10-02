@@ -31,6 +31,29 @@ class TestsRestAssets(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
+
+    def test_delete_asset_should_return_204(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        response = self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        self.assertEqual(204, response.status_code)
+
+    def test_delete_asset_with_missing_asset_identifier_should_return_404(self):
+        response = self._subject.delete(f'/api/v2/assets/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        self.assertEqual(404, response.status_code)
+
+    def test_create_asset_should_work(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        self.assertEqual(201, response.status_code)
+
+    def test_get_asset_with_missing_asset_identifier_should_return_404(self):
+        response = self._subject.get('/api/v2/asset/None')
+        self.assertEqual(404, response.status_code)
+
     def test_create_asset_with_missing_case_identifier_should_return_404(self):
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/assets', body)
