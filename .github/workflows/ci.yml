@@ -61,12 +61,15 @@ jobs:
       - name: Start development server
         run: |
           docker compose --file docker-compose.dev.yml up --detach
+      - name: Install e2e dependencies
+        working-directory: e2e
+        run: npm ci
+      - name: Install playwright dependencies
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium firefox
       - name: Run end to end tests
         working-directory: e2e
-        run: |
-          npm ci
-          npx playwright install --with-deps
-          npx playwright test
+        run: npx playwright test
       - name: Generate GraphQL documentation
         run: |
           npx spectaql@^3.0.2 source/spectaql/config.yml
