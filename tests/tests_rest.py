@@ -60,11 +60,11 @@ class TestsRest(TestCase):
         self.assertEqual(2, response['classification_id'])
 
     def test_create_case_should_add_a_new_case(self):
-        response = self._subject.get_cases()
-        initial_case_count = len(response['data'])
+        response = self._subject.get('/api/v2/cases').json()
+        initial_case_count = len(response['cases'])
         self._subject.create_dummy_case()
-        response = self._subject.get_cases()
-        case_count = len(response['data'])
+        response = self._subject.get('/api/v2/cases').json()
+        case_count = len(response['cases'])
         self.assertEqual(initial_case_count + 1, case_count)
 
     def test_get_case_should_return_case_data(self):
