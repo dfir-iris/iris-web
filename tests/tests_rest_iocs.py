@@ -28,6 +28,56 @@ class TestsRestIocs(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
+    def test_get_iocs_should_not_fail(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs')
+        self.assertEqual(200, response.status_code)
+
+    def test_create_ioc_should_add_the_ioc_in_the_correct_case(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
+        self.assertEqual(1, response['total'])
+
+    def test_get_iocs_should_filter_and_return_ioc_type_identifier(self):
+        case_identifier = self._subject.create_dummy_case()
+        ioc_type_identifier = 2
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
+            'ioc_type_id': ioc_type_identifier,
+            'ioc_tlp_id': 2,
+            'ioc_value': 'test_get_iocs_should_filter_on_ioc_value',
+            'ioc_description': 'rewrw',
+            'ioc_tags': '',
+            'custom_attributes': {}
+        }).json()
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
+            'ioc_type_id': 1,
+            'ioc_tlp_id': 2,
+            'ioc_value': 'wrong_test',
+            'ioc_description': 'rewrw',
+            'ioc_tags': '',
+            'custom_attributes': {}
+        }).json()
+        filters = {'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'}
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs',  query_parameters=filters).json()
+        identifiers = []
+        for ioc in response['iocs']:
+            identifiers.append(ioc['ioc_type_id'])
+        self.assertIn(ioc_type_identifier, identifiers)
+
+    def test_get_ioc_should_return_404_when_not_present(self):
+        response = self._subject.get(f'/api/v2/iocs/137')
+        self.assertEqual(404, response.status_code)
+
+    def test_get_ioc_should_return_200_on_success(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}')
+        self.assertEqual(200, response.status_code)
+
     def test_get_iocs_should_include_tlp_information(self):
         case_identifier = self._subject.create_dummy_case()
         tlp_identifier = 2

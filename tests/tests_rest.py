@@ -206,43 +206,6 @@ class TestsRest(TestCase):
         response = self._subject.get('/api/v2/asset/None')
         self.assertEqual(404, response.status_code)
 
-    def test_create_alert_should_not_fail(self):
-        body = {
-            'alert_title': 'title',
-            'alert_severity_id': 4,
-            'alert_status_id': 3,
-            'alert_customer_id': 1
-        }
-        response = self._subject.create('/alerts/add', body)
-        self.assertEqual(200, response.status_code)
-
-    def test_alerts_filter_with_alerts_filter_should_not_fail(self):
-        response = self._subject.get('/alerts/filter', query_parameters={'alert_assets': 'some assert name'})
-        self.assertEqual(200, response.status_code)
-
-    def test_alerts_filter_with_iocs_filter_should_not_fail(self):
-        response = self._subject.get('/alerts/filter', query_parameters={'alert_iocs': 'some ioc value'})
-        self.assertEqual(200, response.status_code)
-
-    def test_merge_alert_into_a_case_should_not_fail(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {
-            'alert_title': 'title',
-            'alert_severity_id': 4,
-            'alert_status_id': 3,
-            'alert_customer_id': 1
-        }
-        response = self._subject.create('/alerts/add', body).json()
-        alert_identifier = response['data']['alert_id']
-        body = {
-            'target_case_id': case_identifier,
-            'iocs_import_list': [],
-            'assets_import_list': []
-        }
-        response = self._subject.create(f'/alerts/merge/{alert_identifier}', body)
-        # TODO should be 201
-        self.assertEqual(200, response.status_code)
-
     def test_get_timeline_state_should_return_200(self):
         response = self._subject.get('/case/timeline/state', query_parameters={'cid': 1})
         self.assertEqual(200, response.status_code)
@@ -311,61 +274,3 @@ class TestsRest(TestCase):
         }
         response = self._subject.create('/api/v2/cases', body).json()
         self.assertIn('case_customer', response['data'])
-
-    def test_get_iocs_should_not_fail(self):
-        case_identifier = self._subject.create_dummy_case()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs')
-        self.assertEqual(200, response.status_code)
-
-    def test_create_ioc_should_add_the_ioc_in_the_correct_case(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
-        self.assertEqual(1, response['total'])
-
-    def test_get_iocs_should_filter_and_return_ioc_type_identifier(self):
-        case_identifier = self._subject.create_dummy_case()
-        ioc_type_identifier = 2
-        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
-            'ioc_type_id': ioc_type_identifier,
-            'ioc_tlp_id': 2,
-            'ioc_value': 'test_get_iocs_should_filter_on_ioc_value',
-            'ioc_description': 'rewrw',
-            'ioc_tags': '',
-            'custom_attributes': {}
-        }).json()
-        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', {
-            'ioc_type_id': 1,
-            'ioc_tlp_id': 2,
-            'ioc_value': 'wrong_test',
-            'ioc_description': 'rewrw',
-            'ioc_tags': '',
-            'custom_attributes': {}
-        }).json()
-        filters = {'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'}
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs',  query_parameters=filters).json()
-        identifiers = []
-        for ioc in response['iocs']:
-            identifiers.append(ioc['ioc_type_id'])
-        self.assertIn(ioc_type_identifier, identifiers)
-
-    def test_get_ioc_should_return_404_when_not_present(self):
-        response = self._subject.get(f'/api/v2/iocs/137')
-        self.assertEqual(404, response.status_code)
-
-    def test_get_ioc_should_return_200_on_success(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        ioc_identifier = response['ioc_id']
-        response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}')
-        self.assertEqual(200, response.status_code)
-
-    def test_get_asset_should_return_200(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
-        asset_identifier = response['asset_id']
-        response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
-        self.assertEqual(200, response.status_code)
