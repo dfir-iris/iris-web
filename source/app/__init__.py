@@ -35,6 +35,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
+from app.iris_engine.access_control.oidc_handler import get_oidc_client
 
 
 class ReverseProxied(object):
@@ -128,6 +129,9 @@ socket_io = SocketIO(app, cors_allowed_origins="*")
 alerts_namespace = AlertsNamespace('/alerts')
 socket_io.on_namespace(alerts_namespace)
 
+oidc_client = None
+if app.config.get('AUTHENTICATION_TYPE') == "oidc":
+    oidc_client = get_oidc_client(app)
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):

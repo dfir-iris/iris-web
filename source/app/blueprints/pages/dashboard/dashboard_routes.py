@@ -27,6 +27,7 @@ from flask_wtf import FlaskForm
 
 from app import app
 from app import db
+from app import oidc_client
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.forms import CaseGlobalTaskForm
 from app.iris_engine.access_control.utils import ac_get_user_case_counts
@@ -35,6 +36,9 @@ from app.models.authorization import User
 from app.models.models import GlobalTasks
 from app.blueprints.access_controls import ac_requires
 from app.util import not_authenticated_redirection_url
+from app.util import is_authentication_oidc
+
+from oic.oauth2.exception import GrantError
 
 dashboard_blueprint = Blueprint(
     'index',
@@ -54,6 +58,22 @@ def logout():
         current_user.ctx_case = session['current_case']['case_id']
         current_user.ctx_human_case = session['current_case']['case_name']
         db.session.commit()
+
+    if is_authentication_oidc():
+        if oidc_client.provider_info["end_session_endpoint"]:
+            try:
+                logout_request = oidc_client.construct_EndSessionRequest(state=session["oidc_state"])
+                logout_url = logout_request.request(oidc_client.provider_info["end_session_endpoint"])
+                track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+                logout_user()
+                session.clear()
+                return redirect(logout_url)
+            except GrantError:
+                track_activity(
+                    f"no oidc session found for user '{current_user.user}', skipping oidc provider logout and continuing to logout local user",
+                    ctx_less=True,
+                    display_in_ui=False
+                )
 
     track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
     logout_user()
