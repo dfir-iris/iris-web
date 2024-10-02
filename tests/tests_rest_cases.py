@@ -40,6 +40,80 @@ class TestsRestCases(TestCase):
         response = self._subject.get('/manage/cases/filter').json()
         self.assertEqual('success', response['status'])
 
+    def test_create_case_should_return_201(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        })
+        self.assertEqual(201, response.status_code)
+
+    def test_create_case_with_missing_name_should_return_400(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        })
+        self.assertEqual(400, response.status_code)
+
+    def test_create_case_with_classification_id_should_set_classification_id(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': '',
+            'classification_id': 2
+        }).json()
+        self.assertEqual(2, response['classification_id'])
+
+    def test_create_case_should_add_a_new_case(self):
+        response = self._subject.get('/api/v2/cases').json()
+        initial_case_count = len(response['cases'])
+        self._subject.create_dummy_case()
+        response = self._subject.get('/api/v2/cases').json()
+        case_count = len(response['cases'])
+        self.assertEqual(initial_case_count + 1, case_count)
+
+    def test_get_case_should_return_case_data(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        identifier = response['case_id']
+        response = self._subject.get(f'/api/v2/cases/{identifier}').json()
+        self.assertEqual('description', response['case_description'])
+
+    def test_delete_case_should_return_204(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        identifier = response['case_id']
+        response = self._subject.delete(f'/api/v2/cases/{identifier}')
+        self.assertEqual(204, response.status_code)
+
+    def test_get_case_should_return_404_after_it_is_deleted(self):
+        response = self._subject.create('/api/v2/cases', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }).json()
+        identifier = response['case_id']
+        self._subject.delete(f'/api/v2/cases/{identifier}')
+        response = self._subject.get(f'/api/v2/cases/{identifier}')
+        self.assertEqual(404, response.status_code)
+
+    def test_update_case_should_not_require_case_name_issue_358(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/manage/cases/update/{case_identifier}', {'case_tags': 'test,example'}).json()
+        self.assertEqual('success', response['status'])
+
     def test_get_cases_should_not_fail(self):
         response = self._subject.get('/api/v2/cases')
         self.assertEqual(200, response.status_code)
