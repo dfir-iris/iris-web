@@ -41,35 +41,6 @@ class Iris:
         self._api = RestApi(API_URL, _API_KEY)
         self._administrator = User(API_URL, _API_KEY, _ADMINISTRATOR_USER_IDENTIFIER)
 
-    def _wait(self, condition, attempts, sleep_duration=1):
-        count = 0
-        while not condition():
-            time.sleep(sleep_duration)
-            count += 1
-            if count > attempts:
-                print('Docker compose logs: ', self._docker_compose.extract_all_logs())
-                raise ServerTimeoutError()
-
-    def wait_until_api_is_ready(self):
-        print('Waiting for DFIR-IRIS to start...')
-        self._wait(self._api.is_ready, 60)
-
-    def start(self):
-        # TODO it would be preferable to have a dedicated directory with the
-        #      docker-compose.yml file, because for now, it will overwrite the
-        #      .env file and development/tests contexts are mixed up. To do
-        #      that, we should split the building phase of dockers from the
-        #      execution phase of the docker-compose. We should minimize the
-        #      docker-compose so that as few files as possible need to be
-        #      copied. Also, we should try to use standard dockers as much as
-        #      possible instead of having iris specific builds (for instance
-        #      for the database)
-        shutil.copy2(_TEST_DATA_PATH.joinpath('basic.env'), _IRIS_PATH.joinpath('.env'))
-        self._docker_compose.start()
-
-    def stop(self):
-        self._docker_compose.stop()
-
     def create(self, path, body, query_parameters=None):
         return self._api.post(path, body, query_parameters)
 
