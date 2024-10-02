@@ -42,7 +42,6 @@ from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
-from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.datamgmt.case.case_iocs_db import delete_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comments
@@ -69,7 +68,7 @@ case_ioc_rest_blueprint = Blueprint('case_ioc_rest', __name__)
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/list', methods=['GET'])
-@endpoint_deprecated('GET', '/api/v2/iocs')
+@endpoint_deprecated('GET', '/api/v2/cases/<int:identifier>/iocs')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_list_ioc(caseid):
@@ -246,28 +245,18 @@ def case_upload_ioc(caseid):
 
             ioc = add_ioc_schema.load(request_data)
             ioc.custom_attributes = get_default_custom_attributes('ioc')
-            ioc, _ = add_ioc(ioc=ioc,
-                             user_id=current_user.id,
-                             caseid=caseid
-                             )
-            link_existed = add_ioc_link(ioc.ioc_id, caseid)
+            index += 1
 
-            if link_existed:
-                errors.append(f"{ioc.ioc_value} (already exists and linked to this case)")
-                log.error(f"IOC {ioc.ioc_value} already exists and linked to this case")
-                index += 1
-                continue
-
-            if ioc:
-                ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
-                ret.append(request_data)
-                track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)
-
-            else:
+            if not ioc:
                 errors.append(f"{ioc.ioc_value} (internal reasons)")
                 log.error(f"Unable to create IOC {ioc.ioc_value} for internal reasons")
+                continue
 
-            index += 1
+            add_ioc(ioc, current_user.id, caseid)
+            ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
+            ret.append(request_data)
+            track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)
+
 
         if len(errors) == 0:
             msg = "Successfully imported data."
@@ -402,6 +391,7 @@ def case_comment_ioc_add(cur_id, caseid):
         return response_error(msg="Data error", data=e.normalized_messages())
     except ObjectNotFoundError:
         return response_error('Invalid ioc ID')
+
 
 @case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)

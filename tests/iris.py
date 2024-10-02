@@ -23,6 +23,7 @@ from docker_compose import DockerCompose
 from rest_api import RestApi
 from server_timeout_error import ServerTimeoutError
 from user import User
+from uuid import uuid4
 
 API_URL = 'http://127.0.0.1:8000'
 # TODO SSOT: this could be directly read from the .env file
@@ -39,7 +40,6 @@ class Iris:
         # TODO remove this field and use _administrator instead
         self._api = RestApi(API_URL, _API_KEY)
         self._administrator = User(API_URL, _API_KEY, _ADMINISTRATOR_USER_IDENTIFIER)
-        self._user_count = 0
 
     def _wait(self, condition, attempts, sleep_duration=1):
         count = 0
@@ -50,7 +50,7 @@ class Iris:
                 print('Docker compose logs: ', self._docker_compose.extract_all_logs())
                 raise ServerTimeoutError()
 
-    def _wait_until_api_is_ready(self):
+    def wait_until_api_is_ready(self):
         self._wait(self._api.is_ready, 60)
 
     def start(self):
@@ -66,7 +66,7 @@ class Iris:
         shutil.copy2(_TEST_DATA_PATH.joinpath('basic.env'), _IRIS_PATH.joinpath('.env'))
         self._docker_compose.start()
         print('Waiting for DFIR-IRIS to start...')
-        self._wait_until_api_is_ready()
+        self.wait_until_api_is_ready()
 
     def stop(self):
         self._docker_compose.stop()
@@ -113,8 +113,7 @@ class Iris:
         return User(API_URL, user['data']['user_api_key'], user['data']['id'])
 
     def create_dummy_user(self):
-        self._user_count += 1
-        return self.create_user(f'user{self._user_count}')
+        return self.create_user(f'user{uuid4()}')
 
     def create_dummy_case(self):
         body = {
@@ -138,3 +137,17 @@ class Iris:
 
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
+
+    def clear_database(self):
+        cases = self.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
+        for case in cases['cases']:
+            identifier = case['case_id']
+            self.delete(f'/api/v2/cases/{identifier}')
+        groups = self.get('/manage/groups/list').json()
+        for group in groups['data']:
+            identifier = group['group_id']
+            self.create(f'/manage/groups/delete/{identifier}', {})
+        customers = self.get('/manage/customers/list').json()
+        for customer in customers['data']:
+            identifier = customer['customer_id']
+            self.create(f'/manage/customers/delete/{identifier}', {})

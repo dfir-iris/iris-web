@@ -27,7 +27,6 @@ from sqlalchemy import func
 
 from app import app
 from app import db
-from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.models import CaseReceivedFile
 from app.models import DataStoreFile
 from app.models import DataStorePath
@@ -372,10 +371,6 @@ def datastore_add_file_as_ioc(dsf, caseid):
 
         db.session.add(ioc)
         db.session.commit()
-
-    add_ioc_link(ioc.ioc_id, caseid)
-
-    return
 
 
 def datastore_add_file_as_evidence(dsf, caseid):

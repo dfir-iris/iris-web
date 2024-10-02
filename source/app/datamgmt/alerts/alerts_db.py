@@ -18,28 +18,49 @@
 from copy import deepcopy
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
+from datetime import timedelta
 from flask_login import current_user
 from functools import reduce
 from operator import and_
-from sqlalchemy import desc, asc, func, tuple_, or_
-from sqlalchemy.orm import aliased, make_transient
+from sqlalchemy import desc
+from sqlalchemy import asc
+from sqlalchemy import func
+from sqlalchemy import tuple_
+from sqlalchemy import or_
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import make_transient
 from sqlalchemy.orm import joinedload
-from typing import List, Tuple
+from typing import List
+from typing import Tuple
 
 import app
 from app import db
-from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
-from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
-from app.datamgmt.case.case_iocs_db import add_ioc, add_ioc_link
+from app.datamgmt.case.case_assets_db import create_asset
+from app.datamgmt.case.case_assets_db import set_ioc_links
+from app.datamgmt.case.case_assets_db import get_unspecified_analysis_status_id
+from app.datamgmt.case.case_events_db import update_event_assets
+from app.datamgmt.case.case_events_db import update_event_iocs
+from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
-from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id, \
-    case_template_post_modifier
+from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
+from app.datamgmt.manage.manage_case_templates_db import case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
-from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc
-from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
+from app.models import Cases
+from app.models import EventCategory
+from app.models import Tags
+from app.models import AssetsType
+from app.models import Comments
+from app.models import CaseAssets
+from app.models import alert_assets_association
+from app.models import alert_iocs_association
+from app.models import Ioc
+from app.models.alerts import Alert
+from app.models.alerts import AlertStatus
+from app.models.alerts import AlertCaseAssociation
+from app.models.alerts import SimilarAlertsCache
+from app.models.alerts import AlertResolutionStatus
 from app.schema.marshables import EventSchema
 from app.util import add_obj_history_entry
 
@@ -316,9 +337,8 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
             for alert_ioc in alert.iocs:
                 if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
-                    ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
-                    add_ioc_link(ioc.ioc_id, case.case_id)
-                    ioc_links.append(ioc.ioc_id)
+                    add_ioc(alert_ioc, current_user.id, case.case_id)
+                    ioc_links.append(alert_ioc.ioc_id)
 
         # Add the assets to the case
         for asset_uuid in assets_list:
@@ -465,8 +485,8 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
                     alert_ioc = new_alert_ioc
 
-                ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
-                ioc_links.append(ioc.ioc_id)
+                add_ioc(alert_ioc, current_user.id, case.case_id)
+                ioc_links.append(alert_ioc.ioc_id)
 
     # Add the assets to the case
     for asset_uuid in assets_list:
@@ -586,9 +606,8 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         for alert_ioc in alert.iocs:
             if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
-                ioc, existed = add_ioc(alert_ioc, current_user.id, case.case_id)
-                add_ioc_link(ioc.ioc_id, case.case_id)
-                ioc_links.append(ioc.ioc_id)
+                add_ioc(alert_ioc, current_user.id, case.case_id)
+                ioc_links.append(alert_ioc.ioc_id)
 
     # Add the assets to the case
     for asset_uuid in assets_list:

@@ -16,8 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import logging
-
 from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import desc
@@ -125,34 +123,19 @@ def get_ioc_links(ioc_id):
     return related_iocs
 
 
-def find_ioc(ioc_value, ioc_type_id):
-    ioc = Ioc.query.filter(Ioc.ioc_value == ioc_value,
-                           Ioc.ioc_type_id == ioc_type_id).first()
-
-    return ioc
-
-
 def add_ioc(ioc: Ioc, user_id, caseid):
-    if not ioc:
-        return None, False
-
     ioc.user_id = user_id
     ioc.case_id = caseid
     db.session.add(ioc)
 
     update_ioc_state(caseid=caseid)
     db.session.commit()
-    return ioc, False
 
 
-def find_ioc_link(ioc_id, caseid):
-    logging.warning("Method 'find_ioc_link' is deprecated. It is no longer possible to link IOCs with cases.")
-
-
-def add_ioc_link(ioc_id, caseid):
-    logging.warning("Method 'add_ioc_link' is deprecated. It is no longer possible to link IOCs with cases.")
-
-    return False
+def case_iocs_db_find_duplicate(ioc: Ioc):
+    return Ioc.query.filter(Ioc.case_id == ioc.case_id,
+                            Ioc.ioc_value == ioc.ioc_value,
+                            Ioc.ioc_type_id == ioc.ioc_type_id).first()
 
 
 def get_ioc_types_list():

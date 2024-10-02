@@ -23,6 +23,7 @@ from marshmallow.exceptions import ValidationError
 from app import db
 from app.models import Ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
+from app.datamgmt.case.case_iocs_db import case_iocs_db_find_duplicate
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
 from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.case.case_iocs_db import delete_ioc
@@ -55,12 +56,18 @@ def iocs_create(request_json, case_identifier):
     # TODO ideally schema validation should be done before, outside the business logic in the REST API
     #      for that the hook should be called after schema validation
     request_data = call_modules_hook('on_preload_ioc_create', data=request_json, caseid=case_identifier)
-    ioc = _load({**request_data, "case_id": case_identifier})
+    ioc = _load({**request_data, 'case_id': case_identifier})
+
+    if not ioc:
+        raise BusinessProcessingError('Unable to create IOC for internal reasons')
 
     if not check_ioc_type_id(type_id=ioc.ioc_type_id):
         raise BusinessProcessingError('Not a valid IOC type')
 
-    ioc, existed = add_ioc(ioc=ioc, user_id=current_user.id, caseid=case_identifier)
+    if case_iocs_db_find_duplicate(ioc):
+        raise BusinessProcessingError('IOC with same value and type already exists')
+
+    add_ioc(ioc, current_user.id, case_identifier)
 
     ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=case_identifier)
 
@@ -128,9 +135,7 @@ def iocs_delete(ioc: Ioc):
 def iocs_exports_to_json(case_id):
     iocs = get_iocs(case_id)
 
-    iocs_serialized = IocSchema().dump(iocs, many=True)
-
-    return iocs_serialized
+    return IocSchema().dump(iocs, many=True)
 
 
 def iocs_build_filter_query(ioc_id: int = None,
@@ -141,8 +146,7 @@ def iocs_build_filter_query(ioc_id: int = None,
                             ioc_tlp_id: int = None,
                             ioc_tags: str = None,
                             ioc_misp: str = None,
-                            user_id: float = None,
-                            linked_cases: float = None):
+                            user_id: float = None):
     """
     Get a list of iocs from the database, filtered by the given parameters
     """
@@ -166,9 +170,4 @@ def iocs_build_filter_query(ioc_id: int = None,
     if user_id is not None:
         conditions.append(Ioc.user_id == user_id)
 
-    query = Ioc.query.filter(*conditions)
-
-    if linked_cases is not None:
-        logging.warning("Method 'iocs_build_filter_query' with providing 'linked_cases' is deprecated. It is no longer possible to query IOCs by linked cases.")
-
-    return query
+    return Ioc.query.filter(*conditions)
