@@ -30,7 +30,6 @@ class TestsRest(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
-
     def test_create_customer_should_return_200_when_user_has_customer_write_right(self):
         body = {
             'group_name': 'Customer create',
