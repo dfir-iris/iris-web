@@ -341,7 +341,7 @@ def not_authenticated_redirection_url(request_url: str):
         "oidc_proxy": lambda: app.config.get("AUTHENTICATION_PROXY_LOGOUT_URL"),
         "local": lambda: url_for('login.login', next=request_url),
         "ldap": lambda: url_for('login.login', next=request_url),
-        "oidc": lambda: url_for('login.login', next=request_url,),
+        "oidc": lambda: url_for('login.login', next=request_url,)
     }
 
     return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()

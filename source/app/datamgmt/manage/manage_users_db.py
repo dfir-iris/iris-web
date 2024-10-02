@@ -128,6 +128,27 @@ def update_user_groups(user_id, groups):
 
     ac_auto_update_user_effective_access(user_id)
 
+def add_user_to_customer(user_id, customer_id):
+    user_client = UserClient.query.filter(
+        UserClient.user_id == user_id,
+        UserClient.client_id == customer_id
+    ).first()
+
+    if user_client:
+        return True
+
+    user_client = UserClient()
+    user_client.user_id = user_id
+    user_client.client_id = customer_id
+    user_client.access_level = CaseAccessLevel.full_access.value
+    user_client.allow_alerts = True
+    db.session.add(user_client)
+    db.session.commit()
+
+    ac_auto_update_user_effective_access(user_id)
+
+    return True
+
 
 def update_user_customers(user_id, customers):
     # Update the user's customers directly

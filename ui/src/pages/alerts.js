@@ -530,15 +530,15 @@ const options = {
         tooltipDelay: 100,
         zoomView: false
     },
-    height: (window.innerHeight - 250) + "px",
+    height: (window.innerHeight - 400) + "px",
     clickToUse: true,
     physics: {
         forceAtlas2Based: {
             gravitationalConstant: -167,
-            centralGravity: 0.04,
+            centralGravity: 0.02,
             springLength: 0,
-            springConstant: 0.02,
-            damping: 0.9
+            springConstant: 0.01,
+            damping: 0.1
         },
         minVelocity: 0.41,
         solver: "forceAtlas2Based",
@@ -603,7 +603,7 @@ const network = new vis.Network(container, data, options);
               $('#view-alert').data('node-id', node_id);
               $('#view-alert').data('node-type', node_type);
               if (node_type === 'alert' || node_type === 'case') {
-                  $('#view-alert-text').text(`View on ${node_type} #${node_id}`);
+                  $('#view-alert-text').text(`View ${node_type} #${node_id}`);
               } else {
                     $('#view-alert-text').text(`Pivot on ${node_type} ${node_id}`);
               }

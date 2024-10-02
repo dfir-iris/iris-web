@@ -47,6 +47,7 @@ from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
+<<<<<<< HEAD
 from app.models import Cases
 from app.models import EventCategory
 from app.models import Tags
@@ -61,6 +62,12 @@ from app.models.alerts import AlertStatus
 from app.models.alerts import AlertCaseAssociation
 from app.models.alerts import SimilarAlertsCache
 from app.models.alerts import AlertResolutionStatus
+=======
+from app.iris_engine.utils.common import parse_bf_date_format
+from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
+    alert_iocs_association, Ioc, IocLink
+from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
+>>>>>>> master
 from app.schema.marshables import EventSchema
 from app.util import add_obj_history_entry
 
@@ -75,6 +82,8 @@ def db_list_all_alerts():
 def get_filtered_alerts(
         start_date: str = None,
         end_date: str = None,
+        source_start_date: str = None,
+        source_end_date: str = None,
         title: str = None,
         description: str = None,
         status: int = None,
@@ -126,7 +135,16 @@ def get_filtered_alerts(
     conditions = []
 
     if start_date is not None and end_date is not None:
-        conditions.append(Alert.alert_creation_time.between(start_date, end_date))
+        start_date = parse_bf_date_format(start_date)
+        end_date = parse_bf_date_format(end_date)
+        if start_date and end_date:
+            conditions.append(Alert.alert_creation_time.between(start_date, end_date))
+
+    if source_start_date is not None and source_end_date is not None:
+        source_start_date = parse_bf_date_format(source_start_date)
+        source_end_date = parse_bf_date_format(source_end_date)
+        if source_start_date and source_end_date:
+            conditions.append(Alert.alert_source_event_time.between(source_start_date, source_end_date))
 
     if title is not None:
         conditions.append(Alert.alert_title.ilike(f'%{title}%'))
@@ -617,7 +635,8 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
                 tmp_asset = CaseAssets.query.filter(
-                    CaseAssets.asset_uuid == alert_asset.asset_uuid
+                    CaseAssets.asset_uuid == alert_asset.asset_uuid,
+                    CaseAssets.case_id == case.case_id
                 ).first()
 
                 if tmp_asset:
@@ -930,6 +949,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
         db.session.query(Alert, SimilarAlertsCache.asset_name, SimilarAlertsCache.ioc_value,
                          asset_type_alias.asset_icon_not_compromised)
         .join(SimilarAlertsCache, Alert.alert_id == SimilarAlertsCache.alert_id)
+        .outerjoin(Alert.resolution_status)
         .outerjoin(asset_type_alias, SimilarAlertsCache.asset_type_id == asset_type_alias.asset_id)
         .filter(conditions)
         .limit(number_of_results)
@@ -959,10 +979,12 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
     for alert_id, alert_info in alerts_dict.items():
         alert_color = '#c95029' if alert_info['alert'].status.status_name in ['Closed', 'Merged', 'Escalated'] else ''
 
+        alert_resolution_title = f'[{alert_info["alert"].resolution_status.resolution_status_name}]\n' if alert_info["alert"].resolution_status else ""
+
         nodes.append({
             'id': f'alert_{alert_id}',
-            'label': f'[Closed] Alert #{alert_id}' if alert_color != '' else f'Alert #{alert_id}',
-            'title': alert_info['alert'].alert_title,
+            'label': f'[Closed]{alert_resolution_title} {alert_info["alert"].alert_title}' if alert_color != '' else f'{alert_resolution_title}{alert_info["alert"].alert_title}',
+            'title': f'{alert_info["alert"].alert_description}',
             'group': 'alert',
             'shape': 'icon',
             'icon': {
@@ -1026,12 +1048,24 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             close_condition = Cases.close_date.isnot(None) | Cases.close_date.is_(None)
 
         matching_ioc_cases = (
+<<<<<<< HEAD
             db.session.query(Ioc)
             .with_entities(Ioc.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
             .join(Ioc.case)
+=======
+            db.session.query(IocLink)
+            .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date, Cases.description)
+            .join(IocLink.ioc)
+            .join(IocLink.case)
+>>>>>>> master
             .filter(
-                Ioc.ioc_value.in_(added_iocs),
-                close_condition
+                and_(
+                    and_(
+                        Ioc.ioc_value.in_(added_iocs),
+                        close_condition,
+                    ),
+                    Cases.client_id == customer_id
+                )
             )
             .distinct()
             .all()
@@ -1039,11 +1073,16 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         matching_asset_cases = (
             db.session.query(CaseAssets)
-            .with_entities(CaseAssets.case_id, CaseAssets.asset_name, Cases.name, Cases.close_date)
+            .with_entities(CaseAssets.case_id, CaseAssets.asset_name, Cases.name, Cases.close_date, Cases.description)
             .join(CaseAssets.case)
             .filter(
-                CaseAssets.asset_name.in_(added_assets),
-                close_condition
+                and_(
+                    and_(
+                        CaseAssets.asset_name.in_(added_assets),
+                        close_condition
+                    ),
+                    Cases.client_id == customer_id
+                )
             )
             .distinct(CaseAssets.case_id)
             .all()
@@ -1051,16 +1090,16 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
 
         cases_data = {}
 
-        for case_id, ioc_value, case_name, close_date in matching_ioc_cases:
+        for case_id, ioc_value, case_name, close_date, case_desc in matching_ioc_cases:
             if case_id not in cases_data:
                 cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': [],
-                                       'close_date': close_date}
+                                       'close_date': close_date, 'description': case_desc}
             cases_data[case_id]['matching_ioc'].append(ioc_value)
 
-        for case_id, asset_name, case_name, close_date in matching_asset_cases:
+        for case_id, asset_name, case_name, close_date, case_desc in matching_asset_cases:
             if case_id not in cases_data:
                 cases_data[case_id] = {'name': case_name, 'matching_ioc': [], 'matching_assets': [],
-                                       'close_date': close_date}
+                                       'close_date': close_date, 'description': case_desc}
             cases_data[case_id]['matching_assets'].append(asset_name)
 
         for case_id in cases_data:
@@ -1068,7 +1107,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                 nodes.append({
                     'id': f'case_{case_id}',
                     'label': f'[Closed] Case #{case_id}' if cases_data[case_id].get('close_date') else f'Case #{case_id}',
-                    'title': cases_data[case_id]['name'],
+                    'title': cases_data[case_id].get("description"),
                     'group': 'case',
                     'shape': 'icon',
                     'icon': {

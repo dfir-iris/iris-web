@@ -85,7 +85,7 @@
                                     </div>
                                     <div class="row" style="margin-left:0px;">
                                         <div class="col-12" id="container_ioc_desc_content">
-                                            <div id="ioc_description" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if ioc and ioc.ioc_description %}{{ ioc.ioc_description  }}{% endif %}</div>
+                                            <div id="ioc_description" contenteditable="true" spellcheck="true" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if ioc and ioc.ioc_description %}{{ ioc.ioc_description  }}{% endif %}</div>
                                             <textarea id="ioc_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                         </div>
                                         <div class="col-12" id="container_ioc_description" style="display:none">

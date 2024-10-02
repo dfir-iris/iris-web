@@ -17,7 +17,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
-
 import traceback
 from flask import Blueprint
 from flask import request
@@ -25,6 +24,7 @@ from flask_login import current_user
 from marshmallow import ValidationError
 
 from app import ac_current_user_has_permission
+from app.blueprints.access_controls import ac_api_requires
 from app.datamgmt.client.client_db import create_client
 from app.datamgmt.client.client_db import create_contact
 from app.datamgmt.client.client_db import delete_client
@@ -38,11 +38,11 @@ from app.datamgmt.client.client_db import update_client
 from app.datamgmt.client.client_db import update_contact
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
+from app.datamgmt.manage.manage_users_db import add_user_to_customer
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
-from app.blueprints.access_controls import ac_api_requires
 from app.util import ac_api_requires_client_access
 from app.util import response_error
 from app.util import response_success
@@ -253,6 +253,9 @@ def add_customers():
         return response_error(f'An error occurred during customer addition. {e}')
 
     track_activity(f"Added customer {client.name}", ctx_less=True)
+
+    # Associate the created customer with the current user
+    add_user_to_customer(current_user.id, client.client_id)
 
     # Return the customer
     client_schema = CustomerSchema()

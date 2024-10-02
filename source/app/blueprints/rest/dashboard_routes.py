@@ -20,14 +20,14 @@ import marshmallow
 from datetime import datetime
 from datetime import timedelta
 
-from flask import Blueprint
+from flask import Blueprint, session, redirect
 from flask import request
-from flask_login import current_user
+from flask_login import current_user, logout_user
 
 from app import db
-from app.datamgmt.dashboard.dashboard_db import get_global_task
-from app.datamgmt.dashboard.dashboard_db import list_user_cases
-from app.datamgmt.dashboard.dashboard_db import list_user_reviews
+
+from app import oidc_client
+from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
@@ -44,10 +44,48 @@ from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import GlobalTasksSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
+from app.util import response_error, not_authenticated_redirection_url
 from app.util import response_success
+from app.util import is_authentication_oidc
+
+from oic.oauth2.exception import GrantError
 
 dashboard_rest_blueprint = Blueprint('dashboard_rest', __name__)
+
+
+# Logout user
+@dashboard_rest_blueprint.route('/logout')
+def logout():
+    """
+    Logout function. Erase its session and redirect to index i.e login
+    :return: Page
+    """
+    if session['current_case']:
+        current_user.ctx_case = session['current_case']['case_id']
+        current_user.ctx_human_case = session['current_case']['case_name']
+        db.session.commit()
+
+    if is_authentication_oidc():
+        if oidc_client.provider_info.get("end_session_endpoint"):
+            try:
+                logout_request = oidc_client.construct_EndSessionRequest(state=session["oidc_state"])
+                logout_url = logout_request.request(oidc_client.provider_info["end_session_endpoint"])
+                track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+                logout_user()
+                session.clear()
+                return redirect(logout_url)
+            except GrantError:
+                track_activity(
+                    f"no oidc session found for user '{current_user.user}', skipping oidc provider logout and continuing to logout local user",
+                    ctx_less=True,
+                    display_in_ui=False
+                )
+
+    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+    logout_user()
+    session.clear()
+
+    return redirect(not_authenticated_redirection_url('/'))
 
 
 @dashboard_rest_blueprint.route('/dashboard/case_charts', methods=['GET'])

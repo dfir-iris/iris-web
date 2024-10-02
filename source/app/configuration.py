@@ -263,7 +263,7 @@ class CeleryConfig:
 # --------- APP ---------
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.4.10" # DO NOT EDIT THIS LINE MANUALLY
+    IRIS_VERSION = "v2.4.14" # DO NOT EDIT THIS LINE MANUALLY
 
     if os.environ.get('IRIS_DEMO_VERSION') is not None and os.environ.get('IRIS_DEMO_VERSION') != 'None':
         IRIS_VERSION = os.environ.get('IRIS_DEMO_VERSION')
@@ -468,9 +468,22 @@ class Config:
         OIDC_AUTH_ENDPOINT = config.load('OIDC', 'AUTH_ENDPOINT', fallback=None)
         OIDC_TOKEN_ENDPOINT = config.load('OIDC', 'TOKEN_ENDPOINT', fallback=None)
         OIDC_END_SESSION_ENDPOINT = config.load('OIDC', 'END_SESSION_ENDPOINT', fallback=None)
-        OIDC_SCOPES = "openid email profile"
+        OIDC_SCOPES = config.load('OIDC', 'SCOPES', fallback="openid email profile")
+        OIDC_MAPPING_USERNAME = config.load('OIDC', 'MAPPING_USERNAME', fallback='preferred_username')
+        OIDC_MAPPING_EMAIL = config.load('OIDC', 'MAPPING_EMAIL', fallback='email')
 
     """ Caching 
     """
     CACHE_TYPE = "SimpleCache"
     CACHE_DEFAULT_TIMEOUT = 300
+
+    log.info(f'IRIS Server {IRIS_VERSION}')
+    log.info(f'Min. API version supported: {API_MIN_VERSION}')
+    log.info(f'Max. API version supported: {API_MAX_VERSION}')
+    log.info(f'Min. module interface version supported: {MODULES_INTERFACE_MIN_VERSION}')
+    log.info(f'Max. module interface version supported: {MODULES_INTERFACE_MAX_VERSION}')
+    log.info(f'Session lifetime: {PERMANENT_SESSION_LIFETIME}')
+    log.info(f'Authentication mechanism configured: {AUTHENTICATION_TYPE}')
+    log.info(f'Authentication local fallback {"enabled" if AUTHENTICATION_LOCAL_FALLBACK else "disabled"}')
+    log.info(f'MFA {"enabled" if MFA_ENABLED else "disabled"}')
+    log.info(f'Create user during authentication: {"enabled" if AUTHENTICATION_CREATE_USER_IF_NOT_EXIST else "disabled"}')

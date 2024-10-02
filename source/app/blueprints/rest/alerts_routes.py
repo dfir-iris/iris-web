@@ -110,8 +110,10 @@ def alerts_list_route() -> Response:
     alert_schema = AlertSchema()
 
     filtered_data = get_filtered_alerts(
-        start_date=request.args.get('source_start_date'),
-        end_date=request.args.get('source_end_date'),
+        start_date=request.args.get('creation_start_date'),
+        end_date=request.args.get('creation_end_date'),
+        source_start_date=request.args.get('source_start_date'),
+        source_end_date=request.args.get('source_end_date'),
         title=request.args.get('alert_title'),
         description=request.args.get('alert_description'),
         status=request.args.get('alert_status_id', type=int),
@@ -490,7 +492,7 @@ def alerts_batch_delete_route() -> Response:
     if not success:
         return response_error(logs)
 
-    alert = call_modules_hook('on_postload_alert_delete', data=f'alert_ids: {alert_ids}')
+    alert = call_modules_hook('on_postload_alert_delete', data={"alert_ids": alert_ids})
 
     track_activity(f"deleted alerts #{','.join(str(alert_id) for alert_id in alert_ids)}", ctx_less=True)
 

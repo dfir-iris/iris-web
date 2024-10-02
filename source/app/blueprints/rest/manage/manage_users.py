@@ -45,7 +45,9 @@ from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
 from app.schema.marshables import BasicUserSchema
 from app.schema.marshables import UserFullSchema
+
 from app.blueprints.access_controls import ac_api_requires
+from app.util import is_authentication_oidc, is_authentication_ldap
 from app.util import ac_api_return_access_denied
 from app.util import is_authentication_local
 from app.util import response_error
@@ -405,33 +407,32 @@ def renew_user_api_key(cur_id):
     return response_success(f"API key of user {user.user} renewed", data=user_schema.dump(user))
 
 
-if is_authentication_local():
-    @manage_users_rest_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['POST'])
-    @ac_api_requires(Permissions.server_administrator)
-    def view_delete_user(cur_id):
+@manage_users_rest_blueprint.route('/manage/users/delete/<int:cur_id>', methods=['POST'])
+@ac_api_requires(Permissions.server_administrator)
+def view_delete_user(cur_id):
 
-        try:
+    try:
 
-            user = get_user(cur_id)
-            if not user:
-                return response_error("Invalid user ID")
+        user = get_user(cur_id)
+        if not user:
+            return response_error("Invalid user ID")
 
-            if protect_demo_mode_user(user):
-                return ac_api_return_access_denied()
+        if protect_demo_mode_user(user):
+            return ac_api_return_access_denied()
 
-            if user.active is True:
-                track_activity(message="tried to delete active user ID {}".format(cur_id), ctx_less=True)
-                return response_error("Cannot delete active user")
-
-            delete_user(user.id)
-
-            track_activity(message="deleted user ID {}".format(cur_id), ctx_less=True)
-            return response_success("Deleted user ID {}".format(cur_id))
-
-        except Exception:
-            db.session.rollback()
+        if user.active is True:
             track_activity(message="tried to delete active user ID {}".format(cur_id), ctx_less=True)
             return response_error("Cannot delete active user")
+
+        delete_user(user.id)
+
+        track_activity(message="deleted user ID {}".format(cur_id), ctx_less=True)
+        return response_success("Deleted user ID {}".format(cur_id))
+
+    except Exception:
+        db.session.rollback()
+        track_activity(message="tried to delete active user ID {}".format(cur_id), ctx_less=True)
+        return response_error("Cannot delete active user")
 
 
 # Unrestricted section - non admin available

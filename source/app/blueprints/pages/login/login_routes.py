@@ -47,11 +47,11 @@ from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
-from app.util import is_authentication_ldap
-from app.util import is_authentication_oidc
-from app.datamgmt.manage.manage_users_db import get_active_user_by_login
-from app.datamgmt.manage.manage_users_db import create_user
 
+from app.util import is_authentication_ldap, response_error
+from app.util import is_authentication_oidc
+from app.datamgmt.manage.manage_users_db import get_active_user_by_login, get_user
+from app.datamgmt.manage.manage_users_db import create_user
 
 login_blueprint = Blueprint(
     'login',
@@ -146,10 +146,14 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap", "oidc"]:
         if current_user.is_authenticated:
             return redirect(url_for('index.index'))
 
+        if is_authentication_oidc() and app.config.get('AUTHENTICATION_LOCAL_FALLBACK') is False:
+            return redirect(url_for('login.oidc_login'))
+
         form = LoginForm(request.form)
 
         # check if both http method is POST and form is valid on submit
         if not form.is_submitted() and not form.validate():
+
             return _render_template_login(form, None)
 
         # assign form data to variables
@@ -169,7 +173,7 @@ if is_authentication_oidc():
 
         session["oidc_state"] = rndstr()
         session["oidc_nonce"] = rndstr()
-        
+
         args = {
             "client_id": oidc_client.client_id,
             "response_type": "code",
@@ -185,11 +189,12 @@ if is_authentication_oidc():
         return redirect(login_url)
 
 if is_authentication_oidc():
-    @login_blueprint.route('/oidc-authorise')
+
+    @login_blueprint.route('/oidc-authorize')
     def oidc_authorise():
         auth_resp = oidc_client.parse_response(AuthorizationResponse, info=request.args,
                                     sformat="dict")
-                
+
         if auth_resp["state"] != session["oidc_state"]:
             track_activity(
                 f"OIDC session state '{auth_resp['state']}' does not match authorization state '{session['oidc_state']}'",
@@ -203,14 +208,26 @@ if is_authentication_oidc():
         }
 
         access_token_resp = oidc_client.do_access_token_request(state=auth_resp["state"], request_args=args)
-            
-        # not all providers set email by default, use preferred_username where it's missing
-        user_login = access_token_resp['id_token'].get("email") or access_token_resp['id_token'].get("preferred_username")
-        user_name = access_token_resp['id_token'].get("preferred_username") or access_token_resp['id_token'].get("email")
 
-        user = _retrieve_user_by_username(user_login)
+        # not all providers set email by default, use preferred_username where it's missing
+        # Use the mapping from the configuration or default to email or preferred_username if not set
+        email_field = app.config.get("OIDC_MAPPING_EMAIL")
+        username_field = app.config.get("OIDC_MAPPING_USERNAME")
+
+        user_login = access_token_resp['id_token'].get(email_field) or access_token_resp['id_token'].get(username_field)
+        user_name = access_token_resp['id_token'].get(email_field) or access_token_resp['id_token'].get(username_field)
+
+        user = get_user(user_login, 'user')
 
         if not user:
+            if app.config.get("AUTHENTICATION_CREATE_USER_IF_NOT_EXISTS") is False:
+                track_activity(
+                    f"OIDC user {user_login} not found in database",
+                    ctx_less=True,
+                    display_in_ui=False,
+                )
+                return response_error("User not found in IRIS", 404)
+
             track_activity(
                 f"Creating OIDC user {user_login} in database",
                 ctx_less=True,
@@ -224,11 +241,14 @@ if is_authentication_oidc():
                         user_name=user_name,
                         user_login=user_login,
                         user_email=user_login,
-                        user_password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'), 
+                        user_password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
                         user_active=True,
                         user_is_service_account=False
                 )
-        
+
+        if user and not user.active:
+            return response_error("User not active in IRIS", 403)
+
         return wrap_login_user(user)
 
 def wrap_login_user(user):

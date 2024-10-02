@@ -1014,6 +1014,9 @@ function get_avatar_initials(name, small, onClickFunction, xsmall) {
         </div>`;
     }
 
+    // Remove any trailing or leading spaces
+    name = name.trim();
+
     const initial = name.split(' ');
     let snum;
 
