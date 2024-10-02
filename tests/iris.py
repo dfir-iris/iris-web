@@ -70,9 +70,6 @@ class Iris:
         response = self._api.post('/api/v2/cases', body).json()
         return response['case_id']
 
-    def update_case(self, case_identifier, data):
-        return self._api.post(f'/manage/cases/update/{case_identifier}', data).json()
-
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)
 

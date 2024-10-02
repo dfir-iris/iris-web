@@ -103,7 +103,7 @@ class TestsRest(TestCase):
 
     def test_update_case_should_not_require_case_name_issue_358(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.update_case(case_identifier, {'case_tags': 'test,example'})
+        response = self._subject.post(f'/manage/cases/update/{case_identifier}', {'case_tags': 'test,example'}).json()
         self.assertEqual('success', response['status'])
 
     def test_get_case_graph_should_not_fail(self):
