@@ -47,7 +47,6 @@ from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
-<<<<<<< HEAD
 from app.models import Cases
 from app.models import EventCategory
 from app.models import Tags
@@ -62,12 +61,7 @@ from app.models.alerts import AlertStatus
 from app.models.alerts import AlertCaseAssociation
 from app.models.alerts import SimilarAlertsCache
 from app.models.alerts import AlertResolutionStatus
-=======
 from app.iris_engine.utils.common import parse_bf_date_format
-from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc, IocLink
-from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
->>>>>>> master
 from app.schema.marshables import EventSchema
 from app.util import add_obj_history_entry
 
@@ -1048,16 +1042,9 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
             close_condition = Cases.close_date.isnot(None) | Cases.close_date.is_(None)
 
         matching_ioc_cases = (
-<<<<<<< HEAD
             db.session.query(Ioc)
-            .with_entities(Ioc.case_id, Ioc.ioc_value, Cases.name, Cases.close_date)
+            .with_entities(Ioc.case_id, Ioc.ioc_value, Cases.name, Cases.close_date, Cases.description)
             .join(Ioc.case)
-=======
-            db.session.query(IocLink)
-            .with_entities(IocLink.case_id, Ioc.ioc_value, Cases.name, Cases.close_date, Cases.description)
-            .join(IocLink.ioc)
-            .join(IocLink.case)
->>>>>>> master
             .filter(
                 and_(
                     and_(
