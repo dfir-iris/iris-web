@@ -43,7 +43,7 @@ graphene-sqlalchemy==3.0.0rc1
 
 dependencies/docx_generator-0.8.0-py3-none-any.whl
 dependencies/iris_interface-1.2.0-py3-none-any.whl
-dependencies/evtx2splunk-2.0.2-py3-none-any.whl
+dependencies/evtx2splunk-2.0.1-py3-none-any.whl
 dependencies/iris_evtx-1.2.0-py3-none-any.whl
 dependencies/iris_check_module-1.0.1-py3-none-any.whl
 dependencies/iris_vt_module-1.2.1-py3-none-any.whl
