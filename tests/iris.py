@@ -50,14 +50,6 @@ class Iris:
     def get_api_version(self):
         return self._api.get('api/versions').json()
 
-    def create_asset(self):
-        body = {
-            'asset_type_id': '9',
-            'asset_name': 'admin_laptop',
-        }
-        response = self._api.post('/case/assets/add', body)
-        return response.json()
-
     # TODO make private => use create_dummy_user instead
     def create_user(self, user_name):
         body = {
