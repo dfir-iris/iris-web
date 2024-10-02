@@ -29,7 +29,7 @@ class TestsRest(TestCase):
         self._subject.clear_database()
 
     def test_get_api_version_should_not_fail(self):
-        response = self._subject.get_api_version()
+        response = self._subject.get('api/versions').json()
         self.assertEqual('success', response['status'])
 
     def test_create_case_should_return_201(self):

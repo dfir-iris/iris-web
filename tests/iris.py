@@ -47,9 +47,6 @@ class Iris:
     def delete(self, path):
         return self._api.delete(path)
 
-    def get_api_version(self):
-        return self._api.get('api/versions').json()
-
     def _create_user(self, user_name):
         body = {
             'user_name': user_name,
