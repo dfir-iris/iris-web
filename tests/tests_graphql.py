@@ -24,11 +24,9 @@ from base64 import b64encode
 
 
 class TestsGraphQL(TestCase):
-    _subject = None
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls._subject = Iris()
+    def setUp(self) -> None:
+        self._subject = Iris()
 
     def tearDown(self):
         self._subject.clear_database()
