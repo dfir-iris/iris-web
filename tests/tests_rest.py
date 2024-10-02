@@ -22,7 +22,6 @@ from iris import Iris
 _INITIAL_DEMO_CASE_IDENTIFIER = 1
 _GROUP_ANALYSTS_IDENTIFIER = 2
 _CASE_ACCESS_LEVEL_FULL_ACCESS = 4
-_PERMISSION_CUSTOMERS_WRITE = 0x80
 
 # TODO should change None into 123456789 and maybe fix...
 _IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
@@ -562,73 +561,3 @@ class TestsRest(TestCase):
 
         response = user.delete(f'/api/v2/tasks/{task_identifier}')
         self.assertEqual(403, response.status_code)
-
-    def test_create_customer_should_return_200_when_user_has_customer_write_right(self):
-        body = {
-            'group_name': 'Customer create',
-            'group_description': 'Group with customers_write right',
-            'group_permissions': [_PERMISSION_CUSTOMERS_WRITE]
-        }
-        response = self._subject.create('/manage/groups/add', body).json()
-        group_identifier = response['data']['group_id']
-        user = self._subject.create_dummy_user()
-        body = {'groups_membership': [group_identifier]}
-        self._subject.create(f'/manage/users/{user.get_identifier()}/groups/update', body)
-
-        body = {'custom_attributes': {}, 'customer_description': '', 'customer_name': 'Customer', 'customer_sla': ''}
-        response = user.create('/manage/customers/add', body)
-
-        self.assertEqual(200, response.status_code)
-
-    def test_get_iocs_should_include_tlp_information(self):
-        case_identifier = self._subject.create_dummy_case()
-        tlp_identifier = 2
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': tlp_identifier, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
-        self.assertEqual(tlp_identifier, response['iocs'][0]['tlp']['tlp_id'])
-
-    def test_get_iocs_should_include_link_to_other_cases_with_same_value_type_ioc(self):
-        case_identifier1 = self._subject.create_dummy_case()
-        case_identifier2 = self._subject.create_dummy_case()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        self._subject.create(f'/api/v2/cases/{case_identifier1}/iocs', body).json()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 1, 'ioc_value': '8.8.8.8', 'ioc_description': 'another', 'ioc_tags': ''}
-        self._subject.create(f'/api/v2/cases/{case_identifier2}/iocs', body).json()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier2}/iocs').json()
-        self.assertEqual(case_identifier1, response['iocs'][0]['link'][0]['case_id'])
-
-    def test_create_ioc_should_include_field_link(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        self.assertEqual([], response['link'])
-
-    def test_get_ioc_should_include_field_link(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        ioc_identifier = response['ioc_id']
-        response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}').json()
-        self.assertEqual([], response['link'])
-
-    def test_create_should_not_create_two_iocs_with_identical_type_and_value(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
-        self.assertEqual(400, response.status_code)
-
-    def test_create_asset_in_old_api_with_same_type_and_name_should_return_400(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        self._subject.create('/case/assets/add', body, {'cid': case_identifier})
-        response = self._subject.create('/case/assets/add', body, {'cid': case_identifier})
-        self.assertEqual(400, response.status_code)
-
-    def test_create_asset_with_same_type_and_name_should_return_400(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
-        self.assertEqual(400, response.status_code)

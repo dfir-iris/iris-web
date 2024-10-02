@@ -17,11 +17,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from pathlib import Path
-import shutil
-import time
 from docker_compose import DockerCompose
 from rest_api import RestApi
-from server_timeout_error import ServerTimeoutError
 from user import User
 from uuid import uuid4
 
