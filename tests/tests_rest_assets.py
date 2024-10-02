@@ -19,6 +19,9 @@
 from unittest import TestCase
 from iris import Iris
 
+# TODO should change None into 123456789 and maybe fix...
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
+
 
 class TestsRestAssets(TestCase):
 
@@ -27,6 +30,11 @@ class TestsRestAssets(TestCase):
 
     def tearDown(self):
         self._subject.clear_database()
+
+    def test_create_asset_with_missing_case_identifier_should_return_404(self):
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/assets', body)
+        self.assertEqual(404, response.status_code)
 
     def test_create_asset_in_old_api_with_same_type_and_name_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()

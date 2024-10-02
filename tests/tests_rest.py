@@ -23,13 +23,6 @@ from iris import Iris
 _IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
 
 
-def _get_case_with_identifier(response, identifier):
-    for case in response['cases']:
-        if identifier == case['case_id']:
-            return case
-    raise ValueError('Case not found')
-
-
 class TestsRest(TestCase):
 
     def setUp(self) -> None:
@@ -197,11 +190,6 @@ class TestsRest(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
         self.assertEqual(201, response.status_code)
 
-    def test_create_asset_with_missing_case_identifier_should_return_404(self):
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/assets', body)
-        self.assertEqual(404, response.status_code)
-
     def test_get_asset_with_missing_asset_identifier_should_return_404(self):
         response = self._subject.get('/api/v2/asset/None')
         self.assertEqual(404, response.status_code)
@@ -209,35 +197,6 @@ class TestsRest(TestCase):
     def test_get_timeline_state_should_return_200(self):
         response = self._subject.get('/case/timeline/state', query_parameters={'cid': 1})
         self.assertEqual(200, response.status_code)
-
-    def test_get_cases_should_not_fail(self):
-        response = self._subject.get('/api/v2/cases')
-        self.assertEqual(200, response.status_code)
-
-    def test_get_cases_should_filter_on_case_name(self):
-        response = self._subject.create('/api/v2/cases', {
-            'case_name': 'test_get_cases_should_filter_on_case_name',
-            'case_description': 'description',
-            'case_customer': 1,
-            'case_soc_id': ''
-        }).json()
-        case_identifier = response['case_id']
-        filters = {'case_name': 'test_get_cases_should_filter_on_case_name'}
-        response = self._subject.get('/api/v2/cases', query_parameters=filters).json()
-        identifiers = []
-        for case in response['cases']:
-            identifiers.append(case['case_id'])
-        self.assertIn(case_identifier, identifiers)
-
-    def test_get_cases_should_filter_on_is_open(self):
-        case_identifier = self._subject.create_dummy_case()
-        self._subject.create(f'/manage/cases/close/{case_identifier}', {})
-        filters = {'is_open': 'true'}
-        response = self._subject.get('/api/v2/cases', query_parameters=filters).json()
-        identifiers = []
-        for case in response['cases']:
-            identifiers.append(case['case_id'])
-        self.assertNotIn(case_identifier, identifiers)
 
     def test_get_users_should_return_200(self):
         response = self._subject.get('/manage/users/list')
@@ -247,30 +206,3 @@ class TestsRest(TestCase):
         user = self._subject.create_dummy_user()
         response = user.get('/manage/users/list')
         self.assertEqual(403, response.status_code)
-
-    def test_get_cases_should_return_the_state_name(self):
-        case_identifier = self._subject.create_dummy_case()
-        response = self._subject.get('/api/v2/cases').json()
-        case = _get_case_with_identifier(response, case_identifier)
-        self.assertEqual('Open', case['state']['state_name'])
-
-    def test_get_cases_should_return_the_owner_name(self):
-        case_identifier = self._subject.create_dummy_case()
-        response = self._subject.get('/api/v2/cases').json()
-        case = _get_case_with_identifier(response, case_identifier)
-        self.assertEqual('administrator', case['owner']['user_name'])
-
-    def test_get_case_should_have_field_case_name(self):
-        case_identifier = self._subject.create_dummy_case()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
-        self.assertIn('case_name', response)
-
-    def test_create_case_should_return_data_with_case_customer_when_case_customer_is_an_empty_string(self):
-        body = {
-            'case_name': 'case name',
-            'case_description': 'description',
-            'case_customer': '',
-            'case_soc_id': ''
-        }
-        response = self._subject.create('/api/v2/cases', body).json()
-        self.assertIn('case_customer', response['data'])
