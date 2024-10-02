@@ -45,6 +45,9 @@ services:
     volumes:
       - ./source/app:/iriswebapp/app
       - ./ui/dist:/iriswebapp/static
+    healthcheck:
+      test: curl --head --fail http://localhost:8000 || exit 1
+      start_period: 60s
 
   worker:
     extends:
