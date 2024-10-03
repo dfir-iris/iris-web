@@ -55,18 +55,21 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           pip install -r requirements.txt
-          docker compose --file ../docker-compose.dev.yml --env-file data/basic.env up --detach
+          docker compose --file ../docker-compose.dev.yml --env-file data/basic.env up --detach --wait
           PYTHONUNBUFFERED=true python -m unittest --verbose
           docker compose down
       - name: Start development server
         run: |
           docker compose --file docker-compose.dev.yml up --detach
+      - name: Install e2e dependencies
+        working-directory: e2e
+        run: npm ci
+      - name: Install playwright dependencies
+        working-directory: e2e
+        run: npx playwright install chromium firefox
       - name: Run end to end tests
         working-directory: e2e
-        run: |
-          npm ci
-          npx playwright install --with-deps
-          npx playwright test
+        run: npx playwright test
       - name: Generate GraphQL documentation
         run: |
           npx spectaql@^3.0.2 source/spectaql/config.yml

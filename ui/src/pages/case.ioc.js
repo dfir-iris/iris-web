@@ -134,7 +134,7 @@ function get_case_ioc() {
         set_last_state(response.data);
     });
 
-    get_request_data_api(`/api/v2/cases/${get_caseid()}/iocs`)
+    get_request_data_api(`/api/v2/cases/${get_caseid()}/iocs`, { 'per_page': Number.MAX_SAFE_INTEGER })
     .done((data, textStatus) => {
         if (textStatus !== 'success') {
             Table.clear().draw()

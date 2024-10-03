@@ -15,7 +15,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import logging
 
 from flask_login import current_user
 from marshmallow.exceptions import ValidationError
@@ -23,7 +22,7 @@ from marshmallow.exceptions import ValidationError
 from app import db
 from app.models import Ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
-from app.datamgmt.case.case_iocs_db import case_iocs_db_find_duplicate
+from app.datamgmt.case.case_iocs_db import case_iocs_db_exists
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
 from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.case.case_iocs_db import delete_ioc
@@ -64,7 +63,7 @@ def iocs_create(request_json, case_identifier):
     if not check_ioc_type_id(type_id=ioc.ioc_type_id):
         raise BusinessProcessingError('Not a valid IOC type')
 
-    if case_iocs_db_find_duplicate(ioc):
+    if case_iocs_db_exists(ioc):
         raise BusinessProcessingError('IOC with same value and type already exists')
 
     add_ioc(ioc, current_user.id, case_identifier)

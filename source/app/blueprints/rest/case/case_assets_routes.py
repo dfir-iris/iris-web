@@ -35,6 +35,7 @@ from app.business.assets import assets_create
 from app.business.assets import assets_get_detailed
 from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
+from app.datamgmt.case.case_assets_db import case_assets_db_exists
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
@@ -143,7 +144,6 @@ def add_asset(identifier):
 
     asset_schema = CaseAssetsSchema()
     try:
-        asset_schema.is_unique_for_cid(identifier, request.get_json())
         _, asset = assets_create(identifier, request.get_json())
         return response_api_created(asset_schema.dump(asset))
     except BusinessProcessingError as e:
@@ -216,10 +216,13 @@ def case_upload_ioc(caseid):
 
             row['analysis_status_id'] = analysis_status_id
 
+            # TODO from here
             request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
 
-            add_asset_schema.is_unique_for_cid(caseid, request_data)
             asset_sc = add_asset_schema.load(request_data)
+            asset_sc.case_id = caseid
+            if case_assets_db_exists(asset_sc):
+                return response_error('Data error', data='Asset with same value and type already exists')
             asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
@@ -229,12 +232,14 @@ def case_upload_ioc(caseid):
             asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
             if not asset:
-                errors.append("Unable to add asset for internal reason")
+                errors.append('Unable to add asset for internal reason')
                 index += 1
                 continue
 
+            # to here: should call assets_create from the business layer.
+            #          But should the custom_attributes always be called?
+            track_activity(f'added asset {asset.asset_name}', caseid=caseid)
             ret.append(request_data)
-            track_activity(f"added asset {asset.asset_name}", caseid=caseid)
 
             index += 1
 
@@ -246,7 +251,7 @@ def case_upload_ioc(caseid):
         return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
@@ -292,8 +297,10 @@ def asset_update(cur_id, caseid):
 
         request_data['asset_id'] = cur_id
 
-        add_asset_schema.is_unique_for_cid(caseid, request_data)
         asset_schema = add_asset_schema.load(request_data, instance=asset)
+        asset_schema.case_id = caseid
+        if case_assets_db_exists(asset_schema):
+            return response_error('Data error', data='Asset with same value and type already exists')
 
         update_assets_state(caseid=caseid)
         db.session.commit()
@@ -313,7 +320,7 @@ def asset_update(cur_id, caseid):
         return response_error("Unable to update asset for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_assets_rest_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])

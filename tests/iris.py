@@ -17,11 +17,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from pathlib import Path
-import shutil
-import time
 from docker_compose import DockerCompose
 from rest_api import RestApi
-from server_timeout_error import ServerTimeoutError
 from user import User
 from uuid import uuid4
 
@@ -41,36 +38,6 @@ class Iris:
         self._api = RestApi(API_URL, _API_KEY)
         self._administrator = User(API_URL, _API_KEY, _ADMINISTRATOR_USER_IDENTIFIER)
 
-    def _wait(self, condition, attempts, sleep_duration=1):
-        count = 0
-        while not condition():
-            time.sleep(sleep_duration)
-            count += 1
-            if count > attempts:
-                print('Docker compose logs: ', self._docker_compose.extract_all_logs())
-                raise ServerTimeoutError()
-
-    def wait_until_api_is_ready(self):
-        self._wait(self._api.is_ready, 60)
-
-    def start(self):
-        # TODO it would be preferable to have a dedicated directory with the
-        #      docker-compose.yml file, because for now, it will overwrite the
-        #      .env file and development/tests contexts are mixed up. To do
-        #      that, we should split the building phase of dockers from the
-        #      execution phase of the docker-compose. We should minimize the
-        #      docker-compose so that as few files as possible need to be
-        #      copied. Also, we should try to use standard dockers as much as
-        #      possible instead of having iris specific builds (for instance
-        #      for the database)
-        shutil.copy2(_TEST_DATA_PATH.joinpath('basic.env'), _IRIS_PATH.joinpath('.env'))
-        self._docker_compose.start()
-        print('Waiting for DFIR-IRIS to start...')
-        self.wait_until_api_is_ready()
-
-    def stop(self):
-        self._docker_compose.stop()
-
     def create(self, path, body, query_parameters=None):
         return self._api.post(path, body, query_parameters)
 
@@ -80,29 +47,7 @@ class Iris:
     def delete(self, path):
         return self._api.delete(path)
 
-    def get_api_version(self):
-        return self._api.get('api/versions').json()
-
-    def create_alert(self):
-        body = {
-            'alert_title': 'alert title',
-            'alert_severity_id': 4,
-            'alert_status_id': 3,
-            'alert_customer_id': 1
-        }
-        response = self._api.post('/alerts/add', body)
-        return response.json()
-
-    def create_asset(self):
-        body = {
-            'asset_type_id': '9',
-            'asset_name': 'admin_laptop',
-        }
-        response = self._api.post('/case/assets/add', body)
-        return response.json()
-
-    # TODO make private => use create_dummy_user instead
-    def create_user(self, user_name):
+    def _create_user(self, user_name):
         body = {
             'user_name': user_name,
             'user_login': user_name,
@@ -113,7 +58,7 @@ class Iris:
         return User(API_URL, user['data']['user_api_key'], user['data']['id'])
 
     def create_dummy_user(self):
-        return self.create_user(f'user{uuid4()}')
+        return self._create_user(f'user{uuid4()}')
 
     def create_dummy_case(self):
         body = {
@@ -124,16 +69,6 @@ class Iris:
         }
         response = self._api.post('/api/v2/cases', body).json()
         return response['case_id']
-
-    def update_case(self, case_identifier, data):
-        response = self._api.post(f'/manage/cases/update/{case_identifier}', data)
-        return response.json()
-
-    def get_cases(self):
-        return self._api.get('/manage/cases/list').json()
-
-    def get_cases_filter(self):
-        return self._api.get('/manage/cases/filter').json()
 
     def execute_graphql_query(self, payload):
         return self._administrator.execute_graphql_query(payload)

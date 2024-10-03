@@ -1,29 +1,19 @@
-import { test as setup, expect } from '@playwright/test';
-import dotenv from 'dotenv';
+import { test as setup } from './restFixture.js';
+import { expect } from '@playwright/test';
 import fs from 'node:fs';
-
-const _API_URL = 'http://127.0.0.1:8000';
+import dotenv from 'dotenv';
 
 const _PERMISSION_CUSTOMERS_READ = 0x40;
 
 const _ADMINISTRATOR_USERNAME = 'administrator';
 
-let apiContext;
 let administrator_password;
 
 setup.beforeAll(async ({ playwright }) => {
     const envFile = fs.readFileSync('../.env');
     const env = dotenv.parse(envFile);
 
-    administrator_password = env.IRIS_ADM_PASSWORD
-
-    apiContext = await playwright.request.newContext({
-        baseURL: _API_URL,
-        extraHTTPHeaders: {
-            'Authorization': `Bearer ${env.IRIS_ADM_API_KEY}`,
-            'Content-Type': 'application/json'
-        },
-    });
+    administrator_password = env.IRIS_ADM_PASSWORD;
 });
 
 async function authenticate(page, login, password) {
@@ -42,14 +32,14 @@ setup('authenticate as administrator', async ({ page }) => {
     await authenticate(page, _ADMINISTRATOR_USERNAME, administrator_password);
 });
 
-setup('authenticate as user with customers read rights', async ({ page }) => {
+setup('authenticate as user with customers read rights', async ({ page, rest }) => {
     // TODO when this method is called a second time, all these request will fail
     //      think about a better ways of doing things, some possible strategies
     //      - find a way to create a new valid database before and empty the database after
     //      - find a way to remove elements from the database to roughly get back to the initial state
     //      - code so that these requests are robust (check the group exists, user exists, link between the two is set...)
     //      - global setup and teardown? https://playwright.dev/docs/test-global-setup-teardown
-    let response = await apiContext.post('/manage/groups/add', {
+    let response = await rest.post('/manage/groups/add', {
         data: {
             group_name: 'group_customers_r',
             group_description: 'Group with rights: customers_read',
@@ -59,7 +49,7 @@ setup('authenticate as user with customers read rights', async ({ page }) => {
     const groupIdentifier = (await response.json()).data.group_id;
     const login = 'user_customers_r';
     const password = 'aA.1234567890';
-    response = await apiContext.post('/manage/users/add', {
+    response = await rest.post('/manage/users/add', {
         data: {
             user_name: login,
             user_login: login,
@@ -68,17 +58,12 @@ setup('authenticate as user with customers read rights', async ({ page }) => {
         }
     });
     const userIdentifier = (await response.json()).data.id;
-    response = await apiContext.post(`/manage/users/${userIdentifier}/groups/update`, {
+    response = await rest.post(`/manage/users/${userIdentifier}/groups/update`, {
         data: {
             groups_membership: [groupIdentifier]
         }
     });
 
     await authenticate(page, login, password);
-});
-
-setup.afterAll(async ({ }) => {
-  // Dispose all responses.
-  await apiContext.dispose();
 });
 

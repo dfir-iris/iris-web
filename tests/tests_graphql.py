@@ -24,35 +24,12 @@ from base64 import b64encode
 
 
 class TestsGraphQL(TestCase):
-    _subject = None
-    _ioc_count = 0
-    _user_count = 0
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls._subject = Iris()
-        cls._subject.start()
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls._subject.stop()
+    def setUp(self) -> None:
+        self._subject = Iris()
 
     def tearDown(self):
         self._subject.clear_database()
-
-    # Note: this method is necessary because the state of the database is not reset between each test
-    #       and we want to work with distinct object in each test
-    @classmethod
-    def _generate_new_dummy_ioc_value(cls):
-        cls._ioc_count += 1
-        return f'IOC value #{cls._ioc_count}'
-
-    # Note: this method is necessary because the state of the database is not reset between each test
-    #       and we want to work with distinct object in each test
-    @classmethod
-    def _generate_new_dummy_user_name(cls):
-        cls._user_count += 1
-        return f'user{cls._user_count}'
 
     @staticmethod
     def _get_first_case(body):
@@ -95,7 +72,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_create_ioc_should_not_fail(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -109,10 +86,9 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_delete_ioc_should_not_fail(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "IOC value") {{
                                  ioc {{ iocId }}
                              }}
                          }}'''
@@ -132,10 +108,9 @@ class TestsGraphQL(TestCase):
     def test_graphql_create_ioc_should_allow_optional_description_to_be_set(self):
         case_identifier = self._create_case()
         description = 'Some description'
-        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "IOC value",
                                  description: "{description}") {{
                                      ioc {{ iocDescription }}
                              }}
@@ -147,10 +122,9 @@ class TestsGraphQL(TestCase):
     def test_graphql_create_ioc_should_allow_optional_tags_to_be_set(self):
         case_identifier = self._create_case()
         tags = 'tag1,tag2'
-        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}",
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "IOC value",
                                  tags: "{tags}") {{
                                      ioc {{ iocTags }}
                              }}
@@ -161,7 +135,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_update_tlp(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -183,7 +157,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_not_update_typeId(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -206,7 +180,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_fail_when_missing_iocId(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -227,7 +201,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_not_update_tlpId(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -250,10 +224,9 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_not_update_value(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "IOC value") {{
                                 ioc {{ iocId iocValue }}
                             }}
                          }}'''
@@ -273,7 +246,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_update_optional_parameter_description(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -297,7 +270,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_update_optional_parameter_tags(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -333,10 +306,9 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_iocs_should_return_all_iocs_of_a_case(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
         payload = {
             'query': f'''mutation {{
-                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                             iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "IOC value") {{
                                  ioc {{ iocId }}
                              }}
                          }}'''
@@ -353,7 +325,7 @@ class TestsGraphQL(TestCase):
         self.assertNotIn('errors', response)
 
     def test_graphql_case_should_return_error_log_uuid_when_permission_denied(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
+        user = self._subject.create_dummy_user()
         case_identifier = self._create_case()
         payload = {
             'query': f'''{{
@@ -366,14 +338,11 @@ class TestsGraphQL(TestCase):
         self.assertRegex(response['errors'][0]['message'], r'Permission denied \(EID [0-9a-f-]{36}\)')
 
     def test_graphql_case_should_return_error_ioc_when_permission_denied(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
-        payload = {'query': ' mutation { caseCreate(name: "case", description: "Some description", clientId: 1) { case { caseId } } }'}
-        body = self._subject.execute_graphql_query(payload)
-        case_identifier = body['data']['caseCreate']['case']['caseId']
-        ioc_value = self._generate_new_dummy_ioc_value()
+        user = self._subject.create_dummy_user()
+        case_identifier = self._create_case()
         payload = {
             'query': f'''mutation {{
-                                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
+                                     iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "IOC value") {{
                                          ioc {{ iocId iocValue }}
                                      }}
                                  }}'''
@@ -619,11 +588,8 @@ class TestsGraphQL(TestCase):
         self.assertEqual(1, body['data']['caseUpdate']['case']['reviewStatusId'])
 
     def test_graphql_query_ioc_should_not_fail(self):
-        payload = {'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 1) {case { '
-                            'caseId } } }'}
-        body = self._subject.execute_graphql_query(payload)
-        case_identifier = body['data']['caseCreate']['case']['caseId']
-        ioc_value = self._generate_new_dummy_ioc_value()
+        case_identifier = self._create_case()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                                      iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -653,7 +619,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_update_misp(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -676,7 +642,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_update_userId(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -698,7 +664,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_update_iocEnrichment(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -721,7 +687,7 @@ class TestsGraphQL(TestCase):
 
     def test_graphql_update_ioc_should_update_modificationHistory(self):
         case_identifier = self._create_case()
-        ioc_value = self._generate_new_dummy_ioc_value()
+        ioc_value = 'IOC value'
         payload = {
             'query': f'''mutation {{
                              iocCreate(caseId: {case_identifier}, typeId: 1, tlpId: 1, value: "{ioc_value}") {{
@@ -1089,7 +1055,7 @@ class TestsGraphQL(TestCase):
             self.assertEqual(test_user, user_id)
 
     def test_graphql_case_should_return_error_cases_query_when_permission_denied(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
+        user = self._subject.create_dummy_user()
         name = "cases_query_permission_denied"
         case_id = None
         payload = {
@@ -1110,8 +1076,8 @@ class TestsGraphQL(TestCase):
             self.assertEqual(case_id, test_case_id)
 
     def test_graphql_case_should_return_success_cases_query(self):
-        user = self._subject.create_user(self._generate_new_dummy_user_name())
-        name = "cases_query_permission_denied"
+        user = self._subject.create_dummy_user()
+        name = 'cases_query_permission_denied'
         payload = {
             'query': f'''mutation {{
                                     caseCreate(name: "{name}", description: "Some description", clientId: 1) {{
@@ -1135,15 +1101,23 @@ class TestsGraphQL(TestCase):
             'query': 'mutation { caseCreate(name: "test_case_tag", description: "Some description", clientId: 1) { case { caseId } } }'
         }
         body = self._subject.execute_graphql_query(payload)
-        case_id = body['data']['caseCreate']['case']['caseId']
-        self._subject.update_case(case_id, {'case_tags': 'test_case_number1'})
+        case_identifier = body['data']['caseCreate']['case']['caseId']
+
+        payload = {
+            'query': f'''mutation {{
+                             caseUpdate(caseId: {case_identifier}, tags: "test_case_number1") {{
+                                  case {{ name }}
+                             }} 
+                        }}'''
+        }
+        self._subject.execute_graphql_query(payload)
         payload = {
             'query': 'query { cases (tags :"test_case_number1"){ edges { node { caseId } } } }'
         }
         body = self._subject.execute_graphql_query(payload)
         for case in body['data']['cases']['edges']:
             test_case_id = case['node']['caseId']
-            self.assertEqual(case_id, test_case_id)
+            self.assertEqual(case_identifier, test_case_id)
 
     def test_graphql_case_should_work_with_open_since(self):
         payload = {

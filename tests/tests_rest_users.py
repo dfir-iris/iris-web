@@ -16,5 +16,23 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class ServerTimeoutError(Exception):
-    pass
+from unittest import TestCase
+from iris import Iris
+
+
+class TestsRestUsers(TestCase):
+
+    def setUp(self) -> None:
+        self._subject = Iris()
+
+    def tearDown(self):
+        self._subject.clear_database()
+
+    def test_get_users_should_return_200(self):
+        response = self._subject.get('/manage/users/list')
+        self.assertEqual(200, response.status_code)
+
+    def test_get_users_should_return_403_for_user_without_rights(self):
+        user = self._subject.create_dummy_user()
+        response = user.get('/manage/users/list')
+        self.assertEqual(403, response.status_code)

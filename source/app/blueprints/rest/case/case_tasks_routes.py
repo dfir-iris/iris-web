@@ -194,7 +194,7 @@ def deprecated_case_delete_task(cur_id, caseid):
 def case_delete_task(identifier):
     try:
         task = tasks_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=identifier)
 
         tasks_delete(task)

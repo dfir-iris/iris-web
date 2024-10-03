@@ -101,7 +101,7 @@ function add_assets() {
                 })
                 .fail(function (error) {
                     $('#submit_new_assets').text('Save');
-                    propagate_form_api_errors(error.responseJSON.data);
+                    notify_error(error.responseJSON.message);
                 })
             }
 
