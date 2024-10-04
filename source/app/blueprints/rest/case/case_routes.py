@@ -414,7 +414,7 @@ def get_cases() -> Response:
     cases = {
         'total': filtered_cases.total,
         # TODO should maybe really uniform all return types of paginated list and replace field cases by field data
-        'cases': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
+        'data': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
         'last_page': filtered_cases.pages,
         'current_page': filtered_cases.page,
         'next_page': filtered_cases.next_num if filtered_cases.has_next else None,

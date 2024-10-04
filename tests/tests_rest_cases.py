@@ -21,7 +21,7 @@ from iris import Iris
 
 
 def _get_case_with_identifier(response, identifier):
-    for case in response['cases']:
+    for case in response['data']:
         if identifier == case['case_id']:
             return case
     raise ValueError('Case not found')
@@ -69,10 +69,10 @@ class TestsRestCases(TestCase):
 
     def test_create_case_should_add_a_new_case(self):
         response = self._subject.get('/api/v2/cases').json()
-        initial_case_count = len(response['cases'])
+        initial_case_count = len(response['data'])
         self._subject.create_dummy_case()
         response = self._subject.get('/api/v2/cases').json()
-        case_count = len(response['cases'])
+        case_count = len(response['data'])
         self.assertEqual(initial_case_count + 1, case_count)
 
     def test_get_case_should_return_case_data(self):
@@ -129,7 +129,7 @@ class TestsRestCases(TestCase):
         filters = {'case_name': 'test_get_cases_should_filter_on_case_name'}
         response = self._subject.get('/api/v2/cases', query_parameters=filters).json()
         identifiers = []
-        for case in response['cases']:
+        for case in response['data']:
             identifiers.append(case['case_id'])
         self.assertIn(case_identifier, identifiers)
 
@@ -139,7 +139,7 @@ class TestsRestCases(TestCase):
         filters = {'is_open': 'true'}
         response = self._subject.get('/api/v2/cases', query_parameters=filters).json()
         identifiers = []
-        for case in response['cases']:
+        for case in response['data']:
             identifiers.append(case['case_id'])
         self.assertNotIn(case_identifier, identifiers)
 

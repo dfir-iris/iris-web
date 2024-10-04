@@ -288,7 +288,7 @@ $(document).ready(function() {
                 // since there are no filters on this table, it should be OK
                 json.recordsFiltered = json.total;
 
-                return json.cases;
+                return json.data;
             }
         }
     });

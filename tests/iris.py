@@ -75,7 +75,7 @@ class Iris:
 
     def clear_database(self):
         cases = self.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
-        for case in cases['cases']:
+        for case in cases['data']:
             identifier = case['case_id']
             self.delete(f'/api/v2/cases/{identifier}')
         groups = self.get('/manage/groups/list').json()
