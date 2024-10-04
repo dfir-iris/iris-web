@@ -54,7 +54,7 @@ def endpoint_deprecated(alternative_verb, alternative_url):
         @wraps(f)
         def wrap(*args, **kwargs):
             result = f(*args, **kwargs)
-            logger.warning(f'Endpoint deprecated, use {alternative_verb} {alternative_url} instead')
+            logger.warning(f'Endpoint will be deprecated soon. Use {alternative_verb} {alternative_url} instead')
             result.headers['Link'] = f'<{alternative_url}>; rel="alternate"'
             result.headers['Deprecation'] = True
             return result
