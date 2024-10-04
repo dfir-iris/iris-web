@@ -28,14 +28,14 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
-from app.business.iocs import iocs_create
+from app.business.iocs import iocs_create, iocs_update
 from app.business.iocs import iocs_delete
 from app.business.iocs import iocs_get
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
-from app.util import ac_api_return_access_denied
+from app.util import ac_api_return_access_denied, response_success, response_error
 
 api_v2_ioc_blueprint = Blueprint('case_ioc_rest_v2',
                                  __name__,
@@ -135,3 +135,26 @@ def get_case_ioc(identifier):
         return response_api_success(ioc_schema.dump(ioc))
     except ObjectNotFoundError:
         return response_api_not_found()
+
+
+@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['POST'])
+@ac_api_requires()
+def update_ioc(identifier):
+    ioc_schema = IocSchemaForAPIV2()
+    try:
+        #TODO: We have a useless double get on the IOC object
+        # one for the access right, another one for the update of the object.
+        ioc = iocs_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id,
+                                                          [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=ioc.case_id)
+
+        try:
+            ioc, msg = iocs_update(identifier, request.get_json())
+            return response_success(msg, data=ioc_schema.dump(ioc))
+        except BusinessProcessingError as e:
+            return response_error(e.get_message(), data=e.get_data())
+
+    except ObjectNotFoundError:
+        return response_api_not_found()
+

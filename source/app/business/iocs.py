@@ -79,9 +79,11 @@ def iocs_create(request_json, case_identifier):
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
 
 
-# TODO most probably this method should not require a case_identifier... Since the IOC gets modified for all cases...
-def iocs_update(identifier, request_json):
-
+def iocs_update(identifier: int, request_json: dict):
+    """
+    Identifier: the IOC identifier
+    Request JSON: the Request
+    """
     try:
         ioc = get_ioc(identifier)
         if not ioc:

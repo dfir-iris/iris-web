@@ -236,6 +236,7 @@ def deprecated_case_view_ioc(cur_id, caseid):
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_update_ioc(cur_id, caseid):
