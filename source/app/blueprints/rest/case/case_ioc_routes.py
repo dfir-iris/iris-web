@@ -27,11 +27,6 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import response_api_deleted
-from app.blueprints.rest.endpoints import response_api_not_found
-from app.blueprints.rest.endpoints import response_api_success
-from app.blueprints.rest.endpoints import response_api_created
-from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.business.iocs import iocs_create
 from app.business.iocs import iocs_update
@@ -40,7 +35,6 @@ from app.business.iocs import iocs_get
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_iocs_db import add_comment_to_ioc
-from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import delete_ioc_comment
 from app.datamgmt.case.case_iocs_db import get_case_ioc_comment
@@ -57,7 +51,6 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
-from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.util import ac_api_return_access_denied

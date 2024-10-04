@@ -35,7 +35,7 @@ class TestsRestIocs(TestCase):
         response = self._subject.get('/case/ioc/list').json()
         self.assertEqual('success', response['status'])
 
-    def test_create_ioc_should_return_good_ioc_type_id(self):
+    def test_create_ioc_should_return_correct_ioc_type_id(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
@@ -103,7 +103,7 @@ class TestsRestIocs(TestCase):
         filters = {'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'}
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs',  query_parameters=filters).json()
         identifiers = []
-        for ioc in response['iocs']:
+        for ioc in response['data']:
             identifiers.append(ioc['ioc_type_id'])
         self.assertIn(ioc_type_identifier, identifiers)
 
@@ -125,7 +125,7 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': tlp_identifier, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs').json()
-        self.assertEqual(tlp_identifier, response['iocs'][0]['tlp']['tlp_id'])
+        self.assertEqual(tlp_identifier, response['data'][0]['tlp']['tlp_id'])
 
     def test_get_iocs_should_include_link_to_other_cases_with_same_value_type_ioc(self):
         case_identifier1 = self._subject.create_dummy_case()
@@ -135,7 +135,7 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 1, 'ioc_value': '8.8.8.8', 'ioc_description': 'another', 'ioc_tags': ''}
         self._subject.create(f'/api/v2/cases/{case_identifier2}/iocs', body).json()
         response = self._subject.get(f'/api/v2/cases/{case_identifier2}/iocs').json()
-        self.assertEqual(case_identifier1, response['iocs'][0]['link'][0]['case_id'])
+        self.assertEqual(case_identifier1, response['data'][0]['link'][0]['case_id'])
 
     def test_create_ioc_should_include_field_link(self):
         case_identifier = self._subject.create_dummy_case()

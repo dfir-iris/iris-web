@@ -41,6 +41,7 @@ api_v2_ioc_blueprint = Blueprint('case_ioc_rest_v2',
                                  __name__,
                                  url_prefix='/api/v2')
 
+
 @api_v2_ioc_blueprint.route('/cases/<int:identifier>/iocs', methods=['GET'])
 @ac_api_requires()
 def list_ioc(identifier):
@@ -80,8 +81,7 @@ def list_ioc(identifier):
 
     iocs = {
         'total': filtered_iocs.total,
-        # TODO should maybe really uniform all return types of paginated list and replace field iocs by field data
-        'iocs': iocs,
+        'data': iocs,
         'last_page': filtered_iocs.pages,
         'current_page': filtered_iocs.page,
         'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
