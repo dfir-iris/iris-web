@@ -35,7 +35,7 @@ from app.util import ac_api_return_access_denied
 
 api_v2_assets_blueprint = Blueprint('case_assets_rest_v2',
                                     __name__,
-                                    url_prefix='/api/v2/')
+                                    url_prefix='/api/v2')
 
 
 @api_v2_assets_blueprint.route('/cases/<int:identifier>/assets', methods=['POST'])

@@ -39,9 +39,9 @@ from app.util import ac_api_return_access_denied
 
 api_v2_ioc_blueprint = Blueprint('case_ioc_rest_v2',
                                  __name__,
-                                 url_prefix='/api/v2/')
+                                 url_prefix='/api/v2')
 
-@api_v2_ioc_blueprint.route('cases/<int:identifier>/iocs', methods=['GET'])
+@api_v2_ioc_blueprint.route('/cases/<int:identifier>/iocs', methods=['GET'])
 @ac_api_requires()
 def list_ioc(identifier):
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
@@ -90,7 +90,7 @@ def list_ioc(identifier):
     return response_api_success(data=iocs)
 
 
-@api_v2_ioc_blueprint.route('cases/<int:identifier>/iocs', methods=['POST'])
+@api_v2_ioc_blueprint.route('/cases/<int:identifier>/iocs', methods=['POST'])
 @ac_api_requires()
 def case_add_ioc(identifier):
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
@@ -106,7 +106,7 @@ def case_add_ioc(identifier):
         return response_api_error(e.get_message())
 
 
-@api_v2_ioc_blueprint.route('iocs/<int:identifier>', methods=['DELETE'])
+@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['DELETE'])
 @ac_api_requires()
 def delete_case_ioc(identifier):
     try:
@@ -123,7 +123,7 @@ def delete_case_ioc(identifier):
         return response_api_error(e.get_message())
 
 
-@api_v2_ioc_blueprint.route('iocs/<int:identifier>', methods=['GET'])
+@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['GET'])
 @ac_api_requires()
 def get_case_ioc(identifier):
     ioc_schema = IocSchemaForAPIV2()
