@@ -31,7 +31,6 @@ class TestsRestAssets(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
-
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
