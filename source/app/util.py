@@ -346,10 +346,6 @@ def not_authenticated_redirection_url(request_url: str):
     return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
 
 
-def is_authentication_local():
-    return app.config.get("AUTHENTICATION_TYPE") == "local"
-
-
 def is_authentication_ldap():
     return app.config.get('AUTHENTICATION_TYPE') == "ldap"
 
