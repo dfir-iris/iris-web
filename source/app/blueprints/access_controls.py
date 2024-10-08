@@ -21,6 +21,7 @@ import logging as log
 import uuid
 from functools import wraps
 
+from flask import Request
 from flask import request
 from flask import session
 from flask import render_template
@@ -29,17 +30,21 @@ from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
 from app import TEMPLATE_PATH
+from app import app
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
+from app.util import _local_authentication_process
+from app.util import _local_authentication_process
+from app.util import _local_authentication_process
+from app.util import _oidc_proxy_authentication_process
 
 from app.util import update_current_case
 from app.util import log_exception_and_error
 from app.util import response_error
-from app.util import is_user_authenticated
 from app.util import not_authenticated_redirection_url
 
 
@@ -355,3 +360,14 @@ def ac_api_requires_client_access():
             return f(*args, **kwargs)
         return wrap
     return inner_wrap
+
+
+def is_user_authenticated(incoming_request: Request):
+    authentication_mapper = {
+        "oidc_proxy": _oidc_proxy_authentication_process,
+        "local": _local_authentication_process,
+        "ldap": _local_authentication_process,
+        "oidc": _local_authentication_process,
+    }
+
+    return authentication_mapper.get(app.config.get("AUTHENTICATION_TYPE"))(incoming_request)

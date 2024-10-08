@@ -346,17 +346,6 @@ def not_authenticated_redirection_url(request_url: str):
     return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
 
 
-def is_user_authenticated(incoming_request: Request):
-    authentication_mapper = {
-        "oidc_proxy": _oidc_proxy_authentication_process,
-        "local": _local_authentication_process,
-        "ldap": _local_authentication_process,
-        "oidc": _local_authentication_process,
-    }
-
-    return authentication_mapper.get(app.config.get("AUTHENTICATION_TYPE"))(incoming_request)
-
-
 def is_authentication_local():
     return app.config.get("AUTHENTICATION_TYPE") == "local"
 
