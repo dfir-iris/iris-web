@@ -17,9 +17,10 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from functools import wraps
+
 from app import app
-from app.business.errors import BusinessProcessingError
 from app.util import response
+from app.util import response_error
 
 logger = app.logger
 
@@ -58,5 +59,14 @@ def endpoint_deprecated(alternative_verb, alternative_url):
             result.headers['Link'] = f'<{alternative_url}>; rel="alternate"'
             result.headers['Deprecation'] = True
             return result
+        return wrap
+    return inner_wrap
+
+
+def endpoint_removed(message, version):
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            return response_error(f"Endpoint deprecated in {version}. {message}.", status=410)
         return wrap
     return inner_wrap

@@ -54,7 +54,7 @@ from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
-from app.util import endpoint_removed
+from app.blueprints.rest.endpoints import endpoint_removed
 from app.util import response_error
 from app.util import response_success
 

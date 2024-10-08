@@ -37,7 +37,6 @@ from flask import request
 from flask import session
 from flask import url_for
 from flask_login import current_user
-from functools import wraps
 from pathlib import Path
 from pyunpack import Archive
 from sqlalchemy.ext.declarative import DeclarativeMeta
@@ -232,15 +231,6 @@ def regenerate_session():
     session['user_data'] = user_data
 
     session.modified = True
-
-
-def endpoint_removed(message, version):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            return response_error(f"Endpoint deprecated in {version}. {message}.", status=410)
-        return wrap
-    return inner_wrap
 
 
 def decompress_7z(filename: Path, output_dir):

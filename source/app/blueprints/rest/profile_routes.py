@@ -37,7 +37,7 @@ from app.schema.marshables import BasicUserSchema
 from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
-from app.util import endpoint_removed
+from app.blueprints.rest.endpoints import endpoint_removed
 
 profile_rest_blueprint = Blueprint('profile_rest', __name__)
 
