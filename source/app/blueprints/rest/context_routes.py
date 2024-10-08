@@ -30,7 +30,7 @@ from app.models.cases import Cases
 from app.models.models import Client
 from app.blueprints.access_controls import ac_api_requires
 from app.util import not_authenticated_redirection_url
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 context_rest_blueprint = Blueprint('context_rest', __name__)
 

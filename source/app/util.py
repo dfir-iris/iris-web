@@ -53,15 +53,6 @@ def response(status, data=None):
     return app.response_class(response=data, status=status, mimetype='application/json')
 
 
-def response_success(msg='', data=None):
-    content = {
-        "status": "success",
-        "message": msg,
-        "data": data if data is not None else []
-    }
-    return response(200, data=content)
-
-
 def g_db_commit():
     db.session.commit()
 

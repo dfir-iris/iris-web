@@ -70,7 +70,7 @@ from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.util import add_obj_history_entry
 from app.blueprints.responses import response_error
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 case_timeline_rest_blueprint = Blueprint('case_timeline_rest', __name__)
 

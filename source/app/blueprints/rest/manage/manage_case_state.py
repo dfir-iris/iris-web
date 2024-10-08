@@ -31,7 +31,7 @@ from app.models.authorization import Permissions
 from app.schema.marshables import CaseStateSchema
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 manage_case_state_rest_blueprint = Blueprint('manage_case_state_rest', __name__)
 

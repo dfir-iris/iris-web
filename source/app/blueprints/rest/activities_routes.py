@@ -22,7 +22,7 @@ from app.datamgmt.activities.activities_db import get_all_users_activities
 from app.datamgmt.activities.activities_db import get_users_activities
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 activities_rest_blueprint = Blueprint('activities_rest', __name__)
 

@@ -26,7 +26,7 @@ from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.access_controls import ac_api_return_access_denied
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 manage_assets_rest_blueprint = Blueprint('manage_assets_rest', __name__)
 

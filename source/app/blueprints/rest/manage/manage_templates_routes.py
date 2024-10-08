@@ -38,7 +38,7 @@ from app.models.models import Languages
 from app.models.models import ReportType
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 _ALLOWED_EXTENSIONS = {'md', 'html', 'doc', 'docx'}
 

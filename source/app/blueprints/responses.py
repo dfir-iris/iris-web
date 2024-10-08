@@ -41,3 +41,12 @@ def response_error(msg, data=None, status=400):
         'data': data if data is not None else []
     }
     return response(status, data=content)
+
+
+def response_success(msg='', data=None):
+    content = {
+        "status": "success",
+        "message": msg,
+        "data": data if data is not None else []
+    }
+    return response(200, data=content)

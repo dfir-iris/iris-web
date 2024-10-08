@@ -32,7 +32,7 @@ from app.models.authorization import Permissions
 from app.schema.marshables import ServerSettingsSchema
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
-from app.util import response_success
+from app.blueprints.responses import response_success
 from dictdiffer import diff
 
 manage_server_settings_rest_blueprint = Blueprint('manage_server_settings_rest', __name__)

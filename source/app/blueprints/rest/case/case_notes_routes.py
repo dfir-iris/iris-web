@@ -56,7 +56,7 @@ from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import endpoint_removed
 from app.blueprints.responses import response_error
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 case_notes_rest_blueprint = Blueprint('case_notes_rest', __name__)
 

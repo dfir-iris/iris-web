@@ -40,6 +40,7 @@ from app import TEMPLATE_PATH
 
 from app import app
 from app import db
+from app.blueprints.responses import response_error
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.datamgmt.manage.manage_users_db import get_user
@@ -50,7 +51,6 @@ from app.models import Cases
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 
-from app.blueprints.responses import response_error
 from app.util import not_authenticated_redirection_url
 
 
