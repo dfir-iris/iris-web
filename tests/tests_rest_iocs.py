@@ -19,8 +19,7 @@
 from unittest import TestCase
 from iris import Iris
 
-# TODO should change None into 123456789 and maybe fix...
-_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
 
 
 class TestsRestIocs(TestCase):
@@ -108,7 +107,7 @@ class TestsRestIocs(TestCase):
         self.assertIn(ioc_type_identifier, identifiers)
 
     def test_get_ioc_should_return_404_when_not_present(self):
-        response = self._subject.get(f'/api/v2/iocs/137')
+        response = self._subject.get(f'/api/v2/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_get_ioc_should_return_200_on_success(self):

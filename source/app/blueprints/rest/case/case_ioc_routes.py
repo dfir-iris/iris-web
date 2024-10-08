@@ -214,6 +214,7 @@ def deprecated_case_delete_ioc(cur_id, caseid):
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
+
 @case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
 @endpoint_deprecated('GET', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)

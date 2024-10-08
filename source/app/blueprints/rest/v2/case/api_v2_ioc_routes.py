@@ -118,7 +118,7 @@ def delete_case_ioc(identifier):
         return response_api_deleted()
 
     except ObjectNotFoundError:
-        raise BusinessProcessingError('Not a valid IOC for this case')
+        return response_api_not_found()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
