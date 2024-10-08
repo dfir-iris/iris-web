@@ -43,7 +43,7 @@ from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.case.case_db import case_exists
+from app.datamgmt.case.case_db import case_db_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
@@ -85,7 +85,7 @@ log = app.logger
 @ac_api_requires()
 def case_exists_r(caseid):
 
-    if case_exists(caseid):
+    if case_db_exists(caseid):
         return response_success('Case exists')
     return response_error('Case does not exist', 404)
 
