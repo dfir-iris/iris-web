@@ -19,8 +19,7 @@
 from unittest import TestCase
 from iris import Iris
 
-# TODO should change None into 123456789 and maybe fix...
-_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
 
 
 class TestsRestTasks(TestCase):

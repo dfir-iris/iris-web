@@ -199,6 +199,8 @@ def case_delete_task(identifier):
 
         tasks_delete(task)
         return response_api_deleted()
+    except ObjectNotFoundError:
+        return response_api_not_found()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
