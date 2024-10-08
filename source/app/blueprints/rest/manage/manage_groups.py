@@ -44,7 +44,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import AuthorizationGroupSchema
 from app.blueprints.access_controls import ac_api_requires
-from app.util import ac_api_return_access_denied
+from app.blueprints.access_controls import ac_api_return_access_denied
 from app.util import response_error
 from app.util import response_success
 from app.iris_engine.demo_builder import protect_demo_mode_group

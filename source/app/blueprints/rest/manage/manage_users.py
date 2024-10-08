@@ -48,7 +48,7 @@ from app.schema.marshables import UserFullSchema
 
 from app.blueprints.access_controls import ac_api_requires
 from app.util import is_authentication_oidc, is_authentication_ldap
-from app.util import ac_api_return_access_denied
+from app.blueprints.access_controls import ac_api_return_access_denied
 from app.util import is_authentication_local
 from app.util import response_error
 from app.util import response_success

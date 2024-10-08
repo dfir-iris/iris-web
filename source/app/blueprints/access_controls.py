@@ -21,7 +21,9 @@ import logging as log
 import uuid
 from functools import wraps
 
-from flask import request, session, render_template
+from flask import request
+from flask import session
+from flask import render_template
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
@@ -38,7 +40,6 @@ from app.util import log_exception_and_error
 from app.util import response_error
 from app.util import is_user_authenticated
 from app.util import not_authenticated_redirection_url
-from app.util import ac_api_return_access_denied
 
 
 def _user_has_at_least_a_required_permission(permissions: list[Permissions]):
@@ -328,3 +329,15 @@ def ac_socket_requires(*access_level):
 
         return wrap
     return inner_wrap
+
+
+def ac_api_return_access_denied(caseid: int = None):
+    error_uuid = uuid.uuid4()
+    log.warning(f"EID {error_uuid} - Access denied with case #{caseid} for user ID {current_user.id} "
+                f"accessing URI {request.full_path}")
+    data = {
+        'user_id': current_user.id,
+        'case_id': caseid,
+        'error_uuid': error_uuid
+    }
+    return response_error('Permission denied', data=data, status=403)

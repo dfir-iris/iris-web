@@ -380,19 +380,6 @@ def regenerate_session():
     session.modified = True
 
 
-# TODO should move this method into an util file at the root of the blueprint namespace
-def ac_api_return_access_denied(caseid: int = None):
-    error_uuid = uuid.uuid4()
-    log.warning(f"EID {error_uuid} - Access denied with case #{caseid} for user ID {current_user.id} "
-                f"accessing URI {request.full_path}")
-    data = {
-        'user_id': current_user.id,
-        'case_id': caseid,
-        'error_uuid': error_uuid
-    }
-    return response_error('Permission denied', data=data, status=403)
-
-
 def endpoint_removed(message, version):
     def inner_wrap(f):
         @wraps(f)
