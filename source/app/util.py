@@ -28,7 +28,6 @@ import pickle
 import random
 import shutil
 import string
-import traceback
 import uuid
 import weakref
 from cryptography.exceptions import InvalidSignature
@@ -185,11 +184,6 @@ class FileRemover(object):
     def _do_cleanup(self, wr):
         filepath = self.weak_references[wr]
         shutil.rmtree(filepath, ignore_errors=True)
-
-
-def log_exception_and_error(e):
-    log.exception(e)
-    log.error(traceback.print_exc())
 
 
 def get_urlcasename():

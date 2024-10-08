@@ -18,6 +18,7 @@
 
 import json
 import logging as log
+import traceback
 import uuid
 from functools import wraps
 
@@ -49,7 +50,6 @@ from app.models import Cases
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 
-from app.util import log_exception_and_error
 from app.util import response_error
 from app.util import not_authenticated_redirection_url
 
@@ -76,6 +76,11 @@ def _set_caseid_from_current_user():
         current_user.ctx_case = 1
     caseid = current_user.ctx_case
     return redir, caseid
+
+
+def _log_exception_and_error(e):
+    log.exception(e)
+    log.error(traceback.print_exc())
 
 
 def _get_caseid_from_request_data(request_data, no_cid_required):
@@ -112,7 +117,7 @@ def _get_caseid_from_request_data(request_data, no_cid_required):
             redir, caseid = _set_caseid_from_current_user()
             return redir, caseid, True
 
-        log_exception_and_error(e)
+        _log_exception_and_error(e)
         return True, 0, False
 
 
