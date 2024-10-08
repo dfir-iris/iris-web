@@ -136,20 +136,6 @@ def deprecated_add_asset(caseid):
         return response_error(e.get_message())
 
 
-@case_assets_rest_blueprint.route('/api/v2/cases/<int:identifier>/assets', methods=['POST'])
-@ac_api_requires()
-def add_asset(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
-
-    asset_schema = CaseAssetsSchema()
-    try:
-        _, asset = assets_create(identifier, request.get_json())
-        return response_api_created(asset_schema.dump(asset))
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
-
-
 @case_assets_rest_blueprint.route('/case/assets/upload', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
@@ -266,21 +252,6 @@ def deprecated_asset_view(cur_id, caseid):
         return response_error(e.get_message())
 
 
-@case_assets_rest_blueprint.route('/api/v2/assets/<int:identifier>', methods=['GET'])
-@ac_api_requires()
-def asset_view(identifier):
-    asset_schema = CaseAssetsSchema()
-
-    try:
-        asset = assets_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-            return ac_api_return_access_denied(caseid=asset.case_id)
-
-        return response_api_success(asset_schema.dump(asset))
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
-
-
 @case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
@@ -337,20 +308,6 @@ def deprecated_asset_delete(cur_id, caseid):
         return response_success('Deleted')
     except BusinessProcessingError as _:
         return response_error('Invalid asset ID for this case')
-
-
-@case_assets_rest_blueprint.route('/api/v2/assets/<int:identifier>', methods=['DELETE'])
-@ac_api_requires()
-def asset_delete(identifier):
-    try:
-        asset = assets_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.full_access]):
-            return ac_api_return_access_denied(caseid=asset.case_id)
-
-        assets_delete(asset)
-        return response_api_deleted()
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
 
 
 @case_assets_rest_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])

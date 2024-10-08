@@ -93,57 +93,7 @@ def case_list_ioc(caseid):
     return response_success("", data=ret)
 
 
-@case_ioc_rest_blueprint.route('/api/v2/cases/<int:identifier>/iocs', methods=['GET'])
-@ac_api_requires()
-def list_ioc(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
-
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
-
-    ioc_type_id = request.args.get('ioc_type_id', None, type=int)
-    ioc_type = request.args.get('ioc_type', None, type=str)
-    ioc_tlp_id = request.args.get('ioc_tlp_id', None, type=int)
-    ioc_value = request.args.get('ioc_value', None, type=str)
-    ioc_description = request.args.get('ioc_description', None, type=str)
-    ioc_tags = request.args.get('ioc_tags', None, type=str)
-
-    filtered_iocs = get_filtered_iocs(
-        caseid=identifier,
-        ioc_type_id=ioc_type_id,
-        ioc_type=ioc_type,
-        ioc_tlp_id=ioc_tlp_id,
-        ioc_value=ioc_value,
-        ioc_description=ioc_description,
-        ioc_tags=ioc_tags,
-        page=page,
-        per_page=per_page,
-        sort_by=order_by,
-        sort_dir=sort_dir
-    )
-
-    if filtered_iocs is None:
-        return response_api_error('Filtering error')
-
-    iocs = IocSchemaForAPIV2().dump(filtered_iocs.items, many=True)
-
-    iocs = {
-        'total': filtered_iocs.total,
-        # TODO should maybe really uniform all return types of paginated list and replace field iocs by field data
-        'iocs': iocs,
-        'last_page': filtered_iocs.pages,
-        'current_page': filtered_iocs.page,
-        'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
-    }
-
-    return response_api_success(data=iocs)
-
-
 @case_ioc_rest_blueprint.route('/case/ioc/state', methods=['GET'])
-@endpoint_deprecated('GET', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_ioc_state(caseid):
@@ -165,22 +115,6 @@ def deprecated_case_add_ioc(caseid):
         return response_success(msg, data=ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
-
-
-@case_ioc_rest_blueprint.route('/api/v2/cases/<int:identifier>/iocs', methods=['POST'])
-@ac_api_requires()
-def case_add_ioc(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
-
-    ioc_schema = IocSchemaForAPIV2()
-
-    try:
-        ioc, _ = iocs_create(request.get_json(), identifier)
-        return response_api_created(ioc_schema.dump(ioc))
-    except BusinessProcessingError as e:
-        log.error(e)
-        return response_api_error(e.get_message())
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/upload', methods=['POST'])
@@ -287,24 +221,6 @@ def deprecated_case_delete_ioc(cur_id, caseid):
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
-
-@case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['DELETE'])
-@ac_api_requires()
-def delete_case_ioc(identifier):
-    try:
-        ioc = iocs_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
-            return ac_api_return_access_denied(caseid=ioc.case_id)
-
-        iocs_delete(ioc)
-        return response_api_deleted()
-
-    except ObjectNotFoundError:
-        raise BusinessProcessingError('Not a valid IOC for this case')
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
-
-
 @case_ioc_rest_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
 @endpoint_deprecated('GET', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
@@ -319,21 +235,8 @@ def deprecated_case_view_ioc(cur_id, caseid):
         return response_error('Invalid IOC identifier')
 
 
-@case_ioc_rest_blueprint.route('/api/v2/iocs/<int:identifier>', methods=['GET'])
-@ac_api_requires()
-def get_case_ioc(identifier):
-    ioc_schema = IocSchemaForAPIV2()
-    try:
-        ioc = iocs_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-            return ac_api_return_access_denied(caseid=ioc.case_id)
-
-        return response_api_success(ioc_schema.dump(ioc))
-    except ObjectNotFoundError:
-        return response_api_not_found()
-
-
 @case_ioc_rest_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_update_ioc(cur_id, caseid):

@@ -161,7 +161,6 @@ function get_case_ioc() {
         load_menu_mod_options('ioc', Table, delete_ioc);
         hide_loader();
         Table.responsive.recalc();
-        $('[data-toggle="popover"]').popover();
 
         $(document)
             .off('click', '.ioc_details_link')
