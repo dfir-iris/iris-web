@@ -26,10 +26,6 @@ from flask_login import current_user
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
-from app.blueprints.rest.endpoints import response_api_deleted
-from app.blueprints.rest.endpoints import response_api_success
-from app.blueprints.rest.endpoints import response_api_error
-from app.blueprints.rest.endpoints import response_api_created
 from app.business.assets import assets_delete
 from app.business.assets import assets_create
 from app.business.assets import assets_get_detailed
@@ -59,7 +55,8 @@ from app.models import AnalysisStatus
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 from app.schema.marshables import CommentSchema
-from app.blueprints.access_controls import ac_requires_case_identifier, ac_api_requires
+from app.blueprints.access_controls import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_api_requires
 from app.util import response_error
 from app.util import response_success
 from app.util import ac_api_return_access_denied

@@ -20,6 +20,7 @@ from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 from app.models import CaseAssets
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import case_assets_db_exists
@@ -73,7 +74,7 @@ def assets_delete(asset: CaseAssets):
 def assets_get(identifier) -> CaseAssets:
     asset = get_asset(identifier)
     if not asset:
-        raise BusinessProcessingError('Invalid asset ID for this case')
+        raise ObjectNotFoundError()
 
     return asset
 
