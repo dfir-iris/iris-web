@@ -28,6 +28,7 @@ _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
 _IRIS_PATH = Path('..')
 _TEST_DATA_PATH = Path('./data')
 _ADMINISTRATOR_USER_IDENTIFIER = 1
+_INITIAL_DEMO_CASE_IDENTIFIER = 1
 
 
 class Iris:
@@ -77,12 +78,10 @@ class Iris:
         cases = self.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
         for case in cases['data']:
             identifier = case['case_id']
+            if identifier == _INITIAL_DEMO_CASE_IDENTIFIER:
+                continue
             self.delete(f'/api/v2/cases/{identifier}')
         groups = self.get('/manage/groups/list').json()
         for group in groups['data']:
             identifier = group['group_id']
             self.create(f'/manage/groups/delete/{identifier}', {})
-        customers = self.get('/manage/customers/list').json()
-        for customer in customers['data']:
-            identifier = customer['customer_id']
-            self.create(f'/manage/customers/delete/{identifier}', {})

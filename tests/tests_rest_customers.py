@@ -34,6 +34,10 @@ class TestsRestCustomers(TestCase):
             identifier = user['user_id']
             body = {'customers_membership': [_IRIS_INITIAL_CLIENT_IDENTIFIER]}
             self._subject.create(f'/manage/users/{identifier}/customers/update', body)
+        customers = self._subject.get('/manage/customers/list').json()
+        for customer in customers['data']:
+            identifier = customer['customer_id']
+            self._subject.create(f'/manage/customers/delete/{identifier}', {})
         self._subject.clear_database()
 
     def test_create_customer_should_return_200_when_user_has_customer_write_right(self):
