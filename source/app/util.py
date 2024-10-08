@@ -48,7 +48,6 @@ from sqlalchemy.orm.attributes import flag_modified
 from app import TEMPLATE_PATH
 from app import app
 from app import db
-from app.datamgmt.case.case_db import get_case
 from app.models import Cases
 
 
@@ -191,18 +190,6 @@ class FileRemover(object):
 def log_exception_and_error(e):
     log.exception(e)
     log.error(traceback.print_exc())
-
-
-def update_current_case(caseid, restricted_access):
-    if session['current_case']['case_id'] != caseid:
-        case = get_case(caseid)
-        if case:
-            session['current_case'] = {
-                'case_name': "{}".format(case.name),
-                'case_info': "(#{} - {})".format(caseid, case.client.name),
-                'case_id': caseid,
-                'access': restricted_access
-            }
 
 
 def get_urlcasename():

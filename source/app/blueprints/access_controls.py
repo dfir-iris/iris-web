@@ -49,7 +49,6 @@ from app.models import Cases
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 
-from app.util import update_current_case
 from app.util import log_exception_and_error
 from app.util import response_error
 from app.util import not_authenticated_redirection_url
@@ -145,6 +144,18 @@ def _update_denied_case(caseid):
         'case_id': caseid,
         'access': '<i class="ml-2 text-danger mt-1 fa-solid fa-ban"></i>'
     }
+
+
+def update_current_case(caseid, restricted_access):
+    if session['current_case']['case_id'] != caseid:
+        case = get_case(caseid)
+        if case:
+            session['current_case'] = {
+                'case_name': "{}".format(case.name),
+                'case_info': "(#{} - {})".format(caseid, case.client.name),
+                'case_id': caseid,
+                'access': restricted_access
+            }
 
 
 def _update_session(caseid, eaccess_level):
