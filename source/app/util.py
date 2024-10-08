@@ -22,12 +22,10 @@ import datetime
 import decimal
 import hashlib
 import json
-import jwt
 import logging as log
 import marshmallow
 import pickle
 import random
-import requests
 import shutil
 import string
 import traceback
@@ -36,18 +34,14 @@ import weakref
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
-from flask import Request
 from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
 from flask_login import current_user
-from flask_login import login_user
 from functools import wraps
-from jwt import PyJWKClient
 from pathlib import Path
 from pyunpack import Archive
-from requests.auth import HTTPBasicAuth
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -55,9 +49,6 @@ from app import TEMPLATE_PATH
 from app import app
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_users_db import get_user
-from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
-from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 
 
@@ -233,106 +224,6 @@ def get_urlcasename():
                                         case.client.name)
 
     return [case_name, case_info, caseid]
-
-
-def _local_authentication_process(incoming_request: Request):
-    return current_user.is_authenticated
-
-
-def _authenticate_with_email(user_email):
-    user = get_user(user_email, id_key="email")
-    if not user:
-        log.error(f'User with email {user_email} is not registered in the IRIS')
-        return False
-
-    login_user(user)
-    track_activity(f"User '{user.id}' successfully logged-in", ctx_less=True)
-
-    caseid = user.ctx_case
-    session['permissions'] = ac_get_effective_permissions_of_user(user)
-
-    if caseid is None:
-        case = Cases.query.order_by(Cases.case_id).first()
-        user.ctx_case = case.case_id
-        user.ctx_human_case = case.name
-        db.session.commit()
-
-    session['current_case'] = {
-        'case_name': user.ctx_human_case,
-        'case_info': "",
-        'case_id': user.ctx_case
-    }
-
-    return True
-
-
-def _oidc_proxy_authentication_process(incoming_request: Request):
-    # Get the OIDC JWT authentication token from the request header
-    authentication_token = incoming_request.headers.get('X-Forwarded-Access-Token', '')
-
-    if app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'lazy':
-        user_email = incoming_request.headers.get('X-Email')
-
-        if user_email:
-            return _authenticate_with_email(user_email.split(',')[0])
-
-    elif app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'introspection':
-        # Use the authentication server's token introspection endpoint in order to determine if the request is valid /
-        # authenticated. The TLS_ROOT_CA is used to validate the authentication server's certificate.
-        # The other solution was to skip the certificate verification, BUT as the authentication server might be
-        # located on another server, this check is necessary.
-
-        introspection_body = {"token": authentication_token}
-        introspection = requests.post(
-            app.config.get("AUTHENTICATION_TOKEN_INTROSPECTION_URL"),
-            auth=HTTPBasicAuth(app.config.get('AUTHENTICATION_CLIENT_ID'), app.config.get('AUTHENTICATION_CLIENT_SECRET')),
-            data=introspection_body,
-            verify=app.config.get("TLS_ROOT_CA")
-        )
-        if introspection.status_code == 200:
-            response_json = introspection.json()
-
-            if response_json.get("active", False) is True:
-                user_email = response_json.get("sub")
-                return _authenticate_with_email(user_email=user_email)
-
-            else:
-                log.info("USER IS NOT AUTHENTICATED")
-                return False
-
-    elif app.config.get("AUTHENTICATION_TOKEN_VERIFY_MODE") == 'signature':
-        # Use the JWKS urls provided by the OIDC discovery to fetch the signing keys
-        # and check the signature of the token
-        try:
-            jwks_client = PyJWKClient(app.config.get("AUTHENTICATION_JWKS_URL"))
-            signing_key = jwks_client.get_signing_key_from_jwt(authentication_token)
-
-            try:
-
-                data = jwt.decode(
-                    authentication_token,
-                    signing_key.key,
-                    algorithms=["RS256"],
-                    audience=app.config.get("AUTHENTICATION_AUDIENCE"),
-                    options={"verify_exp": app.config.get("AUTHENTICATION_VERIFY_TOKEN_EXP")},
-                )
-
-            except jwt.ExpiredSignatureError:
-                log.error("Provided token has expired")
-                return False
-
-        except Exception as e:
-            log.error(f"Error decoding JWT. {e.__str__()}")
-            return False
-
-        # Extract the user email
-        user_email = data.get("sub")
-
-        return _authenticate_with_email(user_email)
-
-    else:
-        log.error("ERROR DURING TOKEN INTROSPECTION PROCESS")
-        return False
 
 
 def not_authenticated_redirection_url(request_url: str):
