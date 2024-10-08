@@ -146,7 +146,7 @@ def _update_denied_case(caseid):
     }
 
 
-def update_current_case(caseid, restricted_access):
+def _update_current_case(caseid, restricted_access):
     if session['current_case']['case_id'] != caseid:
         case = get_case(caseid)
         if case:
@@ -166,7 +166,7 @@ def _update_session(caseid, eaccess_level):
     if CaseAccessLevel.read_only.value == eaccess_level:
         restricted_access = '<i class="ml-2 text-warning mt-1 fa-solid fa-lock" title="Read only access"></i>'
 
-    update_current_case(caseid, restricted_access)
+    _update_current_case(caseid, restricted_access)
 
 
 # TODO would be nice to remove parameter no_cid_required
