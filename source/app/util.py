@@ -33,7 +33,6 @@ import weakref
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
-from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
@@ -44,7 +43,6 @@ from pyunpack import Archive
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 
-from app import TEMPLATE_PATH
 from app import app
 from app import db
 from app.models import Cases
@@ -296,16 +294,6 @@ def add_obj_history_entry(obj, action, commit=False):
         db.session.commit()
 
     return obj
-
-
-# Set basic 404
-@app.errorhandler(404)
-def page_not_found(e):
-    # note that we set the 404 status explicitly
-    if request.content_type and 'application/json' in request.content_type:
-        return response_error("Resource not found", status=404)
-
-    return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH), 404
 
 
 def file_sha256sum(file_path):
