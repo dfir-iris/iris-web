@@ -32,7 +32,7 @@ from app.models.models import AssetsType
 from app.models.models import CaseAssets
 from app.schema.marshables import AssetTypeSchema
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 from app.util import response_success
 
 manage_assets_type_rest_blueprint = Blueprint('manage_assets_type_rest', __name__)

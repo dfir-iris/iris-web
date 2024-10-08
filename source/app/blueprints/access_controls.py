@@ -50,7 +50,7 @@ from app.models import Cases
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 
-from app.util import response_error
+from app.blueprints.responses import response_error
 from app.util import not_authenticated_redirection_url
 
 

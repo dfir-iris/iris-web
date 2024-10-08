@@ -29,7 +29,7 @@ from app.models import IocType
 from app.models.authorization import Permissions
 from app.schema.marshables import IocTypeSchema
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 from app.util import response_success
 
 manage_ioc_type_rest_blueprint = Blueprint('manage_ioc_types_rest', __name__)

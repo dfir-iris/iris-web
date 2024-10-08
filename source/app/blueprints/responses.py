@@ -21,7 +21,7 @@ from flask import request
 
 from app import TEMPLATE_PATH
 from app import app
-from app.util import response_error
+from app.util import response
 
 
 # Set basic 404
@@ -32,3 +32,12 @@ def page_not_found(e):
         return response_error("Resource not found", status=404)
 
     return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH), 404
+
+
+def response_error(msg, data=None, status=400):
+    content = {
+        'status': 'error',
+        'message': msg,
+        'data': data if data is not None else []
+    }
+    return response(status, data=content)

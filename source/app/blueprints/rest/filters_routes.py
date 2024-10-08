@@ -27,7 +27,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import SavedFilterSchema
 from app.blueprints.access_controls import ac_api_requires
 from app.util import response_success
-from app.util import response_error
+from app.blueprints.responses import response_error
 
 saved_filters_rest_blueprint = Blueprint('saved_filters_rest', __name__)
 

@@ -25,7 +25,7 @@ from app.datamgmt.manage.manage_attribute_db import validate_attribute
 from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 from app.util import response_success
 
 manage_attributes_rest_blueprint = Blueprint('manage_attributes_rest', __name__)

@@ -44,7 +44,7 @@ from app.models.authorization import Permissions
 from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
 from app.blueprints.access_controls import ac_api_requires_client_access
-from app.util import response_error
+from app.blueprints.responses import response_error
 from app.util import response_success
 
 manage_customers_rest_blueprint = Blueprint('manage_customers_rest', __name__)

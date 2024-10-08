@@ -21,7 +21,7 @@ import marshmallow
 from flask import request
 
 from app.schema.marshables import CommentSchema
-from app.util import response_error
+from app.blueprints.responses import response_error
 from app.util import response_success
 from app.business.case_comments import case_comments_update
 from app.business.errors import BusinessProcessingError

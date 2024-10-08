@@ -28,7 +28,7 @@ from app.datamgmt.case.case_rfiles_db import get_rfile
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.models.authorization import CaseAccessLevel
 from app.blueprints.access_controls import ac_case_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 
 case_rfiles_blueprint = Blueprint(
     'case_rfiles',

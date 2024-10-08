@@ -20,7 +20,7 @@ from functools import wraps
 
 from app import app
 from app.util import response
-from app.util import response_error
+from app.blueprints.responses import response_error
 
 logger = app.logger
 

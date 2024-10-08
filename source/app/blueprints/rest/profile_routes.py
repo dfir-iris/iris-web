@@ -35,7 +35,7 @@ from app.models.authorization import Permissions
 from app.schema.marshables import UserSchema
 from app.schema.marshables import BasicUserSchema
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 from app.util import response_success
 from app.blueprints.rest.endpoints import endpoint_removed
 

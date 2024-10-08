@@ -44,7 +44,8 @@ from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import GlobalTasksSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error, not_authenticated_redirection_url
+from app.util import not_authenticated_redirection_url
+from app.blueprints.responses import response_error
 from app.util import response_success
 from app.util import is_authentication_oidc
 
