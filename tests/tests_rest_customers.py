@@ -29,6 +29,7 @@ class TestsRestCustomers(TestCase):
         self._subject = Iris()
 
     def tearDown(self):
+        self._subject.clear_database()
         users = self._subject.get('/manage/users/list').json()
         for user in users['data']:
             identifier = user['user_id']
@@ -38,7 +39,6 @@ class TestsRestCustomers(TestCase):
         for customer in customers['data']:
             identifier = customer['customer_id']
             self._subject.create(f'/manage/customers/delete/{identifier}', {})
-        self._subject.clear_database()
 
     def test_create_customer_should_return_200_when_user_has_customer_write_right(self):
         body = {

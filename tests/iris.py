@@ -85,3 +85,8 @@ class Iris:
         for group in groups['data']:
             identifier = group['group_id']
             self.create(f'/manage/groups/delete/{identifier}', {})
+        users = self.get('/manage/users/list').json()
+        for user in users['data']:
+            identifier = user['user_id']
+            self.get(f'/manage/users/deactivate/{identifier}')
+            self.create(f'/manage/users/delete/{identifier}', {})
