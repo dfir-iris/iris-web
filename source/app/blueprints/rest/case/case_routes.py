@@ -42,8 +42,8 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
+from app.business.cases import cases_exists
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.case.case_db import case_db_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
@@ -83,9 +83,9 @@ log = app.logger
 @endpoint_deprecated('GET', '/api/v2/cases/<int:identifier>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_exists_r(caseid):
+def case_routes_exists(caseid):
 
-    if case_db_exists(caseid):
+    if cases_exists(caseid):
         return response_success('Case exists')
     return response_error('Case does not exist', 404)
 
