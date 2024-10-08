@@ -83,7 +83,7 @@ def case_list_ioc(caseid):
 
     ret['state'] = get_ioc_state(caseid=caseid)
 
-    return response_success("", data=ret)
+    return response_success('', data=ret)
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/state', methods=['GET'])
@@ -120,8 +120,8 @@ def case_upload_ioc(caseid):
         jsdata = request.get_json()
 
         # get IOC list from request
-        headers = "ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp"
-        csv_lines = jsdata["CSVData"].splitlines()  # unavoidable since the file is passed as a string
+        headers = 'ioc_value,ioc_type,ioc_description,ioc_tags,ioc_tlp'
+        csv_lines = jsdata['CSVData'].splitlines()  # unavoidable since the file is passed as a string
         if csv_lines[0].lower() != headers:
             csv_lines.insert(0, headers)
 
@@ -138,30 +138,32 @@ def case_upload_ioc(caseid):
 
             for e in headers.split(','):
                 if row.get(e) is None:
-                    errors.append(f"{e} is missing for row {index}")
+                    errors.append(f'{e} is missing for row {index}')
                     index += 1
                     continue
 
             # IOC value must not be empty
-            if not row.get("ioc_value"):
-                errors.append(f"Empty IOC value for row {index}")
-                track_activity("Attempted to upload an empty IOC value")
+            if not row.get('ioc_value'):
+                errors.append(f'Empty IOC value for row {index}')
+                track_activity('Attempted to upload an empty IOC value')
                 index += 1
                 continue
 
-            row["ioc_tags"] = row["ioc_tags"].replace("|", ",")  # Reformat Tags
+            row['ioc_tags'] = row['ioc_tags'].replace('|', ',')  # Reformat Tags
 
             # Convert TLP into TLP id
-            if row["ioc_tlp"] in tlp_dict:
-                row["ioc_tlp_id"] = tlp_dict[row["ioc_tlp"]]
+            if row['ioc_tlp'] in tlp_dict:
+                row['ioc_tlp_id'] = tlp_dict[row['ioc_tlp']]
             else:
-                row["ioc_tlp_id"] = ""
-            row.pop("ioc_tlp", None)
+                row['ioc_tlp_id'] = ''
+            row.pop('ioc_tlp', None)
 
             type_id = get_ioc_type_id(row['ioc_type'].lower())
             if not type_id:
-                errors.append(f"{row['ioc_value']} (invalid ioc type: {row['ioc_type']}) for row {index}")
-                log.error(f'Unrecognised IOC type {row["ioc_type"]}')
+                ioc_value = row['ioc_value']
+                ioc_type = row['ioc_type']
+                errors.append(f'{ioc_value} (invalid ioc type: {ioc_type}) for row {index}')
+                log.error(f'Unrecognised IOC type {ioc_type}')
                 index += 1
                 continue
 
@@ -175,25 +177,24 @@ def case_upload_ioc(caseid):
             index += 1
 
             if not ioc:
-                errors.append(f"{ioc.ioc_value} (internal reasons)")
-                log.error(f"Unable to create IOC {ioc.ioc_value} for internal reasons")
+                errors.append(f'{ioc.ioc_value} (internal reasons)')
+                log.error(f'Unable to create IOC {ioc.ioc_value} for internal reasons')
                 continue
 
             add_ioc(ioc, current_user.id, caseid)
             ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
             ret.append(request_data)
-            track_activity(f"added ioc \"{ioc.ioc_value}\"", caseid=caseid)
-
+            track_activity(f'added ioc "{ioc.ioc_value}"', caseid=caseid)
 
         if len(errors) == 0:
-            msg = "Successfully imported data."
+            msg = 'Successfully imported data.'
         else:
-            msg = "Data is imported but we got errors with the following rows:\n- " + "\n- ".join(errors)
+            msg = 'Data is imported but we got errors with the following rows:\n- ' + '\n- '.join(errors)
 
         return response_success(msg=msg, data=ret)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_ioc_rest_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
@@ -276,16 +277,16 @@ def case_comment_ioc_add(cur_id, caseid):
         db.session.commit()
 
         hook_data = {
-            "comment": comment_schema.dump(comment),
-            "ioc": IocSchema().dump(ioc)
+            'comment': comment_schema.dump(comment),
+            'ioc': IocSchema().dump(ioc)
         }
         call_modules_hook('on_postload_ioc_commented', data=hook_data, caseid=ioc.case_id)
 
-        track_activity(f"ioc \"{ioc.ioc_value}\" commented", caseid=ioc.case_id)
-        return response_success("Event commented", data=comment_schema.dump(comment))
+        track_activity(f'ioc "{ioc.ioc_value}" commented', caseid=ioc.case_id)
+        return response_success('Event commented', data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.normalized_messages())
+        return response_error(msg='Data error', data=e.normalized_messages())
     except ObjectNotFoundError:
         return response_error('Invalid ioc ID')
 
@@ -296,7 +297,7 @@ def case_comment_ioc_add(cur_id, caseid):
 def case_comment_ioc_get(cur_id, com_id, caseid):
     comment = get_case_ioc_comment(cur_id, com_id)
     if not comment:
-        return response_error("Invalid comment ID")
+        return response_error('Invalid comment ID')
 
     return response_success(data=comment._asdict())
 
@@ -318,5 +319,5 @@ def case_comment_ioc_delete(cur_id, com_id, caseid):
 
     call_modules_hook('on_postload_ioc_comment_delete', data=com_id, caseid=caseid)
 
-    track_activity(f"comment {com_id} on ioc {cur_id} deleted", caseid=caseid)
+    track_activity(f'comment {com_id} on ioc {cur_id} deleted', caseid=caseid)
     return response_success(msg)
