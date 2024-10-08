@@ -35,6 +35,7 @@ from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_acc
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
+
 from app.util import update_current_case
 from app.util import log_exception_and_error
 from app.util import response_error
@@ -341,3 +342,16 @@ def ac_api_return_access_denied(caseid: int = None):
         'error_uuid': error_uuid
     }
     return response_error('Permission denied', data=data, status=403)
+
+
+def ac_api_requires_client_access():
+    def inner_wrap(f):
+        @wraps(f)
+        def wrap(*args, **kwargs):
+            client_id = kwargs.get('client_id')
+            if not user_has_client_access(current_user.id, client_id):
+                return response_error("Permission denied", status=403)
+
+            return f(*args, **kwargs)
+        return wrap
+    return inner_wrap

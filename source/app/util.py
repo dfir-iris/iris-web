@@ -55,7 +55,6 @@ from app import TEMPLATE_PATH
 from app import app
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.datamgmt.manage.manage_users_db import get_user
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
@@ -385,19 +384,6 @@ def endpoint_removed(message, version):
         @wraps(f)
         def wrap(*args, **kwargs):
             return response_error(f"Endpoint deprecated in {version}. {message}.", status=410)
-        return wrap
-    return inner_wrap
-
-
-def ac_api_requires_client_access():
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            client_id = kwargs.get('client_id')
-            if not user_has_client_access(current_user.id, client_id):
-                return response_error("Permission denied", status=403)
-
-            return f(*args, **kwargs)
         return wrap
     return inner_wrap
 
