@@ -34,7 +34,7 @@ from app.business.errors import ObjectNotFoundError
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
-from app.util import ac_api_return_access_denied
+from app.blueprints.access_controls import ac_api_return_access_denied
 
 api_v2_assets_blueprint = Blueprint('case_assets_rest_v2',
                                     __name__,
