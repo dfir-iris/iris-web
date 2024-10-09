@@ -20,6 +20,7 @@ venv1/
 .env*
 .venv/
 .vscode/
+.devcontainer/
 *.code-workspace
 nohup.out
 celerybeat-schedule.db
