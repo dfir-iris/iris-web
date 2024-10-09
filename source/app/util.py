@@ -42,7 +42,7 @@ from app import db
 from app.models import Cases
 
 
-def return_task(success, user, initial, logs, data, case_name, imported_files):
+def _return_task(success, user, initial, logs, data, case_name, imported_files):
     ret = {
         'success': success,
         'user': user,
@@ -56,11 +56,11 @@ def return_task(success, user, initial, logs, data, case_name, imported_files):
 
 
 def task_success(user=None, initial=None, logs=None, data=None, case_name=None, imported_files=None):
-    return return_task(True, user, initial, logs, data, case_name, imported_files)
+    return _return_task(True, user, initial, logs, data, case_name, imported_files)
 
 
 def task_failure(user=None, initial=None, logs=None, data=None, case_name=None, imported_files=None):
-    return return_task(False, user, initial, logs, data, case_name, imported_files)
+    return _return_task(False, user, initial, logs, data, case_name, imported_files)
 
 
 class FileRemover(object):
