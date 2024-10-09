@@ -17,6 +17,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import base64
 import datetime
 import decimal
@@ -43,18 +44,6 @@ from sqlalchemy.orm.attributes import flag_modified
 from app import app
 from app import db
 from app.models import Cases
-
-
-class PgEncoder(json.JSONEncoder):
-
-    def default(self, o):
-        if isinstance(o, datetime.datetime):
-            return DictDatetime(o)
-
-        if isinstance(o, decimal.Decimal):
-            return str(o)
-
-        return json.JSONEncoder.default(self, o)
 
 
 class AlchemyEncoder(json.JSONEncoder):
