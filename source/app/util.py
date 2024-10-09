@@ -45,20 +45,6 @@ from app import db
 from app.models import Cases
 
 
-def g_db_commit():
-    db.session.commit()
-
-
-def g_db_add(obj):
-    if obj:
-        db.session.add(obj)
-
-
-def g_db_del(obj):
-    if obj:
-        db.session.delete(obj)
-
-
 class PgEncoder(json.JSONEncoder):
 
     def default(self, o):
