@@ -36,7 +36,7 @@ from jwt import PyJWKClient
 from requests.auth import HTTPBasicAuth
 from werkzeug.utils import redirect
 
-from app import TEMPLATE_PATH
+from app import TEMPLATE_PATH, app
 
 from app import app
 from app import db
@@ -494,3 +494,7 @@ def is_user_authenticated(incoming_request: Request):
     }
 
     return authentication_mapper.get(app.config.get("AUTHENTICATION_TYPE"))(incoming_request)
+
+
+def is_authentication_oidc():
+    return app.config.get('AUTHENTICATION_TYPE') == "oidc"

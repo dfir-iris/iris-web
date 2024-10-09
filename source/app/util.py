@@ -34,7 +34,6 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
 from flask import request
-from flask import session
 from flask import url_for
 from flask_login import current_user
 from pathlib import Path
@@ -193,10 +192,6 @@ def not_authenticated_redirection_url(request_url: str):
 
 def is_authentication_ldap():
     return app.config.get('AUTHENTICATION_TYPE') == "ldap"
-
-
-def is_authentication_oidc():
-    return app.config.get('AUTHENTICATION_TYPE') == "oidc"
 
 
 def decompress_7z(filename: Path, output_dir):
