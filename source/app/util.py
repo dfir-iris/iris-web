@@ -199,16 +199,6 @@ def is_authentication_oidc():
     return app.config.get('AUTHENTICATION_TYPE') == "oidc"
 
 
-def regenerate_session():
-    user_data = session.get('user_data', {})
-
-    session.clear()
-
-    session['user_data'] = user_data
-
-    session.modified = True
-
-
 def decompress_7z(filename: Path, output_dir):
     """
     Decompress a 7z file in specified output directory
