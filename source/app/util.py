@@ -20,7 +20,6 @@
 
 import base64
 import datetime
-import decimal
 import hashlib
 import logging as log
 import marshmallow
@@ -40,27 +39,6 @@ from sqlalchemy.orm.attributes import flag_modified
 from app import app
 from app import db
 from app.models import Cases
-
-
-def _return_task(success, user, initial, logs, data, case_name, imported_files):
-    ret = {
-        'success': success,
-        'user': user,
-        'initial': initial,
-        'logs': logs,
-        'data': data,
-        'case_name': case_name,
-        'imported_files': imported_files
-    }
-    return ret
-
-
-def task_success(user=None, initial=None, logs=None, data=None, case_name=None, imported_files=None):
-    return _return_task(True, user, initial, logs, data, case_name, imported_files)
-
-
-def task_failure(user=None, initial=None, logs=None, data=None, case_name=None, imported_files=None):
-    return _return_task(False, user, initial, logs, data, case_name, imported_files)
 
 
 class FileRemover(object):
