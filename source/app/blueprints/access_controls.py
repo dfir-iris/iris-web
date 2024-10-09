@@ -498,3 +498,7 @@ def is_user_authenticated(incoming_request: Request):
 
 def is_authentication_oidc():
     return app.config.get('AUTHENTICATION_TYPE') == "oidc"
+
+
+def is_authentication_ldap():
+    return app.config.get('AUTHENTICATION_TYPE') == "ldap"

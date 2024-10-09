@@ -190,10 +190,6 @@ def not_authenticated_redirection_url(request_url: str):
     return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
 
 
-def is_authentication_ldap():
-    return app.config.get('AUTHENTICATION_TYPE') == "ldap"
-
-
 def decompress_7z(filename: Path, output_dir):
     """
     Decompress a 7z file in specified output directory
