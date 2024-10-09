@@ -15,14 +15,18 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import datetime
+import decimal
 import json
+import pickle
+import uuid
 
 from flask import render_template
 from flask import request
+from sqlalchemy.orm import DeclarativeMeta
 
 from app import TEMPLATE_PATH
 from app import app
-from app.util import AlchemyEncoder
 
 
 # Set basic 404
@@ -57,3 +61,39 @@ def response_success(msg='', data=None):
         "data": data if data is not None else []
     }
     return response(200, data=content)
+
+
+class AlchemyEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj.__class__, DeclarativeMeta):
+            # an SQLAlchemy class
+            fields = {}
+            for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata'
+                                                 and x != 'query' and x != 'query_class']:
+                data = obj.__getattribute__(field)
+                try:
+                    json.dumps(data)  # this will fail on non-encodable values, like other classes
+                    fields[field] = data
+                except TypeError:
+                    fields[field] = None
+            # a json-encodable dict
+            return fields
+
+        if isinstance(obj, decimal.Decimal):
+            return str(obj)
+
+        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):
+            return obj.isoformat()
+
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
+
+        else:
+            if obj.__class__ == bytes:
+                try:
+                    return pickle.load(obj)
+                except Exception:
+                    return str(obj)
+
+        return json.JSONEncoder.default(self, obj)

@@ -22,14 +22,11 @@ import base64
 import datetime
 import decimal
 import hashlib
-import json
 import logging as log
 import marshmallow
-import pickle
 import random
 import shutil
 import string
-import uuid
 import weakref
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
@@ -38,48 +35,11 @@ from flask import request
 from flask_login import current_user
 from pathlib import Path
 from pyunpack import Archive
-from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import app
 from app import db
 from app.models import Cases
-
-
-class AlchemyEncoder(json.JSONEncoder):
-
-    def default(self, obj):
-        if isinstance(obj.__class__, DeclarativeMeta):
-            # an SQLAlchemy class
-            fields = {}
-            for field in [x for x in dir(obj) if not x.startswith('_') and x != 'metadata'
-                                                 and x != 'query' and x != 'query_class']:
-                data = obj.__getattribute__(field)
-                try:
-                    json.dumps(data)  # this will fail on non-encodable values, like other classes
-                    fields[field] = data
-                except TypeError:
-                    fields[field] = None
-            # a json-encodable dict
-            return fields
-
-        if isinstance(obj, decimal.Decimal):
-            return str(obj)
-
-        if isinstance(obj, datetime.datetime) or isinstance(obj, datetime.date):
-            return obj.isoformat()
-
-        if isinstance(obj, uuid.UUID):
-            return str(obj)
-
-        else:
-            if obj.__class__ == bytes:
-                try:
-                    return pickle.load(obj)
-                except Exception:
-                    return str(obj)
-
-        return json.JSONEncoder.default(self, obj)
 
 
 def DictDatetime(t):
