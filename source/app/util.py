@@ -54,27 +54,6 @@ class FileRemover(object):
         shutil.rmtree(filepath, ignore_errors=True)
 
 
-def get_urlcasename():
-    caseid = request.args.get('cid', default=None, type=int)
-    if not caseid:
-        try:
-            caseid = current_user.ctx_case
-        except:
-            return ["", ""]
-
-    case = Cases.query.filter(Cases.case_id == caseid).first()
-
-    if case is None:
-        case_name = "CASE NOT FOUND"
-        case_info = "Error"
-    else:
-        case_name = "{}".format(case.name)
-        case_info = "(#{} - {})".format(caseid,
-                                        case.client.name)
-
-    return [case_name, case_info, caseid]
-
-
 def decompress_7z(filename: Path, output_dir):
     """
     Decompress a 7z file in specified output directory
