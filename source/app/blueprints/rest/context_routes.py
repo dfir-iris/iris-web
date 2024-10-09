@@ -28,8 +28,7 @@ from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client
-from app.blueprints.access_controls import ac_api_requires
-from app.util import not_authenticated_redirection_url
+from app.blueprints.access_controls import ac_api_requires, not_authenticated_redirection_url
 from app.blueprints.responses import response_success
 
 context_rest_blueprint = Blueprint('context_rest', __name__)

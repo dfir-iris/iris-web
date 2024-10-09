@@ -26,6 +26,7 @@ import jwt
 import requests
 
 from flask import Request
+from flask import url_for
 from flask import request
 from flask import render_template
 from flask import session
@@ -36,7 +37,7 @@ from jwt import PyJWKClient
 from requests.auth import HTTPBasicAuth
 from werkzeug.utils import redirect
 
-from app import TEMPLATE_PATH, app
+from app import TEMPLATE_PATH
 
 from app import app
 from app import db
@@ -50,8 +51,6 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models import Cases
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
-
-from app.util import not_authenticated_redirection_url
 
 
 def _user_has_at_least_a_required_permission(permissions: list[Permissions]):
@@ -261,6 +260,17 @@ def get_case_access_from_api(request_data, access_level):
         return True, 1, True
 
     return redir, caseid, True
+
+
+def not_authenticated_redirection_url(request_url: str):
+    redirection_mapper = {
+        "oidc_proxy": lambda: app.config.get("AUTHENTICATION_PROXY_LOGOUT_URL"),
+        "local": lambda: url_for('login.login', next=request_url),
+        "ldap": lambda: url_for('login.login', next=request_url),
+        "oidc": lambda: url_for('login.login', next=request_url,)
+    }
+
+    return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
 
 
 def ac_case_requires(*access_level):

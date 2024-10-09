@@ -34,8 +34,7 @@ from app.iris_engine.access_control.utils import ac_get_user_case_counts
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
 from app.models.models import GlobalTasks
-from app.blueprints.access_controls import ac_requires, is_authentication_oidc
-from app.util import not_authenticated_redirection_url
+from app.blueprints.access_controls import ac_requires, is_authentication_oidc, not_authenticated_redirection_url
 
 from oic.oauth2.exception import GrantError
 

@@ -34,7 +34,6 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
 from flask import request
-from flask import url_for
 from flask_login import current_user
 from pathlib import Path
 from pyunpack import Archive
@@ -177,17 +176,6 @@ def get_urlcasename():
                                         case.client.name)
 
     return [case_name, case_info, caseid]
-
-
-def not_authenticated_redirection_url(request_url: str):
-    redirection_mapper = {
-        "oidc_proxy": lambda: app.config.get("AUTHENTICATION_PROXY_LOGOUT_URL"),
-        "local": lambda: url_for('login.login', next=request_url),
-        "ldap": lambda: url_for('login.login', next=request_url),
-        "oidc": lambda: url_for('login.login', next=request_url,)
-    }
-
-    return redirection_mapper.get(app.config.get("AUTHENTICATION_TYPE"))()
 
 
 def decompress_7z(filename: Path, output_dir):
