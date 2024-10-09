@@ -47,12 +47,6 @@ from app import db
 from app.models import Cases
 
 
-def response(status, data=None):
-    if data is not None:
-        data = json.dumps(data, cls=AlchemyEncoder)
-    return app.response_class(response=data, status=status, mimetype='application/json')
-
-
 def g_db_commit():
     db.session.commit()
 

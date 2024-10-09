@@ -15,13 +15,14 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
 
 from flask import render_template
 from flask import request
 
 from app import TEMPLATE_PATH
 from app import app
-from app.util import response
+from app.util import AlchemyEncoder
 
 
 # Set basic 404
@@ -32,6 +33,12 @@ def page_not_found(e):
         return response_error("Resource not found", status=404)
 
     return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH), 404
+
+
+def response(status, data=None):
+    if data is not None:
+        data = json.dumps(data, cls=AlchemyEncoder)
+    return app.response_class(response=data, status=status, mimetype='application/json')
 
 
 def response_error(msg, data=None, status=400):
