@@ -42,22 +42,6 @@ from app import db
 from app.models import Cases
 
 
-def DictDatetime(t):
-    dl = ['Y', 'm', 'd', 'H', 'M', 'S', 'f']
-    if type(t) is datetime.datetime:
-        return {a: t.strftime('%{}'.format(a)) for a in dl}
-    elif type(t) is dict:
-        return datetime.datetime.strptime(''.join(t[a] for a in dl), '%Y%m%d%H%M%S%f')
-
-
-def AlchemyFnCode(obj):
-    """JSON encoder function for SQLAlchemy special classes."""
-    if isinstance(obj, datetime.date):
-        return obj.isoformat()
-    elif isinstance(obj, decimal.Decimal):
-        return float(obj)
-
-
 def return_task(success, user, initial, logs, data, case_name, imported_files):
     ret = {
         'success': success,
