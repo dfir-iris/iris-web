@@ -65,6 +65,15 @@ $(document).ready(function() {
                     }
                 },
                 {
+                    "data": "customer_id",
+                    "render": function (data, type, row) {
+                        if (type === 'display') {
+                            return sanitizeHTML(data);
+                        }
+                        return data;
+                    }
+                },
+                {
                     "data": "customer_description",
                     "render": function (data, type, row) {
                         if (type === 'display') {
