@@ -216,7 +216,7 @@ def view_modules_hook():
 
 
 # TODO is this endpoint still useful?
-@manage_modules_rest_blueprint.route("/sitemap")
+@manage_modules_rest_blueprint.route('/sitemap', methods=['GET'])
 @ac_api_requires()
 def site_map():
     links = []
