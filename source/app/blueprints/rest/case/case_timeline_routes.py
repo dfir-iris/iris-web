@@ -679,7 +679,7 @@ def event_view(cur_id, caseid):
     return response_success(data=output)
 
 
-@case_timeline_rest_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
+@case_timeline_rest_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_edit_event(cur_id, caseid):
