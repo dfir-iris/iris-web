@@ -24,7 +24,7 @@ function add_customer() {
 
             form['custom_attributes'] = attributes;
 
-            post_request_api('customers/add', JSON.stringify(form), true)
+            post_request_api('/manage/customers/add', JSON.stringify(form), true)
             .done((data) => {
                  if(notify_auto_api(data)) {
                     refresh_customer_table();
