@@ -256,10 +256,10 @@ def case_edit_task(cur_id, caseid):
 @case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_task(cur_id, caseid):
-    call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
     if not task:
         return response_error("Invalid task ID for this case")
+    call_modules_hook('on_preload_task_delete', data=task, caseid=caseid)
 
     delete_task(task.id)
 
