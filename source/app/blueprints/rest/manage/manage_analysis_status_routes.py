@@ -25,8 +25,8 @@ from app.datamgmt.manage.manage_case_objs import search_analysis_status_by_name
 from app.models.models import AnalysisStatus
 from app.schema.marshables import AnalysisStatusSchema
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 
 manage_analysis_status_rest_blueprint = Blueprint('manage_analysis_status_rest', __name__)
 

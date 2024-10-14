@@ -42,8 +42,8 @@ from app.schema.marshables import CaseEvidenceSchema
 from app.schema.marshables import CommentSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 
 case_evidences_rest_blueprint = Blueprint('case_evidences_rest', __name__)
 

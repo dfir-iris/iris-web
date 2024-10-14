@@ -23,8 +23,7 @@ from app import app
 from app.datamgmt.manage.manage_tags_db import get_filtered_tags
 from app.schema.marshables import TagsSchema
 from app.blueprints.access_controls import ac_api_requires
-from app.util import AlchemyEncoder
-from app.util import response_success
+from app.blueprints.responses import response_success, AlchemyEncoder
 
 manage_tags_rest_blueprint = Blueprint('manage_tags_rest', __name__)
 

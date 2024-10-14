@@ -27,8 +27,7 @@ from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import get_note
 from app.models.authorization import CaseAccessLevel
 from app.blueprints.access_controls import ac_case_requires
-from app.util import response_error
-
+from app.blueprints.responses import response_error
 
 case_notes_blueprint = Blueprint('case_notes',
                                  __name__,

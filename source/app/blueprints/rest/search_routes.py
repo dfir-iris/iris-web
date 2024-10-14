@@ -30,7 +30,7 @@ from app.models.models import IocType
 from app.models.models import Notes
 from app.models.models import Tlp
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 search_rest_blueprint = Blueprint('search_rest', __name__)
 

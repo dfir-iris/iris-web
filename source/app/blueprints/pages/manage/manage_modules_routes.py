@@ -29,7 +29,7 @@ from app.forms import AddModuleForm
 from app.forms import UpdateModuleParameterForm
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 
 manage_modules_blueprint = Blueprint(
     'manage_module',

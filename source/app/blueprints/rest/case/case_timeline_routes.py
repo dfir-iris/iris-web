@@ -69,8 +69,8 @@ from app.schema.marshables import EventSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.util import add_obj_history_entry
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 
 case_timeline_rest_blueprint = Blueprint('case_timeline_rest', __name__)
 
@@ -679,7 +679,7 @@ def event_view(cur_id, caseid):
     return response_success(data=output)
 
 
-@case_timeline_rest_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
+@case_timeline_rest_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_edit_event(cur_id, caseid):

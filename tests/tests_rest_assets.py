@@ -19,8 +19,7 @@
 from unittest import TestCase
 from iris import Iris
 
-# TODO should change None into 123456789 and maybe fix...
-_IDENTIFIER_FOR_NONEXISTENT_OBJECT = None
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
 
 
 class TestsRestAssets(TestCase):
@@ -30,7 +29,6 @@ class TestsRestAssets(TestCase):
 
     def tearDown(self):
         self._subject.clear_database()
-
 
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()

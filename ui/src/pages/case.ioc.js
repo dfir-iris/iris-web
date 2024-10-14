@@ -148,7 +148,7 @@ function get_case_ioc() {
         }
 
         Table.clear();
-        Table.rows.add(data.iocs);
+        Table.rows.add(data.data);
 
         $('#ioc_table_wrapper').on('click', function(e){
             if($('.popover').length>1)

@@ -42,8 +42,8 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
+from app.business.cases import cases_exists
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.case.case_db import case_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
@@ -70,9 +70,9 @@ from app.schema.marshables import CaseSchemaForAPIV2
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.util import add_obj_history_entry
-from app.util import ac_api_return_access_denied
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.access_controls import ac_api_return_access_denied
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 
 case_rest_blueprint = Blueprint('case_rest', __name__)
 
@@ -83,9 +83,9 @@ log = app.logger
 @endpoint_deprecated('GET', '/api/v2/cases/<int:identifier>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_exists_r(caseid):
+def case_routes_exists(caseid):
 
-    if case_exists(caseid):
+    if cases_exists(caseid):
         return response_success('Case exists')
     return response_error('Case does not exist', 404)
 
@@ -414,7 +414,7 @@ def get_cases() -> Response:
     cases = {
         'total': filtered_cases.total,
         # TODO should maybe really uniform all return types of paginated list and replace field cases by field data
-        'cases': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
+        'data': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
         'last_page': filtered_cases.pages,
         'current_page': filtered_cases.page,
         'next_page': filtered_cases.next_num if filtered_cases.has_next else None,

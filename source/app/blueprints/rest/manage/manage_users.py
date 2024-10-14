@@ -47,11 +47,9 @@ from app.schema.marshables import BasicUserSchema
 from app.schema.marshables import UserFullSchema
 
 from app.blueprints.access_controls import ac_api_requires
-from app.util import is_authentication_oidc, is_authentication_ldap
-from app.util import ac_api_return_access_denied
-from app.util import is_authentication_local
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.access_controls import ac_api_return_access_denied
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 from app.iris_engine.demo_builder import protect_demo_mode_user
 
 manage_users_rest_blueprint = Blueprint('manage_users_rest', __name__)
@@ -269,44 +267,6 @@ def manage_user_cac_delete_cases(cur_id):
     if success:
         track_activity(f"cases access for case(s) {data.get('cases')} deleted for user {user.user}",
                        ctx_less=True)
-
-        user = get_user_details(cur_id)
-
-        return response_success(msg="User case access updated", data=user)
-
-    return response_error(msg=logs)
-
-
-@manage_users_rest_blueprint.route('/manage/users/<int:cur_id>/case-access/delete', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
-def manage_user_cac_delete_case(cur_id):
-
-    user = get_user(cur_id)
-    if not user:
-        return response_error("Invalid user ID")
-
-    if not request.is_json:
-        return response_error("Invalid request")
-
-    data = request.get_json()
-    if not data:
-        return response_error("Invalid request")
-
-    if not isinstance(data.get('case'), int):
-        return response_error("Expecting cases as int")
-
-    try:
-
-        success, logs = remove_case_access_from_user(user.id, data.get('case'))
-        db.session.commit()
-
-    except Exception as e:
-        log.error("Error while removing cases access from user: {}".format(e))
-        log.error(traceback.format_exc())
-        return response_error(msg=str(e))
-
-    if success:
-        track_activity(f"case access for case {data.get('case')} deleted for user {user.user}", ctx_less=True)
 
         user = get_user_details(cur_id)
 

@@ -39,8 +39,8 @@ from app.models.alerts import Alert
 from app.models.authorization import CaseAccessLevel
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 from iris_interface.IrisInterfaceStatus import IIStatus
 
 dim_tasks_rest_blueprint = Blueprint('dim_tasks_rest', __name__)

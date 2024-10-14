@@ -24,14 +24,17 @@ from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.endpoints import response_api_not_found
+from app.business.cases import cases_exists
 from app.business.assets import assets_create
 from app.business.assets import assets_delete
 from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
-from app.util import ac_api_return_access_denied
+from app.blueprints.access_controls import ac_api_return_access_denied
 
 api_v2_assets_blueprint = Blueprint('case_assets_rest_v2',
                                     __name__,
@@ -41,6 +44,8 @@ api_v2_assets_blueprint = Blueprint('case_assets_rest_v2',
 @api_v2_assets_blueprint.route('/cases/<int:identifier>/assets', methods=['POST'])
 @ac_api_requires()
 def add_asset(identifier):
+    if not cases_exists(identifier):
+        return response_api_not_found()
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=identifier)
 
@@ -77,5 +82,7 @@ def asset_delete(identifier):
 
         assets_delete(asset)
         return response_api_deleted()
+    except ObjectNotFoundError:
+        return response_api_not_found()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())

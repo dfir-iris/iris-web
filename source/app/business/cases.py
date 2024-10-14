@@ -39,6 +39,7 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 
+from app.datamgmt.case.case_db import case_db_exists
 from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.case.case_db import register_case_protagonists
 from app.datamgmt.case.case_db import get_review_id_from_name
@@ -72,6 +73,10 @@ def _load(request_data, **kwargs):
 
 def cases_get_by_identifier(case_identifier):
     return get_case(case_identifier)
+
+
+def cases_exists(identifier):
+    return case_db_exists(identifier)
 
 
 def cases_create(request_json):

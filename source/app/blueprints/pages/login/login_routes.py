@@ -48,8 +48,8 @@ from app.iris_engine.access_control.utils import ac_get_effective_permissions_of
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 
-from app.util import is_authentication_ldap, response_error
-from app.util import is_authentication_oidc
+from app.blueprints.responses import response_error
+from app.blueprints.access_controls import is_authentication_oidc, is_authentication_ldap
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login, get_user
 from app.datamgmt.manage.manage_users_db import create_user
 

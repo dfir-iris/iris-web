@@ -35,11 +35,14 @@ from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
-from app.util import ac_api_return_access_denied, response_success, response_error
+from app.blueprints.access_controls import ac_api_return_access_denied
+from app.blueprints.responses import response_success
+from app.blueprints.responses import response_error
 
 api_v2_ioc_blueprint = Blueprint('case_ioc_rest_v2',
                                  __name__,
                                  url_prefix='/api/v2')
+
 
 @api_v2_ioc_blueprint.route('/cases/<int:identifier>/iocs', methods=['GET'])
 @ac_api_requires()
@@ -80,8 +83,7 @@ def list_ioc(identifier):
 
     iocs = {
         'total': filtered_iocs.total,
-        # TODO should maybe really uniform all return types of paginated list and replace field iocs by field data
-        'iocs': iocs,
+        'data': iocs,
         'last_page': filtered_iocs.pages,
         'current_page': filtered_iocs.page,
         'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
@@ -118,7 +120,7 @@ def delete_case_ioc(identifier):
         return response_api_deleted()
 
     except ObjectNotFoundError:
-        raise BusinessProcessingError('Not a valid IOC for this case')
+        return response_api_not_found()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 

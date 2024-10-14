@@ -22,7 +22,7 @@ from flask_login import current_user
 
 from app.datamgmt.overview.overview_db import get_overview_db
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_success
+from app.blueprints.responses import response_success
 
 overview_rest_blueprint = Blueprint('overview_rest', __name__)
 

@@ -18,11 +18,13 @@ function add_customer() {
             has_error = ret[0].length > 0;
             attributes = ret[1];
 
-            if (has_error){return false;}
+            if (has_error) {
+                return false;
+            }
 
             form['custom_attributes'] = attributes;
 
-            post_request_api('customers/add', JSON.stringify(form), true)
+            post_request_api('/manage/customers/add', JSON.stringify(form), true)
             .done((data) => {
                  if(notify_auto_api(data)) {
                     refresh_customer_table();

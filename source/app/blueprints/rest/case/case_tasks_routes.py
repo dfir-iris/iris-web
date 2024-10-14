@@ -25,13 +25,8 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
-from app.blueprints.rest.endpoints import response_api_deleted
-from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import endpoint_deprecated
-from app.blueprints.rest.endpoints import response_api_error
-from app.blueprints.rest.endpoints import response_api_created
 from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
 from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_create
 from app.business.tasks import tasks_get
@@ -46,7 +41,6 @@ from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_status
 from app.datamgmt.states import get_tasks_state
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
@@ -54,9 +48,8 @@ from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CommentSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
-from app.util import ac_api_return_access_denied
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 
 case_tasks_rest_blueprint = Blueprint('case_tasks_rest', __name__)
 
@@ -123,20 +116,6 @@ def deprecated_case_add_task(caseid):
         return response_error(e.get_message(), data=e.get_data())
 
 
-@case_tasks_rest_blueprint.route('/api/v2/cases/<int:identifier>/tasks', methods=['POST'])
-@ac_api_requires()
-def case_add_task(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
-
-    task_schema = CaseTaskSchema()
-    try:
-        _, case = tasks_create(identifier, request.get_json())
-        return response_api_created(task_schema.dump(case))
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
-
-
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
 @endpoint_deprecated('GET', '/api/v2/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
@@ -149,20 +128,6 @@ def deprecated_case_task_view(cur_id, caseid):
     task_schema = CaseTaskSchema()
 
     return response_success(data=task_schema.dump(task))
-
-
-@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:identifier>', methods=['GET'])
-@ac_api_requires()
-def case_task_view(identifier):
-    try:
-        task = tasks_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-            return ac_api_return_access_denied(caseid=task.task_case_id)
-
-        task_schema = CaseTaskSchema()
-        return response_api_created(task_schema.dump(task))
-    except ObjectNotFoundError:
-        return response_api_not_found()
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
@@ -187,20 +152,6 @@ def deprecated_case_delete_task(cur_id, caseid):
         return response_success('Task deleted')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
-
-
-@case_tasks_rest_blueprint.route('/api/v2/tasks/<int:identifier>', methods=['DELETE'])
-@ac_api_requires()
-def case_delete_task(identifier):
-    try:
-        task = tasks_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.full_access]):
-            return ac_api_return_access_denied(caseid=identifier)
-
-        tasks_delete(task)
-        return response_api_deleted()
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])

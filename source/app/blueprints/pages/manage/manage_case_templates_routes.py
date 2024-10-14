@@ -25,7 +25,7 @@ from app.forms import CaseTemplateForm, AddAssetForm
 from app.models import CaseTemplate
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 
 manage_case_templates_blueprint = Blueprint('manage_case_templates',
                                             __name__,

@@ -34,7 +34,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.models import CaseTasks
 from app.blueprints.access_controls import ac_case_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,

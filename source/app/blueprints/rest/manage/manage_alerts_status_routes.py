@@ -26,8 +26,8 @@ from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.schema.marshables import AlertStatusSchema
 from app.schema.marshables import AlertResolutionSchema
 from app.blueprints.access_controls import ac_api_requires
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 
 manage_alerts_status_rest_blueprint = Blueprint('manage_alerts_status_rest', __name__)
 

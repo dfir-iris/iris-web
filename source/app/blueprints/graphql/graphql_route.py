@@ -34,8 +34,8 @@ from graphene import String
 from graphene_sqlalchemy import SQLAlchemyConnectionField
 
 from app.datamgmt.manage.manage_cases_db import build_filter_case_query
-from app.util import is_user_authenticated
-from app.util import response_error
+from app.blueprints.access_controls import is_user_authenticated
+from app.blueprints.responses import response_error
 
 from app.models.authorization import CaseAccessLevel
 

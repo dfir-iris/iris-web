@@ -29,7 +29,7 @@ from app.iris_engine.access_control.utils import ac_get_all_access_level
 from app.iris_engine.access_control.utils import ac_get_all_permissions
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_requires
-from app.util import response_error
+from app.blueprints.responses import response_error
 
 manage_groups_blueprint = Blueprint(
         'manage_groups',

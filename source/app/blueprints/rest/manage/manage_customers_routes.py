@@ -43,14 +43,14 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
-from app.util import ac_api_requires_client_access
-from app.util import response_error
-from app.util import response_success
+from app.blueprints.access_controls import ac_api_requires_client_access
+from app.blueprints.responses import response_error
+from app.blueprints.responses import response_success
 
 manage_customers_rest_blueprint = Blueprint('manage_customers_rest', __name__)
 
 
-@manage_customers_rest_blueprint.route('/manage/customers/list')
+@manage_customers_rest_blueprint.route('/manage/customers/list', methods=['GET'])
 @ac_api_requires(Permissions.customers_read)
 def list_customers():
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
