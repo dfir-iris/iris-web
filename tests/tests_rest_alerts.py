@@ -18,6 +18,7 @@
 
 from unittest import TestCase
 from iris import Iris
+from uuid import uuid4
 
 
 class TestsRestAlerts(TestCase):
@@ -64,3 +65,16 @@ class TestsRestAlerts(TestCase):
         response = self._subject.create(f'/alerts/merge/{alert_identifier}', body)
         # TODO should be 201
         self.assertEqual(200, response.status_code)
+
+    def test_get_alerts_filter_should_show_newly_created_alert_for_administrator(self):
+        alert_title = f'title{uuid4()}'
+        body = {
+            'alert_title': alert_title,
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1
+        }
+        self._subject.create('/alerts/add', body)
+        response = self._subject.get('/alerts/filter', query_parameters={'alert_title': alert_title}).json()
+        self.assertEqual(1, response['data']['total'])
+
