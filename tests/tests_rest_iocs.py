@@ -164,3 +164,12 @@ class TestsRestIocs(TestCase):
         ioc_identifier = response['ioc_id']
         response = self._subject.update(f'/api/v2/iocs/{ioc_identifier}', {'ioc_value': '9.9.9.9'})
         self.assertEqual(200, response.status_code)
+
+    def test_update_ioc_should_return_updated_value(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        new_value = '9.9.9.9'
+        response = self._subject.update(f'/api/v2/iocs/{ioc_identifier}', {'ioc_value': new_value}).json()
+        self.assertEqual(new_value, response['ioc_value'])
