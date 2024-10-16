@@ -18,6 +18,25 @@
   Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
+let current_cid = null;
+
+function get_caseid() {
+    if (current_cid === null) {
+        let queryString = window.location.search;
+        let urlParams = new URLSearchParams(queryString);
+
+        current_cid = urlParams.get('cid')
+    }
+    return current_cid
+}
+
+function case_param() {
+    var params = {
+        cid: get_caseid
+    }
+    return '?'+ $.param(params);
+}
+
 function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, onError_fn) {
    if (cid === undefined ) {
      cid = case_param();
@@ -61,5 +80,7 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
 }
 
 export {
+    case_param,
+    get_caseid,
     post_request_api
 };
