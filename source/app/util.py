@@ -70,12 +70,6 @@ def decompress_7z(filename: Path, output_dir):
     return True
 
 
-def get_random_suffix(length):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
-
-
 def add_obj_history_entry(obj, action, commit=False):
     if hasattr(obj, 'modification_history'):
 
