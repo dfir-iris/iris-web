@@ -155,4 +155,4 @@ def update_ioc(identifier):
         return response_api_not_found()
 
     except BusinessProcessingError as e:
-        return response_error(e.get_message(), data=e.get_data())
+        return response_api_error(e.get_message(), data=e.get_data())
