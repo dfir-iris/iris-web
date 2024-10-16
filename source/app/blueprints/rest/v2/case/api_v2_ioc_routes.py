@@ -143,19 +143,16 @@ def get_case_ioc(identifier):
 def update_ioc(identifier):
     ioc_schema = IocSchemaForAPIV2()
     try:
-        #TODO: We have a useless double get on the IOC object
-        # one for the access right, another one for the update of the object.
         ioc = iocs_get(identifier)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id,
                                                           [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
 
-        try:
-            ioc, msg = iocs_update(identifier, request.get_json())
-            return response_api_success(ioc_schema.dump(ioc))
-        except BusinessProcessingError as e:
-            return response_error(e.get_message(), data=e.get_data())
+        ioc, _ = iocs_update(ioc, request.get_json())
+        return response_api_success(ioc_schema.dump(ioc))
 
     except ObjectNotFoundError:
         return response_api_not_found()
 
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
