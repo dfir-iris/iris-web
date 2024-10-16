@@ -36,7 +36,6 @@ from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_api_return_access_denied
-from app.blueprints.responses import response_error
 
 api_v2_ioc_blueprint = Blueprint('case_ioc_rest_v2',
                                  __name__,
