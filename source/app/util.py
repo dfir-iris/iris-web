@@ -30,7 +30,6 @@ import weakref
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
-from flask import request
 from flask_login import current_user
 from pathlib import Path
 from pyunpack import Archive
@@ -38,7 +37,6 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app import app
 from app import db
-from app.models import Cases
 
 
 class FileRemover(object):
