@@ -139,7 +139,7 @@ def get_case_ioc(identifier):
         return response_api_not_found()
 
 
-@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['POST'])
+@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['PUT'])
 @ac_api_requires()
 def update_ioc(identifier):
     ioc_schema = IocSchemaForAPIV2()
