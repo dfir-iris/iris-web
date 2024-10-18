@@ -306,26 +306,26 @@ function set_page_warning(msg) {
     $('#page_warning').text(msg);
 }
 
-function api_error(propagate_api_error){
-  if (propagate_api_error) {
-                if(jqXHR.responseJSON && jqXHR.status == 400) {
-                    propagate_form_api_errors(jqXHR.responseJSON.data);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
-                }
-            } else {
-                if(jqXHR.responseJSON) {
-                    notify_error(jqXHR.responseJSON.message);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
-                }
-            }
+function api_error(propagate_api_error) {
+    if (propagate_api_error) {
+        if(jqXHR.responseJSON && jqXHR.status == 400) {
+            propagate_form_api_errors(jqXHR.responseJSON.data);
+        } else {
+            ajax_notify_error(jqXHR, this.url);
+        }
+    } else {
+        if(jqXHR.responseJSON) {
+            notify_error(jqXHR.responseJSON.message);
+        } else {
+            ajax_notify_error(jqXHR, this.url);
+        }
+    }
 }
 
 function sendBefore(beforeSend_fn, settings) {
-            if (beforeSend_fn !== undefined) {
-                beforeSend_fn(jqXHR, settings);
-            }
+    if (beforeSend_fn !== undefined) {
+        beforeSend_fn(jqXHR, settings);
+    }
 }
 
 function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
@@ -375,8 +375,8 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
         url: uri + cid,
         type: 'POST',
         data: data,
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
+        dataType: 'json',
+        contentType: 'application/json;charset=UTF-8',
         beforeSend: function(jqXHR, settings) {
             if (typeof beforeSend_fn === 'function') {
                 beforeSend_fn(jqXHR, settings);
@@ -400,19 +400,36 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
     });
 }
 
-function post_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
+function put_request_api(uri, data) {
+   return $.ajax({
+        url: uri,
+        type: 'PUT',
+        data: data,
+        dataType: 'json',
+        contentType: 'application/json;charset=UTF-8',
+        error: function(jqXHR) {
+            if (jqXHR.responseJSON && jqXHR.status == 400) {
+                propagate_form_api_errors(jqXHR.responseJSON.data);
+            } else {
+                ajax_notify_error(jqXHR, this.url);
+            }
+        }
+    });
+}
+
+function post_request_data_api(uri, data, beforeSend_fn) {
    return $.ajax({
         url: uri + case_param(),
         type: 'POST',
         data: data,
-        dataType: "json",
+        dataType: 'json',
         contentType: false,
         processData: false,
         beforeSend: function(jqXHR, settings) {
              sendBefore(beforeSend_fn, settings);
         },
         error: function(jqXHR) {
-            api_error(propagate_api_error);
+            api_error(true);
         }
     });
 }
@@ -1355,13 +1372,13 @@ function hide_minimized_modal_box() {
 
 function hide_table_search_input(columns) {
     for (i=0; i<columns.length; i++) {
-      if (columns[i]) {
-        $('.filters th:eq(' + i + ')' ).show();
-      } else {
-        $('.filters th:eq(' + i + ')' ).hide();
-      }
+        if (columns[i]) {
+            $('.filters th:eq(' + i + ')' ).show();
+        } else {
+            $('.filters th:eq(' + i + ')' ).hide();
+        }
     }
-  }
+}
 
 function load_add_case() {
     // Dynamically load the modal

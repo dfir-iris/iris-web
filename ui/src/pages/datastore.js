@@ -290,7 +290,7 @@ async function save_ds_multi_files(node, index_i) {
     let file = $('#input_upload_ds_files').prop('files')[index];
     formData.append('file_content', file);
     formData.append('file_original_name', file.name);
-    await post_request_data_api(`/datastore/file/add/${node}`, formData, true, function () {
+    await post_request_data_api(`/datastore/file/add/${node}`, formData, function () {
         window.swal({
             title: `File ${file.name} is uploading. (${index}/${totalFiles} files)`,
             text: "Please wait. This window will close automatically when the file is uploaded.",
@@ -319,7 +319,7 @@ function save_ds_file(node, file_id) {
         uri = `/datastore/file/update/${file_id}`;
     }
 
-    post_request_data_api(uri, formData, true, function() {
+    post_request_data_api(uri, formData, function() {
         window.swal({
               title: "File is uploading",
               text: "Please wait. This window will close automatically when the file is uploaded.",

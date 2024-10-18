@@ -25,29 +25,15 @@ from flask import request
 from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import desc
-from werkzeug import Response
-
 
 from app import app
 from app import db
 from app import socket_io
-from app.blueprints.rest.parsing import parse_comma_separated_identifiers
-from app.blueprints.rest.parsing import parse_boolean
 from app.blueprints.rest.endpoints import endpoint_deprecated
-from app.blueprints.rest.endpoints import response_api_success
-from app.blueprints.rest.endpoints import response_api_deleted
-from app.blueprints.rest.endpoints import response_api_not_found
-from app.blueprints.rest.endpoints import response_api_created
-from app.blueprints.rest.endpoints import response_api_error
-from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
-from app.business.cases import cases_create
-from app.business.cases import cases_delete
 from app.business.cases import cases_exists
-from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_db import get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
 from app.datamgmt.manage.manage_users_db import get_user
@@ -61,16 +47,13 @@ from app.models import CaseStatus
 from app.models import ReviewStatusList
 from app.models import UserActivity
 from app.models.authorization import CaseAccessLevel
-from app.models.authorization import Permissions
 from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
-from app.schema.marshables import CaseSchemaForAPIV2
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.util import add_obj_history_entry
-from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
 
@@ -103,17 +86,17 @@ def desc_fetch(caseid):
     case.description = js_data.get('case_description')
     crc = binascii.crc32(case.description.encode('utf-8'))
     db.session.commit()
-    track_activity("updated summary", caseid)
+    track_activity('updated summary', caseid)
 
     if not request.cookies.get('session'):
         # API call so we propagate the message to everyone
         data = {
-            "case_description": case.description,
-            "last_saved": current_user.user
+            'case_description': case.description,
+            'last_saved': current_user.user
         }
-        socket_io.emit('save', data, to=f"case-{caseid}")
+        socket_io.emit('save', data, to=f'case-{caseid}')
 
-    return response_success("Summary updated", data=crc)
+    return response_success('Summary updated', data=crc)
 
 
 @case_rest_blueprint.route('/case/summary/fetch', methods=['GET'])
@@ -122,7 +105,7 @@ def desc_fetch(caseid):
 def summary_fetch(caseid):
     desc_crc32, description = case_get_desc_crc(caseid)
 
-    return response_success("Summary fetch", data={'case_description': description, 'crc32': desc_crc32})
+    return response_success('Summary fetch', data={'case_description': description, 'crc32': desc_crc32})
 
 
 @case_rest_blueprint.route('/case/activities/list', methods=['GET'])
@@ -145,7 +128,7 @@ def activity_fetch(caseid):
 
     output = [a._asdict() for a in ua]
 
-    return response_success("", data=output)
+    return response_success('', data=output)
 
 
 @case_rest_blueprint.route('/case/export', methods=['GET'])
@@ -177,9 +160,9 @@ def case_add_tasklog(caseid):
         ua = track_activity(log_data.get('log_content'), caseid, user_input=True)
 
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
-    return response_success("Log saved", data=ua)
+    return response_success('Log saved', data=ua)
 
 
 @case_rest_blueprint.route('/case/users/list', methods=['GET'])
@@ -221,13 +204,13 @@ def group_cac_set_case(caseid):
             success, logs = ac_set_case_access_for_users(group.group_members, caseid, access_level)
 
     except Exception as e:
-        log.error("Error while setting case access for group: {}".format(e))
+        log.error('Error while setting case access for group: {}'.format(e))
         log.error(traceback.format_exc())
         return response_error(msg=str(e))
 
     if success:
-        track_activity("case access set to {} for group {}".format(data.get('access_level'), group_id), caseid)
-        add_obj_history_entry(case, "access changed to {} for group {}".format(data.get('access_level'), group_id),
+        track_activity('case access set to {} for group {}'.format(data.get('access_level'), group_id), caseid)
+        add_obj_history_entry(case, 'access changed to {} for group {}'.format(data.get('access_level'), group_id),
                               commit=True)
 
         return response_success(msg=logs)
@@ -242,17 +225,17 @@ def user_cac_set_case(caseid):
 
     data = request.get_json()
     if not data:
-        return response_error("Invalid request")
+        return response_error('Invalid request')
 
     if data.get('user_id') == current_user.id:
-        return response_error("I can't let you do that, Dave")
+        return response_error('I can\'t let you do that, Dave')
 
     user = get_user(data.get('user_id'))
     if not user:
-        return response_error("Invalid user ID")
+        return response_error('Invalid user ID')
 
     if data.get('case_id') != caseid:
-        return response_error("Inconsistent case ID")
+        return response_error('Inconsistent case ID')
 
     case = get_case(caseid)
     if not case:
@@ -261,13 +244,13 @@ def user_cac_set_case(caseid):
     try:
 
         success, logs = set_user_case_access(user.id, data.get('case_id'), data.get('access_level'))
-        track_activity("case access set to {} for user {}".format(data.get('access_level'), user.name), caseid)
-        add_obj_history_entry(case, "access changed to {} for user {}".format(data.get('access_level'), user.name))
+        track_activity('case access set to {} for user {}'.format(data.get('access_level'), user.name), caseid)
+        add_obj_history_entry(case, 'access changed to {} for user {}'.format(data.get('access_level'), user.name))
 
         db.session.commit()
 
     except Exception as e:
-        log.error("Error while setting case access for user: {}".format(e))
+        log.error('Error while setting case access for user: {}'.format(e))
         log.error(traceback.format_exc())
         return response_error(msg=str(e))
 
@@ -304,7 +287,7 @@ def case_update_status(caseid):
 
     db.session.commit()
 
-    return response_success("Case status updated", data=case.status_id)
+    return response_success('Case status updated', data=case.status_id)
 
 
 @case_rest_blueprint.route('/case/review/update', methods=['POST'])
@@ -351,97 +334,4 @@ def case_review(caseid):
 
     db.session.commit()
 
-    return response_success("Case review updated", data=CaseSchema().dump(case))
-
-
-@case_rest_blueprint.route('/api/v2/cases', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
-def create_case():
-    try:
-        case, _ = cases_create(request.get_json())
-        return response_api_created(CaseSchemaForAPIV2().dump(case))
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message(), e.get_data())
-
-
-@case_rest_blueprint.route('/api/v2/cases', methods=['GET'])
-@ac_api_requires()
-def get_cases() -> Response:
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get('case_ids', None, type=parse_comma_separated_identifiers)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
-
-
-    case_customer_id = request.args.get('case_customer_id', None, type=str)
-    case_name = request.args.get('case_name', None, type=str)
-    case_description = request.args.get('case_description', None, type=str)
-    case_classification_id = request.args.get('case_classification_id', None, type=int)
-    case_owner_id = request.args.get('case_owner_id', None, type=int)
-    case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
-    case_severity_id = request.args.get('case_severity_id', None, type=int)
-    case_state_id = request.args.get('case_state_id', None, type=int)
-    case_soc_id = request.args.get('case_soc_id', None, type=str)
-    start_open_date = request.args.get('start_open_date', None, type=str)
-    end_open_date = request.args.get('end_open_date', None, type=str)
-    is_open = request.args.get('is_open', None, type=parse_boolean)
-
-    filtered_cases = get_filtered_cases(
-        case_ids=case_ids_str,
-        case_customer_id=case_customer_id,
-        case_name=case_name,
-        case_description=case_description,
-        case_classification_id=case_classification_id,
-        case_owner_id=case_owner_id,
-        case_opening_user_id=case_opening_user_id,
-        case_severity_id=case_severity_id,
-        case_state_id=case_state_id,
-        case_soc_id=case_soc_id,
-        start_open_date=start_open_date,
-        end_open_date=end_open_date,
-        search_value='',
-        page=page,
-        per_page=per_page,
-        current_user_id=current_user.id,
-        sort_by=order_by,
-        sort_dir=sort_dir,
-        is_open=is_open
-    )
-    if filtered_cases is None:
-        return response_api_error('Filtering error')
-
-    cases = {
-        'total': filtered_cases.total,
-        # TODO should maybe really uniform all return types of paginated list and replace field cases by field data
-        'data': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
-        'last_page': filtered_cases.pages,
-        'current_page': filtered_cases.page,
-        'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
-    }
-
-    return response_api_success(data=cases)
-
-
-@case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['GET'])
-@ac_api_requires()
-def case_routes_get(identifier):
-    case = get_case(identifier)
-    if not case:
-        return response_api_not_found()
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
-    return response_api_success(CaseSchemaForAPIV2().dump(case))
-
-
-@case_rest_blueprint.route('/api/v2/cases/<int:identifier>', methods=['DELETE'])
-@ac_api_requires(Permissions.standard_user)
-def case_routes_delete(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
-
-    try:
-        cases_delete(identifier)
-        return response_api_deleted()
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
+    return response_success('Case review updated', data=CaseSchema().dump(case))

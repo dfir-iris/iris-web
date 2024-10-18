@@ -36,6 +36,7 @@ from typing import Tuple
 
 import app
 from app import db
+from app import ac_current_user_has_permission
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import set_ioc_links
 from app.datamgmt.case.case_assets_db import get_unspecified_analysis_status_id
@@ -61,6 +62,7 @@ from app.models.alerts import AlertStatus
 from app.models.alerts import AlertCaseAssociation
 from app.models.alerts import SimilarAlertsCache
 from app.models.alerts import AlertResolutionStatus
+from app.models.authorization import Permissions
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.schema.marshables import EventSchema
 from app.util import add_obj_history_entry
@@ -188,10 +190,9 @@ def get_filtered_alerts(
         if isinstance(iocs, list):
             conditions.append(Alert.iocs.any(Ioc.ioc_value.in_(iocs)))
 
-    if current_user_id is not None:
+    if current_user_id is not None and not ac_current_user_has_permission(Permissions.server_administrator):
         clients_filters = get_user_clients_id(current_user_id)
-        if clients_filters is not None:
-            conditions.append(Alert.alert_customer_id.in_(clients_filters))
+        conditions.append(Alert.alert_customer_id.in_(clients_filters))
 
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]

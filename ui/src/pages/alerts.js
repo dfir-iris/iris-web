@@ -1,4 +1,4 @@
-let sortOrder ;
+let sortOrder;
 
 function objectToQueryString(obj) {
   return Object.keys(obj)

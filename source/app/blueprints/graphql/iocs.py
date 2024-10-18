@@ -123,7 +123,8 @@ class IOCUpdate(Mutation):
             request['ioc_enrichment'] = ioc_enrichment
         if modification_history:
             request['modification_history'] = modification_history
-        ioc, _ = iocs_update(ioc_id, request)
+        ioc = iocs_get(ioc_id)
+        ioc, _ = iocs_update(ioc, request)
         return IOCCreate(ioc=ioc)
 
 

@@ -1,1 +1,0 @@
-api_v2_url_prefix="/api/v2/"
