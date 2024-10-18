@@ -146,7 +146,7 @@ def delete_asset(asset_id):
     com_ids = AssetComments.query.with_entities(
         AssetComments.comment_id
     ).filter(
-        AssetComments.comment_asset_id == asset_id,
+        AssetComments.comment_asset_id == asset_id
     ).all()
 
     com_ids = [c.comment_id for c in com_ids]
@@ -156,15 +156,11 @@ def delete_asset(asset_id):
         Comments.comment_id.in_(com_ids)
     ).delete()
 
-    # Directly delete the relevant records from the CaseAssets table
-    CaseAssets.query.filter(
-        CaseAssets.asset_id == asset_id
-    ).delete()
+    db.session.delete(case_asset)
 
-    update_assets_state(case_asset.asset_id)
+    update_assets_state(case_asset.case_id)
 
     db.session.commit()
-    return
 
 
 def get_assets_types():
