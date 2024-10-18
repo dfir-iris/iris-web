@@ -87,3 +87,14 @@ class TestsRestAssets(TestCase):
         self._subject.delete(f'/api/v2/assets/{asset_identifier}')
         response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
         self.assertEqual(404, response.status_code)
+
+    def test_delete_asset_should_increment_asset_state(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        response = self._subject.get('/case/assets/state', {'cid': case_identifier}).json()
+        state = response['data']['object_state']
+        self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        response = self._subject.get('/case/assets/state', {'cid': case_identifier}).json()
+        self.assertEqual(state + 1, response['data']['object_state'])
