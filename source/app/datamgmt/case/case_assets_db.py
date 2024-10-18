@@ -130,7 +130,7 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
     db.session.commit()
 
 
-def delete_asset(asset_id, caseid):
+def delete_asset(asset_id):
     case_asset = get_asset(asset_id)
     if case_asset is None:
         return
@@ -158,11 +158,10 @@ def delete_asset(asset_id, caseid):
 
     # Directly delete the relevant records from the CaseAssets table
     CaseAssets.query.filter(
-        CaseAssets.asset_id == asset_id,
-        CaseAssets.case_id == caseid
+        CaseAssets.asset_id == asset_id
     ).delete()
 
-    update_assets_state(caseid)
+    update_assets_state(case_asset.asset_id)
 
     db.session.commit()
     return

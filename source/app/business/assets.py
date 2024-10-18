@@ -66,7 +66,7 @@ def assets_create(case_identifier, request_json):
 def assets_delete(asset: CaseAssets):
     call_modules_hook('on_preload_asset_delete', data=asset.asset_id)
     # Deletes an asset and the potential links with the IoCs from the database
-    delete_asset(asset.asset_id, asset.case_id)
+    delete_asset(asset.asset_id)
     call_modules_hook('on_postload_asset_delete', data=asset.asset_id, caseid=asset.case_id)
     track_activity(f'removed asset ID {asset.asset_name}', caseid=asset.case_id)
 

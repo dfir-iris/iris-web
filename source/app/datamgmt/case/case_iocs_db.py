@@ -86,7 +86,7 @@ def delete_ioc(ioc: Ioc):
 
     db.session.delete(ioc)
 
-    update_ioc_state(caseid=ioc.case_id)
+    update_ioc_state(ioc.case_id)
 
 
 def get_detailed_iocs(caseid):
