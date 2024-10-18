@@ -128,5 +128,5 @@ class TestsRestAssets(TestCase):
         comment_identifier = response['data']['comment_id']
         self._subject.delete(f'/api/v2/assets/{asset_identifier}')
         response = self._subject.create(f'/case/assets/{case_identifier}/comments/{comment_identifier}/edit', {'comment_text': 'new comment text'})
-        # TODO should really rather be 404 here
+        # TODO should ideally rather be 404 here
         self.assertEqual(400, response.status_code)
