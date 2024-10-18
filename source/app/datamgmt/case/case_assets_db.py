@@ -153,6 +153,10 @@ def delete_asset(asset_id, caseid):
         com_ids = [c.comment_id for c in com_ids]
         AssetComments.query.filter(AssetComments.comment_id.in_(com_ids)).delete()
 
+        Comments.query.filter(
+            Comments.comment_id.in_(com_ids)
+        ).delete()
+
         # Directly delete the relevant records from the CaseAssets table
         CaseAssets.query.filter(
             CaseAssets.asset_id == asset_id,
