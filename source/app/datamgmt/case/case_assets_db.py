@@ -130,23 +130,19 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
     db.session.commit()
 
 
-def delete_asset(asset_id):
-    case_asset = get_asset(asset_id)
-    if case_asset is None:
-        return
-
-    delete_ioc_asset_link(asset_id)
+def delete_asset(asset: CaseAssets):
+    delete_ioc_asset_link(asset.asset_id)
 
     # Delete the relevant records from the CaseEventsAssets table
     CaseEventsAssets.query.filter(
-        case_asset.asset_id == CaseEventsAssets.asset_id
+        asset.asset_id == CaseEventsAssets.asset_id
     ).delete()
 
     # Delete the relevant records from the AssetComments table
     com_ids = AssetComments.query.with_entities(
         AssetComments.comment_id
     ).filter(
-        AssetComments.comment_asset_id == asset_id
+        AssetComments.comment_asset_id == asset.asset_id
     ).all()
 
     com_ids = [c.comment_id for c in com_ids]
@@ -156,9 +152,9 @@ def delete_asset(asset_id):
         Comments.comment_id.in_(com_ids)
     ).delete()
 
-    db.session.delete(case_asset)
+    db.session.delete(asset)
 
-    update_assets_state(case_asset.case_id)
+    update_assets_state(asset.case_id)
 
     db.session.commit()
 
