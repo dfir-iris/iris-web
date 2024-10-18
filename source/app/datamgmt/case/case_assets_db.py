@@ -147,7 +147,7 @@ def delete_asset(asset_id, caseid):
             CaseAssets.case_id == caseid
         ).delete()
 
-        update_assets_state(caseid=caseid)
+        update_assets_state(caseid)
 
         db.session.commit()
         return
@@ -181,7 +181,7 @@ def delete_asset(asset_id, caseid):
             CaseAssets.case_id == caseid
         ).delete()
 
-        update_assets_state(caseid=caseid)
+        update_assets_state(caseid)
 
 
 def get_assets_types():
