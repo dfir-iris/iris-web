@@ -141,7 +141,13 @@ def delete_asset(asset_id, caseid):
             case_asset.asset_id == CaseEventsAssets.asset_id
         ).delete()
 
-        case_asset.case_id = None
+        CaseAssets.query.filter(
+            CaseAssets.asset_id == asset_id,
+            CaseAssets.case_id == caseid
+        ).delete()
+
+        update_assets_state(caseid=caseid)
+
         db.session.commit()
         return
 

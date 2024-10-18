@@ -49,7 +49,7 @@ class TestsRestAssets(TestCase):
         self.assertEqual(201, response.status_code)
 
     def test_get_asset_with_missing_asset_identifier_should_return_404(self):
-        response = self._subject.get('/api/v2/asset/None')
+        response = self._subject.get(f'/api/v2/asset/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_create_asset_with_missing_case_identifier_should_return_404(self):
@@ -78,3 +78,12 @@ class TestsRestAssets(TestCase):
         asset_identifier = response['asset_id']
         response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
         self.assertEqual(200, response.status_code)
+
+    def test_get_asset_should_return_404_when_it_was_deleted(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
+        self.assertEqual(404, response.status_code)
