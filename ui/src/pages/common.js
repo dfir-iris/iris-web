@@ -375,8 +375,8 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
         url: uri + cid,
         type: 'POST',
         data: data,
-        dataType: "json",
-        contentType: "application/json;charset=UTF-8",
+        dataType: 'json',
+        contentType: 'application/json;charset=UTF-8',
         beforeSend: function(jqXHR, settings) {
             if (typeof beforeSend_fn === 'function') {
                 beforeSend_fn(jqXHR, settings);
@@ -395,6 +395,23 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
                 } else {
                     ajax_notify_error(jqXHR, this.url);
                 }
+            }
+        }
+    });
+}
+
+function put_request_api(uri, data) {
+   return $.ajax({
+        url: uri,
+        type: 'PUT',
+        data: data,
+        dataType: 'json',
+        contentType: 'application/json;charset=UTF-8',
+        error: function(jqXHR) {
+            if (jqXHR.responseJSON && jqXHR.status == 400) {
+                propagate_form_api_errors(jqXHR.responseJSON.data);
+            } else {
+                ajax_notify_error(jqXHR, this.url);
             }
         }
     });
