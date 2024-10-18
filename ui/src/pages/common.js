@@ -323,9 +323,9 @@ function api_error(propagate_api_error){
 }
 
 function sendBefore(beforeSend_fn, settings) {
-            if (beforeSend_fn !== undefined) {
-                beforeSend_fn(jqXHR, settings);
-            }
+    if (beforeSend_fn !== undefined) {
+        beforeSend_fn(jqXHR, settings);
+    }
 }
 
 function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
