@@ -136,6 +136,7 @@ def delete_asset(asset_id, caseid):
         return
 
     if case_asset.case_id and case_asset.alerts is not None:
+        delete_ioc_asset_link(asset_id)
 
         CaseEventsAssets.query.filter(
             case_asset.asset_id == CaseEventsAssets.asset_id

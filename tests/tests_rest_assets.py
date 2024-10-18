@@ -98,3 +98,14 @@ class TestsRestAssets(TestCase):
         self._subject.delete(f'/api/v2/assets/{asset_identifier}')
         response = self._subject.get('/case/assets/state', {'cid': case_identifier}).json()
         self.assertEqual(state + 1, response['data']['object_state'])
+
+    def test_delele_asset_should_not_fail_when_it_is_linked_to_an_ioc(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test', 'ioc_links': [ioc_identifier]}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        response = self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        self.assertEqual(204, response.status_code)
