@@ -36,6 +36,8 @@ services:
       - iris_backend
     volumes:
       - db_data:/var/lib/postgresql/data
+    ports:
+      - "0.0.0.0:5432:5432"
 
   app:
     container_name: iriswebapp_app
