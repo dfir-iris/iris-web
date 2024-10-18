@@ -306,7 +306,7 @@ function set_page_warning(msg) {
     $('#page_warning').text(msg);
 }
 
-function api_error(propagate_api_error){
+function api_error(propagate_api_error) {
   if (propagate_api_error) {
                 if(jqXHR.responseJSON && jqXHR.status == 400) {
                     propagate_form_api_errors(jqXHR.responseJSON.data);
@@ -400,19 +400,19 @@ function post_request_api(uri, data, propagate_api_error, beforeSend_fn, cid, on
     });
 }
 
-function post_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
+function post_request_data_api(uri, data, beforeSend_fn) {
    return $.ajax({
         url: uri + case_param(),
         type: 'POST',
         data: data,
-        dataType: "json",
+        dataType: 'json',
         contentType: false,
         processData: false,
         beforeSend: function(jqXHR, settings) {
              sendBefore(beforeSend_fn, settings);
         },
         error: function(jqXHR) {
-            api_error(propagate_api_error);
+            api_error(true);
         }
     });
 }
