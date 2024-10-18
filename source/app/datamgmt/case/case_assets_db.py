@@ -135,69 +135,37 @@ def delete_asset(asset_id, caseid):
     if case_asset is None:
         return
 
-    if case_asset.case_id and case_asset.alerts is not None:
-        delete_ioc_asset_link(asset_id)
+    delete_ioc_asset_link(asset_id)
 
-        # Delete the relevant records from the CaseEventsAssets table
-        CaseEventsAssets.query.filter(
-            case_asset.asset_id == CaseEventsAssets.asset_id
-        ).delete()
+    # Delete the relevant records from the CaseEventsAssets table
+    CaseEventsAssets.query.filter(
+        case_asset.asset_id == CaseEventsAssets.asset_id
+    ).delete()
 
-        # Delete the relevant records from the AssetComments table
-        com_ids = AssetComments.query.with_entities(
-            AssetComments.comment_id
-        ).filter(
-            AssetComments.comment_asset_id == asset_id,
-        ).all()
+    # Delete the relevant records from the AssetComments table
+    com_ids = AssetComments.query.with_entities(
+        AssetComments.comment_id
+    ).filter(
+        AssetComments.comment_asset_id == asset_id,
+    ).all()
 
-        com_ids = [c.comment_id for c in com_ids]
-        AssetComments.query.filter(AssetComments.comment_id.in_(com_ids)).delete()
+    com_ids = [c.comment_id for c in com_ids]
+    AssetComments.query.filter(AssetComments.comment_id.in_(com_ids)).delete()
 
-        Comments.query.filter(
-            Comments.comment_id.in_(com_ids)
-        ).delete()
+    Comments.query.filter(
+        Comments.comment_id.in_(com_ids)
+    ).delete()
 
-        # Directly delete the relevant records from the CaseAssets table
-        CaseAssets.query.filter(
-            CaseAssets.asset_id == asset_id,
-            CaseAssets.case_id == caseid
-        ).delete()
+    # Directly delete the relevant records from the CaseAssets table
+    CaseAssets.query.filter(
+        CaseAssets.asset_id == asset_id,
+        CaseAssets.case_id == caseid
+    ).delete()
 
-        update_assets_state(caseid)
+    update_assets_state(caseid)
 
-        db.session.commit()
-        return
-
-    with db.session.begin_nested():
-        delete_ioc_asset_link(asset_id)
-
-        # Delete the relevant records from the CaseEventsAssets table
-        CaseEventsAssets.query.filter(
-            CaseEventsAssets.case_id == caseid,
-            CaseEventsAssets.asset_id == asset_id
-        ).delete()
-
-        # Delete the relevant records from the AssetComments table
-        com_ids = AssetComments.query.with_entities(
-            AssetComments.comment_id
-        ).filter(
-            AssetComments.comment_asset_id == asset_id,
-        ).all()
-
-        com_ids = [c.comment_id for c in com_ids]
-        AssetComments.query.filter(AssetComments.comment_id.in_(com_ids)).delete()
-
-        Comments.query.filter(
-            Comments.comment_id.in_(com_ids)
-        ).delete()
-
-        # Directly delete the relevant records from the CaseAssets table
-        CaseAssets.query.filter(
-            CaseAssets.asset_id == asset_id,
-            CaseAssets.case_id == caseid
-        ).delete()
-
-        update_assets_state(caseid)
+    db.session.commit()
+    return
 
 
 def get_assets_types():
