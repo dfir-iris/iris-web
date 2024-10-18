@@ -307,19 +307,19 @@ function set_page_warning(msg) {
 }
 
 function api_error(propagate_api_error) {
-  if (propagate_api_error) {
-                if(jqXHR.responseJSON && jqXHR.status == 400) {
-                    propagate_form_api_errors(jqXHR.responseJSON.data);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
-                }
-            } else {
-                if(jqXHR.responseJSON) {
-                    notify_error(jqXHR.responseJSON.message);
-                } else {
-                    ajax_notify_error(jqXHR, this.url);
-                }
-            }
+    if (propagate_api_error) {
+        if(jqXHR.responseJSON && jqXHR.status == 400) {
+            propagate_form_api_errors(jqXHR.responseJSON.data);
+        } else {
+            ajax_notify_error(jqXHR, this.url);
+        }
+    } else {
+        if(jqXHR.responseJSON) {
+            notify_error(jqXHR.responseJSON.message);
+        } else {
+            ajax_notify_error(jqXHR, this.url);
+        }
+    }
 }
 
 function sendBefore(beforeSend_fn, settings) {
