@@ -56,6 +56,7 @@ def get_filtered_alerts(
         end_date: str = None,
         source_start_date: str = None,
         source_end_date: str = None,
+        source_reference: str = None,
         title: str = None,
         description: str = None,
         status: int = None,
@@ -132,6 +133,9 @@ def get_filtered_alerts(
 
     if resolution_status is not None:
         conditions.append(Alert.alert_resolution_status_id == resolution_status)
+
+    if source_reference is not None:
+        conditions.append(Alert.alert_source_ref.like(f'%{source_reference}%'))
 
     if owner is not None:
         if owner == -1:
