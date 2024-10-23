@@ -163,6 +163,12 @@
 											<span>Case Templates</span>
 										</a>
 									</li>
+									<li class="nav-subitem">
+										<a href="/manage/webhooks?cid={{session['current_case'].case_id}}">
+											<i class="flaticon-layers-1"></i>
+											<span>Shuffler WebHooks</span>
+										</a>
+									</li>
 									{% endif %}
 									{% if user_has_perm(std_permissions.server_administrator) %}
 									<li class="nav-subitem">

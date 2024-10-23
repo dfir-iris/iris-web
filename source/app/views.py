@@ -59,6 +59,7 @@ from app.blueprints.manage.manage_tags import manage_tags_blueprint
 from app.blueprints.manage.manage_task_status_routes import manage_task_status_blueprint
 from app.blueprints.manage.manage_templates_routes import manage_templates_blueprint
 from app.blueprints.manage.manage_tlps_routes import manage_tlp_type_blueprint
+from app.blueprints.manage.manage_webhooks_routes import manage_webhooks_blueprint
 from app.blueprints.manage.manage_case_templates_routes import manage_case_templates_blueprint
 from app.blueprints.manage.manage_users import manage_users_blueprint
 from app.blueprints.overview.overview_routes import overview_blueprint
@@ -99,6 +100,7 @@ app.register_blueprint(manage_case_state_blueprint)
 app.register_blueprint(manage_evidence_types_blueprint)
 app.register_blueprint(manage_assets_blueprint)
 app.register_blueprint(manage_tags_blueprint)
+app.register_blueprint(manage_webhooks_blueprint)
 app.register_blueprint(saved_filters_blueprint)
 
 app.register_blueprint(ctx_blueprint)
