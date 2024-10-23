@@ -15,6 +15,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import tracemalloc
+
 import json
 import marshmallow
 from datetime import datetime
@@ -135,6 +137,9 @@ def alerts_list_route() -> Response:
         resolution_status=request.args.get('alert_resolution_id', type=int),
         current_user_id=current_user.id
     )
+    import gc
+    gc.collect()
+    snapshot_before_selectinload = tracemalloc.take_snapshot()
 
     if filtered_data is None:
         return response_error('Filtering error')
@@ -146,6 +151,12 @@ def alerts_list_route() -> Response:
         'current_page': filtered_data.page,
         'next_page': filtered_data.next_num if filtered_data.has_next else None,
     }
+
+    snapshot_after_selectinload = tracemalloc.take_snapshot()
+    top_stats = snapshot_after_selectinload.compare_to(snapshot_before_selectinload, 'lineno')
+    print("[ Top 10 differences ]")
+    for stat in top_stats[:10]:
+        print(stat)
 
     return response_success(data=alerts)
 

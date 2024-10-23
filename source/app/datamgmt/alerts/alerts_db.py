@@ -23,8 +23,7 @@ from flask_login import current_user
 from functools import reduce
 from operator import and_
 from sqlalchemy import desc, asc, func, tuple_, or_
-from sqlalchemy.orm import aliased, make_transient
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import aliased, make_transient, selectinload
 from typing import List, Tuple
 
 import app
@@ -185,8 +184,8 @@ def get_filtered_alerts(
         ).filter(
             *conditions
         ).options(
-            joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer), joinedload(Alert.cases),
-            joinedload(Alert.iocs), joinedload(Alert.assets)
+            selectinload(Alert.severity), selectinload(Alert.status), selectinload(Alert.customer), selectinload(Alert.cases),
+            selectinload(Alert.iocs), selectinload(Alert.assets)
         ).order_by(
             order_func(Alert.alert_source_event_time)
         ).paginate(page=page, per_page=per_page, error_out=False)
@@ -248,7 +247,7 @@ def get_alert_by_id(alert_id: int) -> Alert:
     """
     return (
         db.session.query(Alert)
-        .options(joinedload(Alert.iocs), joinedload(Alert.assets))
+        .options(selectinload(Alert.iocs), selectinload(Alert.assets))
         .filter(Alert.alert_id == alert_id)
         .first()
     )
