@@ -2256,6 +2256,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     iocs = ma.Nested(IocSchema, many=True)
     assets = ma.Nested(CaseAssetsSchema, many=True)
     resolution_status = ma.Nested(AlertResolutionSchema)
+    aggregated_alerts = ma.Field()
 
     class Meta:
         model = Alert
