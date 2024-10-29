@@ -30,6 +30,8 @@ def upgrade():
             op.create_index('idx_alerts_source_event_time', 'alerts', ['alert_source_event_time'])
         if not index_exists('alerts', 'idx_alerts_customer_id'):
             op.create_index('idx_alerts_customer_id', 'alerts', ['alert_customer_id'])
+        if not index_exists('alerts', 'alert_source_ref'):
+            op.create_index('idx_alert_source_ref', 'alerts', ['alert_source_ref'])
 
     # Adding indexes to the Ioc table
     if _has_table('ioc'):
