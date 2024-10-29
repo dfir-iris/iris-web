@@ -519,7 +519,12 @@ const options = {
     interaction: {
         hideEdgesOnDrag: false,
         tooltipDelay: 100,
-        zoomView: false
+        zoomView: false,
+        navigationButtons: true,
+        keyboard: {
+            enabled: true,
+            bindToWindow: true
+        }
     },
     height: (window.innerHeight - 400) + "px",
     clickToUse: true,
