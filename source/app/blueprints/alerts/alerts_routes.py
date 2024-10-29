@@ -110,8 +110,6 @@ def alerts_list_route() -> Response:
         except ValueError:
             return response_error('Invalid alert ioc')
 
-    alert_schema = AlertSchema()
-
     filtered_data = get_filtered_alerts(
         start_date=request.args.get('creation_start_date'),
         end_date=request.args.get('creation_end_date'),
@@ -140,14 +138,6 @@ def alerts_list_route() -> Response:
 
     if filtered_data is None:
         return response_error('Filtering error')
-
-    # alerts = {
-    #     'total': filtered_data.total,
-    #     'alerts': alert_schema.dump(filtered_data.items, many=True),
-    #     'last_page': filtered_data.pages,
-    #     'current_page': filtered_data.page,
-    #     'next_page': filtered_data.next_num if filtered_data.has_next else None,
-    # }
 
     return response_success(data=filtered_data)
 
@@ -363,6 +353,9 @@ def alerts_update_route(alert_id) -> Response:
         updated_alert = alert_schema.load(data, instance=alert, partial=True)
         if data.get('alert_owner_id') is None and updated_alert.alert_owner_id is None:
             updated_alert.alert_owner_id = current_user.id
+
+        if data.get('alert_owner_id') == "-1":
+            updated_alert.alert_owner_id = None
 
         # Save the changes
         db.session.commit()
