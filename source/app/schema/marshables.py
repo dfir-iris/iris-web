@@ -666,6 +666,8 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     ioc_links: List[int] = fields.List(fields.Integer, required=False)
     asset_enrichment: str = auto_field('asset_enrichment', required=False)
     asset_type: AssetTypeSchema = ma.Nested(AssetTypeSchema, required=False)
+    alerts = fields.Nested('AlertSchema', many=True, exclude=['assets'])
+    analysis_status = fields.Nested('AnalysisStatusSchema', required=False)
 
     class Meta:
         model = CaseAssets
@@ -2256,7 +2258,6 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     iocs = ma.Nested(IocSchema, many=True)
     assets = ma.Nested(CaseAssetsSchema, many=True)
     resolution_status = ma.Nested(AlertResolutionSchema)
-    aggregated_alerts = ma.Field()
 
     class Meta:
         model = Alert

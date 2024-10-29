@@ -120,7 +120,7 @@ function add_assets() {
 function get_case_assets() {
     show_loader();
 
-    get_request_api('/case/assets/list')
+    get_request_api('/case/assets/filter')
     .done(function (response) {
         if (response.status == 'success') {
             if (response.data != null) {
@@ -133,7 +133,17 @@ function get_case_assets() {
                 Table.clear();
                 Table.rows.add(jsdata.assets);
                 Table.columns.adjust().draw();
-                load_menu_mod_options('asset', Table, delete_asset);
+                load_menu_mod_options('asset', Table, delete_asset, [{
+                    type: 'option',
+                    title: 'Check Alerts',
+                    multi: false,
+                    iconClass: 'fas fa-bell',
+                    action: function(rows) {
+                        let row = rows[0];
+                        let asset = get_row_value(row);
+                        window.open(`/alerts?alert_assets=${asset}`, '_blank');
+                    }
+                }]);
                 $('[data-toggle="popover"]').popover();
                 set_last_state(jsdata.state);
                 hide_loader();
@@ -377,32 +387,40 @@ $(document).ready(function(){
                     if (row.link.length > 0) {
                         let has_compro = false;
                         let datacontent = 'data-content="';
-                        for (let idx in row.link) {
-                            if (row.link[idx]['asset_compromise_status_id'] === 1) {
+
+                        row.link.forEach(link => {
+                            const caseInfo = `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${link.case_id}&shared=${link.asset_id}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b>`;
+                            const caseLink = `<b><a href='/case?cid=${link.case_id}'>case #${link.case_id} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b>`;
+                            const date = link.case_open_date.replace('00:00:00 GMT', '');
+
+                            if (link.asset_compromise_status_id === 1) {
                                 has_compro = true;
-                                datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-danger'>compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
+                                datacontent += `${caseInfo} as <b class='text-danger'>compromised</b><br/> on ${caseLink} (${date}) for the same customer.<br/><br/>`;
                             } else {
-
-                                datacontent += `<b><a target='_blank' rel='noopener' href='/case/assets?cid=${row.link[idx]['case_id']}&shared=${row.link[idx]['asset_id']}'>Observed <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></b> as <b class='text-success'>not compromised</b><br/> on <b><a href='/case?cid=${row.link[idx]['case_id']}'>case #${row.link[idx]['case_id']} <sup><i class='fa-solid fa-arrow-up-right-from-square ml-1 mr-1 text-muted'></i></sup></a></a></b> (${row.link[idx]['case_open_date'].replace('00:00:00 GMT', '')}) for the same customer.<br/><br/>`;
+                                datacontent += `${caseInfo} as <b class='text-success'>not compromised</b><br/> on ${caseLink} (${date}) for the same customer.<br/><br/>`;
                             }
-                        }
-                        if (has_compro) {
-                           compro += `<a tabindex="0" class="fas fa-meteor ml-2 text-danger" style="cursor: pointer;" data-html="true"
-                                data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
-                        } else {
-                            compro += `<a tabindex="0" class="fas fa-info-circle ml-2 text-success" style="cursor: pointer;" data-html="true"
-                            data-toggle="popover" data-trigger="focus" title="Observed in previous case" `;
-                        }
+                        });
 
-                        compro += datacontent;
-                        compro += '"></i>';
+                        compro += `<i tabindex="0" class="fas ${has_compro ? 'fa-meteor text-danger' : 'fa-info-circle text-success'} ml-2" style="cursor: pointer;" data-html="true" data-toggle="popover" data-trigger="focus" title="Observed in previous case" ${datacontent}"></i>`;
+                    }
+
+                    if (row.alerts.length > 0) {
+                        let alerts_content = "";
+
+                        row.alerts.forEach(alert => {
+                            alerts_content += `<i tabindex="0" class="fas fa-bell text-warning mr-2"></i><a href=\"/alerts?alert_ids=${alert.alert_id}&page=1&per_page=1&sort=desc\" target="_blank" rel="noopener">#${alert.alert_id} - ${alert.alert_title.replace(/'/g, "&#39;").replace(/"/g, "&quot;")}</a><br/>`;
+                        }  );
+                        alerts_content += `<i tabindex="0" class="fas fa-external-link-square mr-2"></i><a href=\"/alerts?alert_assets=${data}" target="_blank" rel="noopener">More..</a>`;
+
+
+                        compro += `<i tabindex="0" class="fas fa-bell text-warning ml-2" style="cursor: pointer;" data-html="true" data-toggle="popover" data-trigger="focus" title="Alerts" data-content='${alerts_content}'></i>`;
                     }
 
                     let img = $('<img>')
                         .addClass('mr-2')
                         .css({width: '1.5em', height: '1.5em'})
-                        .attr('src', '/static/assets/img/graph/' + (row['asset_compromise_status_id'] == 1 ? row['asset_icon_compromised'] : row['asset_icon_not_compromised']))
-                        .attr('title', row['asset_type']);
+                        .attr('src', '/static/assets/img/graph/' + (row['asset_compromise_status_id'] == 1 ? row['asset_type']['asset_icon_compromised'] : row['asset_type']['asset_icon_not_compromised']))
+                        .attr('title', row['asset_type']['asset_name']);
 
                     let link = $('<a>')
                         .attr('href', 'javascript:void(0);')
@@ -419,7 +437,7 @@ $(document).ready(function(){
             }
           },
           {
-            "data": "asset_type",
+            "data": "asset_type.asset_name",
              "render": function (data, type, row, meta) {
                 if (type === 'display') { data = sanitizeHTML(data);}
                 return data;
@@ -483,7 +501,7 @@ $(document).ready(function(){
             "data": "analysis_status",
             "render": function(data, type, row, meta) {
                if (type === 'display') {
-                data = sanitizeHTML(data);
+                data = sanitizeHTML(data['name']);
                 if (data == 'To be done') {
                     flag = 'danger';
                 } else if (data == 'Started') {

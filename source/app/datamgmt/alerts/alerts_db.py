@@ -15,8 +15,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from collections import defaultdict
-
 from copy import deepcopy
 
 import json
@@ -26,7 +24,7 @@ from functools import reduce
 from operator import and_
 from sqlalchemy import desc, asc, func, tuple_, or_
 from sqlalchemy.orm import aliased, make_transient, selectinload
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import app
 from app import db
@@ -77,34 +75,10 @@ def get_filtered_alerts(
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc',
-        current_user_id: int = None,
-        stack_similar: bool = False
+        current_user_id: int = None
 ):
     """
     Get a list of alerts that match the given filter conditions
-
-    args:
-        start_date (datetime): The start date of the alert creation time
-        end_date (datetime): The end date of the alert creation time
-        title (str): The title of the alert
-        description (str): The description of the alert
-        status (str): The status of the alert
-        severity (str): The severity of the alert
-        owner (str): The owner of the alert
-        source (str): The source of the alert
-        tags (str): The tags of the alert
-        case_id (int): The case id of the alert
-        client (int): The client id of the alert
-        classification (int): The classification id of the alert
-        alert_ids (int): The alert ids
-        assets (list): The assets of the alert
-        iocs (list): The iocs of the alert
-        resolution_status (int): The resolution status of the alert
-        page (int): The page number
-        per_page (int): The number of alerts per page
-        sort (str): The sort order
-        current_user_id (int): The ID of the current user
-        stack_similar (bool): Whether to stack similar alerts based on title, assets, and source
 
     returns:
         dict: A dictionary containing the total count, alerts, and pagination information
@@ -199,42 +173,6 @@ def get_filtered_alerts(
         ).order_by(
             order_func(Alert.alert_source_event_time)
         ).paginate(page=page, per_page=per_page, error_out=False)
-
-        alert_ids = [alert.alert_id for alert in filtered_alerts.items]
-
-        # Batch query the AlertSimilarity table for all relevant alerts with specific conditions
-        similar_alerts = db.session.query(AlertSimilarity).filter(
-            AlertSimilarity.alert_id.in_(alert_ids),
-            or_(
-                and_(AlertSimilarity.similarity_type == 'title_match', AlertSimilarity.matching_asset_id.isnot(None)),
-                and_(AlertSimilarity.similarity_type == 'title_match', AlertSimilarity.matching_ioc_id.isnot(None)),
-                and_(AlertSimilarity.matching_asset_id.isnot(None), AlertSimilarity.matching_ioc_id.isnot(None))
-            )
-        ).all()
-
-        # Group similar alerts by alert_id for easier processing
-        similarity_map = defaultdict(list)
-        for similar_alert in similar_alerts:
-            similarity_map[similar_alert.alert_id].append({
-                'alert_id': similar_alert.similar_alert_id,
-                'similarity_type': similar_alert.similarity_type,
-                'matching_asset_id': similar_alert.matching_asset_id,
-                'matching_ioc_id': similar_alert.matching_ioc_id
-            })
-
-        # Attach aggregated alerts to the alert objects
-        alerts_dict = []
-        processed_alerts = set()
-
-        for alert in filtered_alerts.items:
-            if alert.alert_id in processed_alerts:
-                continue
-
-            alert.aggregated_alerts = similarity_map.get(alert.alert_id, [])
-            alerts_dict.append(alert)
-            processed_alerts.add(alert.alert_id)
-            for agg in alert.aggregated_alerts:
-                processed_alerts.add(agg['alert_id'])
 
         return {
             'total': filtered_alerts.total,
