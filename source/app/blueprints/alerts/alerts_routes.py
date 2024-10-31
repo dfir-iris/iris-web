@@ -28,7 +28,7 @@ import app
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts, get_alert_by_id, create_case_from_alert, \
-    register_related_alerts
+    register_related_alerts, delete_related_alerts_cache
 from app.datamgmt.alerts.alerts_db import merge_alert_in_case, unmerge_alert_from_case, cache_similar_alert
 from app.datamgmt.alerts.alerts_db import get_related_alerts, get_related_alerts_details
 from app.datamgmt.alerts.alerts_db import get_alert_comments, delete_alert_comment, get_alert_comment
@@ -526,6 +526,9 @@ def alerts_delete_route(alert_id) -> Response:
 
         # Delete the case association
         delete_similar_alert_cache(alert_id=alert_id)
+
+        # Delete the similarity entries
+        delete_related_alerts_cache(alert_id=alert_id)
 
         # Delete the alert from the database
         db.session.delete(alert)

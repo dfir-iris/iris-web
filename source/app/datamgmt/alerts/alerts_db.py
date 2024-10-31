@@ -839,6 +839,24 @@ def delete_similar_alert_cache(alert_id):
     db.session.commit()
 
 
+def delete_related_alerts_cache(alert_id):
+    """
+    Delete the related alerts cache
+
+    args:
+        alert_id (int): The ID of the alert
+
+    returns:
+        None
+    """
+    AlertSimilarity.query.filter(
+        or_(
+            AlertSimilarity.alert_id == alert_id,
+            AlertSimilarity.similar_alert_id == alert_id
+        )
+    ).delete()
+    db.session.commit()
+
 def delete_similar_alerts_cache(alert_ids: List[int]):
     """
     Delete the similar alerts cache
