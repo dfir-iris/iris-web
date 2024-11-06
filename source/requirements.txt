@@ -40,6 +40,7 @@ oic==1.7.0
 # unfortunately we are relying on a beta version here. I hope a definitive version gets released soon
 graphql-server[flask]==3.0.0b7
 graphene-sqlalchemy==3.0.0rc1
+Debugpy
 
 dependencies/docx_generator-0.8.0-py3-none-any.whl
 dependencies/iris_interface-1.2.0-py3-none-any.whl
