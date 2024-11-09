@@ -354,7 +354,7 @@ def alerts_update_route(alert_id) -> Response:
         if data.get('alert_owner_id') is None and updated_alert.alert_owner_id is None:
             updated_alert.alert_owner_id = current_user.id
 
-        if data.get('alert_owner_id') == "-1":
+        if data.get('alert_owner_id') == "-1" or data.get('alert_owner_id') == -1:
             updated_alert.alert_owner_id = None
 
         # Save the changes
@@ -433,6 +433,9 @@ def alerts_batch_update_route() -> Response:
             # Check if the user has access to the client
             if not user_has_client_access(current_user.id, alert.alert_customer_id):
                 return response_error('User not entitled to update alerts for the client', status=403)
+
+            if data.get('alert_owner_id') == "-1" or data.get('alert_owner_id') == -1:
+                updates['alert_owner_id'] = None
 
             # Deserialize the JSON data into an Alert object
             alert_schema.load(updates, instance=alert, partial=True)
