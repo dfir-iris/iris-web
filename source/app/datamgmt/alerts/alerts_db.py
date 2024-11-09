@@ -23,9 +23,8 @@ from flask_login import current_user
 from functools import reduce
 from operator import and_
 from sqlalchemy import desc, asc, func, tuple_, or_
-from sqlalchemy.orm import aliased, make_transient
-from sqlalchemy.orm import joinedload
-from typing import List, Tuple
+from sqlalchemy.orm import aliased, make_transient, selectinload
+from typing import List, Tuple, Dict
 
 import app
 from app import db
@@ -40,8 +39,9 @@ from app.datamgmt.states import update_timeline_state
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink
-from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus
-from app.schema.marshables import EventSchema
+from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus, \
+    AlertSimilarity
+from app.schema.marshables import EventSchema, AlertSchema
 from app.util import add_obj_history_entry
 
 
@@ -57,6 +57,7 @@ def get_filtered_alerts(
         end_date: str = None,
         source_start_date: str = None,
         source_end_date: str = None,
+        source_reference: str = None,
         title: str = None,
         description: str = None,
         status: int = None,
@@ -79,30 +80,8 @@ def get_filtered_alerts(
     """
     Get a list of alerts that match the given filter conditions
 
-    args:
-        start_date (datetime): The start date of the alert creation time
-        end_date (datetime): The end date of the alert creation time
-        title (str): The title of the alert
-        description (str): The description of the alert
-        status (str): The status of the alert
-        severity (str): The severity of the alert
-        owner (str): The owner of the alert
-        source (str): The source of the alert
-        tags (str): The tags of the alert
-        case_id (int): The case id of the alert
-        client (int): The client id of the alert
-        classification (int): The classification id of the alert
-        alert_ids (int): The alert ids
-        assets (list): The assets of the alert
-        iocs (list): The iocs of the alert
-        resolution_status (int): The resolution status of the alert
-        page (int): The page number
-        per_page (int): The number of alerts per page
-        sort (str): The sort order
-        current_user_id (int): The ID of the current user
-
     returns:
-        list: A list of alerts that match the given filter conditions
+        dict: A dictionary containing the total count, alerts, and pagination information
     """
     # Build the filter conditions
     conditions = []
@@ -133,6 +112,9 @@ def get_filtered_alerts(
 
     if resolution_status is not None:
         conditions.append(Alert.alert_resolution_status_id == resolution_status)
+
+    if source_reference is not None:
+        conditions.append(Alert.alert_source_ref.like(f'%{source_reference}%'))
 
     if owner is not None:
         if owner == -1:
@@ -177,25 +159,32 @@ def get_filtered_alerts(
 
     order_func = desc if sort == "desc" else asc
 
-    try:
+    alert_schema = AlertSchema()
 
+    try:
         # Query the alerts using the filter conditions
         filtered_alerts = db.session.query(
             Alert
         ).filter(
             *conditions
         ).options(
-            joinedload(Alert.severity), joinedload(Alert.status), joinedload(Alert.customer), joinedload(Alert.cases),
-            joinedload(Alert.iocs), joinedload(Alert.assets)
+            selectinload(Alert.severity), selectinload(Alert.status), selectinload(Alert.customer), selectinload(Alert.cases),
+            selectinload(Alert.iocs), selectinload(Alert.assets)
         ).order_by(
             order_func(Alert.alert_source_event_time)
         ).paginate(page=page, per_page=per_page, error_out=False)
 
+        return {
+            'total': filtered_alerts.total,
+            'alerts': alert_schema.dump(filtered_alerts, many=True),
+            'last_page': filtered_alerts.pages,
+            'current_page': filtered_alerts.page,
+            'next_page': filtered_alerts.next_num if filtered_alerts.has_next else None,
+        }
+
     except Exception as e:
         app.app.logger.exception(f"Error getting alerts: {str(e)}")
-        filtered_alerts = None
-
-    return filtered_alerts
+        return None
 
 
 def add_alert(
@@ -248,7 +237,7 @@ def get_alert_by_id(alert_id: int) -> Alert:
     """
     return (
         db.session.query(Alert)
-        .options(joinedload(Alert.iocs), joinedload(Alert.assets))
+        .options(selectinload(Alert.iocs), selectinload(Alert.assets))
         .filter(Alert.alert_id == alert_id)
         .first()
     )
@@ -785,6 +774,57 @@ def cache_similar_alert(customer_id, assets, iocs, alert_id, creation_date):
     db.session.commit()
 
 
+def register_related_alerts(new_alert=None, assets_list=None, iocs_list=None):
+    """
+    Register related alerts
+    """
+
+
+    # Step 1: Identify similar alerts based on title, assets, and IOCs
+    similar_alerts = db.session.query(Alert).filter(
+        Alert.alert_customer_id == new_alert.alert_customer_id,
+        Alert.alert_id != new_alert.alert_id,
+        or_(
+            Alert.alert_title == new_alert.alert_title,
+            Alert.assets.any(CaseAssets.asset_name.in_([asset.asset_name for asset in new_alert.assets])),
+            Alert.iocs.any(Ioc.ioc_value.in_([ioc.ioc_value for ioc in new_alert.iocs]))
+        )
+    ).all()
+
+    # Step 2: Create relationships in the AlertSimilarity table
+    for similar_alert in similar_alerts:
+        # Matching on title
+        if new_alert.alert_title == similar_alert.alert_title:
+            alert_similarity = AlertSimilarity(
+                alert_id=new_alert.alert_id,
+                similar_alert_id=similar_alert.alert_id,
+                similarity_type="title_match"
+            )
+            db.session.add(alert_similarity)
+
+        # Matching on assets
+        for asset in new_alert.assets:
+            if asset in similar_alert.assets:
+                alert_similarity = AlertSimilarity(
+                    alert_id=new_alert.alert_id,
+                    similar_alert_id=similar_alert.alert_id,
+                    similarity_type="asset_match",
+                    matching_asset_id=asset.asset_id
+                )
+                db.session.add(alert_similarity)
+
+        # Matching on IOCs
+        for ioc in new_alert.iocs:
+            if ioc in similar_alert.iocs:
+                alert_similarity = AlertSimilarity(
+                    alert_id=new_alert.alert_id,
+                    similar_alert_id=similar_alert.alert_id,
+                    similarity_type="ioc_match",
+                    matching_ioc_id=ioc.ioc_id
+                )
+                db.session.add(alert_similarity)
+
+
 def delete_similar_alert_cache(alert_id):
     """
     Delete the similar alert cache
@@ -798,6 +838,24 @@ def delete_similar_alert_cache(alert_id):
     SimilarAlertsCache.query.filter(SimilarAlertsCache.alert_id == alert_id).delete()
     db.session.commit()
 
+
+def delete_related_alerts_cache(alert_id):
+    """
+    Delete the related alerts cache
+
+    args:
+        alert_id (int): The ID of the alert
+
+    returns:
+        None
+    """
+    AlertSimilarity.query.filter(
+        or_(
+            AlertSimilarity.alert_id == alert_id,
+            AlertSimilarity.similar_alert_id == alert_id
+        )
+    ).delete()
+    db.session.commit()
 
 def delete_similar_alerts_cache(alert_ids: List[int]):
     """

@@ -20,7 +20,7 @@
                      </div>
                     <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ rfile.id }}, 'evidences')" title="Comments">
                         <span class="btn-label">
-                            <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length }}</span>
+                            <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length if comments_map|length > 0 else '' }}</span>
                         </span>
                     </button>
                     {% endif %}
