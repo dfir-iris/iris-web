@@ -1,4 +1,4 @@
-const makeCRCTable = function(){
+const makeCRCTable = function() {
     var c;
     var crcTable = [];
     for(var n =0; n < 256; n++){

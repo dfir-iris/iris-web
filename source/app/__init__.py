@@ -63,7 +63,7 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
-app = Flask(__name__, static_folder="../static")
+app = Flask(__name__, static_folder='../static')
 
 
 def ac_current_user_has_permission(*permissions):

@@ -56,7 +56,7 @@ export default defineConfig(({ mode }) => {
         },
         resolve: {
             alias: {
-                "$lib": path.resolve("./src/lib"),
+                '$lib': path.resolve('./src/lib'),
             },
         },
         plugins: [
