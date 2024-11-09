@@ -16020,3 +16020,11 @@ td.dt-nowrap { white-space: nowrap }
 .radial-bg-primary {
     background: radial-gradient(#013479, #011d40) !important;
 }
+
+.notification:not(:empty).notification:not([text='0'])  {
+    background: #c40101;
+    color: white;
+    padding: 2px 5px 2px 5px;
+    border-radius: 50% 50%;
+    margin-bottom: 3px;
+}
