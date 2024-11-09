@@ -16028,3 +16028,23 @@ td.dt-nowrap { white-space: nowrap }
     border-radius: 50% 50%;
     margin-bottom: 3px;
 }
+
+  .copy-value {
+    position: relative;
+  }
+
+  .copy-btn {
+    display: none;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    color: #007bff;
+    cursor: pointer;
+  }
+
+  .copy-value:hover .copy-btn {
+    display: inline;
+  }

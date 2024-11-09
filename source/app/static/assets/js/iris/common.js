@@ -626,7 +626,7 @@ function copy_object_link_md(data_type, node_id){
 
 function copy_text_clipboardb(data){
     navigator.clipboard.writeText(fromBinary64(data)).then(function() {
-        notify_success('Copied!');
+        notify_success('Copied');
     }, function(err) {
         notify_error('Can\'t copy link. I printed it in console.');
         console.error(err);
@@ -635,7 +635,7 @@ function copy_text_clipboardb(data){
 
 function copy_text_clipboard(data){
     navigator.clipboard.writeText(data).then(function() {
-        notify_success('Copied!');
+        notify_success('Copied');
     }, function(err) {
         notify_error('Can\'t copy link. I printed it in console.');
         console.error(err);
