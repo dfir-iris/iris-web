@@ -198,13 +198,10 @@ def case_upload_ioc(caseid):
 
             row['analysis_status_id'] = analysis_status_id
 
-            # TODO from here
             request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
 
+            add_asset_schema.is_unique_for_cid(caseid, request_data)
             asset_sc = add_asset_schema.load(request_data)
-            asset_sc.case_id = caseid
-            if case_assets_db_exists(asset_sc):
-                return response_error('Data error', data='Asset with same value and type already exists')
             asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
@@ -218,10 +215,8 @@ def case_upload_ioc(caseid):
                 index += 1
                 continue
 
-            # to here: should call assets_create from the business layer.
-            #          But should the custom_attributes always be called?
-            track_activity(f'added asset {asset.asset_name}', caseid=caseid)
             ret.append(request_data)
+            track_activity(f"added asset {asset.asset_name}", caseid=caseid)
 
             index += 1
 

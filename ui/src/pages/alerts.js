@@ -528,7 +528,12 @@ const options = {
     interaction: {
         hideEdgesOnDrag: false,
         tooltipDelay: 100,
-        zoomView: false
+        zoomView: false,
+        navigationButtons: true,
+        keyboard: {
+            enabled: true,
+            bindToWindow: true
+        }
     },
     height: (window.innerHeight - 400) + "px",
     clickToUse: true,
@@ -992,23 +997,41 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                       </div>` : ''}
                       ${alert.alert_source_link ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Link:</b></div>
-                        <div class="col-md-9">${
+                        <div class="col-md-9 copy-value">${
                             alert.alert_source_link && alert.alert_source_link.startsWith('http') 
-                            ? `<a href="${alert.alert_source_link}">${alert.alert_source_link}</a>` 
+                            ? `<a href="${alert.alert_source_link}" target="_blank" rel="noopener noreferrer">${alert.alert_source_link}</a>
+                                <button class="copy-btn ml-2" data-value="${escapeHtml(alert.alert_source_link)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                                </button>`
                             : 'No valid link provided'
                           }</div>
                       </div>` : ''}
                       ${alert.alert_source_ref ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Reference:</b></div>
-                        <div class="col-md-9">${alert.alert_source_ref}</div>
+                        <div class="col-md-9 copy-value">
+                            ${alert.alert_source_ref}
+                            <button class="copy-btn ml-2" data-value="${escapeHtml(alert.alert_source_ref)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                            </button>
+                        </div>
                       </div>` : ''}
                       ${alert.alert_source_event_time ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Event Time:</b></div>
-                        <div class="col-md-9">${formatTime(alert.alert_source_event_time)} UTC</div>
+                        <div class="col-md-9 copy-value">
+                            ${formatTime(alert.alert_source_event_time)} UTC
+                            <button class="copy-btn ml-2" data-value="${formatTime(alert.alert_source_event_time)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                            </button>
+                        </div>
                       </div>` : ''}
                       ${alert.alert_creation_time ? `<div class="row mt-2">
                         <div class="col-md-3"><b>IRIS Creation Time:</b></div>
-                        <div class="col-md-9">${formatTime(alert.alert_creation_time)} UTC</div>
+                        <div class="col-md-9 copy-value">
+                            ${formatTime(alert.alert_creation_time)} UTC
+                            <button class="copy-btn ml-2" data-value="${formatTime(alert.alert_creation_time)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                            </button>
+                        </div>
                       </div>` : ''}
                     
                     <div class="separator-solid"></div>
@@ -1098,7 +1121,12 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                               .map(
                                   (ioc) => `
                                                  <tr>
-                                                   <td>${filterXSS(ioc.ioc_value)}</td>
+                                                   <td class="copy-value">
+                                                        ${filterXSS(ioc.ioc_value)}
+                                                        <button class="copy-btn ml-2" data-value="${filterXSS(ioc.ioc_value)}">
+                                                            <i class="fa fa-copy text-dark"></i>
+                                                        </button>
+                                                   </td>
                                                    <td>${filterXSS(ioc.ioc_description)}</td>
                                                    <td>${ioc.ioc_type ? filterXSS(ioc.ioc_type.type_name) : '-'}</td>
                                                    <td>${filterXSS(ioc.ioc_tlp) ? ioc.ioc_tlp : '-'}</td>
@@ -1150,6 +1178,12 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                   .map(
                       (asset) => `
                                      <tr>
+                                       <td class="copy-value">
+                                            ${asset.asset_name ? filterXSS(asset.asset_name) : '-'}
+                                            <button class="copy-btn ml-2" data-value="${asset.asset_name ? filterXSS(asset.asset_name) : '-'}">
+                                                <i class="fa fa-copy text-dark"></i>
+                                            </button>
+                                       </td>
                                        <td>${asset.asset_name ? filterXSS(asset.asset_name) : '-'}</td>
                                        <td>${asset.asset_description ? filterXSS(asset.asset_description) : '-'}</td>
                                        <td>${asset.asset_type ? filterXSS(asset.asset_type.asset_name) : '-'}</td>
@@ -1421,6 +1455,11 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   filterString || queryParams.get('filter_id') ? $('#resetFilters').show() : $('#resetFilters').hide();
 
   alertsContainer.show();
+
+  $('.copy-btn').off().on('click', function() {
+      let value = $(this).data('value');
+      copy_text_clipboard(value);
+  });
 }
 
 $('#alertsPerPage').on('change', (e) => {

@@ -665,7 +665,7 @@ function copy_object_link_md(data_type, node_id){
 
 function copy_text_clipboardb(data){
     navigator.clipboard.writeText(fromBinary64(data)).then(function() {
-        notify_success('Copied!');
+        notify_success('Copied');
     }, function(err) {
         notify_error('Can\'t copy link. I printed it in console.');
         console.error(err);
@@ -674,7 +674,7 @@ function copy_text_clipboardb(data){
 
 function copy_text_clipboard(data){
     navigator.clipboard.writeText(data).then(function() {
-        notify_success('Copied!');
+        notify_success('Copied');
     }, function(err) {
         notify_error('Can\'t copy link. I printed it in console.');
         console.error(err);
@@ -1125,7 +1125,7 @@ function goto_case_number() {
 }
 
 
-function load_menu_mod_options(data_type, table, deletion_fn) {
+function load_menu_mod_options(data_type, table, deletion_fn, additionalOptions = []) {
     var actionOptions = {
         classes: [],
         contextMenu: {
@@ -1149,16 +1149,16 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
         items: [],
     };
 
-    datatype_map = {
+    let datatype_map = {
         'task': 'tasks',
         'ioc': 'ioc',
         'evidence': 'evidences',
         'note': 'notes',
         'asset': 'assets',
         'event': 'timeline/events'
-    }
+    };
 
-    get_request_api(`/dim/hooks/options/${data_type}/list`)
+    get_request_api("/dim/hooks/options/"+ data_type +"/list")
     .done((data) => {
         if (api_request_failed(data)) {
             return;
@@ -1216,9 +1216,16 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                 type: 'divider'
             });
             jdata_menu_options = jsdata;
+            additionalOptions.forEach(option => {
+                actionOptions.items.push(option);
+            });
 
-            for (option in jsdata) {
-                opt = jsdata[option];
+            actionOptions.items.push({
+                type: 'divider'
+            });
+
+            for (let option in jsdata) {
+                let opt = jsdata[option];
 
                 actionOptions.items.push({
                     type: 'option',
@@ -1227,10 +1234,10 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     multiTitle: opt.manual_hook_ui_name,
                     iconClass: 'fas fa-rocket',
                     contextMenuClasses: ['text-dark'],
-                    action: function (rows, de, ke) {
+                    action: function(rows, de, ke) {
                         init_module_processing_wrap(rows, data_type, de[0].outerText);
                     },
-                })
+                });
             }
 
             if (deletion_fn !== undefined) {
@@ -1251,10 +1258,10 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                 });
             }
 
-            tableActions = table.contextualActions(actionOptions);
+            let tableActions = table.contextualActions(actionOptions);
             tableActions.update();
         }
-    })
+    });
 }
 
 
@@ -1682,11 +1689,10 @@ function userWhoamiRequest(force = false) {
   if (!userWhoami || force) {
     get_request_api('/user/whoami')
       .done((data) => {
-        if (api_request_failed(data)) {
-            return;
-        }
-          userWhoami = data.data;
+        if (notify_auto_api(data, true)) {
+            userWhoami = data.data;
           sessionStorage.setItem('userWhoami', JSON.stringify(userWhoami));
+        }
       });
   }
 }
