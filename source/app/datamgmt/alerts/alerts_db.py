@@ -24,7 +24,7 @@ from flask_login import current_user
 from functools import reduce
 from operator import and_
 from sqlalchemy import desc, asc, func, tuple_, or_
-from sqlalchemy.orm import aliased, make_transient
+from sqlalchemy.orm import aliased, make_transient, selectinload
 from sqlalchemy.orm import joinedload
 from typing import List, Tuple
 
@@ -51,14 +51,14 @@ from app.models import CaseAssets
 from app.models import alert_assets_association
 from app.models import alert_iocs_association
 from app.models import Ioc
-from app.models.alerts import Alert
+from app.models.alerts import Alert, AlertSimilarity
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertCaseAssociation
 from app.models.alerts import SimilarAlertsCache
 from app.models.alerts import AlertResolutionStatus
 from app.models.authorization import Permissions
 from app.iris_engine.utils.common import parse_bf_date_format
-from app.schema.marshables import EventSchema
+from app.schema.marshables import EventSchema, AlertSchema
 from app.util import add_obj_history_entry
 
 
@@ -91,8 +91,8 @@ def get_filtered_alerts(
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc',
-        current_user_id: int = None
-):
+        current_user_id: int = None,
+        source_reference=None):
     """
     Get a list of alerts that match the given filter conditions
 
@@ -117,6 +117,7 @@ def get_filtered_alerts(
         per_page (int): The number of alerts per page
         sort (str): The sort order
         current_user_id (int): The ID of the current user
+        source_reference (str): Alert source reference
 
     returns:
         list: A list of alerts that match the given filter conditions

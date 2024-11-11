@@ -14,7 +14,7 @@ from app.alembic.alembic_utils import _has_table, index_exists
 
 # revision identifiers, used by Alembic.
 revision = 'd5a720d1b99b'
-down_revision = '11aa5b725b8e'
+down_revision = '3715d4fac4de'
 branch_labels = None
 depends_on = None
 
