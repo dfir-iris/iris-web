@@ -40,6 +40,7 @@ from app import app
 from app import bc
 from app import db
 from app import oidc_client
+from app.business.auth import validate_ldap_login, _retrieve_user_by_username
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 
 from app.forms import LoginForm, MFASetupForm
@@ -63,12 +64,7 @@ log = app.logger
 
 
 # filter User out of database through username
-def _retrieve_user_by_username(username):
-    user = get_active_user_by_login(username)
-    if not user:
-        track_activity(f'someone tried to log in with user \'{username}\', which does not exist',
-                       ctx_less=True, display_in_ui=False)
-    return user
+
 
 
 def _render_template_login(form, msg):
@@ -93,29 +89,9 @@ def _validate_local_login(username, password):
     return None
 
 
-def _validate_ldap_login(username, password, local_fallback=True):
-    try:
-        if ldap_authenticate(username, password) is False:
-            if local_fallback is True:
-                track_activity(f'wrong login password for user \'{username}\' using LDAP auth - falling back to local based on settings',
-                               ctx_less=True, display_in_ui=False)
-                return _validate_local_login(username, password)
-            track_activity(f'wrong login password for user \'{username}\' using LDAP auth', ctx_less=True, display_in_ui=False)
-            return None
-
-        user = _retrieve_user_by_username(username)
-        if not user:
-            return None
-
-        return user
-    except Exception as e:
-        log.error(e.__str__())
-        return None
-
-
 def _authenticate_ldap(form, username, password, local_fallback=True):
     try:
-        user = _validate_ldap_login(username, password, local_fallback)
+        user = validate_ldap_login(username, password, local_fallback)
         if user is None:
             return _render_template_login(form, 'Wrong credentials. Please try again.')
 
@@ -306,8 +282,8 @@ def mfa_setup():
         if totp.verify(token):
             has_valid_password = False
             if is_authentication_ldap() is True:
-                if _validate_ldap_login(user.user, user_password,
-                                        local_fallback=app.config.get('AUTHENTICATION_LOCAL_FALLBACK')):
+                if validate_ldap_login(user.user, user_password,
+                                       local_fallback=app.config.get('AUTHENTICATION_LOCAL_FALLBACK')):
                     has_valid_password = True
 
             elif bc.check_password_hash(user.password, user_password):
