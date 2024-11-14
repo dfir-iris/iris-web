@@ -231,6 +231,30 @@ class EvidenceTypes(db.Model):
     created_by = relationship('User')
 
 
+class Webhook(db.Model):
+    __tablename__ = 'webhooks'
+
+    # Metadata
+    id = Column(Integer, primary_key=True)
+    created_by_user_id = Column(Integer, db.ForeignKey('user.id'))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    # Data
+    name = Column(String, nullable=False)
+    header_auth = Column(JSON, nullable=True)
+    payload_schema = Column(JSON, nullable=True)
+    url = Column(String, nullable=True)
+
+    created_by_user = relationship('User')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_from_dict(self, data: dict):
+        for field, value in data.items():
+            setattr(self, field, value)
+
+
 class CaseTemplate(db.Model):
     __tablename__ = 'case_template'
 
