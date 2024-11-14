@@ -883,12 +883,7 @@ class WebhookSchema(ma.Schema):
                     if not isinstance(ivalue, str):
                         raise ValidationError('All items in dict must be str')
         return value
-
-    # header_auth: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
-    #     fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list])),
-    #     allow_none=True,
-    #     missing=[]
-    # )
+    
 
 class CaseTemplateSchema(ma.Schema):
     """Schema for serializing and deserializing CaseTemplate objects.
