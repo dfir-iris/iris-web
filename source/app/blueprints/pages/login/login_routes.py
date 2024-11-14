@@ -225,16 +225,16 @@ if is_authentication_oidc():
         if user and not user.active:
             return response_error("User not active in IRIS", 403)
 
-        return wrap_login_user(user)
+        return wrap_login_user(user, is_oidc=True)
 
-def wrap_login_user(user):
+def wrap_login_user(user, is_oidc=False):
 
     session['username'] = user.user
 
     if 'SERVER_SETTINGS' not in app.config:
         app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
 
-    if app.config['SERVER_SETTINGS']['enforce_mfa']:
+    if app.config['SERVER_SETTINGS']['enforce_mfa'] is True and is_oidc is False:
         if "mfa_verified" not in session or session["mfa_verified"] is False:
             return redirect(url_for('mfa_verify'))
 
