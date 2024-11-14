@@ -11,6 +11,7 @@
 {% include 'includes/navigation_ext.html' %}
 {% include 'includes/sidenav.html' %}
 
+
 <div class="main-panel">
 
     <div class="content">
@@ -233,230 +234,180 @@
                         </div>
                     </div>
                 </div>
-                <!-- Actions and triggers -->
-                <div class="row row-card-no-pd" style="padding-top: 0px;padding-bottom: 3px;">
-                    {% include 'case-nav_actions.html' %}
-                </div>
-                <div class="row row-card-no-pd">
-                    <div class="col-md-12">
-                        <div class="card mb-4" id="actionsCard">
-                            <div class="card-header">
-                                <div class="row">
-                                    <a href="#actions_card" class="d-block nav-link mr-auto" data-toggle="collapse"
-                                        aria-expanded="true" aria-controls="actions_card">
-                                        <h4 class="m-0 font-weight-bold">Actions and Triggers</h4>
-                                    </a>
-                                    <div class="mr-0 float-right">
-                                        <button type="button" id="action_refresh_btn"
-                                            class="btn btn-sm btn-outline-default mr-3" onclick="refreshActions();">
-                                            Refresh
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="collapsed" id="actions_card">
-                                <div class="card-body">
-                                    <div class="table-responsive" id="actions_triggers_table_wrapper">
-                                        <div class="selectgroup">
-                                            <span id="table_buttons"></span>
-                                        </div>
-                                        <table class="table display table table-striped table-hover" width="100%"
-                                            cellspacing="0" id="actions_triggers_table">
-                                            <thead>
-                                                <tr>
-                                                    <th>#ID</th>
-                                                    <th>Action Name</th>
-                                                    <th>Trigger Condition</th>
-                                                    <th>Created At</th>
-                                                    <th>Status</th>
-                                                    <th>User</th>
-                                                </tr>
-                                            </thead>
-                                            <tfoot>
-                                                <tr>
-                                                    <th>#ID</th>
-                                                    <th>Action Name</th>
-                                                    <th>Trigger Condition</th>
-                                                    <th>Created At</th>
-                                                    <th>Status</th>
-                                                    <th>User</th>
-                                                </tr>
-                                            </tfoot>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-12" id="actions_output">
-                                        <p id="actionStatus"></p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="modal " tabindex="-1" role="dialog" id="modal_select_report" data-backdrop="true">
-                <div class="modal-lg modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5>Select report template</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                                    aria-hidden="true">&times;</span></button>
-                        </div>
-                        <div class="modal-body">
-                            {% if reports| length == 0 %}
-                            <div class="alert alert-warning" role="alert">
-                                <h4 class="alert-heading">No report template found</h4>
-                                <p>Report templates are configured in <a
-                                        href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
-                            </div>
-                            {% else %}
-                            <div class="col">
-                                <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might
-                                    fail depending on the situation.<br /><code>Safe Mode</code> can be used to generate
-                                    the report without them.</p>
-                            </div>
-
-                            <select class="selectpicker form-control bg-outline-success dropdown-submenu"
-                                data-show-subtext="true" data-live-search="true" id="select_report">
-                                {% for report in reports %}
-                                <option data-toggle="tooltip" value="{{ report[0] }}" data-subtext="{{ report[3] }}">
-                                    {{ report[1] }} ({{ report[2].capitalize() }})</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="modal-footer">
-                            <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_report(true);">
-                                <span class="btn-label">
-                                    <i class="fa fa-file-download"></i>
-                                </span>
-                                Generate in Safe Mode
-                            </a>
-                            <a href="#" class="btn btn-light float-right mt-2 ml-2" onclick="gen_report(false);">
-                                <span class="btn-label">
-                                    <i class="fa fa-file-download"></i>
-                                </span>
-                                Generate
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div><!-- /.modal-content -->
-                </div><!-- /.modal-dialog -->
-            </div>
-            <div class="modal " tabindex="-1" role="dialog" id="modal_select_report_act" data-backdrop="true">
-                <div class="modal-lg modal-dialog" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5>Select activity report template</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                                    aria-hidden="true">&times;</span></button>
-                        </div>
-                        <div class="modal-body">
-                            {% if reports| length == 0 %}
-                            <div class="alert alert-warning" role="alert">
-                                <h4 class="alert-heading">No report template found</h4>
-                                <p>Report templates are configured in <a
-                                        href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
-                            </div>
-                            {% else %}
-                            <div class="col">
-                                <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might
-                                    fail depending on the situation.<br /><code>Safe Mode</code> can be used to generate
-                                    the report without them.</p>
-                            </div>
-                            <select class="selectpicker form-control bg-outline-success dropdown-submenu mb-2"
-                                data-show-subtext="true" data-live-search="true" id="select_report_act">
-                                {% for report in reports_act %}
-                                <option data-toggle="tooltip" value="{{ report[0] }}" data-subtext="{{ report[3] }}">
-                                    {{ report[1] }} ({{ report[2].capitalize() }})</option>
-                                {% endfor %}
-                            </select>
-
-                        </div>
-
-                        <div class="modal-footer">
-                            <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_act_report(true);">
-                                <span class="btn-label">
-                                    <i class="fa fa-file-download"></i>
-                                </span>
-                                Generate in Safe Mode
-                            </a>
-                            <a href="#" class="btn btn-light float-right mt-2 ml-2" onclick="gen_act_report(false);">
-                                <span class="btn-label">
-                                    <i class="fa fa-file-download"></i>
-                                </span>
-                                Generate
-                            </a>
-                            {% endif %}
-                        </div>
-                    </div><!-- /.modal-content -->
-                </div><!-- /.modal-dialog -->
-            </div>
-            <div class="modal " tabindex="-1" role="dialog" id="modal_choose_reviewer" data-backdrop="true">
-                <div class="modal-lg modal-dialog" role="document">
-                    <div class="modal-content">
-                        <form method="post" action="" id="form_choose_reviewer">
+                <div class="modal " tabindex="-1" role="dialog" id="modal_select_report" data-backdrop="true">
+                    <div class="modal-lg modal-dialog" role="document">
+                        <div class="modal-content">
                             <div class="modal-header">
-                                <h5>Choose reviewer</h5>
+                                <h5>Select report template</h5>
                                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                                         aria-hidden="true">&times;</span></button>
                             </div>
                             <div class="modal-body">
-                                <div class="row mb-2">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <select class="selectpicker form-control" data-dropup-auto="false"
-                                                data-live-search="true" id="reviewer_id">
-                                            </select>
+                                {% if reports| length == 0 %}
+                                <div class="alert alert-warning" role="alert">
+                                    <h4 class="alert-heading">No report template found</h4>
+                                    <p>Report templates are configured in <a
+                                            href="/manage/templates?cid={{case.case_id}}">the management section</a>.
+                                    </p>
+                                </div>
+                                {% else %}
+                                <div class="col">
+                                    <p>Since IRIS v2.0.0, the report generation supports images. Integration of images
+                                        might
+                                        fail depending on the situation.<br /><code>Safe Mode</code> can be used to
+                                        generate
+                                        the report without them.</p>
+                                </div>
+
+                                <select class="selectpicker form-control bg-outline-success dropdown-submenu"
+                                    data-show-subtext="true" data-live-search="true" id="select_report">
+                                    {% for report in reports %}
+                                    <option data-toggle="tooltip" value="{{ report[0] }}"
+                                        data-subtext="{{ report[3] }}">
+                                        {{ report[1] }} ({{ report[2].capitalize() }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="modal-footer">
+                                <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_report(true);">
+                                    <span class="btn-label">
+                                        <i class="fa fa-file-download"></i>
+                                    </span>
+                                    Generate in Safe Mode
+                                </a>
+                                <a href="#" class="btn btn-light float-right mt-2 ml-2" onclick="gen_report(false);">
+                                    <span class="btn-label">
+                                        <i class="fa fa-file-download"></i>
+                                    </span>
+                                    Generate
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+                <div class="modal " tabindex="-1" role="dialog" id="modal_select_report_act" data-backdrop="true">
+                    <div class="modal-lg modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5>Select activity report template</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                        aria-hidden="true">&times;</span></button>
+                            </div>
+                            <div class="modal-body">
+                                {% if reports| length == 0 %}
+                                <div class="alert alert-warning" role="alert">
+                                    <h4 class="alert-heading">No report template found</h4>
+                                    <p>Report templates are configured in <a
+                                            href="/manage/templates?cid={{case.case_id}}">the management section</a>.
+                                    </p>
+                                </div>
+                                {% else %}
+                                <div class="col">
+                                    <p>Since IRIS v2.0.0, the report generation supports images. Integration of images
+                                        might
+                                        fail depending on the situation.<br /><code>Safe Mode</code> can be used to
+                                        generate
+                                        the report without them.</p>
+                                </div>
+                                <select class="selectpicker form-control bg-outline-success dropdown-submenu mb-2"
+                                    data-show-subtext="true" data-live-search="true" id="select_report_act">
+                                    {% for report in reports_act %}
+                                    <option data-toggle="tooltip" value="{{ report[0] }}"
+                                        data-subtext="{{ report[3] }}">
+                                        {{ report[1] }} ({{ report[2].capitalize() }})</option>
+                                    {% endfor %}
+                                </select>
+
+                            </div>
+
+                            <div class="modal-footer">
+                                <a href="#" class="btn btn-light float-left mt-2 mr-auto"
+                                    onclick="gen_act_report(true);">
+                                    <span class="btn-label">
+                                        <i class="fa fa-file-download"></i>
+                                    </span>
+                                    Generate in Safe Mode
+                                </a>
+                                <a href="#" class="btn btn-light float-right mt-2 ml-2"
+                                    onclick="gen_act_report(false);">
+                                    <span class="btn-label">
+                                        <i class="fa fa-file-download"></i>
+                                    </span>
+                                    Generate
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+                <div class="modal " tabindex="-1" role="dialog" id="modal_choose_reviewer" data-backdrop="true">
+                    <div class="modal-lg modal-dialog" role="document">
+                        <div class="modal-content">
+                            <form method="post" action="" id="form_choose_reviewer">
+                                <div class="modal-header">
+                                    <h5>Choose reviewer</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                            aria-hidden="true">&times;</span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-2">
+                                        <div class="col-12">
+                                            <div class="form-group">
+                                                <select class="selectpicker form-control" data-dropup-auto="false"
+                                                    data-live-search="true" id="reviewer_id">
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-4">
+                                        <div class="col-12 d-flex">
+                                            <button type="button" class="btn btn-default mr-auto"
+                                                data-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-outline-success ml-auto"
+                                                id="submit_set_reviewer">Request</button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="row mt-4">
-                                    <div class="col-12 d-flex">
-                                        <button type="button" class="btn btn-default mr-auto"
-                                            data-dismiss="modal">Cancel</button>
-                                        <button type="button" class="btn btn-outline-success ml-auto"
-                                            id="submit_set_reviewer">Request</button>
+                            </form>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+                <div class="modal" tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
+                    <div class="modal-xl modal-dialog" role="document">
+                        <div class="modal-content" id="info_case_modal_content">
+
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+                <div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional"
+                    data-backdrop="true">
+                </div>
+                <div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_case_review"
+                    data-backdrop="static" data-keyboard="false">
+                    <div class="modal-dialog modal-lg" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Case Review</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <p>Do you confirm that the case has been reviewed?</p>
                                     </div>
                                 </div>
-                            </div>
-                        </form>
-                    </div><!-- /.modal-content -->
-                </div><!-- /.modal-dialog -->
-            </div>
-            <div class="modal" tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
-                <div class="modal-xl modal-dialog" role="document">
-                    <div class="modal-content" id="info_case_modal_content">
-
-                    </div><!-- /.modal-content -->
-                </div><!-- /.modal-dialog -->
-            </div>
-            <div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional"
-                data-backdrop="true">
-            </div>
-            <div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_case_review"
-                data-backdrop="static" data-keyboard="false">
-                <div class="modal-dialog modal-lg" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Case Review</h5>
-                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        <div class="modal-body">
-                            <div class="row">
-                                <div class="col-12">
-                                    <p>Do you confirm that the case has been reviewed?</p>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12">
-                                    <button type="button" class="btn btn-danger float-left"
-                                        data-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-success float-right" id="confirmReview">Confirm
-                                        Review</button>
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-danger float-left"
+                                            data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-success float-right"
+                                            id="confirmReview">Confirm
+                                            Review</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -465,32 +416,30 @@
             </div>
         </div>
     </div>
-</div>
-{% include 'includes/footer.html' %}
-{% endif %} {% endblock content %} {% block javascripts %}
+    {% include 'includes/footer.html' %}
+    {% endif %} {% endblock content %} {% block javascripts %}
+    <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
+        charset="utf-8"></script>
+    <script src="/static/assets/js/core/socket.io.js"></script>
+    <script src="/static/assets/js/plugin/select/select2.js"></script>
 
-<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript"
-    charset="utf-8"></script>
-<script src="/static/assets/js/core/socket.io.js"></script>
-<script src="/static/assets/js/plugin/select/select2.js"></script>
+    <script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
+    <script src="/static/assets/js/iris/crc32.js"></script>
+    <script src="/static/assets/js/iris/datatablesUtils.js"></script>
+    <script src="/static/assets/js/iris/case.js"></script>
+    <script src="/static/assets/js/iris/case.actions-and-triggers.js"></script>
+    <script src="/static/assets/js/iris/manage.cases.common.js"></script>
+    <script src="/static/assets/js/iris/case.common.js"></script>
+    <script src="/static/assets/js/iris/case.summary.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+    <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 
-<script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
-<script src="/static/assets/js/iris/crc32.js"></script>
-<script src="/static/assets/js/iris/datatablesUtils.js"></script>
-<script src="/static/assets/js/iris/case.js"></script>
-<script src="/static/assets/js/iris/manage.cases.common.js"></script>
-<script src="/static/assets/js/iris/case.common.js"></script>
-<script src="/static/assets/js/iris/case.summary.js"></script>
-<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
-<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
+    <script>
+        $('#modal_select_report').selectpicker();
+        load_menu_mod_options_modal([{{ case.case_id }}], 'case', $("#case_modal_quick_actions"));
+    </script> 
+    <script src="/static/assets/js/plugin/datatables/dataTables.group.min.js"></script>
 
-<script>
-    $('#modal_select_report').selectpicker();
-    load_menu_mod_options_modal([{{ case.case_id }}], 'case', $("#case_modal_quick_actions"));
-</script>
-<script src="/static/assets/js/iris/case.actions-and-triggers.js"></script>
-<script src="/static/assets/js/plugin/datatables/dataTables.group.min.js"></script>
-
-
-{% endblock javascripts %}
+    {% endblock javascripts %}
