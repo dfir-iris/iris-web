@@ -666,6 +666,8 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     ioc_links: List[int] = fields.List(fields.Integer, required=False)
     asset_enrichment: str = auto_field('asset_enrichment', required=False)
     asset_type: AssetTypeSchema = ma.Nested(AssetTypeSchema, required=False)
+    alerts = fields.Nested('AlertSchema', many=True, exclude=['assets'])
+    analysis_status = fields.Nested('AnalysisStatusSchema', required=False)
 
     class Meta:
         model = CaseAssets

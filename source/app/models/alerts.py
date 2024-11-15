@@ -2,7 +2,7 @@ from datetime import datetime
 
 import uuid
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy import BigInteger, Table, Boolean
+from sqlalchemy import BigInteger, Table, Boolean, String
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
@@ -114,3 +114,19 @@ class SimilarAlertsCache(db.Model):
         self.asset_type_id = asset_type_id
         self.ioc_type_id = ioc_type_id
         self.created_at = created_at if created_at else datetime.utcnow()
+
+
+class AlertSimilarity(db.Model):
+    __tablename__ = 'alert_similarity'
+
+    id = Column(BigInteger, primary_key=True)
+    alert_id = Column(BigInteger, ForeignKey('alerts.alert_id'), nullable=False)
+    similar_alert_id = Column(BigInteger, ForeignKey('alerts.alert_id'), nullable=False)
+    similarity_type = Column(String(255), nullable=True)
+    matching_asset_id = Column(BigInteger, ForeignKey('case_assets.asset_id'), nullable=True)
+    matching_ioc_id = Column(BigInteger, ForeignKey('ioc.ioc_id'), nullable=True)
+
+    alert = relationship("Alert", foreign_keys=[alert_id])
+    similar_alert = relationship("Alert", foreign_keys=[similar_alert_id])
+    matching_asset = relationship("CaseAssets")
+    matching_ioc = relationship("Ioc")
