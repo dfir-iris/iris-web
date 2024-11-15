@@ -11,7 +11,7 @@ Flask-Caching==1.10.1
 marshmallow==3.20.1
 marshmallow-sqlalchemy==0.30.0
 gunicorn==20.1.0
-psycopg2-binary==2.9.1
+psycopg2-binary==2.9.10
 pyunpack==0.2.2
 packaging==21.3
 requests==2.31.0
