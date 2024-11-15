@@ -104,7 +104,9 @@ def case_template_modal(cur_id, caseid, url_redir):
         "tags": case_template.tags,
         "tasks": case_template.tasks,
         "note_directories": case_template.note_directories,
-        "classification": case_template.classification
+        "classification": case_template.classification,
+        "action": case_template.action,
+        "triggers": case_template.triggers
     }
 
     form.case_template_json.data = case_template_dict
@@ -142,6 +144,20 @@ def add_template_modal():
                         "content": "Note 1 content"
                     }
                 ]
+            }
+        ],
+        "action": [
+            {
+                "webhook_id": "Webhook Id",
+                "display_name": "Action Name",
+                "input_params": "JSON",
+            }
+        ],
+        "triggers": [
+            {
+                "webhook_id": "Webhook Id",
+                "display_name": "Trigger Name",
+                "input_params": "JSON",
             }
         ]
     }

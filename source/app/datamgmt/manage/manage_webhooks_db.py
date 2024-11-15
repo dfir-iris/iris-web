@@ -74,6 +74,7 @@ def delete_webhook_by_id(webhook_id: int):
 
 
 def validate_webhook(data: dict, update: bool = False) -> Optional[str]:
+    valid_types = {"string", "number", "integer", "object", "array", "boolean", "null"}
     try:
         if not update:
             # If it's not an update, we check the required fields
@@ -144,6 +145,8 @@ def validate_webhook(data: dict, update: bool = False) -> Optional[str]:
                             return "Each property must be a dictionary."
                         if "type" not in property:
                             return "Each property must have a 'type' field."
+                        if property["type"] not in valid_types:
+                            return f"Invalid type '{property['type']}'. Valid types are: {', '.join(valid_types)}."
 
         # If all checks succeeded, we return None to indicate everything is has been validated
         return None

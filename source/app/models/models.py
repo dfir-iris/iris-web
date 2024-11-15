@@ -256,7 +256,7 @@ class Webhook(db.Model):
 
 
 class CaseTemplate(db.Model):
-    __tablename__ = 'case_template'
+    __tablename__ = 'case_templates'
 
     # Metadata
     id = Column(Integer, primary_key=True)
@@ -274,6 +274,8 @@ class CaseTemplate(db.Model):
     tasks = Column(JSON, nullable=True)
     note_directories = Column(JSON, nullable=True)
     classification = Column(String, nullable=True)
+    action = Column(JSON, nullable=True)
+    triggers = Column(JSON, nullable=True)
 
     created_by_user = relationship('User')
 

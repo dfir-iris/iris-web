@@ -107,7 +107,7 @@ def add_template_modal():
                 "properties": [
                     {
                         "property": "property name",
-                        "type": "type of data"
+                        "type": "string"
                     }
                 ]
             }
