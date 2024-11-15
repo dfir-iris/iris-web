@@ -105,7 +105,7 @@ def case_template_modal(cur_id, caseid, url_redir):
         "tasks": case_template.tasks,
         "note_directories": case_template.note_directories,
         "classification": case_template.classification,
-        "action": case_template.action,
+        "actions": case_template.actions,
         "triggers": case_template.triggers
     }
 
@@ -132,7 +132,13 @@ def add_template_modal():
             {
                 "title": "Task 1",
                 "description": "Task 1 description",
-                "tags": ["tag1", "tag2"]
+                "tags": ["tag1", "tag2"],
+                "actions": [
+                    {
+                        "webhook_id": "Webhook Id",
+                        "display_name": "Action Name",
+                    }
+                ],
             }
         ],
         "note_directories": [
@@ -146,18 +152,10 @@ def add_template_modal():
                 ]
             }
         ],
-        "action": [
-            {
-                "webhook_id": "Webhook Id",
-                "display_name": "Action Name",
-                "input_params": "JSON",
-            }
-        ],
         "triggers": [
             {
                 "webhook_id": "Webhook Id",
                 "display_name": "Trigger Name",
-                "input_params": "JSON",
             }
         ]
     }

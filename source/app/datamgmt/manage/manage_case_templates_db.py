@@ -124,19 +124,19 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
                         if not isinstance(tag, str):
                             return "Each tag must be a string."
                         
-        # We check that action, if any, are a list of dictionaries with mandatory keys
-        if "action" in data:
-            if not isinstance(data["action"], list):
-                return "Action must be a list."
-            for action in data["action"]:
-                if not isinstance(action, dict):
-                    return "Each action must be a dictionary."
-                if "webhook_id" not in action:
-                    return "Each action must have a 'webhook_id' field."
-                if "display_name" not in action:
-                    return "Each action must have a 'display_name' field."
-                if "input_params" not in action:
-                    return "Each action must have a 'input_params' field."
+        # # We check that action, if any, are a list of dictionaries with mandatory keys
+        # if "action" in data:
+        #     if not isinstance(data["action"], list):
+        #         return "Action must be a list."
+        #     for action in data["action"]:
+        #         if not isinstance(action, dict):
+        #             return "Each action must be a dictionary."
+        #         if "webhook_id" not in action:
+        #             return "Each action must have a 'webhook_id' field."
+        #         if "display_name" not in action:
+        #             return "Each action must have a 'display_name' field."
+        #         if "input_params" not in action:
+        #             return "Each action must have a 'input_params' field."
                 
         # We check that action, if any, are a list of dictionaries with mandatory keys
         if "triggers" in data:
@@ -149,8 +149,6 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
                     return "Each trigger must have a 'webhook_id' field."
                 if "display_name" not in trigger:
                     return "Each trigger must have a 'display_name' field."
-                if "input_params" not in trigger:
-                    return "Each trigger must have a 'input_params' field."
                 
 
         # We check that note groups, if any, are a list of dictionaries with mandatory keys
@@ -193,7 +191,6 @@ def case_template_pre_modifier(case_schema: CaseSchema, case_template_id: str):
 
     return case_schema
 
-
 def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
     logs = []
     # Update case tasks
@@ -208,7 +205,13 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
                 "task_title": task_template['title'],
                 "task_description": task_template['description'] if task_template.get('description') else "",
                 "task_tags": ",".join(tag for tag in task_template["tags"]) if task_template.get('tags') else "",
-                "task_status_id": 1
+                "task_status_id": 1,
+                "task_actions": [
+                    {
+                        "webhook_id": action["webhook_id"],
+                        "display_name": action["display_name"]
+                    } for action in task_template.get("actions", [])
+                ]
             }
 
             mapped_task_template = call_modules_hook('on_preload_task_create', data=mapped_task_template, caseid=case.case_id)

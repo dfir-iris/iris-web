@@ -248,6 +248,7 @@ function case_template_detail(ctempl_id) {
                 score: 1,
                 meta: "tags of the case or the tasks",
               },
+              { value: "actions", score: 1, meta: "actions of the case" },
               { value: "tasks", score: 1, meta: "tasks of the case" },
               { value: "note_groups", score: 1, meta: "groups of notes" },
               {
@@ -256,7 +257,6 @@ function case_template_detail(ctempl_id) {
                 meta: "title of the task or the note group or the note",
               },
               { value: "content", score: 1, meta: "content of the note" },
-              { value: "action", score: 1, meta: "actions of the case" },
               { value: "triggers", score: 1, meta: "triggers of the case" },
             ]);
           },

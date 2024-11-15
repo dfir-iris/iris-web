@@ -963,12 +963,12 @@ class CaseTemplateSchema(ma.Schema):
         return value
 
     tasks: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
-        fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list])),
+        fields.Dict(keys=fields.Str(), values=fields.Raw()),  # Removed validate_string_or_list
         allow_none=True,
         missing=[]
     )
 
-    action: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
+    actions: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
         fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list])),
         allow_none=True,
         missing=[]
