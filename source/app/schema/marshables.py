@@ -1632,6 +1632,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
     classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
+    review_status: Optional[str] = auto_field('review_status', required=False, allow_none=True)
 
     class Meta:
         model = Cases
@@ -2478,6 +2479,7 @@ class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     state = ma.Nested(CaseStateSchema)
+    review_status = ma.Nested(ReviewStatusSchema)
 
     class Meta:
         model = Cases

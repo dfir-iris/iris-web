@@ -110,24 +110,6 @@ def view_gtask(cur_id):
     return response_success("", data=task._asdict())
 
 
-@dashboard_rest_blueprint.route('/user/tasks/list', methods=['GET'])
-@ac_api_requires()
-def get_utasks():
-    ct = list_user_tasks()
-
-    if ct:
-        output = [c._asdict() for c in ct]
-    else:
-        output = []
-
-    ret = {
-        "tasks_status": get_tasks_status(),
-        "tasks": output
-    }
-
-    return response_success("", data=ret)
-
-
 @dashboard_rest_blueprint.route('/user/reviews/list', methods=['GET'])
 @ac_api_requires()
 def get_reviews():

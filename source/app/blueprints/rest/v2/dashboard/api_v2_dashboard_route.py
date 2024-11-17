@@ -20,8 +20,8 @@ from flask import Blueprint, request
 
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_success
-from app.datamgmt.dashboard.dashboard_db import list_user_cases, list_user_tasks
-from app.schema.marshables import CaseDetailsSchema, CaseTaskSchema
+from app.datamgmt.dashboard.dashboard_db import list_user_cases, list_user_tasks, list_user_reviews
+from app.schema.marshables import CaseDetailsSchema, CaseTaskSchema, CaseSchema
 
 api_v2_dashboard_blueprint = Blueprint('dashboard_rest_v2',
                                     __name__,
@@ -43,3 +43,13 @@ def list_own_cases():
 def list_own_tasks():
     ct = list_user_tasks()
     return response_api_success(data=CaseTaskSchema(many=True).dump(ct))
+
+@api_v2_dashboard_blueprint.route('/user/reviews/list', methods=['GET'])
+@ac_api_requires()
+def list_own_reviews():
+    reviews = list_user_reviews()
+    return response_api_success(
+        data=CaseSchema(
+            many=True,
+            only=["case_id", "case_name", "review_status.status_name", "status_id"]
+        ).dump(reviews))
