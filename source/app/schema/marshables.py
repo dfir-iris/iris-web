@@ -1899,6 +1899,34 @@ class TaskLogSchema(ma.Schema):
         unknown = EXCLUDE
 
 
+class AnalysisStatusSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing AnalysisStatus objects.
+
+    This schema defines the fields to include when serializing and deserializing AnalysisStatus objects.
+    It includes fields for the analysis status name and analysis status value.
+
+    """
+
+    class Meta:
+        model = AnalysisStatus
+        load_instance = True
+        unknown = EXCLUDE
+
+
+class TaskStatusSchema(ma.SQLAlchemyAutoSchema):
+    """Schema for serializing and deserializing TaskStatus objects.
+
+    This schema defines the fields to include when serializing and deserializing TaskStatus objects.
+    It includes fields for the task status name, task status value, and CSRF token.
+
+    """
+
+    class Meta:
+        model = TaskStatus
+        load_instance = True
+        unknown = EXCLUDE
+
+
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseTask objects.
 
@@ -1910,6 +1938,8 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     task_status_id: int = auto_field('task_status_id', required=True)
     task_assignees_id: Optional[List[int]] = fields.List(fields.Integer, required=False, allow_none=True)
     task_assignees: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
+    status = ma.Nested(TaskStatusSchema)
+    case = ma.Nested(CaseSchema, only=['case_name', 'case_id'])
 
     class Meta:
         model = CaseTasks
@@ -2301,20 +2331,6 @@ class AlertResolutionSchema(ma.SQLAlchemyAutoSchema):
 
     class Meta:
         model = AlertResolutionStatus
-        load_instance = True
-        unknown = EXCLUDE
-
-
-class AnalysisStatusSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing AnalysisStatus objects.
-
-    This schema defines the fields to include when serializing and deserializing AnalysisStatus objects.
-    It includes fields for the analysis status name and analysis status value.
-
-    """
-
-    class Meta:
-        model = AnalysisStatus
         load_instance = True
         unknown = EXCLUDE
 

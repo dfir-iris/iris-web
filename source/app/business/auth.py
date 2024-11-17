@@ -1,7 +1,15 @@
-from app import bc, app
+from urllib.parse import urlsplit
+
+from flask import session, redirect, url_for, request
+from flask_login import login_user
+
+from app import bc, app, db
+from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
+from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
+from app.models import Cases
 from app.schema.marshables import UserSchema
 
 log = app.logger
@@ -61,7 +69,48 @@ def validate_local_login(username: str, password: str):
         return None
 
     if bc.check_password_hash(user.password, password):
+        wrap_login_user(user)
         return UserSchema(exclude=['user_password', 'mfa_secrets', 'webauthn_credentials']).dump(user)
 
     track_activity(f'wrong login password for user \'{username}\' using local auth', ctx_less=True, display_in_ui=False)
     return None
+
+
+def wrap_login_user(user, is_oidc=False):
+
+    session['username'] = user.user
+
+    if 'SERVER_SETTINGS' not in app.config:
+        app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
+
+    if app.config['SERVER_SETTINGS']['enforce_mfa'] is True and is_oidc is False:
+        if "mfa_verified" not in session or session["mfa_verified"] is False:
+            return redirect(url_for('mfa_verify'))
+
+    login_user(user)
+
+    caseid = user.ctx_case
+    session['permissions'] = ac_get_effective_permissions_of_user(user)
+
+    if caseid is None:
+        case = Cases.query.order_by(Cases.case_id).first()
+        user.ctx_case = case.case_id
+        user.ctx_human_case = case.name
+        db.session.commit()
+
+    session['current_case'] = {
+        'case_name': user.ctx_human_case,
+        'case_info': "",
+        'case_id': user.ctx_case
+    }
+
+    track_activity(f'user \'{user.user}\' successfully logged-in', ctx_less=True, display_in_ui=False)
+
+    next_url = None
+    if request.args.get('next'):
+        next_url = request.args.get('next') if 'cid=' in request.args.get('next') else request.args.get('next') + '?cid=' + str(user.ctx_case)
+
+    if not next_url or urlsplit(next_url).netloc != '':
+        next_url = url_for('index.index', cid=user.ctx_case)
+
+    return redirect(next_url)

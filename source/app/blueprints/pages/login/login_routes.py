@@ -20,13 +20,8 @@ import base64
 import io
 import pyotp
 import qrcode
-from urllib.parse import urlsplit
 import random
 import string
-
-from oic import rndstr
-from oic.oic.message import AuthorizationResponse
-
 from flask import Blueprint, flash
 from flask import redirect
 from flask import render_template
@@ -34,25 +29,20 @@ from flask import request
 from flask import session
 from flask import url_for
 from flask_login import current_user
-from flask_login import login_user
+from oic import rndstr
+from oic.oic.message import AuthorizationResponse
 
 from app import app
 from app import bc
 from app import db
 from app import oidc_client
-from app.business.auth import validate_ldap_login, _retrieve_user_by_username
-from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
-
-from app.forms import LoginForm, MFASetupForm
-from app.iris_engine.access_control.ldap_handler import ldap_authenticate
-from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
-from app.iris_engine.utils.tracker import track_activity
-from app.models.cases import Cases
-
-from app.blueprints.responses import response_error
 from app.blueprints.access_controls import is_authentication_oidc, is_authentication_ldap
-from app.datamgmt.manage.manage_users_db import get_active_user_by_login, get_user
+from app.blueprints.responses import response_error
+from app.business.auth import validate_ldap_login, _retrieve_user_by_username, wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user
+from app.datamgmt.manage.manage_users_db import get_user
+from app.forms import LoginForm, MFASetupForm
+from app.iris_engine.utils.tracker import track_activity
 
 login_blueprint = Blueprint(
     'login',
@@ -226,45 +216,6 @@ if is_authentication_oidc():
             return response_error("User not active in IRIS", 403)
 
         return wrap_login_user(user, is_oidc=True)
-
-def wrap_login_user(user, is_oidc=False):
-
-    session['username'] = user.user
-
-    if 'SERVER_SETTINGS' not in app.config:
-        app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
-
-    if app.config['SERVER_SETTINGS']['enforce_mfa'] is True and is_oidc is False:
-        if "mfa_verified" not in session or session["mfa_verified"] is False:
-            return redirect(url_for('mfa_verify'))
-
-    login_user(user)
-
-    caseid = user.ctx_case
-    session['permissions'] = ac_get_effective_permissions_of_user(user)
-
-    if caseid is None:
-        case = Cases.query.order_by(Cases.case_id).first()
-        user.ctx_case = case.case_id
-        user.ctx_human_case = case.name
-        db.session.commit()
-
-    session['current_case'] = {
-        'case_name': user.ctx_human_case,
-        'case_info': "",
-        'case_id': user.ctx_case
-    }
-
-    track_activity(f'user \'{user.user}\' successfully logged-in', ctx_less=True, display_in_ui=False)
-
-    next_url = None
-    if request.args.get('next'):
-        next_url = request.args.get('next') if 'cid=' in request.args.get('next') else request.args.get('next') + '?cid=' + str(user.ctx_case)
-
-    if not next_url or urlsplit(next_url).netloc != '':
-        next_url = url_for('index.index', cid=user.ctx_case)
-
-    return redirect(next_url)
 
 
 @app.route('/auth/mfa-setup', methods=['GET', 'POST'])

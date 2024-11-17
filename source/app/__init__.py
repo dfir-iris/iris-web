@@ -97,6 +97,11 @@ app.jinja_options["autoescape"] = lambda _: True
 app.jinja_env.autoescape = True
 
 app.config.from_object('app.configuration.Config')
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='None'
+)
 
 cache = Cache(app)
 

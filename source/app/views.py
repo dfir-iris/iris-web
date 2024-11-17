@@ -102,6 +102,7 @@ from app.blueprints.rest.v2.case.api_v2_case_routes import api_v2_case_blueprint
 from app.blueprints.rest.v2.case.api_v2_assets_routes import api_v2_assets_blueprint
 from app.blueprints.rest.v2.case.api_v2_ioc_routes import api_v2_ioc_blueprint
 from app.blueprints.rest.v2.case.api_v2_case_tasks_routes import api_v2_tasks_blueprint
+from app.blueprints.rest.v2.dashboard.api_v2_dashboard_route import api_v2_dashboard_blueprint
 from app.models.authorization import User
 from app.post_init import run_post_init
 
@@ -191,8 +192,12 @@ app.register_blueprint(api_v2_case_blueprint)
 app.register_blueprint(api_v2_ioc_blueprint)
 app.register_blueprint(api_v2_assets_blueprint)
 app.register_blueprint(api_v2_tasks_blueprint)
+app.register_blueprint(api_v2_dashboard_blueprint)
+
 
 app.register_blueprint(api_v2_auth_blueprint)
+
+
 
 try:
 
