@@ -1,72 +1,78 @@
-$('#case_webhooks_table').DataTable({
-    "ajax": {
-        "url": "/manage/attributes/list" + case_param(),
-        "contentType": "application/json",
-        "type": "GET",
-        "data": function (d) {
-            return d.status === 'success' ? JSON.stringify(d.data) : [];
-        }
+// // Event listener for row clicks
+// Initialize DataTable
+$("#case_webhooks_table").dataTable({
+  ajax: {
+    url: "/manage/webhooks/list" + case_param(),
+    contentType: "application/json",
+    type: "GET",
+    data: function (d) {
+      if (d.status == "success") {
+        return JSON.stringify(d.data);
+      } else {
+        return JSON.stringify([]);
+      }
     },
-    "order": [[0, "desc"]],
-    "autoWidth": false,
-    "columns": [
-        {
-            "data": "attribute_display_name"
-        },
-        {
-            "data": "attribute_description"
-        }
-    ]
+  },
+  order: [[0, "desc"]],
+  autoWidth: false,
+  columns: [
+    {
+      data: "id",
+    },
+    {
+      data: "name",
+    },
+  ],
 });
 
-// Event listener for row clicks
+
+// Add event listener for row clicks
 $('#case_webhooks_table tbody').on('click', 'tr', function () {
-    var table = $('#case_webhooks_table').DataTable();
-    var data = table.row(this).data();
+  var data = table.row(this).data();
 
-    // Populate modal with data
-    $('#webhookName').text(data.attribute_display_name);
-    $('#webhookDescription').text(data.attribute_description);
+  // Populate modal with data
+  $('#webhookId').text(data.id);  // Update with 'I' field
+  $('#webhookName').text(data.name);  // Update with 'name' field
 
-    // Show modal
-    $('#webhookModal').modal('show');
+  // Show modal
+  $('#webhookModal').modal('show');
 });
 
-document.getElementById('copyModalContent').addEventListener('click', function() {
-    // Select the elements containing the modal data
-    const name = document.getElementById('webhookName').innerText;
-    const description = document.getElementById('webhookDescription').innerText;
+// document.getElementById('copyModalContent').addEventListener('click', function() {
+//     // Select the elements containing the modal data
+//     const name = document.getElementById('webhookName').innerText;
+//     const description = document.getElementById('webhookDescription').innerText;
 
-    // Format the content to be copied
-    const modalContent = `Name: ${name}\nDescription: ${description}`;
+//     // Format the content to be copied
+//     const modalContent = `Name: ${name}\nDescription: ${description}`;
 
-    // Check if the browser supports navigator.clipboard
-    if (navigator.clipboard && window.isSecureContext) {
-        // Use Clipboard API for modern browsers
-        navigator.clipboard.writeText(modalContent).then(() => {
-            notify_success('Content copied to clipboard!');
-        }).catch(err => {
-            console.error('Failed to copy content: ', err);
-            notify_success('Failed to copy content.');
-        });
-    } else {
-        // Fallback method for older browsers
-        const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = modalContent;
-        document.body.appendChild(tempTextArea);
-        tempTextArea.select();
+//     // Check if the browser supports navigator.clipboard
+//     if (navigator.clipboard && window.isSecureContext) {
+//         // Use Clipboard API for modern browsers
+//         navigator.clipboard.writeText(modalContent).then(() => {
+//             notify_success('Content copied to clipboard!');
+//         }).catch(err => {
+//             console.error('Failed to copy content: ', err);
+//             notify_success('Failed to copy content.');
+//         });
+//     } else {
+//         // Fallback method for older browsers
+//         const tempTextArea = document.createElement('textarea');
+//         tempTextArea.value = modalContent;
+//         document.body.appendChild(tempTextArea);
+//         tempTextArea.select();
 
-        try {
-            document.execCommand('copy');
-            notify_success("content copied");
-        } catch (err) {
-            console.error('Failed to copy content: ', err);
-            notify_error("failed to copy content");
-        }
+//         try {
+//             document.execCommand('copy');
+//             notify_success("content copied");
+//         } catch (err) {
+//             console.error('Failed to copy content: ', err);
+//             notify_error("failed to copy content");
+//         }
 
-        document.body.removeChild(tempTextArea);
-    }
-});
+//         document.body.removeChild(tempTextArea);
+//     }
+// });
 
 function add_webhook() {
   let url = "/manage/webhooks/add/modal" + case_param();
