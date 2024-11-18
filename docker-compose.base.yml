@@ -34,10 +34,10 @@ services:
       - POSTGRES_DB
     networks:
       - iris_backend
-    volumes:
-      - db_data:/var/lib/postgresql/data
     ports:
       - "0.0.0.0:5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
 
   app:
     container_name: iriswebapp_app
@@ -49,6 +49,7 @@ services:
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
+      - ./source/app:/iriswebapp/app
     restart: always
     depends_on:
       - "rabbitmq"

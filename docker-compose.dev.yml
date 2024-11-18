@@ -42,6 +42,7 @@ services:
     image: iriswebapp_app:v2.4.7
     ports:
       - "127.0.0.1:8000:8000"
+      - "0.0.0.0:5678:5678"
 
   worker:
     extends:

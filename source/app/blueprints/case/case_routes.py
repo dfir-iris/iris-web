@@ -41,6 +41,7 @@ from app.blueprints.case.case_ioc_routes import case_ioc_blueprint
 from app.blueprints.case.case_notes_routes import case_notes_blueprint
 from app.blueprints.case.case_rfiles_routes import case_rfiles_blueprint
 from app.blueprints.case.case_tasks_routes import case_tasks_blueprint
+from app.blueprints.case.case_triggers_routes import case_triggers_blueprint
 from app.blueprints.case.case_timeline_routes import case_timeline_blueprint
 from app.datamgmt.case.case_db import case_exists, get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
@@ -79,6 +80,7 @@ app.register_blueprint(case_ioc_blueprint)
 app.register_blueprint(case_rfiles_blueprint)
 app.register_blueprint(case_graph_blueprint)
 app.register_blueprint(case_tasks_blueprint)
+app.register_blueprint(case_triggers_blueprint)
 
 case_blueprint = Blueprint('case',
                            __name__,
