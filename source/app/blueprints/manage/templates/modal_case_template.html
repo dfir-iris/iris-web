@@ -55,7 +55,6 @@
                                         <li>note_directories: A list of dictionaries defining note directories. Note directories are defined by title (required), and list of notes. Notes have title (required) and content</li>
                                         <li>actions:  A list of dictionaries defining actions that can be triggered from case pages. Each action is defined by a name (required), url, header and a payload.</li>
                                         <li>triggers: A list of dictionaries defining triggers that are executed on case creation. Each trigger is defined by a name (required), order, url, header, and a payload.</li>
-
                                     </ul>
                                 </div>
                             </div>
@@ -99,14 +98,6 @@
             "title": "Containment"
         }
     ],
-    "actions":[
-        {
-            "name":"Name of the action",
-            "url":"URL of the target webhook",
-            "header":[{"key1":"value1"}, {"key2":"value2"}, {"keyn":"valuen"}],
-            "payload":{"key1":"fixed value", "key2":"<<Dynamic value>>" }
-        }
-    ],
     "note_directories": [
         {
             "title": "Identify",
@@ -130,15 +121,6 @@
                     ]
         }
     ],
-    "triggers":[
-                    {
-                        "order":10,
-                        "name":"Name of the action",
-                        "url":"URL of the target webhook",
-                        "header":[{"key1":"value1"}, {"key2":"value2"}, {"keyn":"valuen"}],
-                        "payload":{"key1":"fixed value", "key2":"<<Dynamic value>>" }
-                    }
-    ]
 }
                                     </pre>
                                 </div>
