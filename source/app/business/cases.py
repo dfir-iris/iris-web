@@ -131,7 +131,7 @@ def delete(case_identifier):
         raise BusinessProcessingError('Cannot delete a primary case to keep consistency')
 
     try:
-        call_modules_hook('on_preload_case_delete', data=case_identifier, caseid=case_identifier)
+        call_modules_hook('on_preload_case_delete', data=get_case(case_identifier), caseid=case_identifier)
         if not delete_case(case_identifier):
             track_activity(f'tried to delete case {case_identifier}, but it doesn\'t exist',
                            caseid=case_identifier, ctx_less=True)
