@@ -1,6 +1,6 @@
-function add_case_template() {
-  let url = "/manage/case-templates/add/modal" + case_param();
-  $("#modal_case_template_json").load(url, function (response, status, xhr) {
+function add_webhook() {
+  let url = "/manage/webhooks/add/modal" + case_param();
+  $("#modal_webhook_json").load(url, function (response, status, xhr) {
     if (status !== "success") {
       ajax_notify_error(xhr, url);
       return false;
@@ -26,39 +26,18 @@ function add_case_template() {
         {
           getCompletions: (editor, session, pos, prefix, callback) => {
             callback(null, [
-              { value: "name", score: 1, meta: "name of the template" },
+              { value: "name", score: 1, meta: "name of the webhook" },
               {
-                value: "display",
+                value: "header_auth",
                 score: 1,
-                meta: "display name of the template",
+                meta: "header auth of the webhook",
               },
               {
-                value: "description",
+                value: "payload_schema",
                 score: 1,
-                meta: "description of the template",
+                meta: "payload of the webhook",
               },
-              { value: "author", score: 1, meta: "author of the template" },
-              {
-                value: "title_prefix",
-                score: 1,
-                meta: "prefix of instantiated cases",
-              },
-              { value: "summary", score: 1, meta: "summary of the case" },
-              {
-                value: "tags",
-                score: 1,
-                meta: "tags of the case or the tasks",
-              },
-              { value: "tasks", score: 1, meta: "tasks of the case" },
-              { value: "note_groups", score: 1, meta: "groups of notes" },
-              {
-                value: "title",
-                score: 1,
-                meta: "title of the task or the note group or the note",
-              },
-              { value: "content", score: 1, meta: "content of the note" },
-              { value: "action", score: 1, meta: "actions of the case" },
-              { value: "triggers", score: 1, meta: "triggers of the case" },
+              { value: "url", score: 1, meta: "url of the webhook" },
             ]);
           },
         },
@@ -67,13 +46,13 @@ function add_case_template() {
       enableSnippets: true,
     });
 
-    $("#submit_new_case_template").on("click", function () {
+    $("#submit_new_webhook").on("click", function () {
       let data_sent = Object();
-      data_sent["case_template_json"] = editor.getSession().getValue();
+      data_sent["webhook_json"] = editor.getSession().getValue();
       data_sent["csrf_token"] = $("#csrf_token").val();
 
       post_request_api(
-        "/manage/case-templates/add",
+        "/manage/webhooks/add",
         JSON.stringify(data_sent),
         false,
         function () {
@@ -88,21 +67,21 @@ function add_case_template() {
       )
         .done((data) => {
           if (notify_auto_api(data)) {
-            refresh_case_template_table();
-            $("#modal_case_template").modal("hide");
+            refresh_webhook_table();
+            $("#modal_webhook").modal("hide");
           }
         })
         .fail((error) => {
           let data = error.responseJSON;
-          $("#submit_new_case_template").text("Save");
-          $("#alert_case_template_edit").text(data.message);
+          $("#submit_new_webhook").text("Save");
+          $("#alert_webhook_edit").text(data.message);
           if (data.data && data.data.length > 0) {
             let output = "<li>" + sanitizeHTML(data.data) + "</li>";
-            $("#case_template_err_details_list").append(output);
+            $("#webhook_err_details_list").append(output);
 
-            $("#alert_case_template_details").show();
+            $("#alert_webhook_details").show();
           }
-          $("#alert_case_template_edit").show();
+          $("#alert_webhook_edit").show();
         })
         .always((data) => {
           window.swal.close();
@@ -111,12 +90,12 @@ function add_case_template() {
       return false;
     });
   });
-  $("#modal_case_template").modal({ show: true });
+  $("#modal_webhook").modal({ show: true });
 }
 
-$("#case_templates_table").dataTable({
+$("#webhooks_table").dataTable({
   ajax: {
-    url: "/manage/case-templates/list" + case_param(),
+    url: "/manage/webhooks/list" + case_param(),
     contentType: "application/json",
     type: "GET",
     data: function (d) {
@@ -134,7 +113,7 @@ $("#case_templates_table").dataTable({
       data: "id",
       render: function (data, type, row) {
         return (
-          '<a href="#" onclick="case_template_detail(\'' +
+          '<a href="#" onclick="webhook_detail(\'' +
           row["id"] +
           "');\">" +
           sanitizeHTML(data) +
@@ -143,10 +122,10 @@ $("#case_templates_table").dataTable({
       },
     },
     {
-      data: "display_name",
+      data: "name",
       render: function (data, type, row) {
         return (
-          '<a href="#" onclick="case_template_detail(\'' +
+          '<a href="#" onclick="webhook_detail(\'' +
           row["id"] +
           "');\">" +
           sanitizeHTML(data) +
@@ -155,26 +134,23 @@ $("#case_templates_table").dataTable({
       },
     },
     {
-      data: "description",
+      data: "header_auth",
     },
     {
-      data: "added_by",
+      data: "payload_schema",
     },
     {
-      data: "created_at",
-    },
-    {
-      data: "updated_at",
+      data: "url",
     },
   ],
 });
 
-function refresh_case_template_table() {
-  $("#case_templates_table").DataTable().ajax.reload();
+function refresh_webhook_table() {
+  $("#webhooks_table").DataTable().ajax.reload();
   notify_success("Refreshed");
 }
 
-function delete_case_template(id) {
+function delete_webhook(id) {
   swal({
     title: "Are you sure ?",
     text: "You won't be able to revert this !",
@@ -186,9 +162,9 @@ function delete_case_template(id) {
     confirmButtonText: "Yes, delete it!",
   }).then((willDelete) => {
     if (willDelete) {
-      post_request_api("/manage/case-templates/delete/" + id).done((data) => {
+      post_request_api("/manage/webhooks/delete/" + id).done((data) => {
         if (notify_auto_api(data)) {
-          window.location.href = "/manage/case-templates" + case_param();
+          window.location.href = "/manage/webhooks" + case_param();
         }
       });
     } else {
@@ -197,9 +173,9 @@ function delete_case_template(id) {
   });
 }
 
-function case_template_detail(ctempl_id) {
-  let url = "/manage/case-templates/" + ctempl_id + "/modal" + case_param();
-  $("#modal_case_template_json").load(url, function (response, status, xhr) {
+function webhook_detail(ctempl_id) {
+  let url = "/manage/webhooks/" + ctempl_id + "/modal" + case_param();
+  $("#modal_webhook_json").load(url, function (response, status, xhr) {
     if (status !== "success") {
       ajax_notify_error(xhr, url);
       return false;
@@ -225,39 +201,18 @@ function case_template_detail(ctempl_id) {
         {
           getCompletions: (editor, session, pos, prefix, callback) => {
             callback(null, [
-              { value: "name", score: 1, meta: "name of the template" },
+              { value: "name", score: 1, meta: "name of the webhook" },
               {
-                value: "display_name",
+                value: "header_auth",
                 score: 1,
-                meta: "display name of the template",
+                meta: "header auth of the webhook",
               },
               {
-                value: "description",
+                value: "payload_schema",
                 score: 1,
-                meta: "description of the template",
+                meta: "payload of the webhook",
               },
-              { value: "author", score: 1, meta: "author of the template" },
-              {
-                value: "title_prefix",
-                score: 1,
-                meta: "prefix of instantiated cases",
-              },
-              { value: "summary", score: 1, meta: "summary of the case" },
-              {
-                value: "tags",
-                score: 1,
-                meta: "tags of the case or the tasks",
-              },
-              { value: "actions", score: 1, meta: "actions of the case" },
-              { value: "tasks", score: 1, meta: "tasks of the case" },
-              { value: "note_groups", score: 1, meta: "groups of notes" },
-              {
-                value: "title",
-                score: 1,
-                meta: "title of the task or the note group or the note",
-              },
-              { value: "content", score: 1, meta: "content of the note" },
-              { value: "triggers", score: 1, meta: "triggers of the case" },
+              { value: "url", score: 1, meta: "url of the webhook" },
             ]);
           },
         },
@@ -266,30 +221,30 @@ function case_template_detail(ctempl_id) {
       enableSnippets: true,
     });
 
-    $("#submit_new_case_template").on("click", function () {
-      update_case_template(ctempl_id, editor, false, false);
+    $("#submit_new_webhook").on("click", function () {
+      update_webhook(ctempl_id, editor, false, false);
     });
 
-    $("#submit_delete_case_template").on("click", function () {
-      delete_case_template(ctempl_id);
+    $("#submit_delete_webhook").on("click", function () {
+      delete_webhook(ctempl_id);
     });
   });
-  $("#modal_case_template").modal({ show: true });
+  $("#modal_webhook").modal({ show: true });
 }
 
-function update_case_template(ctempl_id, editor, partial, complete) {
+function update_webhook(ctempl_id, editor, partial, complete) {
   event.preventDefault();
 
   let data_sent = Object();
-  data_sent["case_template_json"] = editor.getSession().getValue();
+  data_sent["webhook_json"] = editor.getSession().getValue();
   data_sent["csrf_token"] = $("#csrf_token").val();
 
-  $("#alert_case_template_edit").empty();
-  $("#alert_case_template_details").hide();
-  $("#case_template_err_details_list").empty();
+  $("#alert_webhook_edit").empty();
+  $("#alert_webhook_details").hide();
+  $("#webhook_err_details_list").empty();
 
   post_request_api(
-    "/manage/case-templates/update/" + ctempl_id,
+    "/manage/webhooks/update/" + ctempl_id,
     JSON.stringify(data_sent),
     false,
     function () {
@@ -307,15 +262,15 @@ function update_case_template(ctempl_id, editor, partial, complete) {
     })
     .fail((error) => {
       let data = error.responseJSON;
-      $("#submit_new_case_template").text("Update");
-      $("#alert_case_template_edit").text(data.message);
+      $("#submit_webhook_template").text("Update");
+      $("#alert_webhook_edit").text(data.message);
       if (data.data && data.data.length > 0) {
         let output = "<li>" + sanitizeHTML(data.data) + "</li>";
-        $("#case_template_err_details_list").append(output);
+        $("#webhook_err_details_list").append(output);
 
-        $("#alert_case_template_details").show();
+        $("#alert_webhook_details").show();
       }
-      $("#alert_case_template_edit").show();
+      $("#alert_webhook_edit").show();
     })
     .always((data) => {
       window.swal.close();
@@ -324,32 +279,29 @@ function update_case_template(ctempl_id, editor, partial, complete) {
   return false;
 }
 
-function fire_upload_case_template() {
-  let url = "/manage/case-templates/upload/modal" + case_param();
-  $("#modal_upload_case_template_json").load(
-    url,
-    function (response, status, xhr) {
-      if (status !== "success") {
-        ajax_notify_error(xhr, url);
-        return false;
-      }
+function fire_upload_webhook() {
+  let url = "/manage/webhooks/upload/modal" + case_param();
+  $("#modal_upload_webhook_json").load(url, function (response, status, xhr) {
+    if (status !== "success") {
+      ajax_notify_error(xhr, url);
+      return false;
     }
-  );
-  $("#modal_upload_case_template").modal({ show: true });
+  });
+  $("#modal_upload_webhook").modal({ show: true });
 }
 
-function upload_case_template() {
-  if ($("#input_upload_case_template").val() !== "") {
-    var file = $("#input_upload_case_template").get(0).files[0];
+function upload_webhook() {
+  if ($("#input_upload_webhook").val() !== "") {
+    var file = $("#input_upload_webhook").get(0).files[0];
     var reader = new FileReader();
     reader.onload = function (e) {
       fileData = e.target.result;
       var data = new Object();
       data["csrf_token"] = $("#csrf_token").val();
-      data["case_template_json"] = fileData;
+      data["webhook_json"] = fileData;
 
       post_request_api(
-        "/manage/case-templates/add",
+        "/manage/webhooks/add",
         JSON.stringify(data),
         false,
         function () {
@@ -366,23 +318,23 @@ function upload_case_template() {
           notify_auto_api(data);
           jsdata = data;
           if (jsdata.status == "success") {
-            refresh_case_template_table();
-            $("#modal_upload_case_template").modal("hide");
+            refresh_webhook_table();
+            $("#modal_upload_webhook").modal("hide");
           }
         })
         .fail((error) => {
           let data = error.responseJSON;
-          $("#alert_upload_case_template").text(data.message);
+          $("#alert_upload_webhook").text(data.message);
           if (data.data && data.data.length > 0) {
             let output = "<li>" + sanitizeHTML(data.data) + "</li>";
-            $("#upload_case_template_err_details_list").append(output);
+            $("#upload_webhook_err_details_list").append(output);
 
-            $("#alert_upload_case_template_details").show();
+            $("#alert_upload_webhook_details").show();
           }
-          $("#alert_upload_case_template").show();
+          $("#alert_upload_webhook").show();
         })
         .always((data) => {
-          $("#input_upload_case_template").val("");
+          $("#input_upload_webhook").val("");
           window.swal.close();
         });
     };
@@ -392,11 +344,11 @@ function upload_case_template() {
   return false;
 }
 
-function downloadCaseTemplateDefinition() {
+function downloadwebhookDefinition() {
   event.preventDefault();
   let editor = ace.edit("editor_detail");
   let data = editor.getSession().getValue();
 
-  let filename = "case_template.json";
+  let filename = "webhook.json";
   download_file(filename, "text/json", data);
 }

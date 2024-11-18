@@ -52,6 +52,7 @@ from app.blueprints.manage.manage_event_categories_routes import manage_event_ca
 from app.blueprints.manage.manage_groups import manage_groups_blueprint
 from app.blueprints.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.manage.manage_modules_routes import manage_modules_blueprint
+from app.blueprints.manage.manage_webhooks_routes import manage_webhooks_blueprint
 from app.blueprints.manage.manage_objects_routes import manage_objects_blueprint
 from app.blueprints.manage.manage_severities_routes import manage_severities_blueprint
 from app.blueprints.manage.manage_srv_settings_routes import manage_srv_settings_blueprint
@@ -81,6 +82,7 @@ app.register_blueprint(manage_srv_settings_blueprint)
 app.register_blueprint(manage_users_blueprint)
 app.register_blueprint(manage_templates_blueprint)
 app.register_blueprint(manage_modules_blueprint)
+app.register_blueprint(manage_webhooks_blueprint)
 app.register_blueprint(manage_customers_blueprint)
 app.register_blueprint(manage_anastatus_blueprint)
 app.register_blueprint(manage_ioc_type_blueprint)
