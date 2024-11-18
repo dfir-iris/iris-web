@@ -230,8 +230,6 @@ function handleActionClick(actionId) {
 // Populate dropdown on page load or whenever needed
 document.addEventListener('DOMContentLoaded', populateActionsDropdown);
 
-
-
 function preview_task_description(no_btn_update) {
     if(!$('#container_task_description').is(':visible')) {
         task_desc = g_task_desc_editor.getValue();
