@@ -111,6 +111,9 @@ class AddReportTemplateForm(FlaskForm):
 class CaseTemplateForm(FlaskForm):
     case_template_json = TextAreaField(u'Case Template JSON', validators=[DataRequired()])
 
+class WebhookForm(FlaskForm):
+    webhook_json = TextAreaField(u'Webhook JSON', validators=[DataRequired()])
+    
 
 class AddUserForm(FlaskForm):
     user_login = StringField(u'Name', validators=[DataRequired()])
