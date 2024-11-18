@@ -18,62 +18,88 @@ function edit_in_task_desc() {
 
 
 /* Fetch a modal that allows to add an event */
-function add_task() {
-    url = 'tasks/add/modal' + case_param();
-    $('#modal_add_task_content').load(url, function (response, status, xhr) {
-        hide_minimized_modal_box();
-        if (status !== "success") {
-             ajax_notify_error(xhr, url);
-             return false;
-        }
-        
-        g_task_desc_editor = get_new_ace_editor('task_description', 'task_desc_content', 'target_task_desc',
-                            function() {
-                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                            }, null);
-        g_task_desc_editor.setOption("minLines", "10");
-        edit_in_task_desc();
+function edit_task(id) {
+  url = '/case/tasks/' + id + '/modal' + case_param();
+  $('#modal_add_task_content').load(url, function (response, status, xhr) {
+    hide_minimized_modal_box();
+    if (status !== "success") {
+      ajax_notify_error(xhr, url);
+      return false;
+    }
 
-        headers = get_editor_headers('g_task_desc_editor', null, 'task_edition_btn');
-        $('#task_edition_btn').append(headers);
+    g_task_id = id;
 
-        $('#submit_new_task').on("click", function () {
+    g_task_desc_editor = get_new_ace_editor('task_description', 'task_desc_content', 'target_task_desc',
+      function () {
+        $('#last_saved').addClass('btn-danger').removeClass('btn-success');
+        $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
+      }, null);
 
-            clear_api_error();
-            if(!$('form#form_new_task').valid()) {
-                return false;
-            }
+    g_task_desc_editor.setOption("minLines", "6");
+    preview_task_description(true);
 
-            var data_sent = $('#form_new_task').serializeObject();
-            data_sent['task_tags'] = $('#task_tags').val();
-            data_sent['task_assignees_id'] = $('#task_assignees_id').val();
-            data_sent['task_status_id'] = $('#task_status_id').val();
-            data_sent['task_description'] = g_task_desc_editor.getValue();
-            ret = get_custom_attributes_fields();
-            has_error = ret[0].length > 0;
-            attributes = ret[1];
+    headers = get_editor_headers('g_task_desc_editor', null, 'task_edition_btn');
+    $('#task_edition_btn').append(headers);
 
-            if (has_error){return false;}
+    load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
+    $('#modal_add_task').modal({ show: true });
+    edit_in_task_desc();
 
-            data_sent['custom_attributes'] = attributes;
+    // Dummy data for action list
+    var dummyActions = [
+      { id: 1, name: 'Review Task' },
+      { id: 2, name: 'Approve Task' },
+      { id: 3, name: 'Reject Task' }
+    ];
 
-            post_request_api('tasks/add', JSON.stringify(data_sent), true)
-            .done((data) => {
-                if(notify_auto_api(data)) {
-                    get_tasks();
-                    $('#modal_add_task').modal('hide');
-                }
-            });
-
+    var actionsList = $('#actionsList');
+    actionsList.empty(); // Clear existing items
+    dummyActions.forEach(function (action) {
+      actionsList.append(
+        $('<a>', {
+          class: 'dropdown-item',
+          href: '#',
+          text: action.name,
+          click: function () {
+            displayActionResponse(id, action.id);
             return false;
+          }
         })
-        $('#modal_add_task').modal({ show: true });
-        $('#task_title').focus();
-
+      );
     });
-
+  });
 }
+
+// Function to handle displaying the response of the selected action using dummy data
+function displayActionResponse(taskId, actionId) {
+  // Dummy response data for each action
+  var dummyResponses = {
+    1: [
+      { id: 1, task: 'Task 1', action: 'Review Task', response: 'Reviewed successfully', executionTime: '5s' },
+      { id: 2, task: 'Task 2', action: 'Review Task', response: 'Minor changes needed', executionTime: '7s' }
+    ],
+    2: [
+      { id: 3, task: 'Task 3', action: 'Approve Task', response: 'Approved successfully', executionTime: '3s' }
+    ],
+    3: [
+      { id: 4, task: 'Task 4', action: 'Reject Task', response: 'Rejected due to issues', executionTime: '6s' }
+    ]
+  };
+
+  var response = dummyResponses[actionId] || [];
+  var table = $('#taskResponse_table').DataTable({
+    destroy: true, // Reinitialize the table each time
+    data: response,
+    columns: [
+      { data: 'id', title: 'ID' },
+      { data: 'task', title: 'Tasks' },
+      { data: 'action', title: 'Action' },
+      { data: 'response', title: 'Response' },
+      { data: 'executionTime', title: 'Execution Time' }
+    ]
+  });
+}
+
 
 function save_task() {
     $('#submit_new_task').click();
@@ -145,34 +171,66 @@ function delete_task(id) {
 }
 
 /* Edit and event from the timeline thanks to its ID */
-function edit_task(id) {
-  url = '/case/tasks/'+ id + '/modal' + case_param();
-  $('#modal_add_task_content').load(url, function (response, status, xhr) {
-        hide_minimized_modal_box();
-        if (status !== "success") {
-             ajax_notify_error(xhr, url);
-             return false;
-        }
+// Example array of actions fetched from a source
+const actionsArray = [
+  { id: 1, name: 'Action 1' },
+  { id: 2, name: 'Action 2' },
+  { id: 3, name: 'Action 3' },
+  { id: 4, name: 'Action 4' }
+];
 
-        g_task_id = id;
+// Example response data for each action
+const actionResponses = {
+  1: { taskId: 1, actionId: 1, response: 'Action 1 executed successfully', executionTime: '2s' },
+  2: { taskId: 1, actionId: 2, response: 'Action 2 executed with warnings', executionTime: '3s' },
+  3: { taskId: 1, actionId: 3, response: 'Action 3 failed', executionTime: '1s' },
+  4: { taskId: 1, actionId: 4, response: 'Action 4 completed successfully', executionTime: '2.5s' }
+};
 
-        g_task_desc_editor = get_new_ace_editor('task_description', 'task_desc_content', 'target_task_desc',
-                            function() {
-                                $('#last_saved').addClass('btn-danger').removeClass('btn-success');
-                                $('#last_saved > i').attr('class', "fa-solid fa-file-circle-exclamation");
-                            }, null);
+// Function to generate dropdown items dynamically
+function populateActionsDropdown() {
+  const actionsList = document.getElementById('actionsList');
+  actionsList.innerHTML = ''; // Clear existing items
 
-        g_task_desc_editor.setOption("minLines", "6");
-        preview_task_description(true);
+  actionsArray.forEach(action => {
+      const actionItem = document.createElement('a');
+      actionItem.className = 'dropdown-item';
+      actionItem.href = '#';
+      actionItem.textContent = action.name;
+      actionItem.setAttribute('data-action-id', action.id);
 
-        headers = get_editor_headers('g_task_desc_editor', null, 'task_edition_btn');
-        $('#task_edition_btn').append(headers);
+      // Add click event to handle response
+      actionItem.addEventListener('click', (event) => {
+          event.preventDefault();
+          handleActionClick(action.id);
+      });
 
-        load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
-        $('#modal_add_task').modal({show:true});
-        edit_in_task_desc();
+      actionsList.appendChild(actionItem);
   });
 }
+
+// Function to handle action click and populate the table
+function handleActionClick(actionId) {
+  const response = actionResponses[actionId];
+
+  if (response) {
+      const tableBody = document.querySelector('#taskResponse_table tbody');
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = `
+          <td>${response.taskId}</td>
+          <td>Task ${response.taskId}</td>
+          <td>Action ${response.actionId}</td>
+          <td>${response.response}</td>
+          <td>${response.executionTime}</td>
+      `;
+      tableBody.appendChild(newRow);
+  }
+}
+
+// Populate dropdown on page load or whenever needed
+document.addEventListener('DOMContentLoaded', populateActionsDropdown);
+
+
 
 function preview_task_description(no_btn_update) {
     if(!$('#container_task_description').is(':visible')) {

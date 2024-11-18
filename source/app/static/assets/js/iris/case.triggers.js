@@ -33,7 +33,7 @@ const dummyTriggers = [
 
 // Function to load dummy trigger data into the table
 function get_triggers() {
-    $('#tasks_table_wrapper').empty();
+    $('#trigger_table_wrapper').empty();
     show_loader();
 
     Table.clear();  // Clear existing rows
