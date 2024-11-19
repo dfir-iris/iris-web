@@ -232,7 +232,7 @@ class EvidenceTypes(db.Model):
 
 
 class Webhook(db.Model):
-    __tablename__ = 'webhooks'
+    __tablename__ = 'webhooksss'
 
     # Metadata
     id = Column(Integer, primary_key=True)
@@ -256,7 +256,7 @@ class Webhook(db.Model):
 
 
 class CaseTemplate(db.Model):
-    __tablename__ = 'case_templatess'
+    __tablename__ = 'case_templatessss'
 
     # Metadata
     id = Column(Integer, primary_key=True)
@@ -276,6 +276,7 @@ class CaseTemplate(db.Model):
     classification = Column(String, nullable=True)
     actions = Column(JSON, nullable=True)
     triggers = Column(JSON, nullable=True)
+    input_params = Column(JSON, nullable=True)
 
     created_by_user = relationship('User')
 

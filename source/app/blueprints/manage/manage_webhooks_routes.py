@@ -98,20 +98,11 @@ def add_template_modal():
         "name": "webhook name",
         "header_auth": [
             {
-                "key": "Value 1"
+                "key": "key 1",
+                "value": "value 1"
             }
         ],
-        "payload_schema": json.loads('''[
-            {
-                "type": "object",
-                "properties": [
-                    {
-                        "property": "property name",
-                        "type": "string"
-                    }
-                ]
-            }
-        ]'''),
+        "payload_schema": "JSON Schema",
         "url": "webhook URL",
     }
 

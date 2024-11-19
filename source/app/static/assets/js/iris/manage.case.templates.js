@@ -59,6 +59,11 @@ function add_case_template() {
               { value: "content", score: 1, meta: "content of the note" },
               { value: "action", score: 1, meta: "actions of the case" },
               { value: "triggers", score: 1, meta: "triggers of the case" },
+              {
+                value: "input_params",
+                score: 1,
+                meta: "input_params of the case or the triggers",
+              },
             ]);
           },
         },
@@ -258,6 +263,11 @@ function case_template_detail(ctempl_id) {
               },
               { value: "content", score: 1, meta: "content of the note" },
               { value: "triggers", score: 1, meta: "triggers of the case" },
+              {
+                value: "input_params",
+                score: 1,
+                meta: "input_params of the case or the triggers",
+              },
             ]);
           },
         },

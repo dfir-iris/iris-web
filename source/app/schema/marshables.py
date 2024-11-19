@@ -826,12 +826,8 @@ class WebhookSchema(ma.Schema):
     updated_at: datetime = fields.DateTime(dump_only=True)
     name: str = fields.String(required=True)
     header_auth: Optional[List[Dict[str, str]]] = fields.List(fields.Dict(), allow_none=True, missing=[])
-    payload_schema: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(fields.Dict(),
-                                                                                                allow_none=True,
-                                                                                                missing=[])
     url: Optional[str] = fields.String(allow_none=True, missing="")
-
-
+    payload_schema: Optional[dict] = fields.Dict(allow_none=True, missing={})
 
     def validate_string_or_list(value: Union[str, List[str]]) -> Union[str, List[str]]:
         """Validates that a value is a string or a list of strings.
@@ -906,6 +902,7 @@ class CaseTemplateSchema(ma.Schema):
     title_prefix: Optional[str] = fields.String(allow_none=True, validate=Length(max=32), missing="")
     summary: Optional[str] = fields.String(allow_none=True, missing="")
     tags: Optional[List[str]] = fields.List(fields.String(), allow_none=True, missing=[])
+    input_params: Optional[List[str]] = fields.List(fields.String(), allow_none=True, missing=[])
     classification: Optional[str] = fields.String(allow_none=True, missing="")
     note_directories: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(fields.Dict(),
                                                                                                 allow_none=True,
@@ -963,7 +960,7 @@ class CaseTemplateSchema(ma.Schema):
         return value
 
     tasks: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
-        fields.Dict(keys=fields.Str(), values=fields.Raw()),  # Removed validate_string_or_list
+        fields.Dict(keys=fields.Str(), values=fields.Raw()), 
         allow_none=True,
         missing=[]
     )
@@ -975,7 +972,7 @@ class CaseTemplateSchema(ma.Schema):
     )
 
     triggers: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
-        fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list])),
+        fields.Dict(keys=fields.Str(), values=fields.Raw()), 
         allow_none=True,
         missing=[]
     )

@@ -15,6 +15,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import marshmallow
+import jsonschema
 from datetime import datetime
 from typing import List, Optional, Union
 
@@ -75,41 +76,23 @@ def delete_case_template_by_id(case_template_id: int):
     """
     CaseTemplate.query.filter_by(id=case_template_id).delete()
 
-
 def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
     try:
         if not update:
-            # If it's not an update, we check the required fields
             if "name" not in data:
                 return "Name is required."
 
-            if "display_name" not in data or not data["display_name"].strip():
-                data["display_name"] = data["name"]
-        # We check that name is not empty
         if "name" in data and not data["name"].strip():
             return "Name cannot be empty."
 
-        # We check that author length is not above 128 chars
-        if "author" in data and len(data["author"]) > 128:
-            return "Author cannot be longer than 128 characters."
-
-        # We check that author length is not above 128 chars
-        if "author" in data and len(data["author"]) > 128:
-            return "Author cannot be longer than 128 characters."
-
-        # We check that prefix length is not above 32 chars
-        if "title_prefix" in data and len(data["title_prefix"]) > 32:
-            return "Prefix cannot be longer than 32 characters."
-
-        # We check that tags, if any, are a list of strings
         if "tags" in data:
             if not isinstance(data["tags"], list):
                 return "Tags must be a list."
             for tag in data["tags"]:
                 if not isinstance(tag, str):
                     return "Each tag must be a string."
-
-        # We check that tasks, if any, are a list of dictionaries with mandatory keys
+                    
+                        
         if "tasks" in data:
             if not isinstance(data["tasks"], list):
                 return "Tasks must be a list."
@@ -124,25 +107,27 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
                     for tag in task["tags"]:
                         if not isinstance(tag, str):
                             return "Each tag must be a string."
-                        
-                        # Check actions within the task
                 if "actions" in task:
                     if not isinstance(task["actions"], list):
                         return "Actions must be a list."
                     for action in task["actions"]:
                         if not isinstance(action, dict):
                             return "Each action must be a dictionary."
+                        # Check for required properties
                         if "webhook_id" not in action:
                             return "Each action must have a 'webhook_id' field."
                         if "display_name" not in action:
                             return "Each action must have a 'display_name' field."
-                
-                        # Check if webhook_id matches an existing Webhook.id
+                        # Check for extra properties
+                        allowed_keys = {"webhook_id", "display_name"}
+                        extra_keys = set(action.keys()) - allowed_keys
+                        if extra_keys:
+                            return f"Invalid properties in action: {', '.join(extra_keys)}. Only 'webhook_id' and 'display_name' are allowed."
                         webhook = get_webhook_by_id(action["webhook_id"])
                         if not webhook:
                             return f"Webhook with id {action['webhook_id']} does not exist."
-                
-        # We check that action, if any, are a list of dictionaries with mandatory keys
+
+
         if "triggers" in data:
             if not isinstance(data["triggers"], list):
                 return "Trigger must be a list."
@@ -153,15 +138,53 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
                     return "Each trigger must have a 'webhook_id' field."
                 if "display_name" not in trigger:
                     return "Each trigger must have a 'display_name' field."
-                # Check if webhook_id matches an existing Webhook.id
+
                 webhook = get_webhook_by_id(trigger["webhook_id"])
                 if not webhook:
                     return f"Webhook with id {trigger['webhook_id']} does not exist."
-                
 
-        # We check that note groups, if any, are a list of dictionaries with mandatory keys
+                if "input_params" in trigger:
+                    input_params = trigger["input_params"]
+                    if not isinstance(input_params, dict):
+                        return "input_params must be a dictionary."
+
+                    payload_schema = webhook.payload_schema
+                    if not payload_schema:
+                        return f"Webhook {webhook.name} has no payload schema."
+
+                    # Validate required fields
+                    required_fields = payload_schema.get("items", {}).get("required", [])
+                    for field in required_fields:
+                        if field not in input_params:
+                            return f"Field '{field}' is required in input_params for webhook '{webhook.name}'."
+
+                    # Validate properties
+                    properties = payload_schema.get("items", {}).get("properties", {})
+                    for key, value in input_params.items():
+                        if key not in properties:
+                            return f"Field '{key}' is not valid for webhook '{webhook.name}'."
+                        prop_schema = properties[key]
+                        TYPE_MAPPING = {
+                            "string": str,
+                            "integer": int,
+                            "boolean": bool,
+                            "array": list,
+                            "object": dict,
+                        }
+                        expected_type = prop_schema.get("type")
+                        if expected_type:
+                            # Map schema type to Python type
+                            python_type = TYPE_MAPPING.get(expected_type)
+                            if not python_type:
+                                return f"Unsupported type '{expected_type}' in schema for field '{key}'."
+                            if not isinstance(value, python_type):
+                                return f"Field '{key}' must be of type '{expected_type}'."
+
+                        if prop_schema.get("minLength") and len(value) < prop_schema["minLength"]:
+                            return f"Field '{key}' must have at least {prop_schema['minLength']} characters."
+
         if "note_groups" in data:
-            return "Note groups has been replaced by note_directories."
+            return "Note groups have been replaced by note_directories."
 
         if "note_directories" in data:
             if not isinstance(data["note_directories"], list):
@@ -180,7 +203,6 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
                         if "title" not in note:
                             return "Each note must have a 'title' field."
 
-        # If all checks succeeded, we return None to indicate everything is has been validated
         return None
     except Exception as e:
         return str(e)

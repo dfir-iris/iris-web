@@ -15,6 +15,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import marshmallow
+import jsonschema
 from datetime import datetime
 from typing import List, Optional, Union
 
@@ -38,7 +39,6 @@ def get_webhooks_list() -> List[dict]:
         Webhook.id,
         Webhook.name,
         Webhook.header_auth,
-        Webhook.payload_schema,
         Webhook.url,
         Webhook.created_at,
         Webhook.updated_at,
@@ -81,32 +81,9 @@ def validate_webhook(data: dict, update: bool = False) -> Optional[str]:
             if "name" not in data:
                 return "Name is required."
 
-            # if "display_name" not in data or not data["display_name"].strip():
-            #     data["display_name"] = data["name"]
         # We check that name is not empty
         if "name" in data and not data["name"].strip():
-            return "Name cannot be empty."
-
-        # # We check that author length is not above 128 chars
-        # if "author" in data and len(data["author"]) > 128:
-        #     return "Author cannot be longer than 128 characters."
-
-        # # We check that author length is not above 128 chars
-        # if "author" in data and len(data["author"]) > 128:
-        #     return "Author cannot be longer than 128 characters."
-
-        # # We check that prefix length is not above 32 chars
-        # if "title_prefix" in data and len(data["title_prefix"]) > 32:
-        #     return "Prefix cannot be longer than 32 characters."
-
-        # # We check that tags, if any, are a list of strings
-        # if "tags" in data:
-        #     if not isinstance(data["tags"], list):
-        #         return "Tags must be a list."
-        #     for tag in data["tags"]:
-        #         if not isinstance(tag, str):
-        #             return "Each tag must be a string."
-
+            return "Name cannot be empty."    
         
 
         # We check that tasks, if any, are a list of dictionaries with mandatory keys
@@ -118,35 +95,23 @@ def validate_webhook(data: dict, update: bool = False) -> Optional[str]:
                     return "Each header auth must be a dictionary."
                 if "key" not in auth:
                     return "Each auth must have a 'key' field."
-                # if "tags" in task:
-                #     if not isinstance(task["tags"], list):
-                #         return "Task tags must be a list."
-                #     for tag in task["tags"]:
-                #         if not isinstance(tag, str):
-                #             return "Each tag must be a string."
+                if "value" not in auth:
+                    return "Each auth must have a 'value' field."
+                
 
         # We check that note groups, if any, are a list of dictionaries with mandatory keys
         if "note_groups" in data:
             return "Note groups has been replaced by note_directories."
-
+                        
+        # Validate the input_params field
         if "payload_schema" in data:
-            if not isinstance(data["payload_schema"], list):
-                return "Payload Schema must be a list."
-            for payload in data["payload_schema"]:
-                if not isinstance(payload, dict):
-                    return "Each payload schema must be a dictionary."
-                if "type" not in payload:
-                    return "Each payload directory must have a 'type' field."
-                if "properties" in payload:
-                    if not isinstance(payload["properties"], list):
-                        return "Properties must be a list."
-                    for property in payload["properties"]:
-                        if not isinstance(property, dict):
-                            return "Each property must be a dictionary."
-                        if "type" not in property:
-                            return "Each property must have a 'type' field."
-                        if property["type"] not in valid_types:
-                            return f"Invalid type '{property['type']}'. Valid types are: {', '.join(valid_types)}."
+            try:
+                # Attempt to validate the payload_schema as a JSON Schema
+                jsonschema.Draft7Validator.check_schema(data["payload_schema"])
+            except jsonschema.exceptions.SchemaError as e:
+                return f"Invalid JSON Schema in 'payload_schema': {e.message}"
+            except Exception as e:
+                return f"Unexpected error in 'payload_schema' validation: {str(e)}"
 
         # If all checks succeeded, we return None to indicate everything is has been validated
         return None
