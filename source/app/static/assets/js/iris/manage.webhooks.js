@@ -22,9 +22,11 @@ $("#case_webhooks_table").dataTable({
     {
       data: "name",
     },
+    {
+      data: "url",
+    },
   ],
 });
-
 
 // Add event listener for row clicks
 $('#case_webhooks_table tbody').on('click', 'tr', function () {
