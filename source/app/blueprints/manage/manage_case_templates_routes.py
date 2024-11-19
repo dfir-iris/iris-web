@@ -156,6 +156,7 @@ def add_template_modal():
             {
                 "webhook_id": "Webhook Id",
                 "display_name": "Trigger Name",
+                "input_params": "JSON Schema"
             }
         ]
     }

@@ -134,12 +134,6 @@ $("#webhooks_table").dataTable({
       },
     },
     {
-      data: "header_auth",
-    },
-    {
-      data: "payload_schema",
-    },
-    {
       data: "url",
     },
   ],
