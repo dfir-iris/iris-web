@@ -53,7 +53,6 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
     ua.activity_desc = message.capitalize()
 
     # if current_user.is_authenticated:
-    #     pass
     #     log.info(f"{current_user.user} [#{current_user.id}] :: Case {caseid} :: {ua.activity_desc}")
     # else:
     #     log.info(f"Anonymous :: Case {caseid} :: {ua.activity_desc}")
