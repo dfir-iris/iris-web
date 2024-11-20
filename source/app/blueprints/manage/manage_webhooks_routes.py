@@ -1,6 +1,6 @@
 # IMPORTS ------------------------------------------------
 import json
-from flask import Blueprint
+from flask import Blueprint, abort, jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -53,6 +53,29 @@ def list_webhooks():
 
     # Return the attributes
     return response_success("", data=webhooks)
+
+@manage_webhooks_blueprint.route('/manage/webhooks/<int:cur_id>', methods=['GET'])
+@ac_api_requires(Permissions.webhooks_read)
+def get_webhook(cur_id):
+    """Fetch a webhook by ID
+
+    Args:
+        cur_id (int): webhook ID
+
+    Returns:
+        JSON Response: Webhook details
+    """
+    webhook = get_webhook_by_id(cur_id)
+    if not webhook:
+        return response_error(f"Invalid webhook ID {cur_id}")
+
+    try:
+        webhook_data = WebhookSchema().dump(webhook)
+    except ValidationError as error:
+        return response_error("Could not serialize webhook", data=str(error))
+
+    return response_success("Webhook retrieved successfully", data=webhook_data)
+
 
 
 @manage_webhooks_blueprint.route('/manage/webhooks/<int:cur_id>/modal', methods=['GET'])

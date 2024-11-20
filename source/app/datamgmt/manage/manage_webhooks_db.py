@@ -42,6 +42,7 @@ def get_webhooks_list() -> List[dict]:
         Webhook.url,
         Webhook.created_at,
         Webhook.updated_at,
+        Webhook.payload_schema,
         User.name.label('added_by')
     ).join(
         Webhook.created_by_user
@@ -60,6 +61,8 @@ def get_webhook_by_id(cur_id: int) -> Webhook:
     Returns:
         Webhook: Webhook
     """
+    print(f"Received request for webhook ID: {cur_id}")
+
     webhook = Webhook.query.filter_by(id=cur_id).first()
     return webhook
 
