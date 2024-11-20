@@ -17,7 +17,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint
-from flask_cors import CORS, cross_origin
 
 from app import app
 from app.util import ac_api_requires
@@ -29,9 +28,6 @@ api_blueprint = Blueprint(
     __name__,
     template_folder='templates'
 )
-
-CORS(api_blueprint, resources={r"/api/*": {"origins": "*"}})
-app.config['CORS_HEADERS'] = 'Content-Type'
 
 # CONTENT ------------------------------------------------
 @api_blueprint.route('/api/ping', methods=['GET'])
@@ -49,21 +45,3 @@ def api_version():
     }
 
     return response_success(data=versions)
-
-@api_blueprint.route('/api/post-data', methods=['POST'])
-@cross_origin()
-def post_data():
-    # Get JSON data from the request body
-    data = request.get_json()
-
-    # If data is not provided, return an error
-    if not data:
-        return jsonify({"error": "No data provided"}), 400
-
-    # Process the data (here, we simply return it as a response)
-    response = {
-        "message": "Data received successfully",
-        "received_data": data
-    }
-
-    return jsonify(response), 200
