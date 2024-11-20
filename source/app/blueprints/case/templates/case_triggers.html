@@ -21,55 +21,59 @@
 
         {% if current_user.is_authenticated %}
         {{ form.hidden_tag() }}
-            <nav class="navbar navbar-header navbar-expand-lg pt-2 pb-2 bg-case-gradient nav-sticky">
-                <div class="container-fluid">
-                    <div class="collapse" id="search-nav">
-                        <div id="tables_button"></div>
-                     </div>
+        <nav class="navbar navbar-header navbar-expand-lg pt-2 pb-2 bg-case-gradient nav-sticky">
+            <div class="container-fluid">
+                <div class="collapse" id="search-nav">
+                    <div id="tables_button"></div>
                 </div>
-			</nav>
+            </div>
+        </nav>
         <div class="page-inner ">
             <div class="row ">
-                 <div class="col-md-12">
-                        <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
-                        <section class="card" id="card_main_load" style="display:none;">
+                <div class="col-md-12">
+                    <div class="loader1 text-center ml-mr-auto" id="loading_msg">Loading...</div>
+                    <section class="card" id="card_main_load" style="display:none;">
 
-                            <div class="card-body">
-                                <div class="table-responsive" id="trigger_table_wrapper">
-                                    <table class="table display wrap col-border table-striped table-hover dataTable" width="100%"
-                                        cellspacing="0" id="trigger_table">
-                                        <tfoot>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Case</th>
-                                                <th>Trigger</th>
-                                                <th>Response</th>
-                                                <th>Execution Time</th>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
-                                </div>
+                        <div class="card-body">
+                            <div class="table-responsive" id="trigger_table_wrapper">
+                                <table class="table display wrap col-border table-striped table-hover dataTable"
+                                    width="100%" cellspacing="0" id="trigger_table">
+                                    <tfoot>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Case</th>
+                                            <th>Trigger</th>
+                                            <th>Response</th>
+                                            <th>Execution Time</th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
-                            <div class="modal fade" id="responseModal" tabindex="-1" role="dialog" aria-labelledby="responseModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-lg" style="width: 90vw; max-width: none;">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="responseModalLabel">Response Details</h5>
-                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">&times;</button>
-                                        </div>
-                                        <div class="modal-body" style="height: 80vh;">
-                                            <iframe id="modalIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
-                                        </div>
+                        </div>
+                        <div class="modal fade" id="responseModal" tabindex="-1" role="dialog"
+                            aria-labelledby="responseModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" style="width: 90vw; max-width: none;" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="responseModalLabel">Response Details</h5>
+                                        <button type="button" class="close" onclick="closeModal()" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body" style="height: 80vh;">
+                                        <iframe id="jsoncrackEmbed" src="https://jsoncrack.com/widget" style="height: 75vh; width: 100%;"
+                                       ></iframe>
                                     </div>
                                 </div>
                             </div>
-                        </section>
+                        </div>
+
+                    </section>
                 </div>
-            </div>
             </div>
         </div>
 
-       
+
         {% endif %}
 
     </div>

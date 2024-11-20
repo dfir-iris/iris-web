@@ -1,5 +1,4 @@
-// Dummy data for triggers
-var g_trigger_id = null;
+
 const dummyTriggers = [
     {
         "id": 1,
@@ -31,19 +30,19 @@ const dummyTriggers = [
     }
 ];
 
-// Function to load dummy trigger data into the table
+
 function get_triggers() {
-    $('#trigger_table_wrapper').empty();
+    $('#trigger_table_wrapper');
     show_loader();
 
-    Table.clear();  // Clear existing rows
-    Table.rows.add(dummyTriggers);  // Add dummy data
-    Table.draw();  // Redraw the table
+    Table.clear();  
+    Table.rows.add(dummyTriggers);  
+    Table.draw();  
 
     hide_loader();
 }
 
-// Initialize DataTable with three columns for triggers
+
 $(document).ready(function () {
     Table = $("#trigger_table").DataTable({
         dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
@@ -71,54 +70,31 @@ $(document).ready(function () {
         order: [[0, 'asc']],
     });
 
-    // Initial fetch of trigger data (dummy)
+
     get_triggers();
 
-    // Event listener for 'View Response' button to open the modal with iframe
+
     $('#trigger_table').on('click', '.view-response', function () {
         const responseData = $(this).data('body');
-        const iframeUrl = 'http://localhost:3000'; // Replace with the desired URL
-    
-        // Prepare data to send
-        const dataToSend = {
-            response: responseData
+        const jsonCrackEmbed = document.getElementById("jsoncrackEmbed");
+
+        $('#responseModal').modal('show');
+
+
+        const options = {
+            theme: "light", 
+            direction: "DOWN", 
         };
-    
-        // Send fetch request to the server
-        fetch('http://localhost:3000/api/receive-data', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(dataToSend)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success:', data);
-    
-            // Open the modal after successful data send
-            $('#responseModal').modal('show');
-            $('#modalIframe').attr('src', iframeUrl + '?data=' + encodeURIComponent(JSON.stringify(responseData)));
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            alert('Failed to send data to the server.');
-        });
+        jsonCrackEmbed.contentWindow.postMessage({ json: JSON.stringify(responseData), options }, "*");
     });
-    
 });
 
+
 function closeModal() {
-    // Hide the modal
-    document.getElementById('responseModal').style.display = 'none';
+    $('#responseModal').modal('hide');
 }
 
-// Helper functions to show/hide loader
+
 function show_loader() {
     $('#loading_msg').show();
     $('#card_main_load').hide();
