@@ -298,7 +298,7 @@ class TaskResponse(db.Model):
 
     # Data
     task = Column(Integer, db.ForeignKey('case_tasks.id'))
-    action = Column(Integer, db.ForeignKey('actions.id'))
+    action = Column(Integer)
     body = Column(JSON, nullable=True)
     execution_time = Column(DateTime, server_default=func.now())
 
@@ -321,8 +321,8 @@ class CaseResponse(db.Model):
     updated_at = Column(DateTime, onupdate=func.now())
     
     # Data
-    case = Column(Integer, db.ForeignKey('case.id'))
-    trigger = Column(Integer, db.ForeignKey('triggers.id'))
+    case = Column(Integer)
+    trigger = Column(Integer)
     body = Column(JSON, nullable=True)
     execution_time = Column(DateTime, server_default=func.now())
 
