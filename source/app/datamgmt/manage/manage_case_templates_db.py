@@ -15,6 +15,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import marshmallow
+import requests
 import jsonschema
 from datetime import datetime
 from typing import List, Optional, Union
@@ -24,7 +25,7 @@ from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.models import CaseTemplate, Cases, Tags, NoteDirectory, Webhook
+from app.models import CaseTemplate, Cases, Tags, NoteDirectory, CaseResponse
 from app.models.authorization import User
 from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseNoteDirectorySchema, CaseNoteSchema
 from app.datamgmt.manage.manage_webhooks_db import get_webhook_by_id
@@ -366,3 +367,77 @@ def case_template_post_modifier(case: Cases, case_template_id: Union[str, int]):
     db.session.commit()
 
     return case, logs
+
+
+def execute_and_save_trigger(trigger, case_template_id):
+    try:
+        # Extract webhook_id from the trigger
+        webhook_id = trigger.get("webhook_id")
+        print(f"Webhook ID: {webhook_id}")  # Debugging: Ensure webhook_id is being accessed
+        if not webhook_id:
+            raise ValueError("Trigger execution failed: webhook_id is missing in trigger.")
+
+        # Fetch the webhook object from the database
+        webhook = get_webhook_by_id(webhook_id)
+        print(f"Webhook Object: {webhook}")  # Debugging: Log the webhook object
+        if not webhook:
+            raise ValueError(f"Trigger execution failed: No webhook found for webhook_id {webhook_id}.")
+
+        # Fetch the URL from the webhook object
+        url = webhook.url  # Adjust this based on your webhook model's attributes
+        print(f"Webhook URL: {url}")  # Debugging: Ensure URL is being accessed
+        if not url:
+            raise ValueError(f"Trigger execution failed: URL is missing in webhook with id {webhook_id}.")
+
+        # Execute the webhook request
+        print(f"Executing webhook request to URL: {url} with data: {trigger}")
+        response = requests.post(url, json=trigger)
+        print(f"Webhook Response Status Code: {response.status_code}")  # Log response status
+        print(f"Webhook Response Content: {response.text}")  # Log response content
+
+        # Check response status
+        if response.status_code == 200:
+            results = response.json()
+            print(f"Webhook Execution Results: {results}")  # Log the result of the execution
+            save_results(results, case_template_id, webhook_id)  # Assuming save_results is implemented to handle the output
+            return f"Trigger executed successfully and saved for webhook_id {webhook_id}."
+        else:
+            raise ValueError(
+                f"Trigger execution failed: Webhook request returned status {response.status_code}, "
+                f"response: {response.text}"
+            )
+
+    except Exception as e:
+        print(f"Error in execute_and_save_trigger: {str(e)}")  # Log the error
+        return str(e)
+
+
+def save_results(data, case_template_id, webhook_id):
+    """
+    Save the results of a webhook execution into the CaseResponse model.
+    
+    :param data: The response data to save (JSON).
+    :param case_template_id: The case template ID.
+    :param webhook_id: The webhook ID.
+    """
+    try:
+        # Create a new CaseResponse object
+        case_response = CaseResponse(
+            case=case_template_id,
+            trigger=webhook_id,
+            body=data,
+        )
+        
+        # Add the object to the session and commit
+        db.session.add(case_response)
+        db.session.commit()
+        
+        print(case_response.id, case_response.case, case_response.trigger, case_response.body, case_response.execution_time)
+        print(f"CaseResponse saved successfully with id {case_response.id}")
+    except Exception as e:
+        db.session.rollback()  # Roll back the session in case of an error
+        print(f"Error saving CaseResponse: {str(e)}")
+
+
+
+

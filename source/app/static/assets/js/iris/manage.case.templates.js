@@ -73,9 +73,10 @@ function add_case_template() {
     });
 
     $("#submit_new_case_template").on("click", function () {
-      let data_sent = Object();
-      data_sent["case_template_json"] = editor.getSession().getValue();
-      data_sent["csrf_token"] = $("#csrf_token").val();
+      let data_sent = {
+        case_template_json: editor.getSession().getValue(),
+        csrf_token: $("#csrf_token").val(),
+      };
 
       post_request_api(
         "/manage/case-templates/add",
@@ -84,7 +85,7 @@ function add_case_template() {
         function () {
           window.swal({
             title: "Adding...",
-            text: "Please wait",
+            text: "Executing triggers, please wait...",
             icon: "/static/assets/img/loader.gif",
             button: false,
             allowOutsideClick: false,
