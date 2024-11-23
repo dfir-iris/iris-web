@@ -30,7 +30,8 @@ from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import validate_case_template
 from app.datamgmt.manage.manage_case_templates_db import delete_case_template_by_id
-from app.forms import CaseTemplateForm, AddAssetForm
+from app.datamgmt.manage.manage_case_templates_db import execute_and_save_trigger
+from app.forms import AddAssetForm, WebhookForm, CaseTemplateForm
 from app.models import CaseTemplate
 from app.models.authorization import Permissions
 from app.iris_engine.utils.tracker import track_activity
@@ -176,36 +177,58 @@ def upload_template_modal():
 def add_case_template(caseid):
     data = request.get_json()
     if not data:
-        return response_error("Invalid request")
+        return response_error("Invalid request: Missing data")
 
     case_template_json = data.get('case_template_json')
     if not case_template_json:
-        return response_error("Invalid request")
+        return response_error("Invalid request: Missing case template JSON")
 
     try:
         case_template_dict = json.loads(case_template_json)
     except Exception as e:
         return response_error("Invalid JSON", data=str(e))
 
+    # Validate case template
     try:
         logs = validate_case_template(case_template_dict, update=False)
         if logs is not None:
             return response_error("Found errors in case template", data=logs)
     except Exception as e:
-        return response_error("Found errors in case template", data=str(e))
+        return response_error("Error validating case template", data=str(e))
 
+    # Attempt to add case template to the database
     try:
         case_template_dict["created_by_user_id"] = current_user.id
         case_template_data = CaseTemplateSchema().load(case_template_dict)
+
         case_template = CaseTemplate(**case_template_data)
         db.session.add(case_template)
+
+        # Commit the template to generate an ID
         db.session.commit()
+
+        # Execute and save triggers
+        for trigger in case_template_dict.get("triggers", []):
+            print(f"Executing trigger for case template ID {case_template.id}: {trigger}")
+            execute_and_save_trigger(trigger, case_template.id)
+
     except Exception as e:
+        print("Error adding case template:", e)  
+        db.session.rollback()  
         return response_error("Could not add case template into DB", data=str(e))
 
-    track_activity(f"Case template '{case_template.name}' added", caseid=caseid, ctx_less=True)
+    # Log activity
+    track_activity(
+        f"Case template '{case_template.name}' added", 
+        caseid=caseid, 
+        ctx_less=True
+    )
 
-    return response_success("Added successfully", data=CaseTemplateSchema().dump(case_template))
+    # Return success response
+    return response_success(
+        "Case template added successfully", 
+        data=CaseTemplateSchema().dump(case_template)
+    )
 
 
 @manage_case_templates_blueprint.route('/manage/case-templates/update/<int:cur_id>', methods=['POST'])

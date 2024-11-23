@@ -811,6 +811,43 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('asset_id'), 'asset')
 
         return data
+    
+class TaskResponseSchema(ma.Schema):
+    """Schema for serializing and deserializing Task Response objects.
+
+    This schema defines the fields to include when serializing and deserializing Task Response objects.
+    It includes fields for the task response ID, the task ID of the user who created the template, the creation and update
+    timestamps, the task, action, body and execution time of the Task Response.
+
+    """
+    id: int = fields.Integer(dump_only=True)
+    created_by_user_id: int = fields.Integer(required=True)
+    created_at: datetime = fields.DateTime(dump_only=True)
+    updated_at: datetime = fields.DateTime(dump_only=True)
+
+    task: int = fields.Integer(dump_only=True)
+    action: int = fields.Integer(dump_only=True)
+    body: Optional[dict] = fields.Dict(allow_none=True, missing={})
+    execution_time: datetime = fields.DateTime(dump_only=True)
+
+class CaseResponseSchema(ma.Schema):
+    """Schema for serializing and deserializing Case Response objects.
+
+    This schema defines the fields to include when serializing and deserializing case Response objects.
+    It includes fields for the case response ID, the task ID of the user who created the template, the creation and update
+    timestamps, the case, action, body and execution time of the Case Response.
+
+    """
+    id: int = fields.Integer(dump_only=True)
+    created_by_user_id: int = fields.Integer(required=True)
+    created_at: datetime = fields.DateTime(dump_only=True)
+    updated_at: datetime = fields.DateTime(dump_only=True)
+
+    case: int = fields.Integer(dump_only=True)
+    trigger: int = fields.Integer(dump_only=True)
+    body: Optional[dict] = fields.Dict(allow_none=True, missing={})
+    execution_time: datetime = fields.DateTime(dump_only=True)
+
 
 class WebhookSchema(ma.Schema):
     """Schema for serializing and deserializing Webhook objects.
