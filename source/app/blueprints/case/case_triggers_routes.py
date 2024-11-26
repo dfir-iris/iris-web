@@ -17,7 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # IMPORTS ------------------------------------------------
-from flask import Blueprint
+from flask import Blueprint, request
 from flask import redirect
 from flask import render_template
 from flask import url_for
@@ -27,21 +27,25 @@ from app.datamgmt.states import update_tasks_state
 from app.models.authorization import CaseAccessLevel
 from app.util import ac_api_case_requires
 from app.util import ac_case_requires
-from source.app.datamgmt.manage.manage_case_response_db import get_case_responses_list
+from app.datamgmt.manage.manage_case_response_db import get_case_responses_list
+
 
 case_triggers_blueprint = Blueprint('case_triggers',
                                     __name__,
                                     template_folder='templates')
 
-# CONTENT ------------------------------------------------
 @case_triggers_blueprint.route('/case/triggers', methods=['GET'])
-#@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-def case_triggers(caseid, url_redir):
+def case_triggers():
+    # Retrieve query parameters from the URL
+    caseid = request.args.get('caseid')
+    url_redir = request.args.get('url_redir', type=bool)
+
     if url_redir:
         return redirect(url_for('case_triggers.case_triggers', cid=caseid, redirect=True))
 
     form = FlaskForm()
     case = get_case(caseid)
-    triggers = get_case_responses_list()  # Fetch the triggers
+    triggers = get_case_responses_list()  
 
     return render_template("case_triggers.html", case=case, form=form, triggers=triggers)
+

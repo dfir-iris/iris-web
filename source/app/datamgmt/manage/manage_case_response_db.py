@@ -30,7 +30,7 @@ def get_case_responses_list() -> List[dict]:
     Returns:
         List[dict]: List of case responses.
     """
-    case_responses = CaseResponse.query.with_entities(
+    case_response = CaseResponse.query.with_entities(
         CaseResponse.id,
         CaseResponse.created_at,
         CaseResponse.updated_at,
@@ -38,11 +38,9 @@ def get_case_responses_list() -> List[dict]:
         CaseResponse.trigger,
         CaseResponse.body,
         User.name.label('created_by')
-    ).join(
-        CaseResponse.created_by_user
     ).all()
 
-    return [row._asdict() for row in case_responses]
+    return [row._asdict() for row in case_response]
 
 
 def get_case_response_by_id(response_id: int) -> CaseResponse:
