@@ -6,7 +6,6 @@ Create Date: 2024-01-15 13:53:48.946919
 
 """
 from alembic import op
-import sqlalchemy as sa
 
 from app.alembic.alembic_utils import _table_has_column
 

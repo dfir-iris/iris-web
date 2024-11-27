@@ -17,7 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from app import db
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.manage.manage_users_db import get_user, get_active_user
+from app.datamgmt.manage.manage_users_db import get_active_user
 
 
 def users_reset_mfa(user_id: int = None):

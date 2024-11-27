@@ -46,7 +46,7 @@ def upgrade():
             sa.Column('uuid',  UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
         )
 
-        res = conn.execute(text(f"select id from \"user\";"))
+        res = conn.execute(text("select id from \"user\";"))
         results = res.fetchall()
         for user in results:
             conn.execute(t_users.update().where(t_users.c.id == user[0]).values(
@@ -168,36 +168,36 @@ def upgrade():
     if not conn:
         conn = op.get_bind()
     # Create the groups if they don't exist
-    res = conn.execute(text(f"select group_id from groups where group_name = 'Administrators';"))
+    res = conn.execute(text("select group_id from groups where group_name = 'Administrators';"))
     if res.rowcount == 0:
         conn.execute(text(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
                      f"group_auto_follow, group_auto_follow_access_level) "
                      f"values ('Administrators', 'Administrators', '{ac_get_mask_full_permissions()}', '{uuid.uuid4()}',"
                      f" true, 4);"))
-        res = conn.execute(text(f"select group_id from groups where group_name = 'Administrators';"))
+        res = conn.execute(text("select group_id from groups where group_name = 'Administrators';"))
     admin_group_id = res.fetchone()[0]
 
-    res = conn.execute(text(f"select group_id from groups where group_name = 'Analysts';"))
+    res = conn.execute(text("select group_id from groups where group_name = 'Analysts';"))
     if res.rowcount == 0:
         conn.execute(text(f"insert into groups (group_name, group_description, group_permissions, group_uuid, "
                      f"group_auto_follow, group_auto_follow_access_level) "
                      f"values ('Analysts', 'Standard Analysts', '{ac_get_mask_analyst()}', '{uuid.uuid4()}', true, 4);"))
-        res = conn.execute(text(f"select group_id from groups where group_name = 'Analysts';"))
+        res = conn.execute(text("select group_id from groups where group_name = 'Analysts';"))
 
     analyst_group_id = res.fetchone()[0]
 
     # Create the organisations if they don't exist
-    res = conn.execute(text(f"select org_id from organisations where org_name = 'Default Org';"))
+    res = conn.execute(text("select org_id from organisations where org_name = 'Default Org';"))
     if res.rowcount == 0:
         conn.execute(text(f"insert into organisations (org_name, org_description, org_url, org_email, org_logo, "
                      f"org_type, org_sector, org_nationality, org_uuid) values ('Default Org', 'Default Organisation', "
                      f"'', '', "
                      f"'','', '', '', '{uuid.uuid4()}');"))
-        res = conn.execute(text(f"select org_id from organisations where org_name = 'Default Org';"))
+        res = conn.execute(text("select org_id from organisations where org_name = 'Default Org';"))
     default_org_id = res.fetchone()[0]
 
     # Give the organisation access to all the cases
-    res = conn.execute(text(f"select case_id from cases;"))
+    res = conn.execute(text("select case_id from cases;"))
     result_cases = [case[0] for case in res.fetchall()]
     access_level = ac_get_mask_case_access_level_full()
 
@@ -206,8 +206,8 @@ def upgrade():
 
     # Get all users with their roles
     if _has_table("user_roles"):
-        res = conn.execute(text(f"select distinct roles.name, \"user\".id from user_roles INNER JOIN \"roles\" ON "
-                           f"\"roles\".id = user_roles.role_id INNER JOIN \"user\" ON \"user\".id = user_roles.user_id;"))
+        res = conn.execute(text("select distinct roles.name, \"user\".id from user_roles INNER JOIN \"roles\" ON "
+                           "\"roles\".id = user_roles.role_id INNER JOIN \"user\" ON \"user\".id = user_roles.user_id;"))
         results_users = res.fetchall()
 
         for user_id in results_users:
