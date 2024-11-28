@@ -1,106 +1,38 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const table = document.getElementById("trigger_table");
 
-const dummyTriggers = [
-    {
-        "id": 1,
-        "case": 101,
-        "trigger": 202,
-        "body": {
-            "status": "success",
-            "message": "Action executed successfully",
-            "details": {
-                "step_1": "Initiated",
-                "step_2": "Completed"
+    table.addEventListener("click", (event) => {
+        if (event.target && event.target.classList.contains("view-response")) {
+            const button = event.target;
+
+            const responseData = button.getAttribute("data-response");
+            const parsedData = JSON.parse(responseData);
+            const jsonCrackEmbed = document.getElementById("jsoncrackEmbed");
+
+            const modal = new bootstrap.Modal(document.getElementById("responseModal"));
+            modal.show();
+            //Check iframe is loaded and contentWindow is available
+            if (jsonCrackEmbed && jsonCrackEmbed.contentWindow) {
+                // Define options for jsonCrack
+                const options = {
+                    theme: "light", 
+                    direction: "DOWN", 
+                };
+
+                // Post message to jsonCrackEmbed iframe
+                jsonCrackEmbed.contentWindow.postMessage({ json: JSON.stringify(parsedData), options }, "*");
+            } else {
+                console.error("jsonCrackEmbed iframe is not available or not loaded.");
             }
-        },
-        "execution_time": "2024-11-13T14:30:00Z"
-    },
-    {
-        "id": 2,
-        "case": 103,
-        "trigger": 202,
-        "body": {
-            "status": "success",
-            "message": "Action executed successfully",
-            "details": {
-                "step_1": "Initiated",
-                "step_2": "Completed"
-            }
-        },
-        "execution_time": "2024-11-13T14:50:00Z"
-    }
-];
-
-
-function get_triggers() {
-    $('#trigger_table_wrapper');
-    show_loader();
-
-    Table.clear();  
-    Table.rows.add(dummyTriggers);  
-    Table.draw();  
-
-    hide_loader();
-}
-
-
-$(document).ready(function () {
-    Table = $("#trigger_table").DataTable({
-        dom: '<"container-fluid"<"row"<"col"l><"col"f>>>rt<"container-fluid"<"row"<"col"i><"col"p>>>',
-        data: [],
-        columns: [
-            { data: "id", title: "ID" },
-            { data: "case", title: "Case" },
-            { data: "trigger", title: "Trigger" },
-            {
-                data: "body",
-                title: "Response",
-                render: function (data, type, row) {
-                    if (type === 'display') {
-                        return '<button class="btn btn-primary btn-sm view-response" data-body=\'' + JSON.stringify(data) + '\'>View Response</button>';
-                    }
-                    return data;
-                }
-            },
-            { data: "execution_time", title: "Execution Time" }
-        ],
-        processing: true,
-        ordering: true,
-        pageLength: 10,
-        responsive: true,
-        order: [[0, 'asc']],
-    });
-
-
-    get_triggers();
-
-
-    $('#trigger_table').on('click', '.view-response', function () {
-        const responseData = $(this).data('body');
-        const jsonCrackEmbed = document.getElementById("jsoncrackEmbed");
-
-        $('#responseModal').modal('show');
-
-
-        const options = {
-            theme: "light", 
-            direction: "DOWN", 
-        };
-        jsonCrackEmbed.contentWindow.postMessage({ json: JSON.stringify(responseData), options }, "*");
+        }
+        
     });
 });
 
 
+
+
 function closeModal() {
-    $('#responseModal').modal('hide');
-}
-
-
-function show_loader() {
-    $('#loading_msg').show();
-    $('#card_main_load').hide();
-}
-
-function hide_loader() {
-    $('#loading_msg').hide();
-    $('#card_main_load').show();
+    const modal = bootstrap.Modal.getInstance(document.getElementById("responseModal"));
+    modal.hide();
 }

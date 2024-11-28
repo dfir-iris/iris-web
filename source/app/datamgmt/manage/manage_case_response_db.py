@@ -52,7 +52,7 @@ def get_case_response_by_id(response_id: int) -> CaseResponse:
     Returns:
         CaseResponse: Task response object.
     """
-    case_response = CaseResponse.query.filter_by(id=response_id).first()
+    case_response = CaseResponse.query.filter_by(id=response_id)
     return case_response
 
 
