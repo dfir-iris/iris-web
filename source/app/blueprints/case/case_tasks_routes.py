@@ -20,7 +20,7 @@
 from datetime import datetime
 
 import marshmallow
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -77,6 +77,18 @@ def case_tasks(caseid, url_redir):
 
     return render_template("case_tasks.html", case=case, form=form)
 
+@case_tasks_blueprint.route('/case/testjsoneeditorRoute', methods=['POST'])
+def save_data():
+    # Get the JSON data from the request
+    data = request.get_json()
+    
+    # Debugging output
+    print('Received data:', data)
+    
+    # Process the data (e.g., save to a database, etc.)
+    
+    # Return a response
+    return jsonify({"status": "success", "message": "Data saved successfully!"})
 
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)

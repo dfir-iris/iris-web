@@ -93,7 +93,7 @@ function edit_task(id) {
                 text: action.name,
                 click: function (e) {
                   e.preventDefault(); // Prevent default link behavior
-                  OpenJsonEditorModal(action.payload_schema);
+                  expandActionDiv(action.payload_schema);
                 },
               })
             );
@@ -115,63 +115,75 @@ function edit_task(id) {
   });
 }
 
-function OpenJsonEditorModal(payloadSchema) {
-  $('#responseModal').modal('show');
+function expandActionDiv(actionDetails) {
+  // Reference to the collapsible content div
+  const collapsibleContent = $('#collapsibleContent');
+  const jsonEditorContainer = $('#jsoneditor');
 
-  // Ensure the editor is initialized only once
-  if (!window.jsonEditor) {
-    window.jsonEditor = new JSONEditor(document.getElementById('jsoneditor'), {
-      schema: payloadSchema,
-      theme:'bootstrap4'
-    });
-  } else {
+  // Show the collapsible content
+  collapsibleContent.slideDown();
+
+  // Reinitialize JSONEditor
+  if (window.jsonEditor) {
+    // Destroy the existing editor instance
     window.jsonEditor.destroy();
-    window.jsonEditor = new JSONEditor(document.getElementById('jsoneditor'), {
-      schema: payloadSchema
-    });
+    window.jsonEditor = null; // Clear reference to avoid accidental reuse
   }
 
-  // Set the default value if provided in the schema
-  if (payloadSchema.default) {
-    window.jsonEditor.set(payloadSchema);
-  }
+  // Create a new JSONEditor instance with the given schema
+  window.jsonEditor = new JSONEditor(jsonEditorContainer[0], {
+    schema: actionDetails, // Use the provided schema
+    theme: 'bootstrap4',
+  });
 
-  // Save button event listener
-  $('#saveBtn').off('click').on('click', function () {
-    var updatedData = window.jsonEditor.get();
+  // Use the `onReady` callback to ensure the editor is ready
+  window.jsonEditor.on('ready', function () {
+    console.log('JSONEditor is ready.');
+
+    // Set default data or use schema defaults if available
+    if (actionDetails.default) {
+      window.jsonEditor.setValue(actionDetails.default);
+    } else {
+      window.jsonEditor.setValue({}); // Initialize with an empty object if no default provided
+    }
+  });
+
+  // Update the Save button logic to handle the current action
+  $('#saveBtn').off('click').on('click', function (e) {
+    e.preventDefault();
+
+    // Retrieve the updated data from JSONEditor
+    const updatedData = window.jsonEditor.getValue();
+
     console.log('Updated data:', updatedData);
+
+    // Example: Simulated save logic (replace with your actual save endpoint)
+    fetch('/case/testjsoneeditorRoute', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedData),
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log('Save successful:', data);
+        alert('Data saved successfully!');
+      })
+      .catch((error) => {
+        console.error('Error saving data:', error);
+        alert('Error saving data. Please try again.');
+      });
   });
 }
 
-// Function to handle displaying the response of the selected action using dummy data
-function displayActionResponse(taskId, actionId) {
-  // Dummy response data for each action
-  var dummyResponses = {
-    1: [
-      { id: 1, task: 'Task 1', action: 'Review Task', response: 'Reviewed successfully', executionTime: '5s' },
-      { id: 2, task: 'Task 2', action: 'Review Task', response: 'Minor changes needed', executionTime: '7s' }
-    ],
-    2: [
-      { id: 3, task: 'Task 3', action: 'Approve Task', response: 'Approved successfully', executionTime: '3s' }
-    ],
-    3: [
-      { id: 4, task: 'Task 4', action: 'Reject Task', response: 'Rejected due to issues', executionTime: '6s' }
-    ]
-  };
 
-  var response = dummyResponses[actionId] || [];
-  var table = $('#taskResponse_table').DataTable({
-    destroy: true, // Reinitialize the table each time
-    data: response,
-    columns: [
-      { data: 'id', title: 'ID' },
-      { data: 'task', title: 'Tasks' },
-      { data: 'action', title: 'Action' },
-      { data: 'response', title: 'Response' },
-      { data: 'executionTime', title: 'Execution Time' }
-    ]
-  });
-}
+
 
 
 function save_task() {

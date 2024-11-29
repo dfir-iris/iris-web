@@ -120,6 +120,13 @@
                                         <!-- JavaScript will populate this dropdown list -->
                                     </div>
                                 </div>
+                                
+                                <!-- Collapsible content -->
+                                <div id="collapsibleContent" class="mt-3 card p-3" style="display: none;">
+                                    <h5>Action Details</h5>
+                                    <div id="jsoneditor"></div> <!-- JSONEditor container -->
+                                    <button id="saveBtn" class="btn btn-primary mt-3">Save</button>
+                                  </div>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive" id="taskResponse_table_wrapper">
@@ -135,25 +142,6 @@
                                         </thead>
                                     </table>
                                 </div>
-                                <div id="responseModal"  tabindex="-1" role="dialog">
-                                    <div class="modal-dialog" role="document">
-                                      <div class="modal-content" >
-                                        <div class="modal-header">
-                                          <h5 class="modal-title">Action Input Form</h5>
-                                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                          </button>
-                                        </div>
-                                        <div class="modal-body">
-                                          <div id="jsoneditor" style="height:80vh;"></div>
-                                        </div>
-                                        <div class="modal-footer">
-                                          <button type="button" class="btn btn-primary" id="saveBtn">Save Changes</button>
-                                          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
                             </div>
                             {% endif %}    
                         </div>
@@ -207,7 +195,6 @@
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
 <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
-<!-- Include JSONEditor JS -->
 <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
 
 {% endblock javascripts %}

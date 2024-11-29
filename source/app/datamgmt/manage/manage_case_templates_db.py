@@ -439,5 +439,46 @@ def save_results(data, case_template_id, webhook_id):
         print(f"Error saving CaseResponse: {str(e)}")
 
 
+# Methods for actions
 
+def execute_and_save_action(action, case_template_id, payload):
+    try:
+        # Extract webhook_id from the action
+        webhook_id = action.get("webhook_id")
+        print(f"Webhook ID: {webhook_id}")  # Debugging: Ensure webhook_id is being accessed
+        if not webhook_id:
+            raise ValueError("Trigger execution failed: webhook_id is missing in action.")
 
+        # Fetch the webhook object from the database
+        webhook = get_webhook_by_id(webhook_id)
+        print(f"Webhook Object: {webhook}")  # Debugging: Log the webhook object
+        if not webhook:
+            raise ValueError(f"Trigger execution failed: No webhook found for webhook_id {webhook_id}.")
+
+        # Fetch the URL from the webhook object
+        url = webhook.url  # Adjust this based on your webhook model's attributes
+        print(f"Webhook URL: {url}")  # Debugging: Ensure URL is being accessed
+        if not url:
+            raise ValueError(f"Trigger execution failed: URL is missing in webhook with id {webhook_id}.")
+
+        # Execute the webhook request
+        print(f"Executing webhook request to URL: {url} with data: {action}")
+        response = requests.post(url, json=action)
+        print(f"Webhook Response Status Code: {response.status_code}")  # Log response status
+        print(f"Webhook Response Content: {response.text}")  # Log response content
+
+        # Check response status
+        if response.status_code == 200:
+            results = response.json()
+            print(f"Webhook Execution Results: {results}")  # Log the result of the execution
+            save_results(results, case_template_id, webhook_id)  # Assuming save_results is implemented to handle the output
+            return f"Trigger executed successfully and saved for webhook_id {webhook_id}."
+        else:
+            raise ValueError(
+                f"Trigger execution failed: Webhook request returned status {response.status_code}, "
+                f"response: {response.text}"
+            )
+
+    except Exception as e:
+        print(f"Error in execute_and_save_action: {str(e)}")  # Log the error
+        return str(e)
