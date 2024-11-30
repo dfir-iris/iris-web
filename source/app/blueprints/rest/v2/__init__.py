@@ -29,6 +29,7 @@ v2_api_bp.register_blueprint(v2_api_case)
 
 # Handlers --------------------------------------------------------------------
 
+@v2_api_bp.errorhandler(UnauthorizedException)
 def handle_unauthorized(exc: UnauthorizedException):
     """Handles when `Unauthorized` is raised and returns a JSON error message."""
     
@@ -42,12 +43,8 @@ def handle_unauthorized(exc: UnauthorizedException):
     
     return response_error(f'Access denied while performing "{error_data["action"]}" on "{error_data["resource"]}".', data=error_data, status=403)
 
+@v2_api_bp.errorhandler(BusinessProcessingError)
 def handle_business_processing_error(exc: BusinessProcessingError):
     """Handles when `BusinessProcessingError` is raised and returns a JSON error message."""
     
     return response_api_error(exc.get_message(), exc.get_data())
-
-# Hook handlers onto their related exception ----------------------------------
-
-v2_api_bp.errorhandler(UnauthorizedException, handle_unauthorized)
-v2_api_bp.errorhandler(BusinessProcessingError, handle_business_processing_error)
