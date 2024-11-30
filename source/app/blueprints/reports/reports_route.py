@@ -18,6 +18,7 @@
 
 import os
 import tempfile
+import base64
 
 from flask import Blueprint
 from flask import request
@@ -32,6 +33,7 @@ from app.util import FileRemover
 from app.util import ac_api_requires
 from app.util import ac_requires_case_identifier
 from app.util import response_error
+from app.datamgmt.case.case_db import get_case
 
 reports_blueprint = Blueprint('reports', __name__, template_folder='templates')
 
@@ -116,8 +118,21 @@ def _gen_report(report_id, caseid):
             if fpath is None:
                 track_activity("failed to generate the report")
                 return response_error(msg="Failed to generate the report", data=logs)
+            
+            with open(fpath,'rb') as rfile:
+                encoded_file = base64.b64encode(rfile.read()).decode('utf-8')
 
-            call_modules_hook('on_postload_report_create', data=fpath, caseid=caseid)
+            res = get_case(caseid)
+            
+            _data = {
+                'report_id':report_id,
+                'file_path':fpath,
+                'case_id':res.case_id,
+                'user_name':res.user.name,
+                'file':encoded_file
+            }
+
+            call_modules_hook('on_postload_report_create', data=_data, caseid=caseid)
 
             resp = send_file(fpath, as_attachment=True)
             file_remover.cleanup_once_done(resp, tmp_dir)

@@ -30,7 +30,7 @@ from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets
+from app.models import CaseAssets, NoteRevisions
 from app.models import CaseClassification
 from app.models import alert_assets_association
 from app.models import CaseStatus
@@ -368,6 +368,13 @@ def delete_case(case_id):
     # Legacy code
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()
+
+    NoteRevisions.query.filter(
+        and_(
+            Notes.note_case_id == case_id,
+            NoteRevisions.note_id == Notes.note_id
+        )
+    ).delete()
 
     Notes.query.filter(Notes.note_case_id == case_id).delete()
     NoteDirectory.query.filter(NoteDirectory.case_id == case_id).delete()

@@ -450,12 +450,12 @@ function mergeAlertCasesSelectOption(data) {
 
 function fetchSmartRelations(alert_id) {
     $(`input[name="open_alerts_${alert_id}"]`).prop('checked', true);
-    $(`input[name="closed_alerts_${alert_id}"]`).prop('checked', false);
-    $(`input[name="open_cases_${alert_id}"]`).prop('checked', false);
-    $(`input[name="closed_cases_${alert_id}"]`).prop('checked', false);
+    $(`input[name="closed_alerts_${alert_id}"]`).prop('checked', true);
+    $(`input[name="open_cases_${alert_id}"]`).prop('checked', true);
+    $(`input[name="closed_cases_${alert_id}"]`).prop('checked', true);
 
-    fetchSimilarAlerts(alert_id, false, true, false,
-        false, false);
+    fetchSimilarAlerts(alert_id, false, true, true,
+        true, true);
 }
 
 function buildAlertLink(alert_id){
@@ -504,9 +504,9 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
     edges: new vis.DataSet(edges),
   };
 
-  const options = {
+const options = {
     edges: {
-      smooth: {
+        smooth: {
             enabled: true,
             type: 'continuous',
             roundness: 0.5
@@ -517,27 +517,34 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
         improvedLayout: true
     },
     interaction: {
-      hideEdgesOnDrag: false,
-        tooltipDelay: 100
+        hideEdgesOnDrag: false,
+        tooltipDelay: 100,
+        zoomView: false,
+        navigationButtons: true,
+        keyboard: {
+            enabled: true,
+            bindToWindow: true
+        }
     },
-    height: (window.innerHeight- 250) + "px",
+    height: (window.innerHeight - 400) + "px",
     clickToUse: true,
     physics: {
         forceAtlas2Based: {
-          gravitationalConstant: -167,
-          centralGravity: 0.04,
-          springLength: 0,
-          springConstant: 0.02,
-          damping: 0.9
+            gravitationalConstant: -167,
+            centralGravity: 0.02,
+            springLength: 0,
+            springConstant: 0.01,
+            damping: 0.1
         },
         minVelocity: 0.41,
         solver: "forceAtlas2Based",
         timestep: 0.45
     }
-  };
+};
 
-    const container = document.getElementById(containerId);
-    const network = new vis.Network(container, data, options);
+const container = document.getElementById(containerId);
+const network = new vis.Network(container, data, options);
+
 
     // Create a MutationObserver to listen for DOM changes in the container
     const observer = new MutationObserver((mutations) => {
@@ -592,7 +599,7 @@ function createNetwork(alert_id, relatedAlerts, nb_nodes, containerId, container
               $('#view-alert').data('node-id', node_id);
               $('#view-alert').data('node-type', node_type);
               if (node_type === 'alert' || node_type === 'case') {
-                  $('#view-alert-text').text(`View on ${node_type} #${node_id}`);
+                  $('#view-alert-text').text(`View ${node_type} #${node_id}`);
               } else {
                     $('#view-alert-text').text(`Pivot on ${node_type} ${node_id}`);
               }
@@ -807,21 +814,21 @@ function getFiltersFromUrl() {
     return Object.fromEntries(formData.entries());
 }
 
-function alertResolutionToARC(resolution) {
+function alertResolutionToARC(resolution, alert_id) {
     if (resolution === null) {
         return '';
     }
     switch (resolution.resolution_status_name) {
         case 'True Positive With Impact':
-            return `<span class="badge alert-bade-status badge-pill badge-danger mr-2">True Positive with impact</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-danger mr-2" id="alertResolution-${alert_id}" data-value="true_positive_with_impact">True Positive with impact</span>`
         case 'True Positive Without Impact':
-            return `<span class="badge alert-bade-status badge-pill badge-warning mr-2">True Positive without impact</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-warning mr-2" id="alertResolution-${alert_id}" data-value="true_positive_without_impact">True Positive without impact</span>`
         case 'False Positive':
-            return `<span class="badge alert-bade-status badge-pill badge-success mr-2">False Positive</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-success mr-2" id="alertResolution-${alert_id}" data-value="false_positive">False Positive</span>`
         case 'Legitimate':
-            return `<span class="badge alert-bade-status badge-pill badge-info mr-2">Legitimate</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-info mr-2" id="alertResolution-${alert_id}" data-value="legitimate">Legitimate</span>`
         case 'Unknown':
-            return `<span class="badge alert-bade-status badge-pill badge-light mr-2">Unknown resolution</span>`
+            return `<span class="badge alert-bade-status badge-pill badge-light mr-2" id="alertResolution-${alert_id}" data-value="unknown">Unknown resolution</span>`
     }
 }
 
@@ -841,7 +848,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                      modulesOptionsIocReq) {
   const colorSeverity = alert_severity_to_color(alert.severity.severity_name);
   const alert_color = alertStatusToColor(alert.status.status_name);
-  const alert_resolution = alertResolutionToARC(alert.resolution_status);
+  const alert_resolution = alertResolutionToARC(alert.resolution_status, alert.alert_id);
 
   if (alert.owner !== null) {
       alert.owner.user_name = filterXSS(alert.owner.user_name);
@@ -884,7 +891,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                             <div class="avatar-tickbox-wrapper">
                               <div class="avatar-wrapper">
                                 <div class="avatar cursor-pointer">
-                                  <span class="avatar-title alert-m-title alert-similarity-trigger rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                                  <span class="avatar-title alert-m-title alert-similarity-trigger rounded-circle bg-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}" >
                                     <i class="fa-solid fa-fire"></i>
                                   </span>
                                 </div>
@@ -897,7 +904,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                         </div>
                     </div>
                     <div class="col-9">
-                        <h6 class="text-uppercase fw-bold mb-1 mt-1 ml-3 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}">
+                        <h6 class="text-uppercase fw-bold mb-1 mt-1 ml-3 alert-m-title alert-m-title-${colorSeverity}" data-toggle="collapse" data-target="#additionalDetails-${alert.alert_id}" onclick="fetchSmartRelations(${alert.alert_id});">
                             ${alert.alert_title}
                             <span class="text-${colorSeverity} pl-3"></span>
                             <div class="d-flex mb-3">
@@ -981,23 +988,41 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                       </div>` : ''}
                       ${alert.alert_source_link ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Link:</b></div>
-                        <div class="col-md-9">${
+                        <div class="col-md-9 copy-value">${
                             alert.alert_source_link && alert.alert_source_link.startsWith('http') 
-                            ? `<a href="${alert.alert_source_link}">${alert.alert_source_link}</a>` 
+                            ? `<a href="${alert.alert_source_link}" target="_blank" rel="noopener noreferrer">${alert.alert_source_link}</a>
+                                <button class="copy-btn ml-2" data-value="${escapeHtml(alert.alert_source_link)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                                </button>`
                             : 'No valid link provided'
                           }</div>
                       </div>` : ''}
                       ${alert.alert_source_ref ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Reference:</b></div>
-                        <div class="col-md-9">${alert.alert_source_ref}</div>
+                        <div class="col-md-9 copy-value">
+                            ${alert.alert_source_ref}
+                            <button class="copy-btn ml-2" data-value="${escapeHtml(alert.alert_source_ref)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                            </button>
+                        </div>
                       </div>` : ''}
                       ${alert.alert_source_event_time ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Event Time:</b></div>
-                        <div class="col-md-9">${formatTime(alert.alert_source_event_time)} UTC</div>
+                        <div class="col-md-9 copy-value">
+                            ${formatTime(alert.alert_source_event_time)} UTC
+                            <button class="copy-btn ml-2" data-value="${formatTime(alert.alert_source_event_time)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                            </button>
+                        </div>
                       </div>` : ''}
                       ${alert.alert_creation_time ? `<div class="row mt-2">
                         <div class="col-md-3"><b>IRIS Creation Time:</b></div>
-                        <div class="col-md-9">${formatTime(alert.alert_creation_time)} UTC</div>
+                        <div class="col-md-9 copy-value">
+                            ${formatTime(alert.alert_creation_time)} UTC
+                            <button class="copy-btn ml-2" data-value="${formatTime(alert.alert_creation_time)}">
+                                    <i class="fa fa-copy text-dark"></i>
+                            </button>
+                        </div>
                       </div>` : ''}
                     
                     <div class="separator-solid"></div>
@@ -1017,8 +1042,8 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                     <div class="separator-solid"></div>
                     <h3 class="title mt-3 mb-3"><strong>Relationships</strong></h3>
                     <button class="btn btn-sm btn-outline-dark" type="button" data-toggle="collapse" data-target="#relationsAlert-${alert.alert_id}" 
-                    aria-expanded="false" aria-controls="relationsAlert-${alert.alert_id}" onclick="fetchSmartRelations(${alert.alert_id});">Toggle Relations</button>
-                    <div class="collapse mt-3" id="relationsAlert-${alert.alert_id}">
+                    aria-expanded="true" aria-controls="relationsAlert-${alert.alert_id}" onclick="fetchSmartRelations(${alert.alert_id});" id="relationsAlertButton-${alert.alert_id}">Toggle Relations</button>
+                    <div class="collapse mt-3 show" id="relationsAlert-${alert.alert_id}">
                         The following relationships are automatically generated by IRIS based on the alert's IOCs and assets 
                         in the system. They are an indication only and may not be accurate. 
                         <div class="row ml-1">
@@ -1053,7 +1078,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                                     <div class="input-group-prepend">
                                         <span class="input-group-text">Lookback (days)</span>
                                     </div>
-                                    <input type="number" name="value" value="30" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
+                                    <input type="number" name="value" value="180" class="form-control" id="daysBackGraphFilter-${alert.alert_id}" onchange="refreshAlertRelationships(${alert.alert_id})">
                                 </div>
                             </div>  
                         </div>
@@ -1087,7 +1112,12 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                               .map(
                                   (ioc) => `
                                                  <tr>
-                                                   <td>${filterXSS(ioc.ioc_value)}</td>
+                                                   <td class="copy-value">
+                                                        ${filterXSS(ioc.ioc_value)}
+                                                        <button class="copy-btn ml-2" data-value="${filterXSS(ioc.ioc_value)}">
+                                                            <i class="fa fa-copy text-dark"></i>
+                                                        </button>
+                                                   </td>
                                                    <td>${filterXSS(ioc.ioc_description)}</td>
                                                    <td>${ioc.ioc_type ? filterXSS(ioc.ioc_type.type_name) : '-'}</td>
                                                    <td>${filterXSS(ioc.ioc_tlp) ? ioc.ioc_tlp : '-'}</td>
@@ -1139,6 +1169,12 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                   .map(
                       (asset) => `
                                      <tr>
+                                       <td class="copy-value">
+                                            ${asset.asset_name ? filterXSS(asset.asset_name) : '-'}
+                                            <button class="copy-btn ml-2" data-value="${asset.asset_name ? filterXSS(asset.asset_name) : '-'}">
+                                                <i class="fa fa-copy text-dark"></i>
+                                            </button>
+                                       </td>
                                        <td>${asset.asset_name ? filterXSS(asset.asset_name) : '-'}</td>
                                        <td>${asset.asset_description ? filterXSS(asset.asset_description) : '-'}</td>
                                        <td>${asset.asset_type ? filterXSS(asset.asset_type.asset_name) : '-'}</td>
@@ -1410,6 +1446,11 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
   filterString || queryParams.get('filter_id') ? $('#resetFilters').show() : $('#resetFilters').hide();
 
   alertsContainer.show();
+
+  $('.copy-btn').off().on('click', function() {
+      let value = $(this).data('value');
+      copy_text_clipboard(value);
+  });
 }
 
 $('#alertsPerPage').on('change', (e) => {
@@ -1547,6 +1588,10 @@ function delete_alert(alert_id) {
         });
 }
 
+function getAlertResolutionName(alert_id) {
+    return $(`#alertResolution-${alert_id}`).data('value');
+}
+
 async function editAlert(alert_id, close=false) {
 
     const alertTag = $('#editAlertTags');
@@ -1555,6 +1600,16 @@ async function editAlert(alert_id, close=false) {
     alertTag.val($(`#alertTags-${alert_id}`).text())
     set_suggest_tags(`editAlertTags`);
     $('#editAlertNote').val($(`#alertNote-${alert_id}`).text());
+
+    let alert_resolution = getAlertResolutionName(alert_id);
+    if (alert_resolution === '') {
+        alert_resolution = 'Unknown';
+    }
+
+    // Uncheck all radio buttons
+    $(`input[type='radio'][name='resolutionStatus']`).prop('checked', false);
+
+    $(`input[type='radio'][name='resolutionStatus'][value='${alert_resolution}']`).prop('checked', true);
 
     if (close) {
         confirmAlertEdition.text('Close alert');

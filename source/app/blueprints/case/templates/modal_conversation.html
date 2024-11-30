@@ -30,7 +30,7 @@
                             </div>
                             <div class="row mb-3">
                                 <div class="col-12 comment-content" id="container_comment_content">
-                                    <div id="comment_message" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
+                                    <div id="comment_message" contenteditable="true" spellcheck="true" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
                                     <textarea id="comment_content" rows="2" style="display: none"></textarea>
                                 </div>
                                 <div class="col-12 comment-content" id="container_comment_preview" style="display:none;">

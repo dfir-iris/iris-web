@@ -20,7 +20,7 @@
                          </div>
                          <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ asset.asset_id }}, 'assets')" title="Comments">
                             <span class="btn-label">
-                                <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length }}</span>
+                                <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length if comments_map|length > 0 else '' }}</span>
                             </span>
                         </button>
                         {% endif %}
@@ -64,7 +64,7 @@
                                         </div>
                                         <div class="row" style="margin-left:0px;">
                                             <div class="col-12" id="container_asset_desc_content">
-                                                <div id="asset_description" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if asset %}{{ asset.asset_description  }}{% endif %}</div>
+                                                <div id="asset_description" contenteditable="true" spellcheck="true" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if asset %}{{ asset.asset_description  }}{% endif %}</div>
                                                 <textarea id="asset_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                             </div>
                                             <div class="col-12" id="container_asset_description" style="display:none">

@@ -83,6 +83,14 @@ def get_assets(caseid):
     return assets
 
 
+def get_raw_assets(caseid):
+    assets = CaseAssets.query.filter(
+        CaseAssets.case_id == caseid
+    ).all()
+
+    return assets
+
+
 def get_assets_name(caseid):
     assets_names = CaseAssets.query.with_entities(
         CaseAssets.asset_name

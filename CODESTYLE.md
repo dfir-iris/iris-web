@@ -62,6 +62,12 @@ New files should be prefixed by the following license header, where `${current_y
   without having to worry about the external context.
   Note: private elements are only called within the modules in which they are defined.
 
+## Javascript coding rules
+
+* use `===` instead of `==`
+* use `!==` instead of `!=`
+* use [template literal](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals) instead of [string addition](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Addition)
+
 ## Code
 The code should be pretty easy to apprehend. It's not perfect, but it will improve over time.
 Some documentation about development is available [here](https://docs.dfir-iris.org/development/).   

@@ -626,7 +626,7 @@ function copy_object_link_md(data_type, node_id){
 
 function copy_text_clipboardb(data){
     navigator.clipboard.writeText(fromBinary64(data)).then(function() {
-        notify_success('Copied!');
+        notify_success('Copied');
     }, function(err) {
         notify_error('Can\'t copy link. I printed it in console.');
         console.error(err);
@@ -635,7 +635,7 @@ function copy_text_clipboardb(data){
 
 function copy_text_clipboard(data){
     navigator.clipboard.writeText(data).then(function() {
-        notify_success('Copied!');
+        notify_success('Copied');
     }, function(err) {
         notify_error('Can\'t copy link. I printed it in console.');
         console.error(err);
@@ -991,6 +991,9 @@ function get_avatar_initials(name, small, onClickFunction, xsmall) {
         </div>`;
     }
 
+    // Remove any trailing or leading spaces
+    name = name.trim();
+
     const initial = name.split(' ');
     let snum;
 
@@ -1078,7 +1081,7 @@ function goto_case_number() {
 }
 
 
-function load_menu_mod_options(data_type, table, deletion_fn) {
+function load_menu_mod_options(data_type, table, deletion_fn, additionalOptions = []) {
     var actionOptions = {
         classes: [],
         contextMenu: {
@@ -1102,28 +1105,28 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
         items: [],
     };
 
-    datatype_map = {
+    let datatype_map = {
         'task': 'tasks',
         'ioc': 'ioc',
         'evidence': 'evidences',
         'note': 'notes',
         'asset': 'assets',
         'event': 'timeline/events'
-    }
+    };
 
-    get_request_api("/dim/hooks/options/"+ data_type +"/list")
+    get_request_api("/dim/hooks/options/" + data_type + "/list")
     .done((data) => {
-        if(notify_auto_api(data, true)) {
+        if (notify_auto_api(data, true)) {
             if (data.data != null) {
-                jsdata = data.data;
+                let jsdata = data.data;
 
                 actionOptions.items.push({
                     type: 'option',
                     title: 'Share',
                     multi: false,
                     iconClass: 'fas fa-share',
-                    action: function(rows){
-                        row = rows[0];
+                    action: function(rows) {
+                        let row = rows[0];
                         copy_object_link(get_row_id(row));
                     }
                 });
@@ -1133,8 +1136,8 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     title: 'Comment',
                     multi: false,
                     iconClass: 'fas fa-comments',
-                    action: function(rows){
-                        row = rows[0];
+                    action: function(rows) {
+                        let row = rows[0];
                         if (data_type in datatype_map) {
                             comment_element(get_row_id(row), datatype_map[data_type]);
                         }
@@ -1146,8 +1149,8 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     title: 'Markdown Link',
                     multi: false,
                     iconClass: 'fa-brands fa-markdown',
-                    action: function(rows){
-                        row = rows[0];
+                    action: function(rows) {
+                        let row = rows[0];
                         copy_object_link_md(data_type, get_row_id(row));
                     }
                 });
@@ -1157,19 +1160,22 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                     title: 'Copy',
                     multi: false,
                     iconClass: 'fa-regular fa-copy',
-                    action: function(rows){
-                        row = rows[0];
+                    action: function(rows) {
+                        let row = rows[0];
                         copy_text_clipboard(get_row_value(row));
                     }
+                });
+
+                additionalOptions.forEach(option => {
+                    actionOptions.items.push(option);
                 });
 
                 actionOptions.items.push({
                     type: 'divider'
                 });
-                jdata_menu_options = jsdata;
 
-                for (option in jsdata) {
-                    opt = jsdata[option];
+                for (let option in jsdata) {
+                    let opt = jsdata[option];
 
                     actionOptions.items.push({
                         type: 'option',
@@ -1178,10 +1184,10 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                         multiTitle: opt.manual_hook_ui_name,
                         iconClass: 'fas fa-rocket',
                         contextMenuClasses: ['text-dark'],
-                        action: function (rows, de, ke) {
+                        action: function(rows, de, ke) {
                             init_module_processing_wrap(rows, data_type, de[0].outerText);
                         },
-                    })
+                    });
                 }
 
                 if (deletion_fn !== undefined) {
@@ -1195,19 +1201,20 @@ function load_menu_mod_options(data_type, table, deletion_fn) {
                         multi: false,
                         iconClass: 'fas fa-trash',
                         contextMenuClasses: ['text-danger'],
-                        action: function(rows){
-                            row = rows[0];
+                        action: function(rows) {
+                            let row = rows[0];
                             deletion_fn(get_row_id(row));
                         }
                     });
                 }
 
-                tableActions = table.contextualActions(actionOptions);
+                let tableActions = table.contextualActions(actionOptions);
                 tableActions.update();
             }
         }
-    })
+    });
 }
+
 
 
 function get_custom_attributes_fields() {
@@ -1691,6 +1698,12 @@ function do_deletion_prompt(message, force_prompt=false) {
             resolve(true);
         });
     }
+}
+
+function escapeHtml(text) {
+    let parser = new DOMParser();
+    let escapedDoc = parser.parseFromString(text, 'text/html');
+    return escapedDoc.documentElement.textContent;
 }
 
 function toBinary64(string) {

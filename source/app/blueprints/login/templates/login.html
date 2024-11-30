@@ -43,6 +43,9 @@
                     {% endif %}
                     <div class="login__form_field_container">
                         <button type="submit" class="btn btn-primary login__submit_button">Sign In</button>
+                        {% if auth_type == 'oidc' %}
+                        <a href="/oidc-login" class="btn float-right btn-light login__submit_button">Use SSO</a>
+                        {% endif %}
                     </div>
                 </div>
             </form>

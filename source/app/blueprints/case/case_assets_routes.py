@@ -28,9 +28,10 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 
+import app
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
-from app.datamgmt.case.case_assets_db import add_comment_to_asset
+from app.datamgmt.case.case_assets_db import add_comment_to_asset, get_raw_assets
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
@@ -93,6 +94,47 @@ def case_assets(caseid, url_redir):
     return render_template("case_assets.html", case=case, form=form)
 
 
+@case_assets_blueprint.route('/case/assets/filter', methods=['GET'])
+@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_filter_assets(caseid):
+    """
+    Returns the list of assets from the case.
+    :return: A JSON object containing the assets of the case, enhanced with assets seen on other cases.
+    """
+
+    # Get all assets objects from the case and the customer id
+    ret = {}
+    assets = CaseAssetsSchema().dump(get_raw_assets(caseid), many=True)
+    customer_id = get_case_client_id(caseid)
+
+    ioc_links_req = get_assets_ioc_links(caseid)
+
+    cache_ioc_link = {}
+    for ioc in ioc_links_req:
+
+        if ioc.asset_id not in cache_ioc_link:
+            cache_ioc_link[ioc.asset_id] = [ioc._asdict()]
+        else:
+            cache_ioc_link[ioc.asset_id].append(ioc._asdict())
+
+    cases_access = get_user_cases_fast(current_user.id)
+
+    for a in assets:
+        a['ioc_links'] = cache_ioc_link.get(a['asset_id'])
+
+        if len(assets) < 300:
+            # Find similar assets from other cases with the same customer
+            a['link'] = list(get_similar_assets(
+                a['asset_name'], a['asset_type_id'], caseid, customer_id, cases_access))
+        else:
+            a['link'] = []
+
+    ret['assets'] = assets
+
+    ret['state'] = get_assets_state(caseid=caseid)
+
+    return response_success("", data=ret)
+
 @case_assets_blueprint.route('/case/assets/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
@@ -101,7 +143,6 @@ def case_list_assets(caseid):
     :return: A JSON object containing the assets of the case, enhanced with assets seen on other cases.
     """
 
-    # Get all assets objects from the case and the customer id
     assets = get_assets(caseid)
     customer_id = get_case_client_id(caseid)
 
@@ -174,6 +215,7 @@ def add_asset(caseid):
         add_asset_schema = CaseAssetsSchema()
         request_data = call_modules_hook('on_preload_asset_create', data=request.get_json(), caseid=caseid)
 
+        add_asset_schema.is_unique_for_cid(caseid, request_data)
         asset = add_asset_schema.load(request_data)
 
         asset = create_asset(asset=asset,
@@ -195,6 +237,7 @@ def add_asset(caseid):
         return response_error("Unable to create asset for internal reasons")
 
     except marshmallow.exceptions.ValidationError as e:
+        db.session.rollback()
         return response_error(msg="Data error", data=e.messages)
 
 
@@ -265,6 +308,8 @@ def case_upload_ioc(caseid):
             row['analysis_status_id'] = analysis_status_id
 
             request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
+
+            add_asset_schema.is_unique_for_cid(caseid, request_data)
             asset_sc = add_asset_schema.load(request_data)
             asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
@@ -363,6 +408,8 @@ def asset_update(cur_id, caseid):
         request_data = call_modules_hook('on_preload_asset_update', data=request.get_json(), caseid=caseid)
 
         request_data['asset_id'] = cur_id
+
+        add_asset_schema.is_unique_for_cid(caseid, request_data)
         asset_schema = add_asset_schema.load(request_data, instance=asset)
 
         update_assets_state(caseid=caseid)

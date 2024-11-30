@@ -6,7 +6,7 @@
 <p align="center">
   Incident Response Investigation System
   <br>
-  <i>Current Version v2.4.7</i>
+  <i>Current Version v2.4.16</i>
   <br>
   <a href="https://v200.beta.dfir-iris.org">Online Demonstration</a>
 </p>
@@ -52,13 +52,13 @@ git clone https://github.com/dfir-iris/iris-web.git
 cd iris-web
 
 # Checkout to the last tagged version 
-git checkout v2.4.7
+git checkout v2.4.16
 
 # Copy the environment file 
 cp .env.model .env
 
-# Build the dockers
-docker compose build
+# Pull the dockers
+docker compose pull
 
 # Run IRIS 
 docker compose up

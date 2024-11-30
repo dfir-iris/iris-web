@@ -28,7 +28,7 @@ from flask_login import current_user
 from flask_wtf import FlaskForm
 
 from app import db, app
-from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
+from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings, get_server_settings_as_dict
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_user_primary_org
 from app.datamgmt.manage.manage_users_db import update_user
@@ -57,7 +57,10 @@ def user_settings(caseid, url_redir):
     if url_redir:
         return redirect(url_for('profile.user_settings', cid=caseid))
 
-    return render_template('profile.html', mfa_enabled=app.config.get('MFA_ENABLED', False))
+    if 'SERVER_SETTINGS' not in app.config:
+        app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
+
+    return render_template('profile.html', mfa_enabled=app.config['SERVER_SETTINGS']['enforce_mfa'])
 
 
 @profile_blueprint.route('/user/token/renew', methods=['GET'])
@@ -117,7 +120,7 @@ def update_pwd_modal(caseid, url_redir):
 
 @profile_blueprint.route('/user/update', methods=['POST'])
 @ac_api_requires()
-def update_user_view(caseid):
+def update_user_view():
     try:
         user = get_user(current_user.id)
         if not user:
@@ -137,7 +140,7 @@ def update_user_view(caseid):
         db.session.commit()
 
         if cuser:
-            track_activity("user {} updated itself".format(user.user), caseid=caseid)
+            track_activity("user {} updated itself".format(user.user))
             return response_success("User updated", data=user_schema.dump(user))
 
         return response_error("Unable to update user for internal reasons")
