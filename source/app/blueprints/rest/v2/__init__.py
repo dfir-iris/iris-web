@@ -3,15 +3,15 @@ from flask import Blueprint, has_request_context, request
 from flask_login import current_user
 
 # Common
-from source.app.blueprints.responses import response_error
-from source.app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.responses import response_error
+from app.blueprints.rest.endpoints import response_api_error
 
 # Child routes
-from source.app.blueprints.rest.v2.case import bp as v2_api_case
+from app.blueprints.rest.v2.case import bp as v2_api_case
 
 # Authorization
-from source.app.blueprints.authorization.exceptions import UnauthorizedException
-from source.app.business.errors import BusinessProcessingError
+from app.blueprints.authorization.exceptions import UnauthorizedException
+from app.business.errors import BusinessProcessingError
 
 
 # MARK: Blueprint -------------------------------------------------------------

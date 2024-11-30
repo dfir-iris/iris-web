@@ -4,19 +4,19 @@ from flask_login import current_user
 from werkzeug import Response
 
 # Common
-from source.app.blueprints.rest.endpoints import response_api_created, response_api_deleted, response_api_error, response_api_not_found, response_api_success
+from app.blueprints.rest.endpoints import response_api_created, response_api_deleted, response_api_error, response_api_not_found, response_api_success
 
 # Authorization
-from source.app.blueprints.access_controls import ac_api_requires, ac_api_return_access_denied
-from source.app.blueprints.rest.parsing import parse_boolean, parse_comma_separated_identifiers
-from source.app.datamgmt.case.case_db import get_case
-from source.app.datamgmt.manage.manage_cases_db import get_filtered_cases
-from source.app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
-from source.app.models.authorization import CaseAccessLevel, Permissions
+from app.blueprints.access_controls import ac_api_requires, ac_api_return_access_denied
+from app.blueprints.rest.parsing import parse_boolean, parse_comma_separated_identifiers
+from app.datamgmt.case.case_db import get_case
+from app.datamgmt.manage.manage_cases_db import get_filtered_cases
+from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
+from app.models.authorization import CaseAccessLevel, Permissions
 
 # Business
-from source.app.business.cases import cases_create, cases_delete
-from source.app.schema.marshables import CaseSchemaForAPIV2
+from app.business.cases import cases_create, cases_delete
+from app.schema.marshables import CaseSchemaForAPIV2
 
 
 # MARK: Blueprint -------------------------------------------------------------
