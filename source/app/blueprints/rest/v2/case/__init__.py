@@ -24,13 +24,14 @@ from app.schema.marshables import CaseSchemaForAPIV2
 
 # Create blueprint
 bp = Blueprint('case', __name__, url_prefix='/cases')
-bp_with_case_id = Blueprint('case_by_id', __name__, url_prefix='/<int:case_id>')
+bp_with_case_id = Blueprint('case', __name__, url_prefix='/<int:case_id>')
+bp.register_blueprint(bp_with_case_id)
 
 
 # MARK: Endpoints -------------------------------------------------------------
 
 
-@bp.post('/cases')
+@bp.post('')
 @ac_api_requires(Permissions.standard_user)
 def create_case():
     """Handle creating a case"""
@@ -39,7 +40,7 @@ def create_case():
     return response_api_created(CaseSchemaForAPIV2().dump(case))
 
 
-@bp.get('/cases')
+@bp.get('')
 @ac_api_requires()
 def get_cases() -> Response:
     """Get & query cases"""

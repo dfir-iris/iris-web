@@ -3,4 +3,4 @@
 
 [case]
 actions = ["create", "read", "update", "delete"]
-description = "View and manage a Case."
+description = "View and manage a Case"
