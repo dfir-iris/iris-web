@@ -35,7 +35,7 @@ bp.register_blueprint(bp_with_case_id)
 @ac_api_requires(Permissions.standard_user)
 def create_case():
     """Handle creating a case"""
-    
+
     case, _ = cases_create(request.get_json())
     return response_api_created(CaseSchemaForAPIV2().dump(case))
 
@@ -44,19 +44,22 @@ def create_case():
 @ac_api_requires()
 def get_cases() -> Response:
     """Get & query cases"""
-    
+
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get('case_ids', None, type=parse_comma_separated_identifiers)
+    case_ids_str = request.args.get(
+        'case_ids', None, type=parse_comma_separated_identifiers)
     order_by = request.args.get('order_by', type=str)
     sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
     case_customer_id = request.args.get('case_customer_id', None, type=str)
     case_name = request.args.get('case_name', None, type=str)
     case_description = request.args.get('case_description', None, type=str)
-    case_classification_id = request.args.get('case_classification_id', None, type=int)
+    case_classification_id = request.args.get(
+        'case_classification_id', None, type=int)
     case_owner_id = request.args.get('case_owner_id', None, type=int)
-    case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
+    case_opening_user_id = request.args.get(
+        'case_opening_user_id', None, type=int)
     case_severity_id = request.args.get('case_severity_id', None, type=int)
     case_state_id = request.args.get('case_state_id', None, type=int)
     case_soc_id = request.args.get('case_soc_id', None, type=str)
@@ -104,7 +107,7 @@ def get_cases() -> Response:
 @ac_api_requires()
 def case_routes_get(case_id):
     """Handle retrieving case by ID."""
-    
+
     case = get_case(case_id)
     if not case:
         return response_api_not_found()
@@ -117,7 +120,7 @@ def case_routes_get(case_id):
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(case_id):
     """Handle deleting a case by ID."""
-    
+
     if not ac_fast_check_current_user_has_case_access(case_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=case_id)
 

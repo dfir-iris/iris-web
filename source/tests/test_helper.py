@@ -31,16 +31,16 @@ from app.datamgmt.client.client_db import create_client
 from app.models import Client
 
 
-
-
 class TestHelper(TestCase):
     @staticmethod
     def log_in(test_app: FlaskClient) -> None:
         login_page = test_app.get('/login')
 
-        csrf_token = re.search(r'id="csrf_token" name="csrf_token" type="hidden" value="(.*?)"', str(login_page.data)).group(1)
+        csrf_token = re.search(
+            r'id="csrf_token" name="csrf_token" type="hidden" value="(.*?)"', str(login_page.data)).group(1)
 
-        test_app.post('/login', data=dict(username='administrator', password=environ.get("IRIS_ADM_PASSWORD", ""), csrf_token=csrf_token), follow_redirects=True)
+        test_app.post('/login', data=dict(username='administrator', password=environ.get(
+            "IRIS_ADM_PASSWORD", ""), csrf_token=csrf_token), follow_redirects=True)
 
     def verify_path_without_cid_redirects_correctly(self, path: str, assert_string: str):
         with app.test_client() as test_app:
@@ -68,11 +68,11 @@ class TestHelper(TestCase):
     @staticmethod
     def get_flask_test_client() -> FlaskClient:
         return app.test_client()
-    
+
     @staticmethod
     def perform_request(test: TestCase, blueprint_name: str, method: Literal["get", "post", "put", "patch", "delete"], /, data: Optional[dict] = None, json: Optional[dict] = None, expected_status: int | list[int] = None):
         """Performs an API request, matching the expected status code, while returning the result. 
-        
+
         Using the blueprint name, this method will automatically determine the endpoint url for you.
 
         Args:
@@ -82,26 +82,26 @@ class TestHelper(TestCase):
             json (dict, optional): Any JSON data to submit with the request. Defaults to None.
             expected_status (int | list[int], optional): The expected returned status code(s). Defaults to [200, 204].
         """
-        
+
         # Set default expected status to 200 OK, 201 Created, 202 Accepted, 204 No Content
         if not expected_status:
-            expected_status =  [200, 201, 202, 204]
-        
+            expected_status = [200, 201, 202, 204]
+
         # Get endpoint based on the blueprint name
         endpoint = url_for(blueprint_name)
-        
+
         # Ensure `expected_status` is a list
         if not type(expected_status) == list:
             expected_status = [expected_status]
-        
+
         # Create test client
         with app.test_client() as test_client:
             # Send req
-            req = test_client.open(endpoint, method=method, data=data, json=json)
-            
+            req = test_client.open(
+                endpoint, method=method, data=data, json=json)
+
             # Assert the status code
             test.assertIn(req.status_code, expected_status)
-            
+
             # Return json or text, if not valid JSON
             return req.get_json(silent=True) or req.text
-            
