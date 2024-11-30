@@ -17,6 +17,9 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+from app.models import Client
+from app.datamgmt.client.client_db import create_client
+from app import app
 from os import environ
 from typing import Literal, Optional
 from unittest import TestCase
@@ -25,10 +28,6 @@ import re
 from flask import url_for
 from flask.testing import FlaskClient
 from random import randrange
-
-from app import app
-from app.datamgmt.client.client_db import create_client
-from app.models import Client
 
 
 class TestHelper(TestCase):
@@ -70,7 +69,7 @@ class TestHelper(TestCase):
         return app.test_client()
 
     @staticmethod
-    def perform_request(test: TestCase, blueprint_name: str, method: Literal["get", "post", "put", "patch", "delete"], /, data: Optional[dict] = None, json: Optional[dict] = None, expected_status: int | list[int] = None):
+    def perform_request(test: TestCase, blueprint_name: str, /, method: Literal["get", "post", "put", "patch", "delete"], data: Optional[dict] = None, json: Optional[dict] = None, expected_status: int = None):
         """Performs an API request, matching the expected status code, while returning the result. 
 
         Using the blueprint name, this method will automatically determine the endpoint url for you.
@@ -87,15 +86,17 @@ class TestHelper(TestCase):
         if not expected_status:
             expected_status = [200, 201, 202, 204]
 
-        # Get endpoint based on the blueprint name
-        endpoint = url_for(blueprint_name)
-
         # Ensure `expected_status` is a list
         if not type(expected_status) == list:
             expected_status = [expected_status]
 
+        # Get endpoint based on the blueprint name
+        with app.test_request_context():
+            endpoint = url_for(blueprint_name)
+
         # Create test client
         with app.test_client() as test_client:
+
             # Send req
             req = test_client.open(
                 endpoint, method=method, data=data, json=json)
