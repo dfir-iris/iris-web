@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+from os import environ
 from app import app
 from app import lm
 from app.blueprints.pages.activities.activities_routes import activities_blueprint
@@ -192,9 +193,13 @@ app.register_blueprint(api_v2_assets_blueprint)
 app.register_blueprint(api_v2_tasks_blueprint)
 
 try:
+    # Don't perform postinit if testing
+    if environ.get("TESTING"):
+        raise NotImplementedError
 
     run_post_init(development=app.config["DEVELOPMENT"])
-
+except NotImplementedError:
+    pass
 except Exception as e:
     app.logger.exception(f"Post init failed. IRIS not started")
     raise e
