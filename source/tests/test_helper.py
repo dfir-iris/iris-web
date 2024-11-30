@@ -70,7 +70,7 @@ class TestHelper(TestCase):
         return app.test_client()
     
     @staticmethod
-    def perform_request(test: TestCase, blueprint_name: str, method: Literal["get", "post", "put", "patch", "delete"], /, data: Optional[dict] = None, json: Optional[dict] = None, expected_status: int | list[int] = [200, 204]):
+    def perform_request(test: TestCase, blueprint_name: str, method: Literal["get", "post", "put", "patch", "delete"], /, data: Optional[dict] = None, json: Optional[dict] = None, expected_status: int | list[int] = None):
         """Performs an API request, matching the expected status code, while returning the result. 
         
         Using the blueprint name, this method will automatically determine the endpoint url for you.
@@ -82,6 +82,10 @@ class TestHelper(TestCase):
             json (dict, optional): Any JSON data to submit with the request. Defaults to None.
             expected_status (int | list[int], optional): The expected returned status code(s). Defaults to [200, 204].
         """
+        
+        # Set default expected status to 200 OK, 201 Created, 202 Accepted, 204 No Content
+        if not expected_status:
+            expected_status =  [200, 201, 202, 204]
         
         # Get endpoint based on the blueprint name
         endpoint = url_for(blueprint_name)
