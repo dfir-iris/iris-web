@@ -130,51 +130,33 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
     db.session.commit()
 
 
-def delete_asset(asset_id, caseid):
-    case_asset = get_asset(asset_id)
-    if case_asset is None:
-        return
+def delete_asset(asset: CaseAssets):
+    delete_ioc_asset_link(asset.asset_id)
 
-    if case_asset.case_id and case_asset.alerts is not None:
+    # Delete the relevant records from the CaseEventsAssets table
+    CaseEventsAssets.query.filter(
+        asset.asset_id == CaseEventsAssets.asset_id
+    ).delete()
 
-        CaseEventsAssets.query.filter(
-            case_asset.asset_id == CaseEventsAssets.asset_id
-        ).delete()
+    # Delete the relevant records from the AssetComments table
+    com_ids = AssetComments.query.with_entities(
+        AssetComments.comment_id
+    ).filter(
+        AssetComments.comment_asset_id == asset.asset_id
+    ).all()
 
-        case_asset.case_id = None
-        db.session.commit()
-        return
+    com_ids = [c.comment_id for c in com_ids]
+    AssetComments.query.filter(AssetComments.comment_id.in_(com_ids)).delete()
 
-    with db.session.begin_nested():
-        delete_ioc_asset_link(asset_id)
+    Comments.query.filter(
+        Comments.comment_id.in_(com_ids)
+    ).delete()
 
-        # Delete the relevant records from the CaseEventsAssets table
-        CaseEventsAssets.query.filter(
-            CaseEventsAssets.case_id == caseid,
-            CaseEventsAssets.asset_id == asset_id
-        ).delete()
+    db.session.delete(asset)
 
-        # Delete the relevant records from the AssetComments table
-        com_ids = AssetComments.query.with_entities(
-            AssetComments.comment_id
-        ).filter(
-            AssetComments.comment_asset_id == asset_id,
-        ).all()
+    update_assets_state(asset.case_id)
 
-        com_ids = [c.comment_id for c in com_ids]
-        AssetComments.query.filter(AssetComments.comment_id.in_(com_ids)).delete()
-
-        Comments.query.filter(
-            Comments.comment_id.in_(com_ids)
-        ).delete()
-
-        # Directly delete the relevant records from the CaseAssets table
-        CaseAssets.query.filter(
-            CaseAssets.asset_id == asset_id,
-            CaseAssets.case_id == caseid
-        ).delete()
-
-        update_assets_state(caseid=caseid)
+    db.session.commit()
 
 
 def get_assets_types():
