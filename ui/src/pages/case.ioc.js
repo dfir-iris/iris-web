@@ -249,21 +249,21 @@ function update_ioc(ioc_id) {
     data['ioc_description'] = g_ioc_desc_editor.getValue();
     data['custom_attributes'] = attributes;
 
-    post_request_api(`/case/ioc/update/${ioc_id}`, JSON.stringify(data), true)
-    .done((data) => {
-        if (data.status == 'success') {
+    put_request_api(`/api/v2/iocs/${ioc_id}`, JSON.stringify(data))
+    .done((data, textStatus) => {
+        if (textStatus == 'success') {
             reload_iocs();
 
             $('#submit_new_ioc').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');
-            $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+            $('#last_saved > i').attr('class', 'fa-solid fa-file-circle-check');
             $('#modal_add_ioc').modal('hide');
 
             notify_success(data.message);
 
         } else {
             $('#submit_new_ioc').text('Save again');
-            swal("Oh no !", data.message, "error")
+            swal('Oh no !', data.message, 'error')
         }
     })
 

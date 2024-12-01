@@ -18,19 +18,17 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+# TODO should probably dispatch the methods provided in this file in the different namespaces
 import base64
 import datetime
 import hashlib
 import logging as log
 import marshmallow
-import random
 import shutil
-import string
 import weakref
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
-from flask import request
 from flask_login import current_user
 from pathlib import Path
 from pyunpack import Archive
@@ -38,7 +36,6 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app import app
 from app import db
-from app.models import Cases
 
 
 class FileRemover(object):
@@ -70,12 +67,6 @@ def decompress_7z(filename: Path, output_dir):
         return False
 
     return True
-
-
-def get_random_suffix(length):
-    letters = string.ascii_lowercase
-    result_str = ''.join(random.choice(letters) for i in range(length))
-    return result_str
 
 
 def add_obj_history_entry(obj, action, commit=False):

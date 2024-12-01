@@ -38,6 +38,13 @@ class RestApi:
         except JSONDecodeError:
             return f'{response.status_code}'
 
+    def post(self, path, payload, query_parameters=None):
+        url = self._build_url(path)
+        response = requests.post(url, headers=self._headers, params=query_parameters, json=payload)
+        response_as_string = self._convert_response_to_string(response)
+        print(f'POST {url} {payload} => {response_as_string}')
+        return response
+
     def get(self, path, query_parameters=None):
         url = self._build_url(path)
         response = requests.get(url, headers=self._headers, params=query_parameters)
@@ -45,11 +52,11 @@ class RestApi:
         print(f'GET {url} => {response_as_string}')
         return response
 
-    def post(self, path, payload, query_parameters=None):
+    def put(self, path, payload):
         url = self._build_url(path)
-        response = requests.post(url, headers=self._headers, params=query_parameters, json=payload)
+        response = requests.put(url, headers=self._headers, json=payload)
         response_as_string = self._convert_response_to_string(response)
-        print(f'POST {url} {payload} => {response_as_string}')
+        print(f'PUT {url} {payload} => {response_as_string}')
         return response
 
     def delete(self, path, query_parameters=None):

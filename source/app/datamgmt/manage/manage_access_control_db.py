@@ -26,7 +26,6 @@ from app.models.authorization import Organisation
 from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
-from app.datamgmt.case.case_db import case_db_exists
 
 from typing import Optional
 
@@ -130,12 +129,8 @@ def get_user_clients_id(user_id: int) -> list:
     Returns:
         list: List of clients
     """
-    filters = []
-    if not ac_current_user_has_permission(Permissions.server_administrator):
-        filters.append(UserClient.user_id == user_id)
-
     result = UserClient.query.filter(
-        *filters
+        UserClient.user_id == user_id
     ).with_entities(
         UserClient.client_id
     ).all()

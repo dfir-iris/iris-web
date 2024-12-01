@@ -79,23 +79,19 @@ def iocs_create(request_json, case_identifier):
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
 
 
-def iocs_update(identifier: int, request_json: dict):
+def iocs_update(ioc: Ioc, request_json: dict):
     """
     Identifier: the IOC identifier
     Request JSON: the Request
     """
     try:
-        ioc = get_ioc(identifier)
-        if not ioc:
-            raise BusinessProcessingError('Invalid IOC ID for this case')
-
         # TODO ideally schema validation should be done before, outside the business logic in the REST API
         #      for that the hook should be called after schema validation
         request_data = call_modules_hook('on_preload_ioc_update', data=request_json, caseid=ioc.case_id)
 
         # validate before saving
         ioc_schema = IocSchema()
-        request_data['ioc_id'] = identifier
+        request_data['ioc_id'] = ioc.ioc_id
         request_data['case_id'] = ioc.case_id
         ioc_sc = ioc_schema.load(request_data, instance=ioc, partial=True)
         ioc_sc.user_id = current_user.id
