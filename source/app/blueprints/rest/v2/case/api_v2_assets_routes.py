@@ -26,7 +26,7 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.business.cases import cases_exists
-from app.business.assets import assets_create
+from app.business.assets import assets_create, get_assets_case
 from app.business.assets import assets_delete
 from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
@@ -82,6 +82,28 @@ def asset_delete(identifier):
 
         assets_delete(asset)
         return response_api_deleted()
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+
+
+@api_v2_assets_blueprint.route('/case/<int:case_identifier>/assets', methods=['GET'])
+@ac_api_requires()
+def case_list_assets(case_identifier):
+    """
+    Returns the list of assets from the case.
+    :return: A JSON object containing the assets of the case, enhanced with assets seen on other cases.
+    """
+    try:
+
+        if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=case_identifier)
+
+        assets = get_assets_case(case_identifier=case_identifier)
+
+        return response_api_success(data=assets)
+
     except ObjectNotFoundError:
         return response_api_not_found()
     except BusinessProcessingError as e:

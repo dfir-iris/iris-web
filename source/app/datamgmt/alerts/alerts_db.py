@@ -69,6 +69,11 @@ def db_list_all_alerts():
     return db.session.query(Alert).all()
 
 
+from sqlalchemy import or_, and_, not_, desc, asc
+from sqlalchemy.orm import selectinload
+from functools import reduce
+
+
 def get_filtered_alerts(
         start_date: str = None,
         end_date: str = None,
@@ -87,12 +92,14 @@ def get_filtered_alerts(
         alert_ids: List[int] = None,
         assets: List[str] = None,
         iocs: List[str] = None,
-        resolution_status: int = None,
+        resolution_status: List[int] = None,
+        logical_operator: str = 'and',  # Logical operator: 'and', 'or', 'not'
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc',
         current_user_id: int = None,
-        source_reference=None):
+        source_reference=None,
+        custom_conditions: List[dict] = None):
     """
     Get a list of alerts that match the given filter conditions
 
@@ -112,12 +119,14 @@ def get_filtered_alerts(
         alert_ids (int): The alert ids
         assets (list): The assets of the alert
         iocs (list): The iocs of the alert
-        resolution_status (int): The resolution status of the alert
+        resolution_status (list): The resolution status of the alert
+        logical_operator (str): Logical operator to combine conditions ('and', 'or', 'not')
         page (int): The page number
         per_page (int): The number of alerts per page
         sort (str): The sort order
         current_user_id (int): The ID of the current user
         source_reference (str): Alert source reference
+        custom_conditions (list): Custom conditions to be applied (e.g., NOT client AND owner_id in [1,2,3])
 
     returns:
         list: A list of alerts that match the given filter conditions
@@ -150,7 +159,10 @@ def get_filtered_alerts(
         conditions.append(Alert.alert_severity_id == severity)
 
     if resolution_status is not None:
-        conditions.append(Alert.alert_resolution_status_id == resolution_status)
+        if isinstance(resolution_status, list):
+            conditions.append(not_(Alert.alert_resolution_status_id.in_(resolution_status)))
+        else:
+            conditions.append(Alert.alert_resolution_status_id == resolution_status)
 
     if source_reference is not None:
         conditions.append(Alert.alert_source_ref.like(f'%{source_reference}%'))
@@ -193,8 +205,37 @@ def get_filtered_alerts(
         if clients_filters is not None:
             conditions.append(Alert.alert_customer_id.in_(clients_filters))
 
+    # Apply custom conditions if provided
+    if custom_conditions:
+        custom_conditions = json.loads(custom_conditions)
+        for custom_condition in custom_conditions:
+            field = getattr(Alert, custom_condition['field'])
+            operator = custom_condition['operator']
+            value = custom_condition['value']
+
+            print(f"field: {field}, operator: {operator}, value: {value}")
+
+            if operator == 'not':
+                conditions.append(not_(field == value))
+            elif operator == 'in':
+                conditions.append(field.in_(value))
+            elif operator == 'not_in':
+                conditions.append(not_(field.in_(value)))
+            else:
+                raise ValueError(f"Unsupported operator: {operator}")
+
+    # Combine conditions with the specified logical operator
     if len(conditions) > 1:
-        conditions = [reduce(and_, conditions)]
+        if logical_operator == 'or':
+            combined_conditions = or_(*conditions)
+        elif logical_operator == 'not':
+            combined_conditions = not_(and_(*conditions))
+        else:  # Default to 'and'
+            combined_conditions = and_(*conditions)
+    elif conditions:
+        combined_conditions = conditions[0]
+    else:
+        combined_conditions = None
 
     order_func = desc if sort == "desc" else asc
 
@@ -202,16 +243,15 @@ def get_filtered_alerts(
 
     try:
         # Query the alerts using the filter conditions
-        filtered_alerts = db.session.query(
-            Alert
-        ).filter(
-            *conditions
-        ).options(
+        query = db.session.query(Alert).options(
             selectinload(Alert.severity), selectinload(Alert.status), selectinload(Alert.customer), selectinload(Alert.cases),
             selectinload(Alert.iocs), selectinload(Alert.assets)
-        ).order_by(
-            order_func(Alert.alert_source_event_time)
-        ).paginate(page=page, per_page=per_page, error_out=False)
+        )
+
+        if combined_conditions is not None:
+            query = query.filter(combined_conditions)
+
+        filtered_alerts = query.order_by(order_func(Alert.alert_source_event_time)).paginate(page=page, per_page=per_page, error_out=False)
 
         return {
             'total': filtered_alerts.total,
@@ -224,6 +264,7 @@ def get_filtered_alerts(
     except Exception as e:
         app.app.logger.exception(f"Error getting alerts: {str(e)}")
         return None
+
 
 
 def add_alert(

@@ -24,7 +24,10 @@ from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
-from flask_cors import CORS
+try:
+    from flask_cors import CORS
+except:
+    pass
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
@@ -65,7 +68,10 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__, static_folder='../static')
-CORS(app, supports_credentials=True, origins="*", resources={r"/*": {"origins": "*"}})
+try:
+    CORS(app, supports_credentials=True, origins="*", resources={r"/*": {"origins": "*"}})
+except:
+    pass
 
 def ac_current_user_has_permission(*permissions):
     """
