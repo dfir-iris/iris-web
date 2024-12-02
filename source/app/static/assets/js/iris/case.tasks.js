@@ -93,7 +93,7 @@ function edit_task(id) {
                 text: action.name,
                 click: function (e) {
                   e.preventDefault(); // Prevent default link behavior
-                  expandActionDiv(action.payload_schema);
+                  expandActionDiv(action.payload_schema, id , action.id);
                 },
               })
             );
@@ -115,7 +115,7 @@ function edit_task(id) {
   });
 }
 
-function expandActionDiv(actionDetails) {
+function expandActionDiv(actionDetails,case_id, action_id) {
   // Reference to the collapsible content div
   const collapsibleContent = $('#collapsibleContent');
   const jsonEditorContainer = $('#jsoneditor');
@@ -155,7 +155,11 @@ function expandActionDiv(actionDetails) {
     // Retrieve the updated data from JSONEditor
     const updatedData = window.jsonEditor.getValue();
 
-    console.log('Updated data:', updatedData);
+    // Add the action_id to the updatedData object
+    updatedData.case_id = case_id;
+    updatedData.action_id = action_id;
+
+    console.log('Updated data with case_id:', updatedData);
 
     // Example: Simulated save logic (replace with your actual save endpoint)
     fetch('/case/testjsoneeditorRoute', {
