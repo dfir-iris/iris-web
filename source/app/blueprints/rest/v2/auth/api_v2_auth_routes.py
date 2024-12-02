@@ -34,8 +34,9 @@ from app.business.auth import validate_ldap_login, validate_local_login
 from app.iris_engine.utils.tracker import track_activity
 
 api_v2_auth_blueprint = Blueprint('auth_rest_v2',
-                                    __name__,
-                                    url_prefix='/api/v2')
+                                  __name__,
+                                  url_prefix='/api/v2')
+
 
 @api_v2_auth_blueprint.route('/auth/login', methods=['POST'])
 def login():
@@ -49,7 +50,8 @@ def login():
     password = request.json.get('password')
 
     if is_authentication_ldap() is True:
-        authed_user = validate_ldap_login(username, password, app.config.get('AUTHENTICATION_LOCAL_FALLBACK'))
+        authed_user = validate_ldap_login(
+            username, password, app.config.get('AUTHENTICATION_LOCAL_FALLBACK'))
 
     else:
         authed_user = validate_local_login(username, password)
@@ -74,9 +76,12 @@ def logout():
     if is_authentication_oidc():
         if oidc_client.provider_info.get("end_session_endpoint"):
             try:
-                logout_request = oidc_client.construct_EndSessionRequest(state=session["oidc_state"])
-                logout_url = logout_request.request(oidc_client.provider_info["end_session_endpoint"])
-                track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+                logout_request = oidc_client.construct_EndSessionRequest(
+                    state=session["oidc_state"])
+                logout_url = logout_request.request(
+                    oidc_client.provider_info["end_session_endpoint"])
+                track_activity("user '{}' has been logged-out".format(
+                    current_user.user), ctx_less=True, display_in_ui=False)
                 logout_user()
                 session.clear()
                 return redirect(logout_url)
@@ -87,8 +92,23 @@ def logout():
                     display_in_ui=False
                 )
 
-    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+    track_activity("user '{}' has been logged-out".format(current_user.user),
+                   ctx_less=True, display_in_ui=False)
     logout_user()
     session.clear()
 
     return redirect(not_authenticated_redirection_url('/'))
+
+
+@api_v2_auth_blueprint.route('/auth/whoami', methods=['GET'])
+def whoami():
+    """
+    Returns information about the currently authenticated user.
+    """
+
+    # Ensure we are authenticated
+    if not current_user.is_authenticated:
+        return response_api_error("Unauthenticated")
+
+    # Return the current_user dict
+    return response_api_success(data=dict(current_user))
