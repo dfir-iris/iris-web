@@ -18,6 +18,7 @@
 
 from flask import Blueprint
 from flask import request
+from kombu.abstract import Object
 
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_created
@@ -68,6 +69,8 @@ def asset_view(identifier):
             return ac_api_return_access_denied(caseid=asset.case_id)
 
         return response_api_success(asset_schema.dump(asset))
+    except ObjectNotFoundError:
+        return response_api_not_found()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
