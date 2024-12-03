@@ -230,7 +230,6 @@ function edit_task(id) {
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-
         // Handle error by displaying a message in the dropdown
         actionsList.empty().append(
           $('<a>', {
@@ -243,7 +242,7 @@ function edit_task(id) {
   });
 }
 
-function expandActionDiv(actionDetails,case_id, action_id) {
+function expandActionDiv(actionDetails,task_id, action_id) {
   // Reference to the collapsible content div
   const collapsibleContent = $('#collapsibleContent');
   const jsonEditorContainer = $('#jsoneditor');
@@ -283,40 +282,40 @@ function expandActionDiv(actionDetails,case_id, action_id) {
     // Retrieve the updated data from JSONEditor
     const updatedData = window.jsonEditor.getValue();
 
-    // Add the action_id to the updatedData object
-    updatedData.case_id = case_id;
-    updatedData.action_id = case_id;
+    // Construct the request body to match the desired response structure
+    const requestData = {
+        action_id: action_id, // Pass the action ID
+        task_id: task_id, // Pass the case ID
+        payload: updatedData, // Include the editor data as 'payload'
+    };
 
-    console.log('Updated data with case_id:', updatedData);
+    console.log('Request data:', requestData);
 
     // Example: Simulated save logic (replace with your actual save endpoint)
     fetch('/case/testjsoneeditorRoute', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedData),
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData), // Send the constructed data
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log('Save successful:', data);
-        alert('Data saved successfully!');
-      })
-      .catch((error) => {
-        console.error('Error saving data:', error);
-        alert('Error saving data. Please try again.');
-      });
-  });
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            console.log('Save successful:', data);
+            alert('Data saved successfully!');
+        })
+        .catch((error) => {
+            console.error('Error saving data:', error);
+            alert('Error saving data. Please try again.');
+        });
+});
+
 }
-
-
-
-
 
 function save_task() {
   $('#submit_new_task').click();

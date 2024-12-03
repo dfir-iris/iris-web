@@ -439,10 +439,11 @@ def save_results(data, case_template_id, webhook_id):
         print(f"Error saving CaseResponse: {str(e)}")
 
 
-def execute_and_save_action(action, task_id):
+def execute_and_save_action(action, task_id,action_id):
+    print("in execute function")
     try:
         # Extract webhook_id from the action
-        webhook_id = action.get("webhook_id")
+        webhook_id = action_id
         print(f"Webhook ID: {webhook_id}")  # Debugging: Ensure webhook_id is being accessed
         if not webhook_id:
             raise ValueError("Action execution failed: webhook_id is missing in action.")

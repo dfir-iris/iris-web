@@ -18,6 +18,7 @@
 
 # IMPORTS ------------------------------------------------
 from datetime import datetime
+import json
 
 import marshmallow
 from flask import Blueprint, jsonify
@@ -59,6 +60,7 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from source.app.datamgmt.manage.manage_case_templates_db import execute_and_save_action
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
@@ -84,7 +86,17 @@ def save_data():
     
     # Debugging output
     print('Received data:', data)
-    
+    actionResponse= execute_and_save_action(data.payload,data.task_id,data.action_id)
+    print('data received from execute function', actionResponse )
+    for actionResponse in actionResponse:
+        actionResponse['created_at'] = actionResponse['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+        if actionResponse['updated_at']:
+            actionResponse['updated_at'] = actionResponse['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
+        if actionResponse['body']:
+            try:
+                actionResponse['body'] = json.dumps(actionResponse['body'])
+            except (TypeError, ValueError) as e:
+                actionResponse['body'] = str(actionResponse['body'])
     # Process the data (e.g., save to a database, etc.)
     
     # Return a response
