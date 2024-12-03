@@ -157,7 +157,7 @@ function expandActionDiv(actionDetails,case_id, action_id) {
 
     // Add the action_id to the updatedData object
     updatedData.case_id = case_id;
-    updatedData.action_id = action_id;
+    updatedData.action_id = case_id;
 
     console.log('Updated data with case_id:', updatedData);
 
