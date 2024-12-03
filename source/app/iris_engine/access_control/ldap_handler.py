@@ -126,6 +126,6 @@ def ldap_authenticate(ldap_user_name, ldap_user_pwd):
     except Exception as e:
         raise Exception(e.__str__())
 
-    log.info(f"Successful authenticated user")
+    log.info("Successful authenticated user")
 
     return True

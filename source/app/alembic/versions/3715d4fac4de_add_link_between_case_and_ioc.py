@@ -30,7 +30,7 @@ def upgrade():
     # Migrate data
     if _has_table('ioc_link'):
         conn = op.get_bind()
-        res = conn.execute(text(f"SELECT * FROM ioc_link;"))
+        res = conn.execute(text("SELECT * FROM ioc_link;"))
         ioc_links = res.fetchall()
 
         for ioc_link in ioc_links:

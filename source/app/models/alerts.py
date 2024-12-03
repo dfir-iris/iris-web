@@ -2,7 +2,7 @@ from datetime import datetime
 
 import uuid
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy import BigInteger, Table, Boolean
+from sqlalchemy import BigInteger
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
@@ -10,11 +10,10 @@ from sqlalchemy import Integer
 from sqlalchemy import Text
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
 from app import db
-from app.models import Base, alert_assets_association, alert_iocs_association
-from app.models.cases import Cases
+from app.models import alert_assets_association, alert_iocs_association
 
 
 class AlertCaseAssociation(db.Model):

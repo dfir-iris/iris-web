@@ -223,7 +223,7 @@ def update_user_orgs(user_id, orgs):
     db.session.commit()
 
     ac_auto_update_user_effective_access(user_id)
-    return True, f'Organisations membership updated' if updated else "Nothing changed"
+    return True, 'Organisations membership updated' if updated else "Nothing changed"
 
 
 def change_user_primary_org(user_id, old_org_id, new_org_id):

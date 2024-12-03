@@ -140,7 +140,7 @@ def delete_contact(contact_id: int) -> None:
         db.session.delete(contact)
         db.session.commit()
 
-    except Exception as e:
+    except Exception:
         raise ElementInUseException('A currently referenced contact cannot be deleted')
 
 
@@ -205,7 +205,7 @@ def delete_client(client_id: int) -> None:
         db.session.delete(client)
         db.session.commit()
 
-    except Exception as e:
+    except Exception:
         raise ElementInUseException('A currently referenced customer cannot be deleted')
 
 

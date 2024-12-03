@@ -196,7 +196,7 @@ try:
     run_post_init(development=app.config["DEVELOPMENT"])
 
 except Exception as e:
-    app.logger.exception(f"Post init failed. IRIS not started")
+    app.logger.exception("Post init failed. IRIS not started")
     raise e
 
 
