@@ -25,9 +25,9 @@ from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.models import CaseTemplate, Cases, Tags, NoteDirectory, CaseResponse
+from app.models import CaseTemplate, Cases, Tags, NoteDirectory, CaseResponse, TaskResponse
 from app.models.authorization import User
-from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseNoteDirectorySchema, CaseNoteSchema
+from app.schema.marshables import CaseSchema, TaskResponseSchema, CaseTaskSchema, CaseNoteDirectorySchema, CaseNoteSchema
 from app.datamgmt.manage.manage_webhooks_db import get_webhook_by_id
 
 
@@ -439,29 +439,27 @@ def save_results(data, case_template_id, webhook_id):
         print(f"Error saving CaseResponse: {str(e)}")
 
 
-# Methods for actions
-
-def execute_and_save_action(action, case_template_id, payload):
+def execute_and_save_action(action, task_id):
     try:
         # Extract webhook_id from the action
         webhook_id = action.get("webhook_id")
         print(f"Webhook ID: {webhook_id}")  # Debugging: Ensure webhook_id is being accessed
         if not webhook_id:
-            raise ValueError("Trigger execution failed: webhook_id is missing in action.")
+            raise ValueError("Action execution failed: webhook_id is missing in action.")
 
-        # Fetch the webhook object from the database
-        webhook = get_webhook_by_id(webhook_id)
+        # Fetch the action object from the database
+        webhook = get_webhook_by_id(webhook_id)  
         print(f"Webhook Object: {webhook}")  # Debugging: Log the webhook object
         if not webhook:
-            raise ValueError(f"Trigger execution failed: No webhook found for webhook_id {webhook_id}.")
+            raise ValueError(f"Action execution failed: No webhook found for webhook_id {webhook_id}.")
 
-        # Fetch the URL from the webhook object
+        # Fetch the URL from the action object
         url = webhook.url  # Adjust this based on your webhook model's attributes
         print(f"Webhook URL: {url}")  # Debugging: Ensure URL is being accessed
         if not url:
-            raise ValueError(f"Trigger execution failed: URL is missing in webhook with id {webhook_id}.")
+            raise ValueError(f"Action execution failed: URL is missing in webhook with id {webhook_id}.")
 
-        # Execute the webhook request
+        # Execute the action request
         print(f"Executing webhook request to URL: {url} with data: {action}")
         response = requests.post(url, json=action)
         print(f"Webhook Response Status Code: {response.status_code}")  # Log response status
@@ -471,14 +469,41 @@ def execute_and_save_action(action, case_template_id, payload):
         if response.status_code == 200:
             results = response.json()
             print(f"Webhook Execution Results: {results}")  # Log the result of the execution
-            save_results(results, case_template_id, webhook_id)  # Assuming save_results is implemented to handle the output
-            return f"Trigger executed successfully and saved for webhook_id {webhook_id}."
+            save_results_for_tasks(results, task_id, webhook_id)  # Save results
+            return f"Webhook executed successfully and saved for webhook_id {webhook_id}."
         else:
             raise ValueError(
-                f"Trigger execution failed: Webhook request returned status {response.status_code}, "
+                f"Action execution failed: Webhook request returned status {response.status_code}, "
                 f"response: {response.text}"
             )
 
     except Exception as e:
         print(f"Error in execute_and_save_action: {str(e)}")  # Log the error
         return str(e)
+
+
+def save_results_for_tasks(data, task_id, webhook_id):
+    """
+    Save the results of an action execution into the TaskResponse model.
+    
+    :param data: The response data to save (JSON).
+    :param task_id: The task ID.
+    :param webhook_id: The webhook ID.
+    """
+    try:
+        # Create a new TaskResponse object
+        task_response = TaskResponse(
+            task=task_id,
+            action=webhook_id,
+            body=data,
+        )
+        
+        # Add the object to the session and commit
+        db.session.add(task_response)
+        db.session.commit()
+        
+        print(task_response.id, task_response.task, task_response.action, task_response.body, task_response.execution_time)
+        print(f"TaskResponse saved successfully with id {task_response.id}")
+    except Exception as e:
+        db.session.rollback()  # Roll back the session in case of an error
+        print(f"Error saving TaskResponse: {str(e)}")
