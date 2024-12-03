@@ -439,39 +439,51 @@ def save_results(data, case_template_id, webhook_id):
         print(f"Error saving CaseResponse: {str(e)}")
 
 
-def execute_and_save_action(action, task_id,action_id):
+def execute_and_save_action(action, task_id, action_id):
     print("in execute function")
     try:
-        # Extract webhook_id from the action
+        # Extract webhook_id
         webhook_id = action_id
-        print(f"Webhook ID: {webhook_id}")  # Debugging: Ensure webhook_id is being accessed
+        print(f"Webhook ID: {webhook_id}")
         if not webhook_id:
             raise ValueError("Action execution failed: webhook_id is missing in action.")
 
-        # Fetch the action object from the database
-        webhook = get_webhook_by_id(webhook_id)  
-        print(f"Webhook Object: {webhook}")  # Debugging: Log the webhook object
+        # Fetch webhook details
+        webhook = get_webhook_by_id(webhook_id)
+        print(f"Webhook Object: {webhook}")
         if not webhook:
             raise ValueError(f"Action execution failed: No webhook found for webhook_id {webhook_id}.")
 
-        # Fetch the URL from the action object
-        url = webhook.url  # Adjust this based on your webhook model's attributes
-        print(f"Webhook URL: {url}")  # Debugging: Ensure URL is being accessed
+        # Validate the webhook URL
+        url = webhook.url
+        print(f"Webhook URL: {url}")
         if not url:
             raise ValueError(f"Action execution failed: URL is missing in webhook with id {webhook_id}.")
 
-        # Execute the action request
+        # Execute the webhook request
         print(f"Executing webhook request to URL: {url} with data: {action}")
         response = requests.post(url, json=action)
-        print(f"Webhook Response Status Code: {response.status_code}")  # Log response status
-        print(f"Webhook Response Content: {response.text}")  # Log response content
+        print(f"Webhook Response Status Code: {response.status_code}")
+        print(f"Webhook Response Content: {response.text}")
 
-        # Check response status
+        # Validate and process the response
         if response.status_code == 200:
-            results = response.json()
-            print(f"Webhook Execution Results: {results}")  # Log the result of the execution
-            save_results_for_tasks(results, task_id, webhook_id)  # Save results
-            return f"Webhook executed successfully and saved for webhook_id {webhook_id}."
+            if 'application/json' in response.headers.get('Content-Type', ''):
+                results = response.json()
+                print(f"Webhook Execution Results: {results}")
+
+                # Save results in the database
+                save_results_for_tasks(results, task_id, webhook_id)
+
+                # Ensure results are a list of dictionaries
+                if isinstance(results, dict):
+                    results = [results]  # Wrap single dictionary in a list
+                elif not isinstance(results, list):
+                    raise ValueError("Unexpected response format: Expected a dictionary or a list of dictionaries.")
+
+                return results
+            else:
+                raise ValueError("Webhook response is not in JSON format.")
         else:
             raise ValueError(
                 f"Action execution failed: Webhook request returned status {response.status_code}, "
@@ -479,32 +491,43 @@ def execute_and_save_action(action, task_id,action_id):
             )
 
     except Exception as e:
-        print(f"Error in execute_and_save_action: {str(e)}")  # Log the error
-        return str(e)
+        print(f"Error in execute_and_save_action: {str(e)}")
+        raise  # Propagate the exception for handling in the calling function
+
 
 
 def save_results_for_tasks(data, task_id, webhook_id):
     """
     Save the results of an action execution into the TaskResponse model.
-    
-    :param data: The response data to save (JSON).
+    :param data: The response data to save (JSON, list of dictionaries or dictionary).
     :param task_id: The task ID.
     :param webhook_id: The webhook ID.
     """
     try:
-        # Create a new TaskResponse object
-        task_response = TaskResponse(
-            task=task_id,
-            action=webhook_id,
-            body=data,
-        )
-        
-        # Add the object to the session and commit
-        db.session.add(task_response)
+        # Ensure data is a list of dictionaries
+        if isinstance(data, dict):
+            data = [data]
+        elif not isinstance(data, list):
+            raise ValueError("Unexpected data format: Expected a dictionary or list of dictionaries.")
+
+        for item in data:
+            # Create a new TaskResponse object for each result
+            task_response = TaskResponse(
+                task=task_id,
+                action=webhook_id,
+                body=item,  # Assuming item is JSON-serializable
+            )
+
+            # Add the object to the session
+            db.session.add(task_response)
+
+        # Commit all changes at once
         db.session.commit()
-        
-        print(task_response.id, task_response.task, task_response.action, task_response.body, task_response.execution_time)
-        print(f"TaskResponse saved successfully with id {task_response.id}")
+
+        print(f"TaskResponses saved successfully for task ID {task_id}")
+
     except Exception as e:
         db.session.rollback()  # Roll back the session in case of an error
         print(f"Error saving TaskResponse: {str(e)}")
+        raise
+

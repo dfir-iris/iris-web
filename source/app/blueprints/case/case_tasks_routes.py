@@ -79,44 +79,28 @@ def case_tasks(caseid, url_redir):
 
     return render_template("case_tasks.html", case=case, form=form)
 
-# @case_tasks_blueprint.route('/case/testjsoneeditorRoute', methods=['POST'])
-# def save_data():
-#     # Get the JSON data from the request
-#     data = request.get_json()
-    
-#     # Debugging output
-#     print('Received data:', data)
-#     actionResponse= execute_and_save_action(data.payload,data.task_id,data.action_id)
-#     print('data received from execute function', actionResponse )
-#     for actionResponse in actionResponse:
-#         actionResponse['created_at'] = actionResponse['created_at'].strftime("%Y-%m-%d %H:%M:%S")
-#         if actionResponse['updated_at']:
-#             actionResponse['updated_at'] = actionResponse['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
-#         if actionResponse['body']:
-#             try:
-#                 actionResponse['body'] = json.dumps(actionResponse['body'])
-#             except (TypeError, ValueError) as e:
-#                 actionResponse['body'] = str(actionResponse['body'])
-#     # Process the data (e.g., save to a database, etc.)
-    
-#     # Return a response
-#     return jsonify({"status": "success", "message": "Data saved successfully!"})
-
-
 @case_tasks_blueprint.route('/case/testjsoneeditorRoute', methods=['POST'])
 def save_data():
     try:
+        # Debugging: Print raw request data
+        raw_data = request.data
+        print(f"Raw request data: {raw_data}")
+
         # Get the JSON data
         data = request.get_json()
-        print(f"Type of data: {type(data)}") 
-        print(f"Content of data: {data}")    
+        if not isinstance(data, dict):
+            raise ValueError("Request payload is not a valid JSON object")
+
+        print(f"Content of data: {data}")
 
         # Extract values using dictionary keys
-        payload = data['payload']
-        task_id = data['task_id']
-        action_id = data['action_id']
+        payload = data.get('payload')
+        task_id = data.get('task_id')
+        action_id = data.get('action_id')
 
-        # Debugging output
+        if not payload or not task_id or not action_id:
+            raise KeyError("Missing one or more required keys: 'payload', 'task_id', 'action_id'")
+
         print(f"Payload: {payload}, Task ID: {task_id}, Action ID: {action_id}")
 
         # Call the function with extracted values
@@ -125,15 +109,17 @@ def save_data():
 
         # Process the action response
         for response in action_response:
-            response['created_at'] = response['created_at'].strftime("%Y-%m-%d %H:%M:%S")
-            print("CREATED", response)
-            if response.get('updated_at'):
-                response['updated_at'] = response['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
-            if response.get('body'):
-                try:
-                    response['body'] = json.dumps(response['body'])
-                except (TypeError, ValueError):
-                    response['body'] = str(response['body'])
+            if isinstance(response, dict):
+                # Ensure created_at and updated_at are formatted correctly
+                if 'created_at' in response:
+                    response['created_at'] = response['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+                if 'updated_at' in response:
+                    response['updated_at'] = response['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
+                if 'body' in response:
+                    try:
+                        response['body'] = json.dumps(response['body'])
+                    except (TypeError, ValueError):
+                        response['body'] = str(response['body'])
 
         # Return a success response
         return jsonify({"status": "success", "message": "Data saved successfully!", "data": action_response})
@@ -141,9 +127,14 @@ def save_data():
     except KeyError as e:
         print(f"Missing key in data: {e}")
         return jsonify({"status": "error", "message": f"Missing key: {e}"}), 400
+    except ValueError as e:
+        print(f"Invalid data: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 400
     except Exception as e:
         print(f"Error in save_data: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
 
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
