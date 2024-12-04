@@ -42,16 +42,11 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # - ./source/app:/iriswebapp/app
+      - ./source/app:/iriswebapp/app
       - ./ui/dist:/iriswebapp/static
     healthcheck:
       test: curl --head --fail http://localhost:8000 || exit 1
       start_period: 60s
-    develop:
-      watch:
-        - action: sync+restart
-          path: ./source/app
-          target: /iriswebapp/app
 
   worker:
     extends:
