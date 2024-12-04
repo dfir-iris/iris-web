@@ -32,6 +32,7 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
 from app.business.auth import validate_ldap_login, validate_local_login
 from app.iris_engine.utils.tracker import track_activity
+from app.models.authorization import User
 
 api_v2_auth_blueprint = Blueprint('auth_rest_v2',
                                   __name__,
@@ -110,5 +111,11 @@ def whoami():
     if not current_user.is_authenticated:
         return response_api_error("Unauthenticated")
 
+    user: User = current_user._get_current_object()
+
     # Return the current_user dict
-    return response_api_success(data=dict(current_user))
+    return response_api_success(data={
+        "id": user.id,
+        "email": user.email,
+        "name": user.name
+    })
