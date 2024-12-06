@@ -462,7 +462,7 @@ def execute_and_save_action(action, task_id, action_id):
 
         # Execute the webhook request
         print(f"Executing webhook request to URL: {url} with data: {action}")
-        response = requests.post(url, json=action)
+        response = requests.post(url, json=action, verify=False)
         print(f"Webhook Response Status Code: {response.status_code}")
         print(f"Webhook Response Content: {response.text}")
 

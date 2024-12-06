@@ -314,7 +314,9 @@ function expandActionDiv(actionDetails,task_id, action_id) {
             alert('Error saving data. Please try again.');
         });
 });
-
+$('#collapsibleContent').find('.btn[data-dismiss="collapse-action-form"]').on('click', function () {
+  collapsibleContent.slideUp(); // Hides the div with a slide-up effect
+});
 }
 
 function save_task() {

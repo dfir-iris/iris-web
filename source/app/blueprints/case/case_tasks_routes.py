@@ -61,6 +61,7 @@ from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 from app.datamgmt.manage.manage_case_templates_db import execute_and_save_action
+from source.app.datamgmt.manage.manage_task_response_db import get_task_responses_list
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
@@ -73,7 +74,7 @@ case_tasks_blueprint = Blueprint('case_tasks',
 def case_tasks(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
-
+    
     form = FlaskForm()
     case = get_case(caseid)
 
@@ -84,15 +85,12 @@ def save_data():
     try:
         # Debugging: Print raw request data
         raw_data = request.data
-        print(f"Raw request data: {raw_data}")
 
         # Get the JSON data
         data = request.get_json()
         if not isinstance(data, dict):
             raise ValueError("Request payload is not a valid JSON object")
-
-        print(f"Content of data: {data}")
-
+        
         # Extract values using dictionary keys
         payload = data.get('payload')
         task_id = data.get('task_id')
@@ -101,37 +99,15 @@ def save_data():
         if not payload or not task_id or not action_id:
             raise KeyError("Missing one or more required keys: 'payload', 'task_id', 'action_id'")
 
-        print(f"Payload: {payload}, Task ID: {task_id}, Action ID: {action_id}")
-
         # Call the function with extracted values
         action_response = execute_and_save_action(payload, task_id, action_id)
-        print('Data received from execute_and_save_action:', action_response)
-
-        # Process the action response
-        for response in action_response:
-            if isinstance(response, dict):
-                # Ensure created_at and updated_at are formatted correctly
-                if 'created_at' in response:
-                    response['created_at'] = response['created_at'].strftime("%Y-%m-%d %H:%M:%S")
-                if 'updated_at' in response:
-                    response['updated_at'] = response['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
-                if 'body' in response:
-                    try:
-                        response['body'] = json.dumps(response['body'])
-                    except (TypeError, ValueError):
-                        response['body'] = str(response['body'])
-
         # Return a success response
         return jsonify({"status": "success", "message": "Data saved successfully!", "data": action_response})
-
     except KeyError as e:
-        print(f"Missing key in data: {e}")
         return jsonify({"status": "error", "message": f"Missing key: {e}"}), 400
     except ValueError as e:
-        print(f"Invalid data: {e}")
         return jsonify({"status": "error", "message": str(e)}), 400
     except Exception as e:
-        print(f"Error in save_data: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
@@ -196,7 +172,7 @@ def case_add_task_modal(caseid):
     form.task_assignees_id.choices = []
 
     return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None,
-                           attributes=task.custom_attributes)
+                           attributes=task.custom_attributes )
 
 
 @case_tasks_blueprint.route('/case/tasks/add', methods=['POST'])
@@ -263,9 +239,19 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
     comments_map = get_case_tasks_comments_count([task.id])
-
+    taskActionResponse = get_task_responses_list() 
+        # Serialize datetime objects for rendering
+    for taskActionResponse in taskActionResponse:
+        taskActionResponse['created_at'] = taskActionResponse['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+        if taskActionResponse['updated_at']:
+            taskActionResponse['updated_at'] = taskActionResponse['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
+        if taskActionResponse['body']:
+            try:
+                taskActionResponse['body'] = json.dumps(taskActionResponse['body'])
+            except (TypeError, ValueError) as e:
+                taskActionResponse['body'] = str(taskActionResponse['body']) 
     return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
-                           comments_map=comments_map, attributes=task.custom_attributes)
+                           comments_map=comments_map, attributes=task.custom_attributes ,taskActionResponse=taskActionResponse)
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])

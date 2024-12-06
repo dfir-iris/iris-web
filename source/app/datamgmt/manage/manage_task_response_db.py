@@ -37,10 +37,10 @@ def get_task_responses_list() -> List[dict]:
         TaskResponse.task,
         TaskResponse.action,
         TaskResponse.body,
-        User.name.label('created_by')
-    ).join(
-        TaskResponse.created_by_user
-    ).all()
+        User.name.label('created_by'))
+    # ).join(
+    #     TaskResponse.created_by_user
+    # ).all()
 
     return [row._asdict() for row in task_responses]
 
@@ -55,6 +55,7 @@ def get_task_response_by_id(response_id: int) -> TaskResponse:
         TaskResponse: Task response object.
     """
     task_response = TaskResponse.query.filter_by(id=response_id).first()
+    print("in here")
     return task_response
 
 

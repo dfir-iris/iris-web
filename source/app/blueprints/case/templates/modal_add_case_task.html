@@ -2,7 +2,9 @@
     <div class="col md-12">
         <div class="row">
             <div class="col align-self-center">
-                <h4 class="modal-title mr-4">{% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}</h4>
+                <h4 class="modal-title mr-4">
+                    {% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}
+                </h4>
                 <small><i class="text-muted">#{{ task.task_uuid }}</i></small>
             </div>
             {% include 'modals/modal_attributes_nav.html' %}
@@ -16,7 +18,7 @@
                         </button>
                         <div class="dropdown-menu pull-right" id="task_modal_quick_actions"
                             aria-labelledby="dropdownMenuButton">
-                            <a class="dropdown-item" href="#" onclick='copy_object_link({{task.id}});return false;'><i
+                            <a class="dropdown-item" href="#" onclick="copy_object_link({{task.id}});return false;"><i
                                     class="fa fa-share mr-2"></i>Share</a>
                             <a class="dropdown-item" href="#"
                                 onclick='copy_object_link_md("task", {{task.id}});return false;'><i
@@ -32,10 +34,12 @@
                     </button>
                     {% endif %}
                     <button class="float-right btn bg-transparent" title="Minimize"
-                        onclick="modal_minimized('modal_add_task', '{% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}');">
-                        <i class='fa fa-minus'></i> </button>
-                    <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal"
-                        aria-label="Close"><span aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                        onclick="modal_minimized('modal_add_task', '{% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}');">
+                        <i class="fa fa-minus"></i>
+                    </button>
+                    <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true"><i class="fa fa-times"></i></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -53,9 +57,7 @@
                             <div class="form-group mt-3 row">
                                 <div class="col-6 col-xs-12">
                                     <label for="task_assignee_id" class="placeholder">Assigned to *</label>
-                                    {{ form.task_assignees_id(class="selectpicker col-12", data_actions_box="true",
-                                    data_dropup_auto="false") }}
-
+                                    {{ form.task_assignees_id(class="selectpicker col-12", data_actions_box="true", data_dropup_auto="false") }}
                                 </div>
                                 <div class="col-6 col-xs-12">
                                     <label for="task_status_id" class="placeholder">Status *</label>
@@ -71,81 +73,120 @@
                                 <div class="md_description_field">
                                     <div class="form-group mt--2">
                                         <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2"
-                                            onclick="edit_in_task_desc();">
-                                        </button>
-                                        <button type="button" style="display: none;"
+                                            onclick="edit_in_task_desc();"></button>
+                                        <button type="button" style="display: none"
                                             class="btn btn-dark btn-sm float-right mr-2 mt-2"
-                                            onclick="preview_task_description();" id="task_preview_button"><i
-                                                class="fa-solid fa-eye"></i></button>
+                                            onclick="preview_task_description();" id="task_preview_button">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
                                     </div>
                                     <div class="row">
-                                        <div class="col mb--2 ml--2" id="task_edition_btn" style="display:none;">
-                                        </div>
+                                        <div class="col mb--2 ml--2" id="task_edition_btn" style="display: none"></div>
                                     </div>
-                                    <div class="row" style="margin-left:0px;">
+                                    <div class="row" style="margin-left: 0px">
                                         <div class="col-12" id="container_task_desc_content">
                                             <div id="task_description" contenteditable="true" spellcheck="true"
                                                 class="mr-2"
                                                 data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">
                                                 {% if task.task_description %}{{ task.task_description }}{% endif %}
                                             </div>
-                                            <textarea id="task_desc_content" rows="10" cols="82"
-                                                style="display: none"></textarea>
+                                            <textarea id="task_desc_content" rows="10" cols="82" style="display: none"></textarea>
                                         </div>
-                                        <div class="col-12" id="container_task_description" style="display:none">
+                                        <div class="col-12" id="container_task_description" style="display: none">
                                             <div id="target_task_desc"></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <div class="form-group mt-3">
-                                <label for="task_tags">Task tags
-                                </label>
+                                <label for="task_tags">Task tags </label>
                                 <input type="text" id="task_tags" class="form-control col-md-12" {% if task.task_tags %}
                                     value="{{ task.task_tags }}" {% endif %} />
                             </div>
-                            {% if task.id %}
-                            <div class="form-group mt-3">
-                                <label for="actionsList">Actions</label>
-
-                                <!-- Dropdown Button -->
-                                <div class="dropdown">
-                                    <button class="btn btn-outline-secondary dropdown-toggle col-12" type="button"
-                                        id="actionsDropdownButton" data-toggle="dropdown" aria-haspopup="true"
-                                        aria-expanded="false">
-                                        Select Action
-                                    </button>
-                                    <div class="dropdown-menu col-12" id="actionsList"
-                                        aria-labelledby="actionsDropdownButton">
-                                        <!-- JavaScript will populate this dropdown list -->
-                                    </div>
-                                </div>
-                                
-                                <!-- Collapsible content -->
-                                <div id="collapsibleContent" class="mt-3 card p-3" style="display: none;">
-                                    <h5>Action Details</h5>
-                                    <div id="jsoneditor"></div> <!-- JSONEditor container -->
-                                    <button id="saveBtn" class="btn btn-primary mt-3">Exexute</button>
-                                  </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive" id="taskResponse_table_wrapper">
-                                    <table class="table display wrap col-border table-striped table-hover dataTable" width="100%" cellspacing="0" id="taskResponse_table">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Tasks</th>
-                                                <th>Action</th>
-                                                <th>Response</th>
-                                                <th>Execution Time</th>
-                                            </tr>
-                                        </thead>
-                                    </table>
-                                </div>
-                            </div>
-                            {% endif %}    
                         </div>
-                    </form>
+                    </form> <!-- Closing the form tag here -->
+                    {% if task.id %}
+                    <div class="mt-3">
+                        <label for="actionsList">Actions</label>
+                        <!-- Dropdown Button -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle col-12" type="button"
+                                id="actionsDropdownButton" data-toggle="dropdown" aria-haspopup="true"
+                                aria-expanded="false">
+                                Select Action
+                            </button>
+                            <div class="dropdown-menu col-12" id="actionsList"
+                                aria-labelledby="actionsDropdownButton">
+                                <!-- JavaScript will populate this dropdown list -->
+                            </div>
+                        </div>
+                    
+                        <!-- Collapsible content -->
+                        <div id="collapsibleContent" class="mt-3 card p-3" style="display: none">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <!-- Title (Action Payload Form) -->
+                                <h5 class="mb-0">Action Payload Form</h5>
+                                
+                                <!-- Close Button -->
+                                <button type="button" class="btn bg-transparent" data-dismiss="collapse-action-form" aria-label="Close">
+                                    <span aria-hidden="true"><i class="fa fa-times"></i></span>
+                                </button>
+                            </div>
+                            
+                            <div id="jsoneditor"></div>
+                            <!-- JSONEditor container -->
+                            
+                            <button id="saveBtn" class="btn btn-primary mt-3">
+                                Execute
+                            </button>
+                        </div>
+                    
+                        {% if taskActionResponse and task.id == taskActionResponse.task %}
+                        <div class="card-body">
+                            <div class="table-responsive" id="action_table_wrapper">
+                                <table class="table display wrap col-border table-striped table-hover dataTable"
+                                    width="100%" cellspacing="0" id="action_table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Action Id</th>
+                                            <th>Task Id</th>
+                                            <th>Body</th>
+                                            <th>Created At</th>
+                                            <th>Created By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>{{ taskActionResponse.id }}</td>
+                                            <td>{{ taskActionResponse.task }}</td>
+                                            <td>{{ taskActionResponse.action }}</td>
+                                            <td>
+                                                <button id="" type="button" class="btn btn-primary btn-sm view-response" 
+                                                onclick="toggleJsonViewer(this)" data-response="{{ taskActionResponse.body }}">
+                                                    View Response
+                                                </button>
+                                            </td>
+                                            <td>{{ taskActionResponse.created_at }}</td>
+                                            <td>{{ taskActionResponse.created_by|capitalize }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                    
+                            <!-- Expandable div for the JSON viewer -->
+                            <div id="jsonViewerContainer" style="display:none; margin-top:20px; padding: 15px; border: 1px solid #ddd;">
+                                <button type="button" class="pull-right btn bg-transparent" data-dismiss="collapse-frame" aria-label="Close">
+                                    <span aria-hidden="true"><i class="fa fa-times"></i></span>
+                                </button>
+                                <h5>Action Response</h5>
+                                
+                                <iframe id="jsoncrackIframe" src="https://jsoncrack.com/widget" frameborder="0" style="height: 50vh; width: 100%;"></iframe>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             {% include 'modals/modal_attributes_tabs.html' %}
@@ -153,26 +194,33 @@
     </div>
     {% if task.id %}
 
-    <button type="button" class="btn btn-outline-danger mt-5" onclick="delete_task({{ task.id }});">Delete</button>
+    <button type="button" class="btn btn-outline-danger mt-5" onclick="delete_task({{ task.id }});">
+        Delete
+    </button>
 
     <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_task"
-        onclick="update_task({{ task.id }});">Update</button>
+        onclick="update_task({{ task.id }});">
+        Update
+    </button>
 
     {% else %}
 
-    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_task">Save</button>
+    <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_task">
+        Save
+    </button>
 
     {% endif %}
 </div>
+
 {% block javascripts %}
 <script>
 
     var data = [];
     if (current_users_list.length === 0) {
         refresh_users(do_list_users, [{% for assignee in task.task_assignees %} { { assignee.id } }, {% endfor %}]);
-    } else {
+  } else {
         do_list_users(current_users_list, [{% for assignee in task.task_assignees %} { { assignee.id } }, {% endfor %}]);
-    }
+  }
 
     $('form#form_new_task').validate();
     set_suggest_tags('task_tags');
@@ -188,13 +236,11 @@
     $('#task_status_id').selectpicker('val', 'To do');
     {% endif %}
     $('[data-toggle="popover"]').popover();
-
-
-
 </script>
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
 <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="/static/assets/js/iris/case.taskaction.response.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@json-editor/json-editor@latest/dist/jsoneditor.min.js"></script>
 
 {% endblock javascripts %}

@@ -154,12 +154,14 @@ def add_template_modal():
             }
         ],
         "triggers": [
-            {
-                "webhook_id": "Webhook Id",
-                "display_name": "Trigger Name",
-                "input_params": "JSON Schema"
+        {
+            "webhook_id": "Webhook Trigger ID",
+            "display_name": "Trigger Name",
+            "input_params": {
+                "username": "User Name"
             }
-        ]
+        }
+    ]
     }
 
     return render_template("modal_case_template.html", form=form, case_template=case_template)

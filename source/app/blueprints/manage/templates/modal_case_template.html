@@ -100,67 +100,50 @@
                 <div class="card-body">
                   A case template is defined as below.
                   <pre>
-
 {
-    "name": "ransomware_infection",
-    "display_name": "Ransomware Infection Template",
-    "description": "This case template describes first-response tasks to handle information system compromised by a ransomware.",
-    "author": "DFIR-IRIS",
-    "title_prefix": "RANS",
-    "summary": "# Context \n\n\n # Contact \n\n\n # Actions \n\n\n",
-    "tags": ["ransomware","malware"],
-    "tasks": [
-        {
-            "title": "Identify the perimeter",
-            "description": "The perimeter of compromise must be identified",
-            "tags": ["identify"],
-            "actions": [
-                {
-                    "webhook_id": "Webhook Id",
-                    "display_name": "Action Name",
-                }
-            ],
-        },
-        {
-            "title": "Collect compromised hosts",
-            "description": "Deploy Velociraptor and start collecting evidence",
-            "tags": ["collect", "velociraptor"],
-            "actions": [
-                {
-                    "webhook_id": "Webhook Id",
-                    "display_name": "Action Name",
-                }
-            ],
-            "tags": ["collect", "velociraptor"],
-            "actions": [
-                {
-                    "webhook_id": "Webhook Id",
-                    "display_name": "Action Name",
-                }
-            ],
-        },
-        {
-            "title": "Contain"
-        }
-    ],
-    "note_directories": [
-        {
-            "title": "Identify",
-            "notes": [
-                        {
-                            "title": "Identify the compromised accounts",
-                            "content": "# Observations\n\n"
-                        }
-                    ]
-        },
-        
-    ],
-    "triggers": [
-        {
-            "webhook_id": "Webhook Id",
-            "display_name": "Trigger Name",
-        }
-    ],
+  "name": "ransomware_infection",
+  "display_name": "Ransomware Infection Template",
+  "description": "This case template describes first-response tasks to handle information system compromised by a ransomware.",
+  "author": "DFIR-IRIS",
+  "title_prefix": "[RANS]",
+  "summary": "# Context \n\n\n # Contact \n\n\n # Actions \n\n\n",
+  "tags":  ["ransomware","malware"]
+  "tasks": [
+      {
+          "title": "Task 1",
+          "description": "Task 1 description",
+          "tags": [
+              "tag1",
+              "tag2"
+          ],
+          "actions": [
+              {
+                  "webhook_id": "Webhook Action",
+                  "display_name": "Action Name"
+              }
+          ]
+      }
+  ],
+  "note_directories": [
+      {
+          "title": "Identify",
+          "notes": [
+              {
+                  "title": "Identify the compromised accounts",
+                  "content": "# Observations\n\n"
+              }
+          ]
+      }
+  ],
+  "triggers": [
+      {
+          "webhook_id": "Webhook Trigger ID",
+          "display_name": "Trigger Name",
+          "input_params": {
+              "username": "User Name"
+          }
+      }
+  ]
 }
                                     </pre>
                 </div>

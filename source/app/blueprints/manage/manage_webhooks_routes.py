@@ -125,8 +125,34 @@ def add_template_modal():
                 "value": "value 1"
             }
         ],
-        "payload_schema": "JSON Schema",
-        "url": "webhook URL",
+        "payload_schema": {
+        "type": "Webhook Payload Type",
+        "description": "Webhook payload Description",
+        "minItems": 1,
+        "uniqueItems": "true",
+        "items": {
+            "type": "object",
+            "required": [
+                "property"
+            ],
+            "properties": {
+                "property 1": {
+                    "type": "property type",
+                    "minLength": 1
+                },
+                "property 2": {
+                    "type": "object",
+                    "properties": {
+                        "sub property 1": {
+                            "type": "property type",
+                            "minLength": 1
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "url": "http://webhookexampleurl.com"
     }
 
     return render_template("modal_webhook.html", form=form, webhook=webhook)
