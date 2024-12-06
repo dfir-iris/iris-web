@@ -28,9 +28,9 @@ jobs:
       - name: Check out iris
         uses: actions/checkout@v4
       - name: Check code with ruff
-        run: |
-          pip install ruff
-          ruff check --output-format=github source
+        uses: astral-sh/ruff-action@v2
+        with:
+          src: "./source"
       - name: Build dockers
         run: |
           # TODO using the environment file from tests to build here. 
