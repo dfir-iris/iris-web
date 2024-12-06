@@ -30,7 +30,8 @@ jobs:
       - name: Check code with ruff
         uses: astral-sh/ruff-action@v2
         with:
-          src: "./source"
+          args: check --output-format=github
+          src: ./source
       - name: Build dockers
         run: |
           # TODO using the environment file from tests to build here. 
