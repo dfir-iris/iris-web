@@ -469,6 +469,7 @@ class Config:
         OIDC_TOKEN_ENDPOINT = config.load('OIDC', 'TOKEN_ENDPOINT', fallback=None)
         OIDC_END_SESSION_ENDPOINT = config.load('OIDC', 'END_SESSION_ENDPOINT', fallback=None)
         OIDC_SCOPES = config.load('OIDC', 'SCOPES', fallback="openid email profile")
+        OIDC_MAPPING_NAME = config.load('OIDC', 'MAPPING_DISPLAYNAME', fallback='name')
         OIDC_MAPPING_USERNAME = config.load('OIDC', 'MAPPING_USERNAME', fallback='preferred_username')
         OIDC_MAPPING_EMAIL = config.load('OIDC', 'MAPPING_EMAIL', fallback='email')
 
