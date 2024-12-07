@@ -56,6 +56,7 @@ class Cases(db.Model):
     description = Column(Text)
     open_date = Column(Date)
     close_date = Column(Date)
+    close_datetime = Column(DateTime)
     initial_date = Column(DateTime, nullable=False, server_default=text("now()"))
     closing_note = Column(Text)
     user_id = Column(ForeignKey('user.id'))
@@ -107,6 +108,7 @@ class Cases(db.Model):
         self.open_date = datetime.utcnow()
         self.close_date = None
         self.initial_date = datetime.utcnow()
+        self.close_datetime = None
         self.custom_attributes = custom_attributes
         self.case_uuid = uuid.uuid4()
         self.status_id = 0

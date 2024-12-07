@@ -119,6 +119,7 @@ def list_cases_dict(user_id):
         Client.name.label('client_name'),
         Cases.open_date.label('case_open_date'),
         Cases.close_date.label('case_close_date'),
+        Cases.close_datetime.label('case_close_datetime'),
         Cases.soc_id.label('case_soc_id'),
         Cases.user_id.label('opened_by_user_id'),
         user_alias.user.label('opened_by'),
@@ -182,6 +183,8 @@ def close_case(case_id):
 
     if res:
         res.close_date = datetime.utcnow()
+        res.close_datetime = datetime.utcnow()
+
 
         res.state_id = get_case_state_by_name('Closed').state_id
 
@@ -223,6 +226,7 @@ def reopen_case(case_id):
 
     if res:
         res.close_date = None
+        res.close_datetime = None
 
         res.state_id = get_case_state_by_name('Open').state_id
 
@@ -274,6 +278,7 @@ def get_case_details_rt(case_id):
             Cases.custom_attributes,
             Cases.modification_history,
             Cases.initial_date,
+            Cases.close_datetime,
             Cases.classification_id,
             CaseClassification.name.label('classification'),
             Cases.reviewer_id,
