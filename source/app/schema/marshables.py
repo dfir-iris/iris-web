@@ -1540,6 +1540,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     protagonists: List[Dict[str, Any]] = fields.List(fields.Dict, required=False)
     case_tags: Optional[str] = fields.String(required=False)
     initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
+    close_datetime: Optional[datetime.datetime] = auto_field('close_datetime', required=False)
     classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
 
@@ -1547,7 +1548,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
         model = Cases
         include_fk = True
         load_instance = True
-        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date']
+        exclude = ['name', 'description', 'soc_id', 'client_id', 'initial_date', 'close_datetime']
         unknown = EXCLUDE
 
     @pre_load
