@@ -94,7 +94,8 @@ class Cases(db.Model):
                  user=None,
                  custom_attributes=None,
                  classification_id=None,
-                 state_id=None
+                 state_id=None,
+                 severity_id=None
                  ):
         self.name = name[:200] if name else None,
         self.soc_id = soc_id,
@@ -111,7 +112,8 @@ class Cases(db.Model):
         self.case_uuid = uuid.uuid4()
         self.status_id = 0
         self.classification_id = classification_id
-        self.state_id = state_id
+        self.state_id = state_id,
+        self.severity_id = severity_id
 
     def save(self):
         """
