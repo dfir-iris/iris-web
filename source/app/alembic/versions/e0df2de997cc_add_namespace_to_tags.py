@@ -10,7 +10,6 @@ import sqlalchemy as sa
 from sqlalchemy import text
 
 from app.alembic.alembic_utils import _table_has_column
-from app.datamgmt.manage.manage_tags_db import add_db_tag
 
 # revision identifiers, used by Alembic.
 revision = 'e0df2de997cc'

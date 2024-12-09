@@ -41,7 +41,7 @@ def backup_iris_db():
         datetime.now().strftime("%Y-%m-%d_%H%M%S"))
 
     try:
-        logs.append(f'Saving database')
+        logs.append('Saving database')
         with open(backup_file, 'w') as backup:
             completed_process = subprocess.run(
                 [f'{app.config.get("PG_CLIENT_PATH")}/pg_dump', '-h',
