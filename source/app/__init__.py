@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import collections
 import json
 import logging as logger
@@ -24,10 +25,7 @@ from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
-try:
-    from flask_cors import CORS
-except:
-    pass
+from flask_cors import CORS
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
@@ -65,13 +63,16 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
+logger.basicConfig(level=logger.INFO, format=LOG_FORMAT,
+                   datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__, static_folder='../static')
 try:
-    CORS(app, supports_credentials=True, origins="*", resources={r"/*": {"origins": "*"}})
+    CORS(app, supports_credentials=True, origins="*",
+         resources={r"/*": {"origins": "*"}}, )
 except:
     pass
+
 
 def ac_current_user_has_permission(*permissions):
     """
@@ -94,11 +95,13 @@ def ac_current_user_has_manage_perms():
 
 
 app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
-app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
+app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(
+    u, indent=4, ensure_ascii=False)
 app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
 app.jinja_env.filters['escape_dots'] = lambda u: u.replace('.', '[.]')
 app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
-app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_perms)
+app.jinja_env.globals.update(
+    user_has_manage_perms=ac_current_user_has_manage_perms)
 app.jinja_options["autoescape"] = lambda _: True
 app.jinja_env.autoescape = True
 
@@ -116,14 +119,15 @@ SQLALCHEMY_ENGINE_OPTIONS = {
     "pool_pre_ping": True
 }
 
-db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
+# flask-sqlalchemy
+db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)
 
 bc = Bcrypt(app)  # flask-bcrypt
 
 lm = LoginManager()  # flask-loginmanager
 lm.init_app(app)  # init the login manager
 
-ma = Marshmallow(app) # Init marshmallow
+ma = Marshmallow(app)  # Init marshmallow
 
 dropzone = Dropzone(app)
 
@@ -146,9 +150,11 @@ oidc_client = None
 if app.config.get('AUTHENTICATION_TYPE') == "oidc":
     oidc_client = get_oidc_client(app)
 
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db.session.remove()
 
 
+# autopep8: off
 from app import views
