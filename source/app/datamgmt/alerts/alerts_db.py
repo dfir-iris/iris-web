@@ -21,8 +21,7 @@ import json
 from datetime import datetime, timedelta
 from flask_login import current_user
 from functools import reduce
-from operator import and_
-from sqlalchemy import desc, asc, func, tuple_, or_, not_
+from sqlalchemy import desc, asc, func, tuple_, or_, not_, and_
 from sqlalchemy.orm import aliased, make_transient, selectinload
 from typing import List, Tuple, Dict
 
