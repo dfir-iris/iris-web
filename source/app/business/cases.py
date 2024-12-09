@@ -79,7 +79,7 @@ def create(request_json):
 
         case = _load(request_data)
         case.owner_id = current_user.id
-        case.severity_id = 4
+        if not case.severity_id: case.severity_id = 4
 
         if case_template_id and len(case_template_id) > 0:
             case = case_template_pre_modifier(case, case_template_id)

@@ -206,7 +206,8 @@ class AuthenticationType(Enum):
 authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
                                      config.get('IRIS', 'AUTHENTICATION_TYPE', fallback="local"))
 
-authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST')
+authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST',
+                                                        fallback="False")
 
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('IRIS', 'TLS_ROOT_CA', fallback=None))
@@ -263,7 +264,7 @@ class CeleryConfig:
 # --------- APP ---------
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.4.16" # DO NOT EDIT THIS LINE MANUALLY
+    IRIS_VERSION = "v2.4.17" # DO NOT EDIT THIS LINE MANUALLY
 
     if os.environ.get('IRIS_DEMO_VERSION') is not None and os.environ.get('IRIS_DEMO_VERSION') != 'None':
         IRIS_VERSION = os.environ.get('IRIS_DEMO_VERSION')

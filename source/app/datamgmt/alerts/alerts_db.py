@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from flask_login import current_user
 from functools import reduce
 from operator import and_
-from sqlalchemy import desc, asc, func, tuple_, or_
+from sqlalchemy import desc, asc, func, tuple_, or_, not_
 from sqlalchemy.orm import aliased, make_transient, selectinload
 from typing import List, Tuple, Dict
 
@@ -36,13 +36,39 @@ from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id, \
     case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
+from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc, IocLink
+    alert_iocs_association, Ioc, IocLink, Client
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus, \
-    AlertSimilarity
+    AlertSimilarity, Severity
+from app.models.authorization import Permissions, User
 from app.schema.marshables import EventSchema, AlertSchema
 from app.util import add_obj_history_entry
+
+
+relationship_model_map = {
+    'owner': User,
+    'severity': Severity,
+    'status': AlertStatus,
+    'customer': Client,
+    'resolution_status': AlertResolutionStatus,
+    'cases': Cases,
+    'comments': Comments,
+    'assets': CaseAssets,
+    'iocs': Ioc
+}
+
+RESTRICTED_USER_FIELDS = {
+    'password',
+    'mfa_secrets',
+    'webauthn_credentials',
+    'api_key',
+    'external_id',
+    'ctx_case',
+    'ctx_human_case',
+    'is_service_account'
+}
 
 
 def db_list_all_alerts():
@@ -52,12 +78,59 @@ def db_list_all_alerts():
     return db.session.query(Alert).all()
 
 
+def build_condition(column, operator, value):
+    if hasattr(column, 'property') and hasattr(column.property, 'local_columns'):
+        # It's a relationship attribute
+        fk_cols = list(column.property.local_columns)
+        if operator in ['in', 'not_in']:
+            if len(fk_cols) == 1:
+                # Use the single FK column for the condition
+                fk_col = fk_cols[0]
+                if operator == 'in':
+                    return fk_col.in_(value)
+                else:
+                    return ~fk_col.in_(value)
+            else:
+                raise NotImplementedError(
+                    "in_() on a relationship with multiple FK columns not supported. Specify a direct column.")
+        else:
+            raise ValueError(
+                "Non-in operators on relationships require specifying a related model column, e.g., owner.id or assets.asset_name.")
+
+    # If we get here, 'column' should be an actual column, not a relationship.
+    if operator == 'not':
+        return column != value
+    elif operator == 'in':
+        return column.in_(value)
+    elif operator == 'not_in':
+        return ~column.in_(value)
+    elif operator == 'eq':
+        return column == value
+    elif operator == 'like':
+        return column.ilike(f"%{value}%")
+    else:
+        raise ValueError(f"Unsupported operator: {operator}")
+
+
+def combine_conditions(conditions, logical_operator):
+    if len(conditions) > 1:
+        if logical_operator == 'or':
+            return or_(*conditions)
+        elif logical_operator == 'not':
+            return not_(and_(*conditions))
+        else:  # Default to 'and'
+            return and_(*conditions)
+    elif conditions:
+        return conditions[0]
+    else:
+        return None
+
+
 def get_filtered_alerts(
         start_date: str = None,
         end_date: str = None,
         source_start_date: str = None,
         source_end_date: str = None,
-        source_reference: str = None,
         title: str = None,
         description: str = None,
         status: int = None,
@@ -71,19 +144,27 @@ def get_filtered_alerts(
         alert_ids: List[int] = None,
         assets: List[str] = None,
         iocs: List[str] = None,
-        resolution_status: int = None,
+        resolution_status: List[int] = None,
+        logical_operator: str = 'and',  # Logical operator: 'and', 'or', 'not'
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc',
-        current_user_id: int = None
-):
+        current_user_id: int = None,
+        source_reference=None,
+        custom_conditions: List[dict] = None,
+        fields: List[str] = None):
     """
     Get a list of alerts that match the given filter conditions
 
+    args:
+        start_date (datetime): The start date of the alert creation time
+        end_date (datetime): The end date of the alert creation time
+        ...
+        fields (List[str]): The list of fields to include in the output
+
     returns:
-        dict: A dictionary containing the total count, alerts, and pagination information
+        dict: Dictionary with pagination info and list of serialized alerts
     """
-    # Build the filter conditions
     conditions = []
 
     if start_date is not None and end_date is not None:
@@ -111,7 +192,10 @@ def get_filtered_alerts(
         conditions.append(Alert.alert_severity_id == severity)
 
     if resolution_status is not None:
-        conditions.append(Alert.alert_resolution_status_id == resolution_status)
+        if isinstance(resolution_status, list):
+            conditions.append(not_(Alert.alert_resolution_status_id.in_(resolution_status)))
+        else:
+            conditions.append(Alert.alert_resolution_status_id == resolution_status)
 
     if source_reference is not None:
         conditions.append(Alert.alert_source_ref.like(f'%{source_reference}%'))
@@ -149,28 +233,98 @@ def get_filtered_alerts(
         if isinstance(iocs, list):
             conditions.append(Alert.iocs.any(Ioc.ioc_value.in_(iocs)))
 
-    if current_user_id is not None:
+    if current_user_id is not None and not ac_current_user_has_permission(Permissions.server_administrator):
         clients_filters = get_user_clients_id(current_user_id)
         if clients_filters is not None:
             conditions.append(Alert.alert_customer_id.in_(clients_filters))
 
-    if len(conditions) > 1:
-        conditions = [reduce(and_, conditions)]
+    query = db.session.query(
+        Alert
+    ).options(
+        selectinload(Alert.severity),
+        selectinload(Alert.status),
+        selectinload(Alert.customer),
+        selectinload(Alert.cases),
+        selectinload(Alert.iocs),
+        selectinload(Alert.assets)
+    )
+
+    # Apply custom conditions if provided
+    if custom_conditions:
+        if isinstance(custom_conditions, str):
+            try:
+                custom_conditions = json.loads(custom_conditions)
+            except:
+                app.app.logger.exception(f"Error parsing custom_conditions: {custom_conditions}")
+                return
+
+        # Keep track of which relationships we've already joined
+        joined_relationships = set()
+
+        for custom_condition in custom_conditions:
+            field_path = custom_condition['field']
+            operator = custom_condition['operator']
+            value = custom_condition['value']
+
+            # Check if we need to handle a related field
+            if '.' in field_path:
+                relationship_name, related_field_name = field_path.split('.', 1)
+
+                # Ensure the relationship name is known
+                if relationship_name not in relationship_model_map:
+                    raise ValueError(f"Unknown relationship: {relationship_name}")
+
+                if related_field_name in RESTRICTED_USER_FIELDS:
+                    app.logger.error(f"Access to the field '{related_field_name}' is restricted.")
+                    app.logger.error(f"Suspicious behavior detected for user {current_user.id} - {current_user.user}.")
+                    continue
+
+                related_model = relationship_model_map[relationship_name]
+
+                # Join the relationship if not already joined
+                if relationship_name not in joined_relationships:
+                    query = query.join(getattr(Alert, relationship_name))
+                    joined_relationships.add(relationship_name)
+
+                related_field = getattr(related_model, related_field_name, None)
+                if related_field is None:
+                    raise ValueError(
+                        f"Field '{related_field_name}' not found in related model '{related_model.__name__}'")
+
+                # Build the condition
+                condition = build_condition(related_field, operator, value)
+                conditions.append(condition)
+            else:
+                # Field belongs to Alert model
+                field = getattr(Alert, field_path, None)
+                if field is None:
+                    raise ValueError(f"Field '{field_path}' not found in Alert model")
+
+                condition = build_condition(field, operator, value)
+                conditions.append(condition)
+
+        # Combine conditions
+    combined_conditions = combine_conditions(conditions, logical_operator)
 
     order_func = desc if sort == "desc" else asc
 
-    alert_schema = AlertSchema()
+    # If fields are provided, use them in the schema
+    if fields:
+        try:
+            alert_schema = AlertSchema(only=fields)
+        except Exception as e:
+            app.app.logger.exception(f"Error selecting fields in AlertSchema: {str(e)}")
+            alert_schema = AlertSchema()
+    else:
+        alert_schema = AlertSchema()
 
     try:
         # Query the alerts using the filter conditions
-        filtered_alerts = db.session.query(
-            Alert
-        ).filter(
-            *conditions
-        ).options(
-            selectinload(Alert.severity), selectinload(Alert.status), selectinload(Alert.customer), selectinload(Alert.cases),
-            selectinload(Alert.iocs), selectinload(Alert.assets)
-        ).order_by(
+
+        if combined_conditions is not None:
+            query = query.filter(combined_conditions)
+
+        filtered_alerts = query.order_by(
             order_func(Alert.alert_source_event_time)
         ).paginate(page=page, per_page=per_page, error_out=False)
 
@@ -839,7 +993,7 @@ def delete_similar_alert_cache(alert_id):
     db.session.commit()
 
 
-def delete_related_alerts_cache(alert_id):
+def delete_related_alert_cache(alert_id):
     """
     Delete the related alerts cache
 
@@ -868,6 +1022,25 @@ def delete_similar_alerts_cache(alert_ids: List[int]):
         None
     """
     SimilarAlertsCache.query.filter(SimilarAlertsCache.alert_id.in_(alert_ids)).delete()
+    db.session.commit()
+
+
+def delete_related_alerts_cache(alert_ids: List[int]):
+    """
+    Delete the related alerts cache
+
+    args:
+        alert_ids (List(int)): The ID of the alert
+
+    returns:
+        None
+    """
+    AlertSimilarity.query.filter(
+        or_(
+            AlertSimilarity.alert_id.in_(alert_ids),
+            AlertSimilarity.similar_alert_id.in_(alert_ids)
+        )
+    ).delete()
     db.session.commit()
 
 
@@ -1302,6 +1475,8 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
     try:
 
         delete_similar_alerts_cache(alert_ids)
+
+        delete_related_alerts_cache(alert_ids)
 
         remove_alerts_from_assets_by_ids(alert_ids)
         remove_alerts_from_iocs_by_ids(alert_ids)
