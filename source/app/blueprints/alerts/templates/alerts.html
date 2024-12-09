@@ -179,22 +179,50 @@
                             </select>
                     </div>
                 </div>
-                    <div class="form-row mt-3">
-                        <div class="col-md-12">
-                            <button class="btn btn-sm btn-outline-dark" type="button" data-toggle="collapse" data-target="#customConditionsCollapse" aria-expanded="false" aria-controls="customConditionsCollapse">
-                                Custom Conditions
-                            </button>
-                        </div>
+                <div class="form-row mt-3">
+                    <div class="col-md-12">
+                        <button class="btn btn-sm btn-outline-dark" type="button" data-toggle="collapse" data-target="#customConditionsCollapse" aria-expanded="false" aria-controls="customConditionsCollapse">
+                            Custom Conditions
+                        </button>
+                        <a href="#" class="ml-2" data-toggle="collapse" data-target="#customConditionsExamples" aria-expanded="false" aria-controls="customConditionsExamples">
+                            Show Examples
+                        </a>
                     </div>
+                </div>
 
-                    <div class="collapse mt-3" id="customConditionsCollapse">
-                        <div class="form-row">
-                            <div class="col-md-12 form-group">
-                                <label for="custom_conditions">Custom Conditions</label>
-                                <div class="form-control" id="custom_conditions"></div>
-                            </div>
+                <div class="collapse mt-3" id="customConditionsCollapse">
+                    <div class="form-row">
+                        <div class="col-md-12 form-group">
+                            <label for="custom_conditions">Custom Conditions</label>
+                            <div class="form-control" id="custom_conditions"></div>
                         </div>
                     </div>
+                </div>
+
+                <div class="collapse" id="customConditionsExamples">
+                    <div class="card card-body mt-2">
+                        <p>Here are two sample custom conditions:</p>
+                        <pre><code>
+[{
+  "field": "alert_severity_id",
+  "operator": "in",
+  "value": [1, 2]
+},
+{
+  "field": "alert_title",
+  "operator": "like",
+  "value": "phishing"
+}]</code></pre>
+<pre><code>
+[{
+  "field": "severity.severity_name",
+  "operator": "like",
+  "value": "Critical"
+}]
+</code></pre>
+                        <p>Copy one of these conditions and paste it into the "Custom Conditions" field above, then adjust the values as needed.</p>
+                    </div>
+                </div>
                 <div class="form-row mt-3">
                     <div class="col centered">
                         <button type="submit" class="btn btn-sm btn-primary">Apply Filters</button>

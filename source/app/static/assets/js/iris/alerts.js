@@ -1358,7 +1358,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
         console.error(error);
     });
 
-  if (!notify_auto_api(data)) {
+  if (!notify_auto_api(data, true)) {
     return;
   }
   const alerts = data.data.alerts;
