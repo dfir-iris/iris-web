@@ -59,6 +59,17 @@ relationship_model_map = {
     'iocs': Ioc
 }
 
+RESTRICTED_USER_FIELDS = {
+    'password',
+    'mfa_secrets',
+    'webauthn_credentials',
+    'api_key',
+    'external_id',
+    'ctx_case',
+    'ctx_human_case',
+    'is_service_account'
+}
+
 
 def db_list_all_alerts():
     """
@@ -68,8 +79,6 @@ def db_list_all_alerts():
 
 
 def build_condition(column, operator, value):
-    # If 'column' is actually a relationship (e.g., Alert.owner),
-    # we need to find the corresponding foreign key column or raise an error.
     if hasattr(column, 'property') and hasattr(column.property, 'local_columns'):
         # It's a relationship attribute
         fk_cols = list(column.property.local_columns)
@@ -264,6 +273,11 @@ def get_filtered_alerts(
                 # Ensure the relationship name is known
                 if relationship_name not in relationship_model_map:
                     raise ValueError(f"Unknown relationship: {relationship_name}")
+
+                if related_field_name in RESTRICTED_USER_FIELDS:
+                    app.logger.error(f"Access to the field '{related_field_name}' is restricted.")
+                    app.logger.error(f"Suspicious behavior detected for user {current_user.id} - {current_user.user}.")
+                    continue
 
                 related_model = relationship_model_map[relationship_name]
 

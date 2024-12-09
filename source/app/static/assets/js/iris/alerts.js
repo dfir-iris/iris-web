@@ -2183,6 +2183,8 @@ $(document).ready(function () {
                     { caption: '"field": "alert_resolution_id"', value: '"field": "alert_resolution_id"', meta: "field" },
                     { caption: '"operator": "in"', value: '"operator": "in"', meta: "operator" },
                     { caption: '"operator": "not_in"', value: '"operator": "not_in"', meta: "operator" },
+                    { caption: '"operator": "eq"', value: '"operator": "eq"', meta: "operator" },
+                    { caption: '"operator": "like"', value: '"operator": "like"', meta: "operator" },
                     { caption: '"value": [1]', value: '"value": [1]', meta: "value" }
                 ];
 
