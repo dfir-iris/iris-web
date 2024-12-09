@@ -39,12 +39,25 @@ from app.datamgmt.states import update_timeline_state
 from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc, IocLink
+    alert_iocs_association, Ioc, IocLink, Client
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus, \
-    AlertSimilarity
-from app.models.authorization import Permissions
+    AlertSimilarity, Severity
+from app.models.authorization import Permissions, User
 from app.schema.marshables import EventSchema, AlertSchema
 from app.util import add_obj_history_entry
+
+
+relationship_model_map = {
+    'owner': User,
+    'severity': Severity,
+    'status': AlertStatus,
+    'customer': Client,
+    'resolution_status': AlertResolutionStatus,
+    'cases': Cases,
+    'comments': Comments,
+    'assets': CaseAssets,
+    'iocs': Ioc
+}
 
 
 def db_list_all_alerts():
@@ -52,6 +65,56 @@ def db_list_all_alerts():
     List all alerts in the database
     """
     return db.session.query(Alert).all()
+
+
+def build_condition(column, operator, value):
+    # If 'column' is actually a relationship (e.g., Alert.owner),
+    # we need to find the corresponding foreign key column or raise an error.
+    if hasattr(column, 'property') and hasattr(column.property, 'local_columns'):
+        # It's a relationship attribute
+        fk_cols = list(column.property.local_columns)
+        if operator in ['in', 'not_in']:
+            if len(fk_cols) == 1:
+                # Use the single FK column for the condition
+                fk_col = fk_cols[0]
+                if operator == 'in':
+                    return fk_col.in_(value)
+                else:
+                    return ~fk_col.in_(value)
+            else:
+                raise NotImplementedError(
+                    "in_() on a relationship with multiple FK columns not supported. Specify a direct column.")
+        else:
+            raise ValueError(
+                "Non-in operators on relationships require specifying a related model column, e.g., owner.id or assets.asset_name.")
+
+    # If we get here, 'column' should be an actual column, not a relationship.
+    if operator == 'not':
+        return column != value
+    elif operator == 'in':
+        return column.in_(value)
+    elif operator == 'not_in':
+        return ~column.in_(value)
+    elif operator == 'eq':
+        return column == value
+    elif operator == 'like':
+        return column.ilike(f"%{value}%")
+    else:
+        raise ValueError(f"Unsupported operator: {operator}")
+
+
+def combine_conditions(conditions, logical_operator):
+    if len(conditions) > 1:
+        if logical_operator == 'or':
+            return or_(*conditions)
+        elif logical_operator == 'not':
+            return not_(and_(*conditions))
+        else:  # Default to 'and'
+            return and_(*conditions)
+    elif conditions:
+        return conditions[0]
+    else:
+        return None
 
 
 def get_filtered_alerts(
@@ -166,40 +229,68 @@ def get_filtered_alerts(
         if clients_filters is not None:
             conditions.append(Alert.alert_customer_id.in_(clients_filters))
 
+    query = db.session.query(
+        Alert
+    ).options(
+        selectinload(Alert.severity),
+        selectinload(Alert.status),
+        selectinload(Alert.customer),
+        selectinload(Alert.cases),
+        selectinload(Alert.iocs),
+        selectinload(Alert.assets)
+    )
+
     # Apply custom conditions if provided
     if custom_conditions:
-        try:
-            custom_conditions = json.loads(custom_conditions)
-        except:
-            app.app.logger.exception(f"Error parsing custom_conditions: {custom_conditions}")
-            return
+        if isinstance(custom_conditions, str):
+            try:
+                custom_conditions = json.loads(custom_conditions)
+            except:
+                app.app.logger.exception(f"Error parsing custom_conditions: {custom_conditions}")
+                return
+
+        # Keep track of which relationships we've already joined
+        joined_relationships = set()
 
         for custom_condition in custom_conditions:
-            field = getattr(Alert, custom_condition['field'])
+            field_path = custom_condition['field']
             operator = custom_condition['operator']
             value = custom_condition['value']
 
-            if operator == 'not':
-                conditions.append(not_(field == value))
-            elif operator == 'in':
-                conditions.append(field.in_(value))
-            elif operator == 'not_in':
-                conditions.append(not_(field.in_(value)))
-            else:
-                raise ValueError(f"Unsupported operator: {operator}")
+            # Check if we need to handle a related field
+            if '.' in field_path:
+                relationship_name, related_field_name = field_path.split('.', 1)
 
-    # Combine conditions with the specified logical operator
-    if len(conditions) > 1:
-        if logical_operator == 'or':
-            combined_conditions = or_(*conditions)
-        elif logical_operator == 'not':
-            combined_conditions = not_(and_(*conditions))
-        else:  # Default to 'and'
-            combined_conditions = and_(*conditions)
-    elif conditions:
-        combined_conditions = conditions[0]
-    else:
-        combined_conditions = None
+                # Ensure the relationship name is known
+                if relationship_name not in relationship_model_map:
+                    raise ValueError(f"Unknown relationship: {relationship_name}")
+
+                related_model = relationship_model_map[relationship_name]
+
+                # Join the relationship if not already joined
+                if relationship_name not in joined_relationships:
+                    query = query.join(getattr(Alert, relationship_name))
+                    joined_relationships.add(relationship_name)
+
+                related_field = getattr(related_model, related_field_name, None)
+                if related_field is None:
+                    raise ValueError(
+                        f"Field '{related_field_name}' not found in related model '{related_model.__name__}'")
+
+                # Build the condition
+                condition = build_condition(related_field, operator, value)
+                conditions.append(condition)
+            else:
+                # Field belongs to Alert model
+                field = getattr(Alert, field_path, None)
+                if field is None:
+                    raise ValueError(f"Field '{field_path}' not found in Alert model")
+
+                condition = build_condition(field, operator, value)
+                conditions.append(condition)
+
+        # Combine conditions
+    combined_conditions = combine_conditions(conditions, logical_operator)
 
     order_func = desc if sort == "desc" else asc
 
@@ -215,16 +306,6 @@ def get_filtered_alerts(
 
     try:
         # Query the alerts using the filter conditions
-        query = db.session.query(
-            Alert
-        ).options(
-            selectinload(Alert.severity),
-            selectinload(Alert.status),
-            selectinload(Alert.customer),
-            selectinload(Alert.cases),
-            selectinload(Alert.iocs),
-            selectinload(Alert.assets)
-        )
 
         if combined_conditions is not None:
             query = query.filter(combined_conditions)
@@ -898,7 +979,7 @@ def delete_similar_alert_cache(alert_id):
     db.session.commit()
 
 
-def delete_related_alerts_cache(alert_id):
+def delete_related_alert_cache(alert_id):
     """
     Delete the related alerts cache
 
@@ -927,6 +1008,25 @@ def delete_similar_alerts_cache(alert_ids: List[int]):
         None
     """
     SimilarAlertsCache.query.filter(SimilarAlertsCache.alert_id.in_(alert_ids)).delete()
+    db.session.commit()
+
+
+def delete_related_alerts_cache(alert_ids: List[int]):
+    """
+    Delete the related alerts cache
+
+    args:
+        alert_ids (List(int)): The ID of the alert
+
+    returns:
+        None
+    """
+    AlertSimilarity.query.filter(
+        or_(
+            AlertSimilarity.alert_id.in_(alert_ids),
+            AlertSimilarity.similar_alert_id.in_(alert_ids)
+        )
+    ).delete()
     db.session.commit()
 
 
@@ -1361,6 +1461,8 @@ def delete_alerts(alert_ids: List[int]) -> tuple[bool, str]:
     try:
 
         delete_similar_alerts_cache(alert_ids)
+
+        delete_related_alerts_cache(alert_ids)
 
         remove_alerts_from_assets_by_ids(alert_ids)
         remove_alerts_from_iocs_by_ids(alert_ids)

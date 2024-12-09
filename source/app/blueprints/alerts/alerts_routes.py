@@ -548,7 +548,7 @@ def alerts_delete_route(alert_id) -> Response:
         delete_similar_alert_cache(alert_id=alert_id)
 
         # Delete the similarity entries
-        delete_related_alerts_cache(alert_id=alert_id)
+        delete_related_alerts_cache([alert_id])
 
         # Delete the alert from the database
         db.session.delete(alert)

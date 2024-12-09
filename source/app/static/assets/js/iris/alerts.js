@@ -2162,36 +2162,28 @@ $(document).ready(function () {
         let customCompleter = {
             getCompletions: function(editor, session, pos, prefix, callback) {
                 const completions = [
-                    {
-                        caption: '"field": "alert_owner_id"',
-                        value: 'field',
-                        meta: "field",
-                    },
-                    {
-                        caption: '"operator": "in"',
-                        value: 'operator',
-                        meta: "operator",
-                    },
-                    {
-                        caption: '"value": [1]',
-                        value: 'value',
-                        meta: "value",
-                    },
-                    {
-                        caption: "in",
-                        "value": "in",
-                        "meta": "operator"
-                    },
-                    {
-                        caption: "not",
-                        "value": "in",
-                        "meta": "operator"
-                    },
-                    {
-                        caption: "not_in",
-                        "value": "in",
-                        "meta": "operator"
-                    }
+                    { caption: '"field": "alert_title"', value: '"field": "alert_title"', meta: "field" },
+                    { caption: '"field": "alert_description"', value: '"field": "alert_description"', meta: "field" },
+                    { caption: '"field": "alert_source"', value: '"field": "alert_source"', meta: "field" },
+                    { caption: '"field": "alert_tags"', value: '"field": "alert_tags"', meta: "field" },
+                    { caption: '"field": "alert_status_id"', value: '"field": "alert_status_id"', meta: "field" },
+                    { caption: '"field": "alert_severity_id"', value: '"field": "alert_severity_id"', meta: "field" },
+                    { caption: '"field": "alert_classification_id"', value: '"field": "alert_classification_id"', meta: "field" },
+                    { caption: '"field": "alert_customer_id"', value: '"field": "alert_customer_id"', meta: "field" },
+                    { caption: '"field": "source_start_date"', value: '"field": "source_start_date"', meta: "field" },
+                    { caption: '"field": "source_end_date"', value: '"field": "source_end_date"', meta: "field" },
+                    { caption: '"field": "creation_start_date"', value: '"field": "creation_start_date"', meta: "field" },
+                    { caption: '"field": "creation_end_date"', value: '"field": "creation_end_date"', meta: "field" },
+                    { caption: '"field": "alert_assets"', value: '"field": "alert_assets"', meta: "field" },
+                    { caption: '"field": "alert_iocs"', value: '"field": "alert_iocs"', meta: "field" },
+                    { caption: '"field": "alert_ids"', value: '"field": "alert_ids"', meta: "field" },
+                    { caption: '"field": "source_reference"', value: '"field": "source_reference"', meta: "field" },
+                    { caption: '"field": "case_id"', value: '"field": "case_id"', meta: "field" },
+                    { caption: '"field": "alert_owner_id"', value: '"field": "alert_owner_id"', meta: "field" },
+                    { caption: '"field": "alert_resolution_id"', value: '"field": "alert_resolution_id"', meta: "field" },
+                    { caption: '"operator": "in"', value: '"operator": "in"', meta: "operator" },
+                    { caption: '"operator": "not_in"', value: '"operator": "not_in"', meta: "operator" },
+                    { caption: '"value": [1]', value: '"value": [1]', meta: "value" }
                 ];
 
                 // Filter the completions based on the current prefix if desired
