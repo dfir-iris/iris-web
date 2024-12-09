@@ -434,6 +434,9 @@ def alerts_batch_update_route() -> Response:
             if not user_has_client_access(current_user.id, alert.alert_customer_id):
                 return response_error('User not entitled to update alerts for the client', status=403)
 
+            if getattr(alert, 'alert_owner_id') is None:
+                updates['alert_owner_id'] = current_user.id
+
             if data.get('alert_owner_id') == "-1" or data.get('alert_owner_id') == -1:
                 updates['alert_owner_id'] = None
 
