@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Resources",
+    "type": "object",
+    "required": [],
+    "additionalProperties": {
+        "type": "object",
+        "$ref": "#/definitions/resource"
+    },
+    "definitions": {
+        "resource": {
+            "type": "object",
+            "properties": {
+                "actions": {
+                    "$comment": "The allowed type of actions to take against a resource, multiple allowed.",
+                    "description": "What actions are allowed to be performed against this resource? Options: create, read, update, delete.",
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": ["create", "read", "update", "delete"]
+                    },
+                    "minItems": 1
+                },
+                "description": {
+                    "$comment": "Friendly description of the resource, used for UI.",
+                    "description": "Describe what this resource is for.",
+                    "type": "string"
+                }
+            },
+            "required": ["actions", "description"]
+        }
+    }
+}
