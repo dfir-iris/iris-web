@@ -110,31 +110,45 @@ def alerts_list_route() -> Response:
         except ValueError:
             return response_error('Invalid alert ioc')
 
-    filtered_data = get_filtered_alerts(
-        start_date=request.args.get('creation_start_date'),
-        end_date=request.args.get('creation_end_date'),
-        source_start_date=request.args.get('source_start_date'),
-        source_end_date=request.args.get('source_end_date'),
-        source_reference=request.args.get('source_reference'),
-        title=request.args.get('alert_title'),
-        description=request.args.get('alert_description'),
-        status=request.args.get('alert_status_id', type=int),
-        severity=request.args.get('alert_severity_id', type=int),
-        owner=request.args.get('alert_owner_id', type=int),
-        source=request.args.get('alert_source'),
-        tags=request.args.get('alert_tags'),
-        classification=request.args.get('alert_classification_id', type=int),
-        client=request.args.get('alert_customer_id'),
-        case_id=request.args.get('case_id', type=int),
-        alert_ids=alert_ids,
-        page=page,
-        per_page=per_page,
-        sort=request.args.get('sort'),
-        assets=alert_assets,
-        iocs=alert_iocs,
-        resolution_status=request.args.get('alert_resolution_id', type=int),
-        current_user_id=current_user.id
-    )
+    fields_str = request.args.get('fields')
+    if fields_str:
+        # Split into a list
+        fields = [field.strip() for field in fields_str.split(',') if field.strip()]
+    else:
+        fields = None
+
+    try:
+        filtered_data = get_filtered_alerts(
+            start_date=request.args.get('creation_start_date'),
+            end_date=request.args.get('creation_end_date'),
+            source_start_date=request.args.get('source_start_date'),
+            source_end_date=request.args.get('source_end_date'),
+            source_reference=request.args.get('source_reference'),
+            title=request.args.get('alert_title'),
+            description=request.args.get('alert_description'),
+            status=request.args.get('alert_status_id', type=int),
+            severity=request.args.get('alert_severity_id', type=int),
+            owner=request.args.get('alert_owner_id', type=int),
+            source=request.args.get('alert_source'),
+            tags=request.args.get('alert_tags'),
+            classification=request.args.get('alert_classification_id', type=int),
+            client=request.args.get('alert_customer_id'),
+            case_id=request.args.get('case_id', type=int),
+            alert_ids=alert_ids,
+            page=page,
+            per_page=per_page,
+            sort=request.args.get('sort', 'desc', type=str),
+            custom_conditions=request.args.get('custom_conditions'),
+            assets=alert_assets,
+            iocs=alert_iocs,
+            resolution_status=request.args.get('alert_resolution_id', type=int),
+            current_user_id=current_user.id,
+            fields=fields
+        )
+
+    except Exception as e:
+        app.app.logger.exception(e)
+        return response_error(str(e))
 
     if filtered_data is None:
         return response_error('Filtering error')

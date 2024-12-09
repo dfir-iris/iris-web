@@ -22,7 +22,7 @@ from datetime import datetime, timedelta
 from flask_login import current_user
 from functools import reduce
 from operator import and_
-from sqlalchemy import desc, asc, func, tuple_, or_
+from sqlalchemy import desc, asc, func, tuple_, or_, not_
 from sqlalchemy.orm import aliased, make_transient, selectinload
 from typing import List, Tuple, Dict
 
@@ -36,11 +36,13 @@ from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id, \
     case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
+from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
     alert_iocs_association, Ioc, IocLink
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus, \
     AlertSimilarity
+from app.models.authorization import Permissions
 from app.schema.marshables import EventSchema, AlertSchema
 from app.util import add_obj_history_entry
 
@@ -57,7 +59,6 @@ def get_filtered_alerts(
         end_date: str = None,
         source_start_date: str = None,
         source_end_date: str = None,
-        source_reference: str = None,
         title: str = None,
         description: str = None,
         status: int = None,
@@ -71,19 +72,27 @@ def get_filtered_alerts(
         alert_ids: List[int] = None,
         assets: List[str] = None,
         iocs: List[str] = None,
-        resolution_status: int = None,
+        resolution_status: List[int] = None,
+        logical_operator: str = 'and',  # Logical operator: 'and', 'or', 'not'
         page: int = 1,
         per_page: int = 10,
         sort: str = 'desc',
-        current_user_id: int = None
-):
+        current_user_id: int = None,
+        source_reference=None,
+        custom_conditions: List[dict] = None,
+        fields: List[str] = None):
     """
     Get a list of alerts that match the given filter conditions
 
+    args:
+        start_date (datetime): The start date of the alert creation time
+        end_date (datetime): The end date of the alert creation time
+        ...
+        fields (List[str]): The list of fields to include in the output
+
     returns:
-        dict: A dictionary containing the total count, alerts, and pagination information
+        dict: Dictionary with pagination info and list of serialized alerts
     """
-    # Build the filter conditions
     conditions = []
 
     if start_date is not None and end_date is not None:
@@ -111,7 +120,10 @@ def get_filtered_alerts(
         conditions.append(Alert.alert_severity_id == severity)
 
     if resolution_status is not None:
-        conditions.append(Alert.alert_resolution_status_id == resolution_status)
+        if isinstance(resolution_status, list):
+            conditions.append(not_(Alert.alert_resolution_status_id.in_(resolution_status)))
+        else:
+            conditions.append(Alert.alert_resolution_status_id == resolution_status)
 
     if source_reference is not None:
         conditions.append(Alert.alert_source_ref.like(f'%{source_reference}%'))
@@ -149,28 +161,75 @@ def get_filtered_alerts(
         if isinstance(iocs, list):
             conditions.append(Alert.iocs.any(Ioc.ioc_value.in_(iocs)))
 
-    if current_user_id is not None:
+    if current_user_id is not None and not ac_current_user_has_permission(Permissions.server_administrator):
         clients_filters = get_user_clients_id(current_user_id)
         if clients_filters is not None:
             conditions.append(Alert.alert_customer_id.in_(clients_filters))
 
+    # Apply custom conditions if provided
+    if custom_conditions:
+        try:
+            custom_conditions = json.loads(custom_conditions)
+        except:
+            app.app.logger.exception(f"Error parsing custom_conditions: {custom_conditions}")
+            return
+
+        for custom_condition in custom_conditions:
+            field = getattr(Alert, custom_condition['field'])
+            operator = custom_condition['operator']
+            value = custom_condition['value']
+
+            if operator == 'not':
+                conditions.append(not_(field == value))
+            elif operator == 'in':
+                conditions.append(field.in_(value))
+            elif operator == 'not_in':
+                conditions.append(not_(field.in_(value)))
+            else:
+                raise ValueError(f"Unsupported operator: {operator}")
+
+    # Combine conditions with the specified logical operator
     if len(conditions) > 1:
-        conditions = [reduce(and_, conditions)]
+        if logical_operator == 'or':
+            combined_conditions = or_(*conditions)
+        elif logical_operator == 'not':
+            combined_conditions = not_(and_(*conditions))
+        else:  # Default to 'and'
+            combined_conditions = and_(*conditions)
+    elif conditions:
+        combined_conditions = conditions[0]
+    else:
+        combined_conditions = None
 
     order_func = desc if sort == "desc" else asc
 
-    alert_schema = AlertSchema()
+    # If fields are provided, use them in the schema
+    if fields:
+        try:
+            alert_schema = AlertSchema(only=fields)
+        except Exception as e:
+            app.app.logger.exception(f"Error selecting fields in AlertSchema: {str(e)}")
+            alert_schema = AlertSchema()
+    else:
+        alert_schema = AlertSchema()
 
     try:
         # Query the alerts using the filter conditions
-        filtered_alerts = db.session.query(
+        query = db.session.query(
             Alert
-        ).filter(
-            *conditions
         ).options(
-            selectinload(Alert.severity), selectinload(Alert.status), selectinload(Alert.customer), selectinload(Alert.cases),
-            selectinload(Alert.iocs), selectinload(Alert.assets)
-        ).order_by(
+            selectinload(Alert.severity),
+            selectinload(Alert.status),
+            selectinload(Alert.customer),
+            selectinload(Alert.cases),
+            selectinload(Alert.iocs),
+            selectinload(Alert.assets)
+        )
+
+        if combined_conditions is not None:
+            query = query.filter(combined_conditions)
+
+        filtered_alerts = query.order_by(
             order_func(Alert.alert_source_event_time)
         ).paginate(page=page, per_page=per_page, error_out=False)
 
