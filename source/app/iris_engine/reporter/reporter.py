@@ -567,31 +567,3 @@ class IrisMakeMdReport(IrisReportMaker):
             return None, e.__str__()
 
         return output_file_path, 'Report generated'
-
-
-class QueuingHandler(log.Handler):
-    """A thread safe logging.Handler that writes messages into a queue object.
-
-       Designed to work with LoggingWidget so log messages from multiple
-       threads can be shown together in a single ttk.Frame.
-
-       The standard logging.QueueHandler/logging.QueueListener can not be used
-       for this because the QueueListener runs in a private thread, not the
-       main thread.
-
-       Warning:  If multiple threads are writing into this Handler, all threads
-       must be joined before calling logging.shutdown() or any other log
-       destinations will be corrupted.
-    """
-
-    def __init__(self, *args, task_self, message_queue, **kwargs):
-        """Initialize by copying the queue and sending everything else to superclass."""
-        log.Handler.__init__(self, *args, **kwargs)
-        self.message_queue = message_queue
-        self.task_self = task_self
-
-    def emit(self, record):
-        """Add the formatted log message (sans newlines) to the queue."""
-        self.message_queue.append(self.format(record).rstrip('\n'))
-        self.task_self.update_state(state='PROGRESS',
-                                    meta=list(self.message_queue))
