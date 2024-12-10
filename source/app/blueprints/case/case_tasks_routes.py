@@ -61,7 +61,7 @@ from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
 from app.datamgmt.manage.manage_case_templates_db import execute_and_save_action
-from source.app.datamgmt.manage.manage_task_response_db import get_task_responses_list
+from source.app.datamgmt.manage.manage_task_response_db import get_task_response_by_id, get_task_responses_list
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
@@ -239,19 +239,44 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
     comments_map = get_case_tasks_comments_count([task.id])
-    taskActionResponse = get_task_responses_list() 
+    taskActionResponses = get_task_responses_list() 
         # Serialize datetime objects for rendering
-    for taskActionResponse in taskActionResponse:
-        taskActionResponse['created_at'] = taskActionResponse['created_at'].strftime("%Y-%m-%d %H:%M:%S")
-        if taskActionResponse['updated_at']:
-            taskActionResponse['updated_at'] = taskActionResponse['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
-        if taskActionResponse['body']:
-            try:
-                taskActionResponse['body'] = json.dumps(taskActionResponse['body'])
-            except (TypeError, ValueError) as e:
-                taskActionResponse['body'] = str(taskActionResponse['body']) 
     return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
-                           comments_map=comments_map, attributes=task.custom_attributes ,taskActionResponse=taskActionResponse)
+                           comments_map=comments_map, attributes=task.custom_attributes ,taskActionResponses=taskActionResponses)
+
+@case_tasks_blueprint.route('/case/task/action_response', methods=['GET'])
+def case_task_action_response():
+    try:
+        taskActionResponses = get_task_responses_list()
+
+        # Serialize datetime objects for rendering and the 'body' field
+        for taskActionResponse in taskActionResponses:
+            if isinstance(taskActionResponse['created_at'], datetime):
+                taskActionResponse['created_at'] = taskActionResponse['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+            if taskActionResponse.get('updated_at') and isinstance(taskActionResponse['updated_at'], datetime):
+                taskActionResponse['updated_at'] = taskActionResponse['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
+            if taskActionResponse.get('body'):
+                try:
+                    taskActionResponse['body'] = json.dumps(taskActionResponse['body'])
+                except (TypeError, ValueError) as e:
+                    taskActionResponse['body'] = str(taskActionResponse['body'])
+        
+        return jsonify({"success": True, "data": taskActionResponses})  # Properly return as JSON
+
+    except Exception as e:
+        # Log the exception for debugging
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@case_tasks_blueprint.route('/case/task/action_response/<int:cur_id>', methods=['GET'])
+def case_task_action_response_by_id(cur_id):
+    action_response = get_task_response_by_id(cur_id)
+
+    if action_response:
+        return response_success("Task action response fetched successfully", data=action_response)
+    else:
+        return response_error("No action response found for this task", 404)
+
+
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])

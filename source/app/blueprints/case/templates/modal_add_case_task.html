@@ -141,7 +141,7 @@
                             </button>
                         </div>
                     
-                        {% if taskActionResponse and task.id == taskActionResponse.task %}
+                        {% if taskActionResponses %}
                         <div class="card-body">
                             <div class="table-responsive" id="action_table_wrapper">
                                 <table class="table display wrap col-border table-striped table-hover dataTable"
@@ -156,20 +156,8 @@
                                             <th>Created By</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>{{ taskActionResponse.id }}</td>
-                                            <td>{{ taskActionResponse.task }}</td>
-                                            <td>{{ taskActionResponse.action }}</td>
-                                            <td>
-                                                <button id="" type="button" class="btn btn-primary btn-sm view-response" 
-                                                onclick="toggleJsonViewer(this)" data-response="{{ taskActionResponse.body }}">
-                                                    View Response
-                                                </button>
-                                            </td>
-                                            <td>{{ taskActionResponse.created_at }}</td>
-                                            <td>{{ taskActionResponse.created_by|capitalize }}</td>
-                                        </tr>
+                                    <tbody id="actionTableBody">
+                                        <!-- table rows will be populated here -->
                                     </tbody>
                                 </table>
                             </div>

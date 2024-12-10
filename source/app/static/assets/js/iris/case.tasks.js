@@ -174,7 +174,7 @@ function edit_task(id) {
     load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
     $('#modal_add_task').modal({ show: true });
     edit_in_task_desc();
-
+    loadTableData()
     // Define actionsList as a global variable if it's reused elsewhere
     const actionsList = $('#actionsList');
 
@@ -242,6 +242,65 @@ function edit_task(id) {
   });
 }
 
+function loadTableData() {
+    $("#action_table").dataTable({
+      ajax: {
+        url: "/case/task/action_response",
+        contentType: "application/json",
+        type: "GET",
+        data: function (d) {
+          if (d.status == "success") {
+            console.log("Response data:", d.data); // Log the data here
+            return JSON.stringify(d.data);
+          } else {
+            return JSON.stringify([]);
+          }
+        },
+      },
+
+      order: [[0, "desc"]],
+      autoWidth: false,
+      columns: [
+        {
+          data: "id",
+        },
+        {
+          data: "task",
+        },
+        {
+          data: "action",
+        },
+        {
+          data: "body",
+          render: function (data, type, row) {
+            console.log("Body data:", data); // Logs the raw data
+
+            const task = row.id; // Get the task value from the row
+
+            return `
+                <button type="button" class="btn btn-primary btn-sm view-response"
+                    data-task='${task}' 
+                    onclick="toggleJsonViewer(this)">
+                    View Response
+                </button>`;
+        }
+          
+        },
+        
+        {
+          data: "created_at",
+        },
+        {
+          data: "updated_at",
+        },
+      ],
+    });
+}
+
+
+
+
+
 function expandActionDiv(actionDetails,task_id, action_id) {
   // Reference to the collapsible content div
   const collapsibleContent = $('#collapsibleContent');
@@ -283,39 +342,48 @@ function expandActionDiv(actionDetails,task_id, action_id) {
   // clicking on execute button in the html this click event is triggered
   $('#executeBtn').off('click').on('click', function (e) {
     e.preventDefault();
-
+  
     const updatedData = window.jsonEditor.getValue();
-
+  
     const requestData = {
-        action_id: action_id, 
-        task_id: task_id, 
+        action_id: action_id,
+        task_id: task_id,
         payload: updatedData,
     };
-
-    console.log('Request data:', requestData);
-
-    fetch('/case/jsoneditor', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestData),
+  
+    post_request_api(
+        "/case/jsoneditor",
+        JSON.stringify(requestData),
+        false,
+        function () {
+            window.swal({
+                title: "Processing",
+                text: "Executing action, please wait...",
+                icon: "/static/assets/img/loader.gif",
+                button: false,
+                allowOutsideClick: false,
+            });
+        }
+    )
+    .done((data) => {
+        if (notify_auto_api(data)) {
+          refresh_action_rsponse_table();
+        }
     })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then((data) => {
-            console.log('Save successful:', data);
-            alert('Data saved successfully!');
-        })
-        .catch((error) => {
-            console.error('Error saving data:', error);
-            alert('Error saving data. Please try again.');
-        });
-});
+    .always(() => {
+        window.swal.close(); // Close the loading dialog
+    });
+  
+    return false;
+  });
+
+  function refresh_action_rsponse_table(){
+    $('#action_table').DataTable().ajax.reload();
+  notify_success("Refreshed");
+  }
+  
+
+
 $('#collapsibleContent').find('.btn[data-dismiss="collapse-action-form"]').on('click', function () {
   collapsibleContent.slideUp(); // Hides the div with a slide-up effect
 });
