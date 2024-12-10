@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+from os import environ
 from app import app
 from app import lm
 from app.blueprints.pages.activities.activities_routes import activities_blueprint
@@ -97,7 +98,7 @@ from app.blueprints.rest.profile_routes import profile_rest_blueprint
 from app.blueprints.rest.reports_route import reports_rest_blueprint
 from app.blueprints.rest.search_routes import search_rest_blueprint
 from app.blueprints.graphql.graphql_route import graphql_blueprint
-from app.blueprints.rest.v2.case.api_v2_case_routes import api_v2_case_blueprint
+from app.blueprints.rest.v2 import v2_api_bp as api_v2_root_blueprint
 from app.blueprints.rest.v2.case.api_v2_assets_routes import api_v2_assets_blueprint
 from app.blueprints.rest.v2.case.api_v2_ioc_routes import api_v2_ioc_blueprint
 from app.blueprints.rest.v2.case.api_v2_case_tasks_routes import api_v2_tasks_blueprint
@@ -186,15 +187,19 @@ app.register_blueprint(alerts_rest_blueprint)
 app.register_blueprint(rest_api_blueprint)
 app.register_blueprint(demo_blueprint)
 
-app.register_blueprint(api_v2_case_blueprint)
+app.register_blueprint(api_v2_root_blueprint)
 app.register_blueprint(api_v2_ioc_blueprint)
 app.register_blueprint(api_v2_assets_blueprint)
 app.register_blueprint(api_v2_tasks_blueprint)
 
 try:
+    # Don't perform postinit if testing
+    if environ.get("TESTING"):
+        raise NotImplementedError
 
     run_post_init(development=app.config["DEVELOPMENT"])
-
+except NotImplementedError:
+    pass
 except Exception as e:
     app.logger.exception("Post init failed. IRIS not started")
     raise e
