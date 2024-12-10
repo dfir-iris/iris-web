@@ -80,7 +80,7 @@ def case_tasks(caseid, url_redir):
 
     return render_template("case_tasks.html", case=case, form=form)
 
-@case_tasks_blueprint.route('/case/testjsoneeditorRoute', methods=['POST'])
+@case_tasks_blueprint.route('/case/jsoneditor', methods=['POST'])
 def save_data():
     try:
         # Debugging: Print raw request data

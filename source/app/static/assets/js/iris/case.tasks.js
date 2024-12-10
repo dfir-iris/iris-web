@@ -252,52 +252,54 @@ function expandActionDiv(actionDetails,task_id, action_id) {
 
   // Reinitialize JSONEditor
   if (window.jsonEditor) {
-    // Destroy the existing editor instance
     window.jsonEditor.destroy();
-    window.jsonEditor = null; // Clear reference to avoid accidental reuse
+    window.jsonEditor = null; 
   }
 
-  // Create a new JSONEditor instance with the given schema
+
   window.jsonEditor = new JSONEditor(jsonEditorContainer[0], {
-    schema: actionDetails, // Use the provided schema
-    theme: 'bootstrap4',
+    schema: actionDetails,
+    theme: 'tailwind',
+    disable_edit_json: true, // Disables raw JSON editing
+    disable_properties: true, // Disables editing of object properties
+    disable_collapse: true,   // Disables the ability to collapse elements
+    disable_array_add: true,  // Disables adding items to arrays
+    disable_array_delete: true,  
+    show_errors: "change",
+    form_name_root: " "
+
   });
 
-  // Use the `onReady` callback to ensure the editor is ready
-  window.jsonEditor.on('ready', function () {
-    console.log('JSONEditor is ready.');
 
-    // Set default data or use schema defaults if available
+  window.jsonEditor.on('ready', function () {
+
     if (actionDetails.default) {
       window.jsonEditor.setValue(actionDetails.default);
     } else {
-      window.jsonEditor.setValue({}); // Initialize with an empty object if no default provided
+      window.jsonEditor.setValue({});
     }
   });
 
-  // Update the Save button logic to handle the current action
-  $('#saveBtn').off('click').on('click', function (e) {
+  // clicking on execute button in the html this click event is triggered
+  $('#executeBtn').off('click').on('click', function (e) {
     e.preventDefault();
 
-    // Retrieve the updated data from JSONEditor
     const updatedData = window.jsonEditor.getValue();
 
-    // Construct the request body to match the desired response structure
     const requestData = {
-        action_id: action_id, // Pass the action ID
-        task_id: task_id, // Pass the case ID
-        payload: updatedData, // Include the editor data as 'payload'
+        action_id: action_id, 
+        task_id: task_id, 
+        payload: updatedData,
     };
 
     console.log('Request data:', requestData);
 
-    // Example: Simulated save logic (replace with your actual save endpoint)
-    fetch('/case/testjsoneeditorRoute', {
+    fetch('/case/jsoneditor', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify(requestData), // Send the constructed data
+        body: JSON.stringify(requestData),
     })
         .then((response) => {
             if (!response.ok) {
