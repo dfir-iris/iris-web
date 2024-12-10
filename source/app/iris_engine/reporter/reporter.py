@@ -165,8 +165,6 @@ class IrisReportMaker(object):
             CasesEvent.event_date
         ).all()
 
-        cache_id = {}
-        ras = {}
         tim = []
         for row in timeline:
             ras = row
@@ -410,8 +408,6 @@ class IrisMakeDocReport(IrisReportMaker):
             CasesEvent.event_date
         ).all()
 
-        cache_id = {}
-        ras = {}
         tim = []
         for row in timeline:
             ras = row
