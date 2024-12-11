@@ -54,7 +54,7 @@ def dim_index(caseid: int, url_redir):
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def task_status(task_id, caseid, url_redir):
     if url_redir:
-        return response_error("Invalid request")
+        return response_error('Invalid request')
 
     task = app.celery.AsyncResult(task_id)
 
@@ -68,13 +68,13 @@ def task_status(task_id, caseid, url_redir):
             'Additional information': 'The results of this tasks were stored in a pickled Class which does not exists '
                                       'anymore in current IRIS version.'
         }
-        return render_template("modal_task_info.html", data=task_info, task_id=task.id)
+        return render_template('modal_task_info.html', data=task_info, task_id=task.id)
 
     task_info = {
         'Task ID': task_id,
         'Task finished on': task.date_done,
         'Task state': task.state.lower(),
-        'Engine': task.name if task.name else "No engine. Unrecoverable shadow failure"}
+        'Engine': task.name if task.name else 'No engine. Unrecoverable shadow failure'}
 
     task_meta = task._get_task_meta()
 
@@ -91,12 +91,12 @@ def task_status(task_id, caseid, url_redir):
 
     else:
         success = None
-        task_info['User'] = "Shadow Iris"
+        task_info['User'] = 'Shadow Iris'
         task_info['Logs'] = ['Task did not returned a valid IIStatus object']
 
     if task_meta.get('traceback'):
         task_info['Traceback'] = task.traceback
 
-    task_info['Success'] = "Success" if success else "Failure"
+    task_info['Success'] = 'Success' if success else 'Failure'
 
-    return render_template("modal_task_info.html", data=task_info, task_id=task.id)
+    return render_template('modal_task_info.html', data=task_info, task_id=task.id)
