@@ -50,28 +50,22 @@ def dim_index(caseid: int, url_redir):
     return render_template('dim_tasks.html', form=form)
 
 
-@dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-def task_status(task_id, caseid, url_redir):
-    if url_redir:
-        return response_error('Invalid request')
-
-    task = app.celery.AsyncResult(task_id)
+def _get_task(task_identifier):
+    task = app.celery.AsyncResult(task_identifier)
 
     try:
         tinfo = task.info
     except AttributeError:
         # Legacy task
-        task_info = {
+        return {
             'Danger': 'This task was executed in a previous version of IRIS and the status cannot be read anymore.',
             'Note': 'All the data readable by the current IRIS version is displayed in the table.',
             'Additional information': 'The results of this tasks were stored in a pickled Class which does not exists '
                                       'anymore in current IRIS version.'
         }
-        return render_template('modal_task_info.html', data=task_info)
 
     task_info = {
-        'Task ID': task_id,
+        'Task ID': task_identifier,
         'Task finished on': task.date_done,
         'Task state': task.state.lower(),
         'Engine': task.name if task.name else 'No engine. Unrecoverable shadow failure'}
@@ -99,4 +93,14 @@ def task_status(task_id, caseid, url_redir):
 
     task_info['Success'] = 'Success' if success else 'Failure'
 
+    return task_info
+
+
+@dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def task_status(task_id, caseid, url_redir):
+    if url_redir:
+        return response_error('Invalid request')
+
+    task_info = _get_task(task_id)
     return render_template('modal_task_info.html', data=task_info)
