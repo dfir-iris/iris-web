@@ -68,7 +68,7 @@ def task_status(task_id, caseid, url_redir):
             'Additional information': 'The results of this tasks were stored in a pickled Class which does not exists '
                                       'anymore in current IRIS version.'
         }
-        return render_template('modal_task_info.html', data=task_info, task_id=task.id)
+        return render_template('modal_task_info.html', data=task_info)
 
     task_info = {
         'Task ID': task_id,
@@ -99,4 +99,4 @@ def task_status(task_id, caseid, url_redir):
 
     task_info['Success'] = 'Success' if success else 'Failure'
 
-    return render_template('modal_task_info.html', data=task_info, task_id=task.id)
+    return render_template('modal_task_info.html', data=task_info)
