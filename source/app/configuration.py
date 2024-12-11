@@ -372,7 +372,6 @@ class Config:
 
     AUTHENTICATION_TYPE = authentication_type
     AUTHENTICATION_CREATE_USER_IF_NOT_EXIST = (authentication_create_user_if_not_exists == "True")
-    IRIS_NEW_USERS_DEFAULT_GROUP = config.load('IRIS', 'NEW_USERS_DEFAULT_GROUP', fallback='Analysts')
     AUTHENTICATION_LOCAL_FALLBACK = config.load('IRIS', 'AUTHENTICATION_LOCAL_FALLBACK', fallback="True") == "True"
 
     if authentication_type == 'oidc_proxy':
@@ -411,6 +410,9 @@ class Config:
 
         LDAP_AUTHENTICATION_TYPE = config.load('LDAP', 'AUTHENTICATION_TYPE')
 
+        LDAP_BIND_DN = config.load('LDAP', 'BIND_DN')
+        LDAP_BIND_PASSWORD = config.load('LDAP', 'BIND_PASSWORD')
+
         LDAP_SEARCH_DN = config.load('LDAP', 'SEARCH_DN')
         if authentication_create_user_if_not_exists and LDAP_SEARCH_DN is None:
             raise Exception('LDAP enabled with user provisioning: LDAP_SEARCH_DN should be set')
@@ -420,6 +422,8 @@ class Config:
 
         LDAP_ATTRIBUTE_DISPLAY_NAME = config.load('LDAP', 'ATTRIBUTE_DISPLAY_NAME')
         LDAP_ATTRIBUTE_MAIL = config.load('LDAP', 'ATTRIBUTE_MAIL')
+
+        LDAP_GROUP_BASE_DN = config.load('LDAP', 'GROUP_BASE_DN')
 
         LDAP_USE_SSL = config.load('LDAP', 'USE_SSL', fallback='True')
         LDAP_USE_SSL = (LDAP_USE_SSL == 'True')
