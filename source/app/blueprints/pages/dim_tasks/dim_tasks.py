@@ -26,9 +26,10 @@ from flask_wtf import FlaskForm
 import app
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.blueprints.access_controls import ac_case_requires, ac_requires
+from app.blueprints.access_controls import ac_case_requires
+from app.blueprints.access_controls import ac_requires
 from app.blueprints.responses import response_error
-from iris_interface.IrisInterfaceStatus import IIStatus
+from app.business.dim_tasks import dim_tasks_get
 
 dim_tasks_blueprint = Blueprint(
     'dim_tasks',
@@ -50,57 +51,11 @@ def dim_index(caseid: int, url_redir):
     return render_template('dim_tasks.html', form=form)
 
 
-def _get_task(task_identifier):
-    task = app.celery.AsyncResult(task_identifier)
-
-    try:
-        tinfo = task.info
-    except AttributeError:
-        # Legacy task
-        return {
-            'Danger': 'This task was executed in a previous version of IRIS and the status cannot be read anymore.',
-            'Note': 'All the data readable by the current IRIS version is displayed in the table.',
-            'Additional information': 'The results of this tasks were stored in a pickled Class which does not exists '
-                                      'anymore in current IRIS version.'
-        }
-
-    task_info = {
-        'Task ID': task_identifier,
-        'Task finished on': task.date_done,
-        'Task state': task.state.lower(),
-        'Engine': task.name if task.name else 'No engine. Unrecoverable shadow failure'}
-
-    task_meta = task._get_task_meta()
-
-    if task_meta.get('name') \
-            and ('task_hook_wrapper' in task_meta.get('name') or 'pipeline_dispatcher' in task_meta.get('name')):
-        task_info['Module name'] = task_meta.get('kwargs').get('module_name')
-        task_info['Hook name'] = task_meta.get('kwargs').get('hook_name')
-        task_info['User'] = task_meta.get('kwargs').get('init_user')
-        task_info['Case ID'] = task_meta.get('kwargs').get('caseid')
-
-    if isinstance(task.info, IIStatus):
-        success = task.info.is_success()
-        task_info['Logs'] = task.info.get_logs()
-
-    else:
-        success = None
-        task_info['User'] = 'Shadow Iris'
-        task_info['Logs'] = ['Task did not returned a valid IIStatus object']
-
-    if task_meta.get('traceback'):
-        task_info['Traceback'] = task.traceback
-
-    task_info['Success'] = 'Success' if success else 'Failure'
-
-    return task_info
-
-
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def task_status(task_id, caseid, url_redir):
     if url_redir:
         return response_error('Invalid request')
 
-    task_info = _get_task(task_id)
+    task_info = dim_tasks_get(task_id)
     return render_template('modal_task_info.html', data=task_info)
