@@ -1010,11 +1010,23 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                         <div class="col-md-3"><b>IRIS Creation Time:</b></div>
                         <div class="col-md-9">${formatTime(alert.alert_creation_time)} UTC</div>
                       </div>` : ''}
-                    
+                      ${alert.external_ref_link ? `<div class="row mt-2">
+                        <div class="col-md-3"><b>External ticket:</b></div>
+                        <div class="col-md-9">${
+                            alert.external_ref_link && alert.external_ref_link.startsWith('http')
+                            ? `<a href="${alert.external_ref_link}">${alert.external_ref_link}</a>`
+                            : 'No valid link provided'
+                          }</div>
+                      </div>` : ''}
+                      ${alert.external_ref_id ? `<div class="row mt-2">
+                        <div class="col-md-3"><b>External ticket id:</b></div>
+                        <div class="col-md-9">${alert.external_ref_id}</div>
+                      </div>` : ''}
+
                     <div class="separator-solid"></div>
                     <h3 class="title mb-3"><strong>Alert note</strong></h3>
                     <pre id=alertNote-${alert.alert_id}>${alert.alert_note}</pre>
-                    
+
                     <!-- Alert Context section -->
                     ${
                         alert.alert_context && Object.keys(alert.alert_context).length > 0
