@@ -1174,6 +1174,8 @@ function load_menu_mod_options(data_type, table, deletion_fn, additionalOptions 
                     type: 'divider'
                 });
 
+                jdata_menu_options = jsdata;
+
                 for (let option in jsdata) {
                     let opt = jsdata[option];
 
