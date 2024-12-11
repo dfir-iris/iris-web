@@ -26,8 +26,8 @@ def upgrade():
     if not _table_has_column('alerts', 'external_ref_link'):
         op.add_column('alerts', sa.Column('external_ref_link', sa.Text, nullable=True))
 
-    if not _table_has_column('alerts', 'external_ref_source'):
-        op.add_column('alerts', sa.Column('external_ref_source', sa.JSON, nullable=True))
+    if not _table_has_column('alerts', 'external_ref_content'):
+        op.add_column('alerts', sa.Column('external_ref_content', sa.JSON, nullable=True))
 
     return
 

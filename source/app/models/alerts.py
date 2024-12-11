@@ -49,7 +49,7 @@ class Alert(db.Model):
     alert_resolution_status_id = Column(ForeignKey('alert_resolution_status.resolution_status_id'), nullable=True)
     external_ref_id = Column(Text, nullable=True)
     external_ref_link = Column(Text, nullable=True)
-    external_ref_source = Column(JSON, nullable=True)
+    external_ref_content = Column(JSON, nullable=True)
 
     owner = relationship('User', foreign_keys=[alert_owner_id])
     severity = relationship('Severity')
