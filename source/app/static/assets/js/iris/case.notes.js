@@ -432,7 +432,7 @@ async function note_detail(id) {
             $('.note').removeClass('note-highlight');
             $('#note-' + id).addClass('note-highlight');
 
-            $('#object_comments_number').text(data.data.comments.length);
+            $('#object_comments_number').text(data.data.comments.length > 0 ? data.data.comments.length: '');
             $('#content_last_saved_by').text('');
             $('#content_typing').text('');
             $('#last_saved').removeClass('btn-danger').addClass('btn-success');

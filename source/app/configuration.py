@@ -206,7 +206,8 @@ class AuthenticationType(Enum):
 authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
                                      config.get('IRIS', 'AUTHENTICATION_TYPE', fallback="local"))
 
-authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST')
+authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST',
+                                                        fallback="False")
 
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('IRIS', 'TLS_ROOT_CA', fallback=None))

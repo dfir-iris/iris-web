@@ -58,6 +58,9 @@ from app.util import is_authentication_oidc
 
 from oic.oauth2.exception import GrantError
 
+log = app.logger
+
+
 # CONTENT ------------------------------------------------
 dashboard_blueprint = Blueprint(
     'index',
@@ -93,9 +96,12 @@ def logout():
                     ctx_less=True,
                     display_in_ui=False
                 )
+            except Exception as e:
+                log.error(f"Error logging out: {e}")
+                log.warning(f'Will continue to local logout')
 
-    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
     logout_user()
+    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
     session.clear()
 
     return redirect(not_authenticated_redirection_url('/'))

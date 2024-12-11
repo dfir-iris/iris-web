@@ -53,7 +53,6 @@ cd iris-web
 
 # Checkout to the last tagged version 
 git checkout v2.4.18
-
 # Copy the environment file 
 cp .env.model .env
 
