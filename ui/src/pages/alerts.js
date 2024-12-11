@@ -980,21 +980,21 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                 </div>
                 <span class="mt-4">${alert.alert_description.replaceAll('\n', '<br/>').replaceAll('\t', '  ')}</span>
 
-                
+
 
               <!-- Additional details and other content -->
               <div id="additionalDetails-${alert.alert_id}" class="collapse mt-4 ${expanded? 'show': ''} alert-collapsible">
                 <div class="card-no-pd mt-2">
                     <div class="card-body">
-                    <h3 class="title mb-3"><strong>General info</strong></h3>  
+                    <h3 class="title mb-3"><strong>General info</strong></h3>
                         ${alert.alert_source ? `<div class="row"><div class="col-md-3"><b>Source:</b></div>
                         <div class="col-md-9">${alert.alert_source}</div>
                       </div>` : ''}
                       ${alert.alert_source_link ? `<div class="row mt-2">
                         <div class="col-md-3"><b>Source Link:</b></div>
                         <div class="col-md-9">${
-                            alert.alert_source_link && alert.alert_source_link.startsWith('http') 
-                            ? `<a href="${alert.alert_source_link}">${alert.alert_source_link}</a>` 
+                            alert.alert_source_link && alert.alert_source_link.startsWith('http')
+                            ? `<a href="${alert.alert_source_link}">${alert.alert_source_link}</a>`
                             : 'No valid link provided'
                           }</div>
                       </div>` : ''}
