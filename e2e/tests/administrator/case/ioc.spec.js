@@ -46,7 +46,7 @@ test('should paginate the IOCs', async ({ page, rest }) => {
     const caseName = `Case - ${crypto.randomUUID()}`;
 
     // TODO maybe should remove cases between each tests (like in the backend tests)
-    let response = await rest.post('/api/v2/cases', {
+    const response = await rest.post('/api/v2/cases', {
         data: {
             case_name: caseName,
             case_description: 'Case description',
