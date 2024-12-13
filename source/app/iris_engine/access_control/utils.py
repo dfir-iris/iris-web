@@ -11,14 +11,11 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import UserClient
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
-from app.models.authorization import Organisation
-from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import Permissions
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
-from app.models.authorization import UserOrganisation
 
 log = app.app.logger
 
