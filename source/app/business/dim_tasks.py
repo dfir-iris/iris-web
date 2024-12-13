@@ -33,7 +33,7 @@ def _get_success(task_result: IIStatus):
 
 def dim_tasks_is_legacy(task):
     try:
-        _ = task.info
+        _ = task.date_done
         return False
     except AttributeError:
         return True
