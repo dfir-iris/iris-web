@@ -41,6 +41,7 @@ from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
+from app.business.dim_tasks import dim_tasks_is_legacy
 from iris_interface.IrisInterfaceStatus import IIStatus
 
 dim_tasks_rest_blueprint = Blueprint('dim_tasks_rest', __name__)
@@ -186,10 +187,7 @@ def list_dim_tasks(count):
 
         tkp = {'state': row.status, 'case': "Unknown", 'module': row.name, 'task_id': row.task_id, 'date_done': row.date_done, 'user': "Unknown"}
 
-        try:
-            _ = row.result
-        except AttributeError:
-            # Legacy task
+        if dim_tasks_is_legacy(row):
             data.append(tkp)
             continue
 
