@@ -7,6 +7,8 @@ test.beforeEach(async({ page }) => {
     await page.goto('/case/ioc?cid=1');
 });
 
+// TODO should maybe remove all iocs between each tests: there is a risk we reach the pagination limit
+
 test('should be able to update IOC', async ({ page }) => {
     const iocValue = `IOC value - ${crypto.randomUUID()}`;
 
