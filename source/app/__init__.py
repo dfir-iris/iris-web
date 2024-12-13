@@ -28,7 +28,8 @@ from flask_cors import CORS
 
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
-from flask_socketio import SocketIO, Namespace
+from flask_socketio import SocketIO
+from flask_socketio import Namespace
 from flask_sqlalchemy import SQLAlchemy
 from functools import partial
 
