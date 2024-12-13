@@ -40,14 +40,11 @@ def dim_tasks_get(task_identifier):
         'Task state': task.state.lower(),
         'Engine': task.name if task.name else 'No engine. Unrecoverable shadow failure'}
 
-    task_meta = task._get_task_meta()
-
-    if task_meta.get('name') \
-            and ('task_hook_wrapper' in task_meta.get('name') or 'pipeline_dispatcher' in task_meta.get('name')):
-        task_info['Module name'] = task_meta.get('kwargs').get('module_name')
-        task_info['Hook name'] = task_meta.get('kwargs').get('hook_name')
-        task_info['User'] = task_meta.get('kwargs').get('init_user')
-        task_info['Case ID'] = task_meta.get('kwargs').get('caseid')
+    if task.name and ('task_hook_wrapper' in task.name or 'pipeline_dispatcher' in task.name):
+        task_info['Module name'] = task.kwargs.get('module_name')
+        task_info['Hook name'] = task.kwargs.get('hook_name')
+        task_info['User'] = task.kwargs.get('init_user')
+        task_info['Case ID'] = task.kwargs.get('caseid')
 
     if isinstance(task.info, IIStatus):
         success = task.info.is_success()
@@ -58,7 +55,7 @@ def dim_tasks_get(task_identifier):
         task_info['User'] = 'Shadow Iris'
         task_info['Logs'] = ['Task did not returned a valid IIStatus object']
 
-    if task_meta.get('traceback'):
+    if task.traceback:
         task_info['Traceback'] = task.traceback
 
     task_info['Success'] = 'Success' if success else 'Failure'
