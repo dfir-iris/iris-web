@@ -20,13 +20,27 @@ from app import celery
 from iris_interface.IrisInterfaceStatus import IIStatus
 
 
+def _get_engine_name(task):
+    if not task.name:
+        return 'No engine. Unrecoverable shadow failure'
+    return task.name
+
+def _get_success(task_result: IIStatus):
+    if task_result.is_success():
+        return 'Success'
+    else:
+        return 'Failure'
+
+def dim_tasks_is_legacy(task):
+    try:
+        _ = task.info
+        return False
+    except AttributeError:
+        return True
+
 def dim_tasks_get(task_identifier):
     task = celery.AsyncResult(task_identifier)
-
-    try:
-        tinfo = task.info
-    except AttributeError:
-        # Legacy task
+    if dim_tasks_is_legacy(task):
         return {
             'Danger': 'This task was executed in a previous version of IRIS and the status cannot be read anymore.',
             'Note': 'All the data readable by the current IRIS version is displayed in the table.',
@@ -34,30 +48,35 @@ def dim_tasks_get(task_identifier):
                                       'anymore in current IRIS version.'
         }
 
-    task_info = {
+    engine_name = _get_engine_name(task)
+    user = None
+    module_name = None
+    hook_name = None
+    case_identifier = None
+    if task.name and ('task_hook_wrapper' in task.name or 'pipeline_dispatcher' in task.name):
+        module_name = task.kwargs.get('module_name')
+        hook_name = task.kwargs.get('hook_name')
+        user = task.kwargs.get('init_user')
+        case_identifier = task.kwargs.get('caseid')
+
+    if isinstance(task.info, IIStatus):
+        success = _get_success(task.info)
+        logs = task.info.get_logs()
+    else:
+        success = 'Failure'
+        user = 'Shadow Iris'
+        logs = ['Task did not returned a valid IIStatus object']
+
+    return {
         'Task ID': task_identifier,
         'Task finished on': task.date_done,
         'Task state': task.state.lower(),
-        'Engine': task.name if task.name else 'No engine. Unrecoverable shadow failure'}
-
-    if task.name and ('task_hook_wrapper' in task.name or 'pipeline_dispatcher' in task.name):
-        task_info['Module name'] = task.kwargs.get('module_name')
-        task_info['Hook name'] = task.kwargs.get('hook_name')
-        task_info['User'] = task.kwargs.get('init_user')
-        task_info['Case ID'] = task.kwargs.get('caseid')
-
-    if isinstance(task.info, IIStatus):
-        success = task.info.is_success()
-        task_info['Logs'] = task.info.get_logs()
-
-    else:
-        success = None
-        task_info['User'] = 'Shadow Iris'
-        task_info['Logs'] = ['Task did not returned a valid IIStatus object']
-
-    if task.traceback:
-        task_info['Traceback'] = task.traceback
-
-    task_info['Success'] = 'Success' if success else 'Failure'
-
-    return task_info
+        'Engine': engine_name,
+        'Module name': module_name,
+        'Hook name': hook_name,
+        'Case ID': case_identifier,
+        'Success': success,
+        'User': user,
+        'Logs': logs,
+        'Traceback': task.traceback
+    }
