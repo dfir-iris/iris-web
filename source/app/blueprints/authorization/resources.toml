@@ -1,0 +1,6 @@
+#:schema ./resources.schema.json
+# If you're using VS Code, recommend installing the 'Even Better TOML' (tamasfe.even-better-toml) extension for syntax highlighting & schema validation. 
+
+[case]
+actions = ["create", "read", "update", "delete"]
+description = "View and manage a Case"

@@ -16,7 +16,6 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 services:
-
   rabbitmq:
     extends:
       file: docker-compose.base.yml
@@ -43,11 +42,16 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
-      - ./source/app:/iriswebapp/app
+      # - ./source/app:/iriswebapp/app
       - ./ui/dist:/iriswebapp/static
     healthcheck:
       test: curl --head --fail http://localhost:8000 || exit 1
       start_period: 60s
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./source/app
+          target: /iriswebapp/app
 
   worker:
     extends:
@@ -70,7 +74,6 @@ services:
         NGINX_CONF_GID: 1234
         NGINX_CONF_FILE: nginx.conf
     image: iriswebapp_nginx:develop
-
 
 volumes:
   iris-downloads:
