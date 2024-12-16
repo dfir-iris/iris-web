@@ -15,7 +15,6 @@ from flask import render_template_string
 from flask import url_for
 
 from app.flask_dropzone.utils import get_url
-from app.flask_dropzone.utils import random_filename
 
 #: defined normal file type
 allowed_file_extensions = {
