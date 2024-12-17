@@ -16,24 +16,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-####################
-# COMPILE JS IMAGE #
-####################
-FROM node:20-alpine AS compile-js-image
-
-COPY ui/ /ui
-
-RUN rm -rf /ui/{node_modules,dist}
-
-WORKDIR /ui
-
-RUN npm ci
-RUN npm run build
 
 #################
 # COMPILE IMAGE #
 #################
-FROM python:3.9 AS compile-image
+FROM python:3.12 AS compile-image
 RUN apt-get update
 
 RUN python -m venv /opt/venv
@@ -48,7 +35,7 @@ RUN pip3 install -r requirements.txt
 ###############
 # BUILD IMAGE #
 ###############
-FROM python:3.9 AS iriswebapp
+FROM python:3.12 as iriswebapp
 ENV PYTHONUNBUFFERED=1 DOCKERIZED=1
 
 COPY --from=compile-image /opt/venv /opt/venv
@@ -76,8 +63,6 @@ WORKDIR /iriswebapp
 COPY docker/webApp/iris-entrypoint.sh .
 COPY docker/webApp/wait-for-iriswebapp.sh .
 COPY ./source .
-
-COPY --from=compile-js-image /ui/dist/ /iriswebapp/static/
 
 # Add execution right to binaries needed by evtx2splunk for iris_evtx module
 RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/fd
