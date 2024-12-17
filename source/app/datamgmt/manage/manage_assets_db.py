@@ -24,7 +24,7 @@ from functools import reduce
 
 import app
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
-from app.models import CaseAssets
+from app.models.models import CaseAssets
 from app.models.models import Client
 from app.models.cases import Cases
 

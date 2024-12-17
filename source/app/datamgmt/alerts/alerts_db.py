@@ -38,15 +38,15 @@ from app.datamgmt.states import update_timeline_state
 
 from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.models.cases import Cases
-from app.models import EventCategory
-from app.models import Tags
-from app.models import AssetsType
-from app.models import Comments
-from app.models import CaseAssets
-from app.models import alert_assets_association
-from app.models import alert_iocs_association
-from app.models import Ioc
-from app.models import Client
+from app.models.models import Client
+from app.models.models import EventCategory
+from app.models.models import Tags
+from app.models.models import AssetsType
+from app.models.models import Comments
+from app.models.models import CaseAssets
+from app.models.models import alert_assets_association
+from app.models.models import alert_iocs_association
+from app.models.models import Ioc
 from app.models.alerts import Alert
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertCaseAssociation

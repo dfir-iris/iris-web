@@ -24,8 +24,8 @@ from app import db
 from app.datamgmt.case.case_iocs_db import get_ioc_types_list
 from app.datamgmt.manage.manage_case_objs import search_ioc_type_by_name
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Ioc
-from app.models import IocType
+from app.models.models import Ioc
+from app.models.models import IocType
 from app.models.authorization import Permissions
 from app.schema.marshables import IocTypeSchema
 from app.blueprints.access_controls import ac_api_requires

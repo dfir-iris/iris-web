@@ -46,7 +46,7 @@ from app.datamgmt.case.case_notes_db import get_note
 from app.datamgmt.states import get_notes_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Notes
+from app.models.models import Notes
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseNoteDirectorySchema
 from app.schema.marshables import CaseNoteRevisionSchema

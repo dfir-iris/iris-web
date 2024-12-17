@@ -34,9 +34,9 @@ from app.datamgmt.iris_engine.modules_db import get_module_config_from_hname
 from app.datamgmt.iris_engine.modules_db import iris_module_add
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.iris_engine.modules_db import modules_list_pipelines
-from app.models import IrisHook
-from app.models import IrisModule
-from app.models import IrisModuleHook
+from app.models.models import IrisHook
+from app.models.models import IrisModule
+from app.models.models import IrisModuleHook
 from app.util import hmac_sign
 from app.util import hmac_verify
 from iris_interface import IrisInterfaceStatus as IStatus

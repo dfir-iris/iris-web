@@ -25,7 +25,7 @@ from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.models.cases import Cases
 from app.models.models import Client
-from app.models import Contact
+from app.models.models import Contact
 from app.models.authorization import User
 from app.models.authorization import UserClient
 from app.schema.marshables import ContactSchema

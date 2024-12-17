@@ -24,18 +24,18 @@ from sqlalchemy import func
 
 from app import db, app
 from app.datamgmt.states import update_assets_state
-from app.models import AnalysisStatus
-from app.models import CaseStatus
-from app.models import AssetComments
-from app.models import AssetsType
-from app.models import CaseAssets
-from app.models import CaseEventsAssets
+from app.models.models import AnalysisStatus
+from app.models.models import CaseStatus
+from app.models.models import AssetComments
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.models.models import CaseEventsAssets
 from app.models.cases import Cases
-from app.models import Comments
-from app.models import CompromiseStatus
-from app.models import Ioc
-from app.models import IocAssetLink
-from app.models import IocType
+from app.models.models import Comments
+from app.models.models import CompromiseStatus
+from app.models.models import Ioc
+from app.models.models import IocAssetLink
+from app.models.models import IocType
 from app.models.authorization import User
 
 

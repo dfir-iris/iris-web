@@ -1,9 +1,11 @@
 from functools import reduce
 
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_
+from sqlalchemy import desc
+from sqlalchemy import asc
 
 import app
-from app.models import Tags
+from app.models.models import Tags
 
 
 def get_filtered_tags(tag_title=None,
