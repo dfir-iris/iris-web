@@ -52,6 +52,10 @@ from app.blueprints.graphql.cases import CaseConnection
 from app.business.cases import cases_get_by_identifier
 from app.business.iocs import iocs_get
 from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_case_access
+import warnings
+
+# Ignore all UserWarnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class Query(ObjectType):

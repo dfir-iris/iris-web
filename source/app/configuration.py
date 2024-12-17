@@ -206,7 +206,8 @@ class AuthenticationType(Enum):
 authentication_type = os.environ.get('IRIS_AUTHENTICATION_TYPE',
                                      config.get('IRIS', 'AUTHENTICATION_TYPE', fallback="local"))
 
-authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST')
+authentication_create_user_if_not_exists = config.load('IRIS', 'AUTHENTICATION_CREATE_USER_IF_NOT_EXIST',
+                                                        fallback="False")
 
 tls_root_ca = os.environ.get('TLS_ROOT_CA',
                              config.get('IRIS', 'TLS_ROOT_CA', fallback=None))
@@ -258,12 +259,13 @@ class CeleryConfig:
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
+    broker_connection_retry_on_startup =True
 
 
 # --------- APP ---------
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.4.16" # DO NOT EDIT THIS LINE MANUALLY
+    IRIS_VERSION = "v2.4.18" # DO NOT EDIT THIS LINE MANUALLY
 
     if os.environ.get('IRIS_DEMO_VERSION') is not None and os.environ.get('IRIS_DEMO_VERSION') != 'None':
         IRIS_VERSION = os.environ.get('IRIS_DEMO_VERSION')
@@ -288,7 +290,7 @@ class Config:
         IRIS_ADM_USERNAME = config.load('IRIS', 'ADM_USERNAME')
         IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY')
 
-    PERMANENT_SESSION_LIFETIME = timedelta(minutes=config.load('IRIS', 'SESSION_TIMEOUT', fallback=1440))
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=int(config.load('IRIS', 'SESSION_TIMEOUT', fallback=1440)))
     SESSION_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SECURE = True
     MFA_ENABLED = config.load('IRIS', 'MFA_ENABLED', fallback=False) == 'True'

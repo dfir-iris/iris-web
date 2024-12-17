@@ -74,7 +74,6 @@ def _load(request_data, **kwargs):
 def cases_get_by_identifier(case_identifier):
     return get_case(case_identifier)
 
-
 def cases_exists(identifier):
     return case_db_exists(identifier)
 

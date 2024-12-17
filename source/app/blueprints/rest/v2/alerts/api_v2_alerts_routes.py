@@ -73,6 +73,13 @@ def alerts_list_route() -> Response:
         except ValueError:
             return response_api_error('Invalid alert ioc')
 
+    fields_str = request.args.get('fields')
+    if fields_str:
+        # Split into a list
+        fields = [field.strip() for field in fields_str.split(',') if field.strip()]
+    else:
+        fields = None
+
     filtered_data = get_filtered_alerts(
         start_date=request.args.get('creation_start_date'),
         end_date=request.args.get('creation_end_date'),
@@ -92,12 +99,13 @@ def alerts_list_route() -> Response:
         alert_ids=alert_ids,
         page=page,
         per_page=per_page,
-        sort=request.args.get('sort'),
+        sort=request.args.get('sort', 'desc', type=str),
         custom_conditions=request.args.get('custom_conditions'),
         assets=alert_assets,
         iocs=alert_iocs,
         resolution_status=request.args.get('alert_resolution_id', type=int),
-        current_user_id=current_user.id
+        current_user_id=current_user.id,
+        fields=fields
     )
 
     if filtered_data is None:
