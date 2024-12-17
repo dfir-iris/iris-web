@@ -25,7 +25,7 @@ from app.models import CaseAssets
 from app.models import CaseReceivedFile
 from app.models import CaseTasks
 from app.models.cases import Cases
-from app.models import CasesEvent
+from app.models.cases import CasesEvent
 from app.models import Client
 from app.models import CustomAttribute
 from app.models import Ioc
