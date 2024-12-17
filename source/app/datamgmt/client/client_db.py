@@ -16,16 +16,18 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import marshmallow
-from sqlalchemy import func, and_
+from sqlalchemy import func
+from sqlalchemy import and_
 from typing import List
 
 from app import db
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Client
 from app.models import Contact
-from app.models.authorization import User, UserClient
+from app.models.authorization import User
+from app.models.authorization import UserClient
 from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
 

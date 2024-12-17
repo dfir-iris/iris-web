@@ -20,8 +20,10 @@ from sqlalchemy import and_
 from sqlalchemy import desc
 
 from app import db
-from app.models import CaseTasks, TaskAssignee, ReviewStatus
-from app.models import Cases
+from app.models import CaseTasks
+from app.models import TaskAssignee
+from app.models import ReviewStatus
+from app.models.cases import Cases
 from app.models import GlobalTasks
 from app.models import TaskStatus
 from app.models.authorization import User

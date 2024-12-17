@@ -15,10 +15,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from sqlalchemy import and_, case, or_, asc
+from sqlalchemy import and_
+from sqlalchemy import case
+from sqlalchemy import or_
+from sqlalchemy import asc
 from sqlalchemy import desc
 
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import UserCaseEffectiveAccess

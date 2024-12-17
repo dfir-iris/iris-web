@@ -31,7 +31,7 @@ from app.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
 from app.models import CaseTasks
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import CasesEvent
 from app.models import Comments
 from app.models import EventCategory

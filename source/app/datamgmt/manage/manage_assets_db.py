@@ -1,10 +1,32 @@
+#  IRIS Source Code
+#  Copyright (C) 2024 - DFIR-IRIS
+#  contact@dfir-iris.org
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 3 of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from flask_login import current_user
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_
+from sqlalchemy import desc
+from sqlalchemy import asc
 from functools import reduce
 
 import app
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
-from app.models import CaseAssets, Client, Cases
+from app.models import CaseAssets
+from app.models import Client
+from app.models.cases import Cases
 
 
 def get_filtered_assets(case_id=None,

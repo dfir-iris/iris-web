@@ -5,7 +5,7 @@ from sqlalchemy import and_
 import app
 from app import db
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import UserClient

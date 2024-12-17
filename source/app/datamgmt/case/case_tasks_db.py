@@ -18,7 +18,8 @@
 
 from datetime import datetime
 from flask_login import current_user
-from sqlalchemy import desc, and_
+from sqlalchemy import desc
+from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -26,7 +27,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_c
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks
 from app.models import TaskAssignee
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Comments
 from app.models import TaskComments
 from app.models import TaskStatus
