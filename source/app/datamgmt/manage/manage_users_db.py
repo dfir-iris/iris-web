@@ -33,7 +33,7 @@ from app.iris_engine.access_control.utils import ac_remove_case_access_from_user
 from app.iris_engine.access_control.utils import ac_set_case_access_for_user
 from app.models import UserActivity
 from app.models.cases import Cases
-from app.models import Client
+from app.models.models import Client
 from app.models.authorization import CaseAccessLevel, UserClient
 from app.models.authorization import Group
 from app.models.authorization import Organisation

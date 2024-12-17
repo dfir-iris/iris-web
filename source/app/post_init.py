@@ -61,7 +61,7 @@ from app.models.authorization import Organisation
 from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import CaseState
-from app.models.cases import Client
+from app.models.models import Client
 from app.models.models import AnalysisStatus
 from app.models.models import CaseClassification
 from app.models.models import ReviewStatus

@@ -31,7 +31,7 @@ from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.manage.manage_users_db import create_user
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.cases import Client
+from app.models.models import Client
 from app.models.models import CaseEventsAssets
 from app.models.authorization import User
 from app.post_init import run_post_init
