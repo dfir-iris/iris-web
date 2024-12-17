@@ -259,6 +259,7 @@ class CeleryConfig:
     result_extended = True
     result_serializer = "json"
     worker_pool_restarts = True
+    broker_connection_retry_on_startup =True
 
 
 # --------- APP ---------
