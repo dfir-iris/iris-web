@@ -21,7 +21,7 @@ from marshmallow.exceptions import ValidationError
 
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
-from app.models import CaseAssets
+from app.models.models import CaseAssets
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import case_assets_db_exists
 from app.datamgmt.case.case_assets_db import create_asset

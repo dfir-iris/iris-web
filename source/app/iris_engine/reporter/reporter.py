@@ -34,14 +34,14 @@ from app.datamgmt.activities.activities_db import get_auto_activities
 from app.datamgmt.activities.activities_db import get_manual_activities
 from app.datamgmt.case.case_db import case_get_desc_crc
 
-from app.models import AssetsType
-from app.models import CaseAssets
-from app.models import CaseEventsAssets
-from app.models import CaseReceivedFile
-from app.models import CaseTemplateReport
-from app.models import CasesEvent
-from app.models import Ioc
-from app.models import IocAssetLink
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.models.models import CaseEventsAssets
+from app.models.models import CaseReceivedFile
+from app.models.models import CaseTemplateReport
+from app.models.cases import CasesEvent
+from app.models.models import Ioc
+from app.models.models import IocAssetLink
 
 from app.iris_engine.reporter.ImageHandler import ImageHandler
 from app.iris_engine.utils.common import IrisJinjaEnv
@@ -165,8 +165,6 @@ class IrisReportMaker(object):
             CasesEvent.event_date
         ).all()
 
-        cache_id = {}
-        ras = {}
         tim = []
         for row in timeline:
             ras = row
@@ -410,8 +408,6 @@ class IrisMakeDocReport(IrisReportMaker):
             CasesEvent.event_date
         ).all()
 
-        cache_id = {}
-        ras = {}
         tim = []
         for row in timeline:
             ras = row
@@ -571,31 +567,3 @@ class IrisMakeMdReport(IrisReportMaker):
             return None, e.__str__()
 
         return output_file_path, 'Report generated'
-
-
-class QueuingHandler(log.Handler):
-    """A thread safe logging.Handler that writes messages into a queue object.
-
-       Designed to work with LoggingWidget so log messages from multiple
-       threads can be shown together in a single ttk.Frame.
-
-       The standard logging.QueueHandler/logging.QueueListener can not be used
-       for this because the QueueListener runs in a private thread, not the
-       main thread.
-
-       Warning:  If multiple threads are writing into this Handler, all threads
-       must be joined before calling logging.shutdown() or any other log
-       destinations will be corrupted.
-    """
-
-    def __init__(self, *args, task_self, message_queue, **kwargs):
-        """Initialize by copying the queue and sending everything else to superclass."""
-        log.Handler.__init__(self, *args, **kwargs)
-        self.message_queue = message_queue
-        self.task_self = task_self
-
-    def emit(self, record):
-        """Add the formatted log message (sans newlines) to the queue."""
-        self.message_queue.append(self.format(record).rstrip('\n'))
-        self.task_self.update_state(state='PROGRESS',
-                                    meta=list(self.message_queue))

@@ -30,7 +30,7 @@ from app import db
 from app.util import add_obj_history_entry
 from app.schema.marshables import CaseSchema
 
-from app.models import ReviewStatusList
+from app.models.models import ReviewStatusList
 
 from app.business.errors import BusinessProcessingError
 from app.business.iocs import iocs_exports_to_json

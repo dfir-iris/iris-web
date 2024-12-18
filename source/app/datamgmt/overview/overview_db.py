@@ -20,7 +20,7 @@ from sqlalchemy import and_
 
 from app.datamgmt.case.case_tasks_db import get_tasks_cases_mapping
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
-from app.models import Cases
+from app.models.cases import Cases
 from app.schema.marshables import CaseDetailsSchema
 
 

@@ -21,7 +21,7 @@ from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
-from app.models import ObjectState
+from app.models.models import ObjectState
 
 
 def _update_object_state(object_name, caseid, userid=None) -> ObjectState:

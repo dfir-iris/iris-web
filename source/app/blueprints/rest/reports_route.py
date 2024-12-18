@@ -29,7 +29,7 @@ from app.iris_engine.reporter.reporter import IrisMakeDocReport
 from app.iris_engine.reporter.reporter import IrisMakeMdReport
 from app.iris_engine.utils.tracker import track_activity
 
-from app.models import CaseTemplateReport
+from app.models.models import CaseTemplateReport
 from app.models.authorization import CaseAccessLevel
 
 from app.util import FileRemover

@@ -43,9 +43,9 @@ from app.business.cases import cases_export_to_json
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.iris_engine.utils.tracker import track_activity
-from app.models import CaseStatus
-from app.models import ReviewStatusList
-from app.models import UserActivity
+from app.models.models import CaseStatus
+from app.models.models import ReviewStatusList
+from app.models.models import UserActivity
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema

@@ -21,7 +21,7 @@ from flask import request
 from sqlalchemy import and_
 
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Comments
+from app.models.models import Comments
 from app.models.authorization import Permissions
 from app.models.cases import Cases
 from app.models.models import Client

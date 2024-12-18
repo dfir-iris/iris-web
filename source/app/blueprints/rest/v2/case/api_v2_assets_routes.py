@@ -18,7 +18,6 @@
 
 from flask import Blueprint
 from flask import request
-from kombu.abstract import Object
 
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_created

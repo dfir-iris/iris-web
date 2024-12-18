@@ -1,7 +1,7 @@
 from sqlalchemy import text
 
 from app import db
-from app.models import ServerSettings
+from app.models.models import ServerSettings
 from app.schema.marshables import ServerSettingsSchema
 
 

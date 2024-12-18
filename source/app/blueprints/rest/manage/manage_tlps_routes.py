@@ -18,7 +18,7 @@
 
 from flask import Blueprint
 
-from app.models import Tlp
+from app.models.models import Tlp
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success

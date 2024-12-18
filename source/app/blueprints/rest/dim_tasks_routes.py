@@ -23,24 +23,25 @@ import pickle
 from sqlalchemy import desc
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.models import CeleryTaskMeta
-from app.models import IrisHook
-from app.models import IrisModule
-from app.models import IrisModuleHook
-from app.models import CaseAssets
-from app.models import CaseReceivedFile
-from app.models import CaseTasks
-from app.models import Cases
-from app.models import CasesEvent
-from app.models import GlobalTasks
-from app.models import Ioc
-from app.models import Notes
+from app.models.models import CeleryTaskMeta
+from app.models.models import IrisHook
+from app.models.models import IrisModule
+from app.models.models import IrisModuleHook
+from app.models.models import CaseAssets
+from app.models.models import CaseReceivedFile
+from app.models.models import CaseTasks
+from app.models.cases import Cases
+from app.models.cases import CasesEvent
+from app.models.models import GlobalTasks
+from app.models.models import Ioc
+from app.models.models import Notes
 from app.models.alerts import Alert
 from app.models.authorization import CaseAccessLevel
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
+from app.business.dim_tasks import dim_tasks_is_legacy
 from iris_interface.IrisInterfaceStatus import IIStatus
 
 dim_tasks_rest_blueprint = Blueprint('dim_tasks_rest', __name__)
@@ -186,10 +187,7 @@ def list_dim_tasks(count):
 
         tkp = {'state': row.status, 'case': "Unknown", 'module': row.name, 'task_id': row.task_id, 'date_done': row.date_done, 'user': "Unknown"}
 
-        try:
-            _ = row.result
-        except AttributeError:
-            # Legacy task
+        if dim_tasks_is_legacy(row):
             data.append(tkp)
             continue
 

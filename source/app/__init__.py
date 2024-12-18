@@ -26,7 +26,8 @@ from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
-from flask_socketio import SocketIO, Namespace
+from flask_socketio import SocketIO
+from flask_socketio import Namespace
 from flask_sqlalchemy import SQLAlchemy
 from functools import partial
 
@@ -139,4 +140,21 @@ def shutdown_session(exception=None):
     db.session.remove()
 
 
-from app import views
+from app.views import register_blueprints
+from app.views import load_user
+from app.views import load_user_from_request
+
+register_blueprints(app)
+
+from app.post_init import run_post_init
+
+try:
+
+    run_post_init(development=app.config['DEVELOPMENT'])
+
+except Exception as e:
+    app.logger.exception('Post init failed. IRIS not started')
+    raise e
+
+lm.user_loader(load_user)
+lm.request_loader(load_user_from_request)

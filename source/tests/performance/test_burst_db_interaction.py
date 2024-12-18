@@ -31,7 +31,7 @@ from app.datamgmt.case.case_notes_db import add_note_group
 from app.datamgmt.manage.manage_users_db import create_user
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.cases import Client
+from app.models.models import Client
 from app.models.models import CaseEventsAssets
 from app.models.authorization import User
 from app.post_init import run_post_init
@@ -157,8 +157,6 @@ class TestBurstDBInteraction(TestCase):
 
     @staticmethod
     def update_dates():
-        d1 = datetime.strptime('1/1/2008 1:30 PM', '%m/%d/%Y %I:%M %p')
-        d2 = datetime.strptime('12/12/2021 4:50 AM', '%m/%d/%Y %I:%M %p')
         events = CasesEvent.query.all()
         for event in events:
             event.event_date = datetime.utcnow()

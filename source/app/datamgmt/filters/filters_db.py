@@ -1,7 +1,7 @@
 from flask_login import current_user
 from sqlalchemy import and_
 
-from app.models import SavedFilter
+from app.models.models import SavedFilter
 
 
 def get_filter_by_id(filter_id):

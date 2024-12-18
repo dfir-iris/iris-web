@@ -1,10 +1,13 @@
 import { test } from '../../restFixture.js';
 import { expect } from '@playwright/test';
+import Api from '../../api.js';
 import crypto from 'node:crypto';
 
 test.beforeEach(async({ page }) => {
     await page.goto('/case/ioc?cid=1');
 });
+
+// TODO should maybe remove all iocs between each tests: there is a risk we reach the pagination limit
 
 test('should be able to update IOC', async ({ page }) => {
     const iocValue = `IOC value - ${crypto.randomUUID()}`;
@@ -43,18 +46,7 @@ test('should not be able to create an IOC with the same type and value', async (
 });
 
 test('should paginate the IOCs', async ({ page, rest }) => {
-    const caseName = `Case - ${crypto.randomUUID()}`;
-
-    // TODO maybe should remove cases between each tests (like in the backend tests)
-    let response = await rest.post('/api/v2/cases', {
-        data: {
-            case_name: caseName,
-            case_description: 'Case description',
-            case_customer: 1,
-            case_soc_id: ''
-        }
-    });
-    const caseIdentifier = (await response.json()).case_id;
+    const caseIdentifier = await Api.createCase(rest);
     for (let i = 0; i < 11; i++) {
         await rest.post(`/api/v2/cases/${caseIdentifier}/iocs`, {
             data: {

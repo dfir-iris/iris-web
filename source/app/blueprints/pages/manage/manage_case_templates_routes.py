@@ -22,7 +22,7 @@ from flask import url_for
 
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.forms import CaseTemplateForm, AddAssetForm
-from app.models import CaseTemplate
+from app.models.models import CaseTemplate
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_requires
 from app.blueprints.responses import response_error

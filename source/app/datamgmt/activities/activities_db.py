@@ -19,7 +19,7 @@
 from sqlalchemy import and_
 from sqlalchemy import desc
 
-from app.models import Cases
+from app.models.cases import Cases
 from app.models.authorization import User
 from app.models.models import UserActivity
 

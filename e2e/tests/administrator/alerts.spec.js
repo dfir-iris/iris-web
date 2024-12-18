@@ -17,5 +17,6 @@ test('should present the alert', async ({ page, rest }) => {
             alert_customer_id: 1
         }
     });
+    await page.getByRole('button', { name: 'Refresh', exact: true }).click();
     await expect(page.getByRole('heading', { name: alertTitle })).toBeVisible();
 });

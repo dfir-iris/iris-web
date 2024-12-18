@@ -27,7 +27,7 @@ from random import randrange
 
 from app import app
 from app.datamgmt.client.client_db import create_client
-from app.models import Client
+from app.models.models import Client
 
 
 class TestHelper(TestCase):

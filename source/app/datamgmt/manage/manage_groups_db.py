@@ -24,7 +24,7 @@ from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_l
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_permission_to_list
-from app.models import Cases
+from app.models.cases import Cases
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import User

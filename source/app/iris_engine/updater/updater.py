@@ -39,7 +39,7 @@ from app import db
 from app import socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.iris_engine.backup.backup import backup_iris_db
-from app.models import ServerSettings
+from app.models.models import ServerSettings
 from iris_interface import IrisInterfaceStatus as IStatus
 
 log = app.logger

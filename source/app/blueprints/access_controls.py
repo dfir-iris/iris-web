@@ -48,7 +48,7 @@ from app.datamgmt.manage.manage_users_db import get_user
 from app.iris_engine.access_control.utils import ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Cases
+from app.models.cases import Cases
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 
