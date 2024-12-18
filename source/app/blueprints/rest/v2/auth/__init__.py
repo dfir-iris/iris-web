@@ -33,6 +33,7 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.business.auth import validate_ldap_login, validate_local_login
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
+from app.schema.marshables import UserSchema
 
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -118,8 +119,6 @@ def whoami():
     user: User = current_user._get_current_object()
 
     # Return the current_user dict
-    return response_api_success(data={
-        "id": user.id,
-        "email": user.email,
-        "name": user.name
-    })
+    return response_api_success(data=UserSchema(only=[
+        'id', 'user_name', 'user_login', 'user_email'
+    ]).dump(current_user))
