@@ -2,7 +2,8 @@ import enum
 import secrets
 import uuid
 from flask_login import UserMixin
-from sqlalchemy import BigInteger, JSON
+from sqlalchemy import BigInteger
+from sqlalchemy import JSON
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
