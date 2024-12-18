@@ -38,16 +38,23 @@ from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_api_return_access_denied
 
-api_v2_ioc_blueprint = Blueprint('case_ioc_rest_v2',
-                                 __name__,
-                                 url_prefix='/api/v2')
+case_iocs_bp = Blueprint('case_ioc_rest_v2',
+                         __name__,
+                         url_prefix='/<int:case_id>/iocs')
 
 
-@api_v2_ioc_blueprint.route('/cases/<int:identifier>/iocs', methods=['GET'])
+@case_iocs_bp.get('', strict_slashes=False)
 @ac_api_requires()
-def list_ioc(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
+def get_case_iocs(case_id):
+    """
+    Handles getting the IOCs for a case
+
+    Args:
+        case_id (int): The case ID to get IOCs from
+    """
+
+    if not ac_fast_check_current_user_has_case_access(case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_id)
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
@@ -62,7 +69,7 @@ def list_ioc(identifier):
     ioc_tags = request.args.get('ioc_tags', None, type=str)
 
     filtered_iocs = get_filtered_iocs(
-        caseid=identifier,
+        caseid=case_id,
         ioc_type_id=ioc_type_id,
         ioc_type=ioc_type,
         ioc_tlp_id=ioc_tlp_id,
@@ -91,29 +98,46 @@ def list_ioc(identifier):
     return response_api_success(data=iocs)
 
 
-@api_v2_ioc_blueprint.route('/cases/<int:identifier>/iocs', methods=['POST'])
+@case_iocs_bp.post('', strict_slashes=False)
 @ac_api_requires()
-def case_add_ioc(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
+def add_ioc_to_case(case_id):
+    """
+    Handles adding an IOC to a case
+
+    Args:
+        case_id (int): The case ID to add an IOC
+    """
+
+    if not ac_fast_check_current_user_has_case_access(case_id, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_id)
 
     ioc_schema = IocSchemaForAPIV2()
 
     try:
-        ioc, _ = iocs_create(request.get_json(), identifier)
+        ioc, _ = iocs_create(request.get_json(), case_id)
         return response_api_created(ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
         log.error(e)
         return response_api_error(e.get_message())
 
 
-@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['DELETE'])
+@case_iocs_bp.delete('/<int:identifier>')
 @ac_api_requires()
-def delete_case_ioc(identifier):
+def delete_case_ioc(case_id, identifier):
+    """
+    Deletes an IOC from a case
+
+    Args:
+        case_id (int): The case ID
+        identifier (int): The IOC ID
+    """
+
     try:
         ioc = iocs_get(identifier)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
+        if ioc.case_id != case_id:
+            raise ObjectNotFoundError()
 
         iocs_delete(ioc)
         return response_api_deleted()
@@ -124,23 +148,39 @@ def delete_case_ioc(identifier):
         return response_api_error(e.get_message())
 
 
-@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['GET'])
+@case_iocs_bp.get('/<int:identifier>')
 @ac_api_requires()
-def get_case_ioc(identifier):
+def get_case_ioc(case_id, identifier):
+    """
+    Handle getting an IOC from a case
+
+    Args:
+        case_id (int): The Case ID
+        identifier (int): The IOC ID
+    """
     ioc_schema = IocSchemaForAPIV2()
     try:
         ioc = iocs_get(identifier)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
+        if ioc.case_id != case_id:
+            raise ObjectNotFoundError()
 
         return response_api_success(ioc_schema.dump(ioc))
     except ObjectNotFoundError:
         return response_api_not_found()
 
 
-@api_v2_ioc_blueprint.route('/iocs/<int:identifier>', methods=['PUT'])
+@case_iocs_bp.put('/<int:identifier>')
 @ac_api_requires()
-def update_ioc(identifier):
+def update_ioc(case_id, identifier):
+    """
+    Handle updating an IOC from a case
+
+    Args:
+        case_id (int): The Case ID
+        identifier (int): The IOC ID
+    """
     ioc_schema = IocSchemaForAPIV2()
     try:
         ioc = iocs_get(identifier)
