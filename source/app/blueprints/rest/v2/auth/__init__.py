@@ -116,8 +116,6 @@ def whoami():
     if not current_user.is_authenticated:
         return response_api_error("Unauthenticated")
 
-    user: User = current_user._get_current_object()
-
     # Return the current_user dict
     return response_api_success(data=UserSchema(only=[
         'id', 'user_name', 'user_login', 'user_email'
