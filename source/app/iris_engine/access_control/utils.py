@@ -859,7 +859,7 @@ def ac_trace_user_effective_cases_access_2(user_id):
             effective_cases_access[uca.case_id]['user_effective_access'] = uca.access_level
 
             for kec in effective_cases_access[uca.case_id]['user_access']:
-                kec['state'] = f'Overwritten by self user access'
+                kec['state'] = 'Overwritten by self user access'
 
         else:
             effective_cases_access[uca.case_id] = {

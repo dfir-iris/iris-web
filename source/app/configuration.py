@@ -288,7 +288,7 @@ class Config:
         IRIS_ADM_USERNAME = config.load('IRIS', 'ADM_USERNAME')
         IRIS_ADM_API_KEY = config.load('IRIS', 'ADM_API_KEY')
 
-    PERMANENT_SESSION_LIFETIME = timedelta(minutes=config.load('IRIS', 'SESSION_TIMEOUT', fallback=1440))
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=int(config.load('IRIS', 'SESSION_TIMEOUT', fallback=1440)))
     SESSION_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SECURE = True
     MFA_ENABLED = config.load('IRIS', 'MFA_ENABLED', fallback=False) == 'True'

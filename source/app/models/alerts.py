@@ -10,11 +10,10 @@ from sqlalchemy import Integer
 from sqlalchemy import Text
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
 from app import db
-from app.models import Base, alert_assets_association, alert_iocs_association
-from app.models.cases import Cases
+from app.models import alert_assets_association, alert_iocs_association
 
 
 class AlertCaseAssociation(db.Model):

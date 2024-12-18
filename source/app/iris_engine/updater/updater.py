@@ -83,7 +83,7 @@ def get_message(data):
 @socket_io.on('update_ping', namespace='/server-updates')
 def socket_on_update_ping(msg):
 
-    emit('update_ping', {'message': f"Server connected", 'is_error': False},
+    emit('update_ping', {'message': "Server connected", 'is_error': False},
          namespace='/server-updates')
 
 
@@ -467,11 +467,11 @@ def verify_compatibility(target_directory, release_assets_info):
         return None
 
     if not updates_info.get('support_auto'):
-        update_log_error(f'This updates does not support automatic handling. Please read the upgrades instructions.')
+        update_log_error('This updates does not support automatic handling. Please read the upgrades instructions.')
         return None
 
     if 'worker' not in updates_info.get('scope') and 'iriswebapp' not in updates_info.get('scope'):
-        update_log_error(f'Something is wrong, updates configuration does not have any valid scope')
+        update_log_error('Something is wrong, updates configuration does not have any valid scope')
         update_log_error('Please contact DFIR-IRIS team')
         return None
 
