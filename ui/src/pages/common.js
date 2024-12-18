@@ -1166,14 +1166,76 @@ function load_menu_mod_options(data_type, table, deletion_fn, additionalOptions 
         if (data.data != null) {
             jsdata = data.data;
 
-            actionOptions.items.push({
-                type: 'option',
-                title: 'Share',
-                multi: false,
-                iconClass: 'fas fa-share',
-                action: function(rows){
-                    row = rows[0];
-                    copy_object_link(get_row_id(row));
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Share',
+                    multi: false,
+                    iconClass: 'fas fa-share',
+                    action: function(rows) {
+                        let row = rows[0];
+                        copy_object_link(get_row_id(row));
+                    }
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Comment',
+                    multi: false,
+                    iconClass: 'fas fa-comments',
+                    action: function(rows) {
+                        let row = rows[0];
+                        if (data_type in datatype_map) {
+                            comment_element(get_row_id(row), datatype_map[data_type]);
+                        }
+                    }
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Markdown Link',
+                    multi: false,
+                    iconClass: 'fa-brands fa-markdown',
+                    action: function(rows) {
+                        let row = rows[0];
+                        copy_object_link_md(data_type, get_row_id(row));
+                    }
+                });
+
+                actionOptions.items.push({
+                    type: 'option',
+                    title: 'Copy',
+                    multi: false,
+                    iconClass: 'fa-regular fa-copy',
+                    action: function(rows) {
+                        let row = rows[0];
+                        copy_text_clipboard(get_row_value(row));
+                    }
+                });
+
+                additionalOptions.forEach(option => {
+                    actionOptions.items.push(option);
+                });
+
+                actionOptions.items.push({
+                    type: 'divider'
+                });
+
+                jdata_menu_options = jsdata;
+
+                for (let option in jsdata) {
+                    let opt = jsdata[option];
+
+                    actionOptions.items.push({
+                        type: 'option',
+                        title: opt.manual_hook_ui_name,
+                        multi: true,
+                        multiTitle: opt.manual_hook_ui_name,
+                        iconClass: 'fas fa-rocket',
+                        contextMenuClasses: ['text-dark'],
+                        action: function(rows, de, ke) {
+                            init_module_processing_wrap(rows, data_type, de[0].outerText);
+                        },
+                    });
                 }
             });
 

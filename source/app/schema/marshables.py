@@ -1633,6 +1633,7 @@ class CaseSchema(ma.SQLAlchemyAutoSchema):
     classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
     review_status: Optional[str] = auto_field('review_status', required=False, allow_none=True)
+    severity_id: Optional[int] = auto_field('severity_id', required=False, allow_none=True)
 
     class Meta:
         model = Cases

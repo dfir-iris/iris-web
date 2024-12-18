@@ -50,10 +50,56 @@ from app.blueprints.responses import response_success
 
 from oic.oauth2.exception import GrantError
 
-dashboard_rest_blueprint = Blueprint('dashboard_rest', __name__)
+log = app.logger
 
 
-@dashboard_rest_blueprint.route('/dashboard/case_charts', methods=['GET'])
+# CONTENT ------------------------------------------------
+dashboard_blueprint = Blueprint(
+    'index',
+    __name__,
+    template_folder='templates'
+)
+
+
+# Logout user
+@dashboard_blueprint.route('/logout')
+def logout():
+    """
+    Logout function. Erase its session and redirect to index i.e login
+    :return: Page
+    """
+    if session['current_case']:
+        current_user.ctx_case = session['current_case']['case_id']
+        current_user.ctx_human_case = session['current_case']['case_name']
+        db.session.commit()
+
+    if is_authentication_oidc():
+        if oidc_client.provider_info.get("end_session_endpoint"):
+            try:
+                logout_request = oidc_client.construct_EndSessionRequest(state=session["oidc_state"])
+                logout_url = logout_request.request(oidc_client.provider_info["end_session_endpoint"])
+                track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+                logout_user()
+                session.clear()
+                return redirect(logout_url)
+            except GrantError:
+                track_activity(
+                    f"no oidc session found for user '{current_user.user}', skipping oidc provider logout and continuing to logout local user",
+                    ctx_less=True,
+                    display_in_ui=False
+                )
+            except Exception as e:
+                log.error(f"Error logging out: {e}")
+                log.warning(f'Will continue to local logout')
+
+    logout_user()
+    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+    session.clear()
+
+    return redirect(not_authenticated_redirection_url('/'))
+
+
+@dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
 @ac_api_requires()
 def get_cases_charts():
     """

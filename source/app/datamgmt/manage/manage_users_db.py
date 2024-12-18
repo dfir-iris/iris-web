@@ -31,7 +31,7 @@ from app.iris_engine.access_control.utils import ac_auto_update_user_effective_a
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
 from app.iris_engine.access_control.utils import ac_remove_case_access_from_user
 from app.iris_engine.access_control.utils import ac_set_case_access_for_user
-from app.models import Cases, Client
+from app.models import Cases, Client, UserActivity
 from app.models.authorization import CaseAccessLevel, UserClient
 from app.models.authorization import Group
 from app.models.authorization import Organisation
@@ -699,6 +699,10 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
 
 
 def delete_user(user_id):
+    # Migrate the user activity to a shadow user
+
+    UserActivity.query.filter(UserActivity.user_id == user_id).update({UserActivity.user_id: None})
+
     UserCaseAccess.query.filter(UserCaseAccess.user_id == user_id).delete()
     UserOrganisation.query.filter(UserOrganisation.user_id == user_id).delete()
     UserGroup.query.filter(UserGroup.user_id == user_id).delete()
