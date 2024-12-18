@@ -24,7 +24,6 @@ from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
-from flask_cors import CORS
 
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
@@ -160,6 +159,8 @@ def after_request(response):
 
 
 from app.views import register_blueprints
+from app.views import load_user
+from app.views import load_user_from_request
 
 register_blueprints(app)
 
@@ -172,3 +173,6 @@ try:
 except Exception as e:
     app.logger.exception('Post init failed. IRIS not started')
     raise e
+
+lm.user_loader(load_user)
+lm.request_loader(load_user_from_request)
