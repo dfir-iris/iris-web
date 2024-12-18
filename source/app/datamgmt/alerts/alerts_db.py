@@ -60,7 +60,7 @@ from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc, IocLink, Client
+    alert_iocs_association, Ioc, Client
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus, \
     AlertSimilarity, Severity
 from app.models.authorization import Permissions, User

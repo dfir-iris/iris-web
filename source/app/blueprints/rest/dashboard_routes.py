@@ -24,7 +24,7 @@ from flask import Blueprint, session, redirect
 from flask import request
 from flask_login import current_user, logout_user
 
-from app import db
+from app import db, app
 
 from app import oidc_client
 from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews
@@ -54,15 +54,15 @@ log = app.logger
 
 
 # CONTENT ------------------------------------------------
-dashboard_blueprint = Blueprint(
-    'index',
+dashboard_rest_blueprint = Blueprint(
+    'dashboard_rest',
     __name__,
     template_folder='templates'
 )
 
 
 # Logout user
-@dashboard_blueprint.route('/logout')
+@dashboard_rest_blueprint.route('/logout')
 def logout():
     """
     Logout function. Erase its session and redirect to index i.e login
@@ -76,15 +76,19 @@ def logout():
     if is_authentication_oidc():
         if oidc_client.provider_info.get("end_session_endpoint"):
             try:
-                logout_request = oidc_client.construct_EndSessionRequest(state=session["oidc_state"])
-                logout_url = logout_request.request(oidc_client.provider_info["end_session_endpoint"])
-                track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+                logout_request = oidc_client.construct_EndSessionRequest(
+                    state=session["oidc_state"])
+                logout_url = logout_request.request(
+                    oidc_client.provider_info["end_session_endpoint"])
+                track_activity("user '{}' has been logged-out".format(
+                    current_user.user), ctx_less=True, display_in_ui=False)
                 logout_user()
                 session.clear()
                 return redirect(logout_url)
             except GrantError:
                 track_activity(
-                    f"no oidc session found for user '{current_user.user}', skipping oidc provider logout and continuing to logout local user",
+                    f"no oidc session found for user '{
+                        current_user.user}', skipping oidc provider logout and continuing to logout local user",
                     ctx_less=True,
                     display_in_ui=False
                 )
@@ -93,13 +97,14 @@ def logout():
                 log.warning(f'Will continue to local logout')
 
     logout_user()
-    track_activity("user '{}' has been logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+    track_activity("user '{}' has been logged-out".format(current_user.user),
+                   ctx_less=True, display_in_ui=False)
     session.clear()
 
     return redirect(not_authenticated_redirection_url('/'))
 
 
-@dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
+@dashboard_rest_blueprint.route('/dashboard/case_charts', methods=['GET'])
 @ac_api_requires()
 def get_cases_charts():
     """
@@ -116,7 +121,8 @@ def get_cases_charts():
     retr = [[], []]
     rk = {}
     for case in res:
-        month = "{}/{}/{}".format(case.open_date.day, case.open_date.month, case.open_date.year)
+        month = "{}/{}/{}".format(case.open_date.day,
+                                  case.open_date.month, case.open_date.year)
 
         if month in rk:
             rk[month] += 1
@@ -170,7 +176,8 @@ def utask_statusupdate(caseid):
 
     case_id = jsdata.get('case_id') if jsdata.get('case_id') else caseid
     task_id = jsdata.get('task_id')
-    task = CaseTasks.query.filter(CaseTasks.id == task_id, CaseTasks.task_case_id == case_id).first()
+    task = CaseTasks.query.filter(
+        CaseTasks.id == task_id, CaseTasks.task_case_id == case_id).first()
     if not task:
         return response_error(f"Invalid case task ID {task_id} for case {case_id}")
 
@@ -199,7 +206,8 @@ def add_gtask(caseid):
 
         gtask_schema = GlobalTasksSchema()
 
-        request_data = call_modules_hook('on_preload_global_task_create', data=request.get_json(), caseid=caseid)
+        request_data = call_modules_hook(
+            'on_preload_global_task_create', data=request.get_json(), caseid=caseid)
 
         gtask = gtask_schema.load(request_data)
 
@@ -219,8 +227,10 @@ def add_gtask(caseid):
     except Exception as e:
         return response_error(msg="Data error", data=e.__str__())
 
-    gtask = call_modules_hook('on_postload_global_task_create', data=gtask, caseid=caseid)
-    track_activity("created new global task \'{}\'".format(gtask.task_title), caseid=caseid)
+    gtask = call_modules_hook(
+        'on_postload_global_task_create', data=gtask, caseid=caseid)
+    track_activity("created new global task \'{}\'".format(
+        gtask.task_title), caseid=caseid)
 
     return response_success('Task added', data=gtask_schema.dump(gtask))
 
@@ -231,8 +241,10 @@ def add_gtask(caseid):
 def edit_gtask(cur_id, caseid):
     form = CaseGlobalTaskForm()
     task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
-    form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(User.active == True).order_by(User.name).all()]
-    form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
+    form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(
+        User.active == True).order_by(User.name).all()]
+    form.task_status_id.choices = [(a.id, a.status_name)
+                                   for a in get_tasks_status()]
 
     if not task:
         return response_error(msg="Data error", data="Invalid task ID")
@@ -249,12 +261,14 @@ def edit_gtask(cur_id, caseid):
 
         db.session.commit()
 
-        gtask = call_modules_hook('on_postload_global_task_update', data=gtask, caseid=caseid)
+        gtask = call_modules_hook(
+            'on_postload_global_task_update', data=gtask, caseid=caseid)
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
 
-    track_activity("updated global task {} (status {})".format(task.task_title, task.task_status_id), caseid=caseid)
+    track_activity("updated global task {} (status {})".format(
+        task.task_title, task.task_status_id), caseid=caseid)
 
     return response_success('Task updated', data=gtask_schema.dump(gtask))
 
@@ -263,7 +277,8 @@ def edit_gtask(cur_id, caseid):
 @ac_api_requires()
 @ac_requires_case_identifier()
 def gtask_delete(cur_id, caseid):
-    call_modules_hook('on_preload_global_task_delete', data=cur_id, caseid=caseid)
+    call_modules_hook('on_preload_global_task_delete',
+                      data=cur_id, caseid=caseid)
 
     if not cur_id:
         return response_error("Missing parameter")
@@ -275,7 +290,8 @@ def gtask_delete(cur_id, caseid):
     GlobalTasks.query.filter(GlobalTasks.id == cur_id).delete()
     db.session.commit()
 
-    call_modules_hook('on_postload_global_task_delete', data=request.get_json(), caseid=caseid)
+    call_modules_hook('on_postload_global_task_delete',
+                      data=request.get_json(), caseid=caseid)
     track_activity("deleted global task ID {}".format(cur_id), caseid=caseid)
 
     return response_success("Task deleted")
