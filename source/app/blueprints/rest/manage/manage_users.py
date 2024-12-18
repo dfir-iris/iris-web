@@ -36,7 +36,6 @@ from app.datamgmt.manage.manage_users_db import get_user_by_username
 from app.datamgmt.manage.manage_users_db import get_user_details
 from app.datamgmt.manage.manage_users_db import get_users_list
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted
-from app.datamgmt.manage.manage_users_db import remove_case_access_from_user
 from app.datamgmt.manage.manage_users_db import remove_cases_access_from_user
 from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
@@ -389,7 +388,8 @@ def view_delete_user(cur_id):
         track_activity(message="deleted user ID {}".format(cur_id), ctx_less=True)
         return response_success("Deleted user ID {}".format(cur_id))
 
-    except Exception:
+    except Exception as e:
+        print(e)
         db.session.rollback()
         track_activity(message="tried to delete active user ID {}".format(cur_id), ctx_less=True)
         return response_error("Cannot delete active user")

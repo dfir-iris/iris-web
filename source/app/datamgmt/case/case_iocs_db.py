@@ -70,9 +70,23 @@ def update_ioc(ioc_type, ioc_tags, ioc_value, ioc_description, ioc_tlp, userid, 
 
 
 def delete_ioc(ioc: Ioc):
+    # Delete the relevant records from the AssetComments table
+    com_ids = IocComments.query.with_entities(
+        IocComments.comment_id
+    ).filter(
+        IocComments.comment_ioc_id == ioc.ioc_id,
+    ).all()
+
+    com_ids = [c.comment_id for c in com_ids]
+    IocComments.query.filter(IocComments.comment_id.in_(com_ids)).delete()
+
+    Comments.query.filter(
+        Comments.comment_id.in_(com_ids)
+    ).delete()
+
     db.session.delete(ioc)
 
-    update_ioc_state(caseid=ioc.case_id)
+    update_ioc_state(ioc.case_id)
 
 
 def get_detailed_iocs(caseid):

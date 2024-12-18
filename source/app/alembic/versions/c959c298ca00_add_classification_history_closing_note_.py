@@ -5,7 +5,6 @@ Revises: 4ecdfcb34f7c
 Create Date: 2023-03-03 23:49:16.360494
 
 """
-import logging
 
 from alembic import op
 import sqlalchemy as sa
@@ -33,10 +32,10 @@ def upgrade():
         sa.Column('owner_id', sa.Integer, sa.ForeignKey('user.id'), nullable=False),
         sa.Column('classification_id', sa.Integer, sa.ForeignKey('case_classification.id'), nullable=False)
     )
-    res = conn.execute(text(f"select case_id, open_date, user_id from \"cases\";"))
+    res = conn.execute(text("select case_id, open_date, user_id from \"cases\";"))
     results = res.fetchall()
 
-    ras = conn.execute(text(f"select id from \"user\" ORDER BY id ASC LIMIT 1;"))
+    ras = conn.execute(text("select id from \"user\" ORDER BY id ASC LIMIT 1;"))
     user = ras.fetchone()
 
     if not _table_has_column('cases', 'modification_history'):

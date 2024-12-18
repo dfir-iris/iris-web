@@ -20,7 +20,7 @@ import uuid
 from datetime import datetime
 from flask_login import current_user
 # IMPORTS ------------------------------------------------
-from sqlalchemy import BigInteger, Table, CheckConstraint
+from sqlalchemy import BigInteger, CheckConstraint
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Date
@@ -43,7 +43,7 @@ from app.datamgmt.states import update_ioc_state
 from app.datamgmt.states import update_notes_state
 from app.datamgmt.states import update_tasks_state
 from app.datamgmt.states import update_timeline_state
-from app.models.models import Client, Base
+from app.models.models import Client
 
 
 class Cases(db.Model):
@@ -94,7 +94,8 @@ class Cases(db.Model):
                  user=None,
                  custom_attributes=None,
                  classification_id=None,
-                 state_id=None
+                 state_id=None,
+                 severity_id=None
                  ):
         self.name = name[:200] if name else None,
         self.soc_id = soc_id,
@@ -111,7 +112,8 @@ class Cases(db.Model):
         self.case_uuid = uuid.uuid4()
         self.status_id = 0
         self.classification_id = classification_id
-        self.state_id = state_id
+        self.state_id = state_id,
+        self.severity_id = severity_id
 
     def save(self):
         """

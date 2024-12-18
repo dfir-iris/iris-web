@@ -24,7 +24,7 @@ def upgrade():
     # Get all users with their roles
     if _has_table("case_tasks"):
         if _table_has_column("case_tasks", "task_assignee_id"):
-            res = conn.execute(text(f"select id, task_assignee_id from case_tasks"))
+            res = conn.execute(text("select id, task_assignee_id from case_tasks"))
             results_tasks = res.fetchall()
 
             for task in results_tasks:

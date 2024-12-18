@@ -157,6 +157,16 @@ class TestsRestIocs(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
         self.assertEqual(400, response.status_code)
 
+    def test_delete_ioc_should_not_prevent_case_deletion(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        self._subject.create(f'/case/ioc/{ioc_identifier}/comments/add', {'comment_text': 'comment text'})
+        self._subject.delete(f'/api/v2/iocs/{ioc_identifier}')
+        response = self._subject.delete(f'/api/v2/cases/{case_identifier}')
+        self.assertEqual(204, response.status_code)
+        
     def test_update_ioc_should_not_fail(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}

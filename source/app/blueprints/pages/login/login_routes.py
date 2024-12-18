@@ -180,13 +180,15 @@ if is_authentication_oidc():
         email_field = app.config.get("OIDC_MAPPING_EMAIL")
         username_field = app.config.get("OIDC_MAPPING_USERNAME")
 
-        user_login = access_token_resp['id_token'].get(email_field) or access_token_resp['id_token'].get(username_field)
+        user_login = access_token_resp['id_token'].get(username_field) or access_token_resp['id_token'].get(email_field)
         user_name = access_token_resp['id_token'].get(email_field) or access_token_resp['id_token'].get(username_field)
 
         user = get_user(user_login, 'user')
 
         if not user:
-            if app.config.get("AUTHENTICATION_CREATE_USER_IF_NOT_EXISTS") is False:
+            log.warning(f"OIDC user {user_login} not found in database")
+            if app.config.get("AUTHENTICATION_CREATE_USER_IF_NOT_EXIST") is False:
+                log.warning(f"Authentication is set to not create user if not exists")
                 track_activity(
                     f"OIDC user {user_login} not found in database",
                     ctx_less=True,
@@ -194,6 +196,7 @@ if is_authentication_oidc():
                 )
                 return response_error("User not found in IRIS", 404)
 
+            log.info(f"Creating OIDC user {user_login} in database")
             track_activity(
                 f"Creating OIDC user {user_login} in database",
                 ctx_less=True,

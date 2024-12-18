@@ -28,6 +28,9 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.v2.cases.assets import case_assets_bp
+from app.blueprints.rest.v2.cases.iocs import case_iocs_bp
+from app.blueprints.rest.v2.cases.tasks import case_tasks_bp
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.datamgmt.case.case_db import get_case
@@ -41,14 +44,23 @@ from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 
 
-api_v2_case_blueprint = Blueprint('case_rest_v2',
+# Create blueprint & import child blueprints
+api_v2_case_blueprint = Blueprint('cases',
                                   __name__,
-                                  url_prefix='/api/v2')
+                                  url_prefix='/cases')
+api_v2_case_blueprint.register_blueprint(case_assets_bp)
+api_v2_case_blueprint.register_blueprint(case_iocs_bp)
+api_v2_case_blueprint.register_blueprint(case_tasks_bp)
 
 
-@api_v2_case_blueprint.route('/cases', methods=['POST'])
+# Routes
+@api_v2_case_blueprint.post('', strict_slashes=False)
 @ac_api_requires(Permissions.standard_user)
 def create_case():
+    """
+    Handles creating a new case.
+    """
+
     try:
         case, _ = cases_create(request.get_json())
         return response_api_created(CaseSchemaForAPIV2().dump(case))
@@ -56,21 +68,28 @@ def create_case():
         return response_api_error(e.get_message(), e.get_data())
 
 
-@api_v2_case_blueprint.route('/cases', methods=['GET'])
+@api_v2_case_blueprint.get('', strict_slashes=False)
 @ac_api_requires()
 def get_cases() -> Response:
+    """
+    Handles getting cases, with optional filtering & pagination
+    """
+
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get('case_ids', None, type=parse_comma_separated_identifiers)
+    case_ids_str = request.args.get(
+        'case_ids', None, type=parse_comma_separated_identifiers)
     order_by = request.args.get('order_by', type=str)
     sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
     case_customer_id = request.args.get('case_customer_id', None, type=str)
     case_name = request.args.get('case_name', None, type=str)
     case_description = request.args.get('case_description', None, type=str)
-    case_classification_id = request.args.get('case_classification_id', None, type=int)
+    case_classification_id = request.args.get(
+        'case_classification_id', None, type=int)
     case_owner_id = request.args.get('case_owner_id', None, type=int)
-    case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
+    case_opening_user_id = request.args.get(
+        'case_opening_user_id', None, type=int)
     case_severity_id = request.args.get('case_severity_id', None, type=int)
     case_state_id = request.args.get('case_state_id', None, type=int)
     case_soc_id = request.args.get('case_soc_id', None, type=str)
@@ -114,9 +133,13 @@ def get_cases() -> Response:
     return response_api_success(data=cases)
 
 
-@api_v2_case_blueprint.route('/cases/<int:identifier>', methods=['GET'])
+@api_v2_case_blueprint.get('/<int:identifier>')
 @ac_api_requires()
 def case_routes_get(identifier):
+    """
+    Get a case by its ID
+    """
+
     case = get_case(identifier)
     if not case:
         return response_api_not_found()
@@ -125,9 +148,13 @@ def case_routes_get(identifier):
     return response_api_success(CaseSchemaForAPIV2().dump(case))
 
 
-@api_v2_case_blueprint.route('/cases/<int:identifier>', methods=['DELETE'])
+@api_v2_case_blueprint.delete('/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
+    """
+    Delete a case by ID
+    """
+
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=identifier)
 

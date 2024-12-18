@@ -19,20 +19,18 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-
-
 target=${1-:app}
 
 printf "Running ${target} ...\n"
 
 if [[ "${target}" == iris-worker ]] ; then
     if [[ -z $NUMBER_OF_CHILD ]]; then
-        celery -A app.celery worker -E -B -l INFO &
+        celery -A app.celery worker -E -B -l $LOG_LEVEL &
     else
-        celery -A app.celery worker -c $NUMBER_OF_CHILD -E -B -l INFO &
+        celery -A app.celery worker -c $NUMBER_OF_CHILD -E -B -l $LOG_LEVEL &
     fi
 else
-    gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=info &
+    gunicorn app:app --worker-class eventlet --bind 0.0.0.0:8000 --timeout 180 --worker-connections 1000 --log-level=$LOG_LEVEL &
 fi
 
 while true; do sleep 2; done
