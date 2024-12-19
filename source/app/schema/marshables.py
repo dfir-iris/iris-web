@@ -1197,7 +1197,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
         try:
             self.event_date = dateutil.parser.isoparse(date_time)
             self.event_date_wtz = dateutil.parser.isoparse(date_time_wtz)
-        except Exception as e:
+        except Exception:
             raise marshmallow.exceptions.ValidationError("Invalid date time", field_name="event_date")
 
         return self.event_date, self.event_date_wtz
@@ -1478,7 +1478,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
         if location is None:
             raise marshmallow.exceptions.ValidationError(
-                f"Unable to save file in target location",
+                "Unable to save file in target location",
                 field_name='file_content'
             )
 

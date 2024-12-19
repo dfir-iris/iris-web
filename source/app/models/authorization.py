@@ -1,6 +1,5 @@
 import enum
 import secrets
-import pyotp
 import uuid
 from flask_login import UserMixin
 from sqlalchemy import BigInteger, JSON

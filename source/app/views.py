@@ -97,15 +97,8 @@ from app.blueprints.rest.profile_routes import profile_rest_blueprint
 from app.blueprints.rest.reports_route import reports_rest_blueprint
 from app.blueprints.rest.search_routes import search_rest_blueprint
 from app.blueprints.graphql.graphql_route import graphql_blueprint
-from app.blueprints.rest.v2.alerts.api_v2_alerts_routes import api_v2_alerts_blueprint
-from app.blueprints.rest.v2.auth.api_v2_auth_routes import api_v2_auth_blueprint
-from app.blueprints.rest.v2.case.api_v2_case_routes import api_v2_case_blueprint
-from app.blueprints.rest.v2.case.api_v2_assets_routes import api_v2_assets_blueprint
-from app.blueprints.rest.v2.case.api_v2_ioc_routes import api_v2_ioc_blueprint
-from app.blueprints.rest.v2.case.api_v2_case_tasks_routes import api_v2_tasks_blueprint
-from app.blueprints.rest.v2.dashboard.api_v2_dashboard_route import api_v2_dashboard_blueprint
-from app.blueprints.rest.v2.context.api_v2_context_routes import api_v2_context_blueprint
 
+from app.blueprints.rest.v2 import rest_v2_bp
 from app.models.authorization import User
 from app.post_init import run_post_init
 
@@ -191,18 +184,7 @@ app.register_blueprint(alerts_rest_blueprint)
 app.register_blueprint(rest_api_blueprint)
 app.register_blueprint(demo_blueprint)
 
-app.register_blueprint(api_v2_case_blueprint)
-app.register_blueprint(api_v2_ioc_blueprint)
-app.register_blueprint(api_v2_assets_blueprint)
-app.register_blueprint(api_v2_tasks_blueprint)
-
-app.register_blueprint(api_v2_alerts_blueprint)
-app.register_blueprint(api_v2_dashboard_blueprint)
-app.register_blueprint(api_v2_context_blueprint)
-
-
-app.register_blueprint(api_v2_auth_blueprint)
-
+app.register_blueprint(rest_v2_bp)
 
 
 try:

@@ -180,7 +180,7 @@ def datastore_add_child_node(parent_node, folder_name, cid):
             DataStorePath.path_case_id == cid
         ).first()
 
-    except Exception as e:
+    except Exception:
         return True, f'Unable to request datastore for parent node : {parent_node}', None
 
     if dsp_base is None:
@@ -206,7 +206,7 @@ def datastore_rename_node(parent_node, folder_name, cid):
             DataStorePath.path_case_id == cid
         ).first()
 
-    except Exception as e:
+    except Exception:
         return True, f'Unable to request datastore for parent node : {parent_node}', None
 
     if dsp_base is None:
@@ -226,7 +226,7 @@ def datastore_delete_node(node_id, cid):
             DataStorePath.path_case_id == cid
         ).first()
 
-    except Exception as e:
+    except Exception:
         return True, f'Unable to request datastore for parent node : {node_id}'
 
     if dsp_base is None:
