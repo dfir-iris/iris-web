@@ -96,9 +96,12 @@ def logout():
                 log.error(f"Error logging out: {e}")
                 log.warning(f'Will continue to local logout')
 
+    track_activity("user '{}' is being logged-out".format(current_user.user), ctx_less=True, display_in_ui=False)
+
     logout_user()
     track_activity("user '{}' has been logged-out".format(current_user.user),
                    ctx_less=True, display_in_ui=False)
+
     session.clear()
 
     return redirect(not_authenticated_redirection_url('/'))
