@@ -24,10 +24,8 @@ from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
-try:
-    from flask_cors import CORS
-except:
-    pass
+from flask_cors import CORS
+
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
@@ -67,10 +65,9 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__, static_folder='../static')
-try:
-    CORS(app, supports_credentials=True, origins="*", resources={r"/*": {"origins": "*"}})
-except:
-    pass
+
+CORS(app, supports_credentials=True, origins="*", resources={r"/*": {"origins": "*"}})
+
 
 def ac_current_user_has_permission(*permissions):
     """
@@ -105,7 +102,7 @@ app.config.from_object('app.configuration.Config')
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='None'
+    SESSION_COOKIE_SAMESITE='Lax'
 )
 
 cache = Cache(app)
@@ -148,6 +145,12 @@ if app.config.get('AUTHENTICATION_TYPE') == "oidc":
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db.session.remove()
+
+# @app.after_request
+# def after_request(response):
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#
+#     return response
 
 
 from app import views
