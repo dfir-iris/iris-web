@@ -44,8 +44,6 @@ from app.blueprints.graphql.iocs import IOCObject
 from app.blueprints.graphql.iocs import IOCCreate
 from app.blueprints.graphql.iocs import IOCUpdate
 from app.blueprints.graphql.iocs import IOCDelete
-from app.business.cases import get_case_by_identifier
-from app.business.iocs import get_ioc_by_identifier
 from app.blueprints.graphql.cases import CaseCreate
 from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
@@ -85,11 +83,11 @@ class Query(ObjectType):
 
     @staticmethod
     def resolve_case(root, info, case_id):
-        return get_case_by_identifier(case_id)
+        return cases_get_by_identifier(case_id)
 
     @staticmethod
     def resolve_ioc(root, info, ioc_id):
-        return get_ioc_by_identifier(ioc_id)
+        return iocs_get(ioc_id)
 
 
 class Mutation(ObjectType):
