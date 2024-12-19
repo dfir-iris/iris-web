@@ -97,6 +97,7 @@ from app.blueprints.rest.profile_routes import profile_rest_blueprint
 from app.blueprints.rest.reports_route import reports_rest_blueprint
 from app.blueprints.rest.search_routes import search_rest_blueprint
 from app.blueprints.graphql.graphql_route import graphql_blueprint
+
 from app.blueprints.rest.v2 import rest_v2_bp
 from app.models.authorization import User
 from app.post_init import run_post_init
@@ -191,7 +192,7 @@ try:
     run_post_init(development=app.config["DEVELOPMENT"])
 
 except Exception as e:
-    app.logger.exception("Post init failed. IRIS not started")
+    app.logger.exception(f"Post init failed. IRIS not started")
     raise e
 
 

@@ -25,11 +25,13 @@ from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
 from flask_cors import CORS
+
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
 from flask_sqlalchemy import SQLAlchemy
 from functools import partial
+
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
@@ -63,11 +65,8 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 app = Flask(__name__, static_folder='../static')
-try:
-    CORS(app, supports_credentials=True, origins="*",
-         resources={r"/*": {"origins": "*"}}, )
-except:
-    pass
+
+CORS(app, supports_credentials=True, origins="*", resources={r"/*": {"origins": "*"}})
 
 
 def ac_current_user_has_permission(*permissions):
@@ -103,7 +102,7 @@ app.config.from_object('app.configuration.Config')
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='None'
+    SESSION_COOKIE_SAMESITE='Lax'
 )
 
 cache = Cache(app)
@@ -132,7 +131,7 @@ celery = make_celery(app)
 # )
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
-# app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
+#app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
 
 socket_io = SocketIO(app, cors_allowed_origins="*")
 
