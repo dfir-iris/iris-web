@@ -53,7 +53,15 @@ from oic.oauth2.exception import GrantError
 dashboard_rest_blueprint = Blueprint('dashboard_rest', __name__)
 
 
-@dashboard_rest_blueprint.route('/dashboard/case_charts', methods=['GET'])
+# CONTENT ------------------------------------------------
+dashboard_blueprint = Blueprint(
+    'index',
+    __name__,
+    template_folder='templates'
+)
+
+
+@dashboard_blueprint.route('/dashboard/case_charts', methods=['GET'])
 @ac_api_requires()
 def get_cases_charts():
     """
