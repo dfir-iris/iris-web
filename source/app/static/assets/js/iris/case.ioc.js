@@ -433,8 +433,12 @@ $(document).ready(function(){
             "data": "tlp_name",
             "render": function(data, type, row, meta) {
                if (type === 'display') {
-                    data = sanitizeHTML(data);
-                  data = '<span class="badge badge-'+ row['tlp_bscolor'] +' ml-2">tlp:' + data + '</span>';
+                    if (data) {
+                        data = sanitizeHTML(data);
+                        data = '<span class="badge badge-' + row['tlp_bscolor'] + ' ml-2">tlp:' + data + '</span>';
+                    } else {
+                        return `<span class="badge badge-light ml-2">unspecified</span>`
+                    }
               }
               return data;
             }

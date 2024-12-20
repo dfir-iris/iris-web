@@ -146,7 +146,7 @@ def get_detailed_iocs(caseid):
              IocLink.ioc_id == Ioc.ioc_id)
     ).join(IocLink.ioc)
      .join(Ioc.ioc_type)
-     .join(Ioc.tlp)
+     .outerjoin(Ioc.tlp)
      .order_by(IocType.type_name).all())
 
     return detailed_iocs
