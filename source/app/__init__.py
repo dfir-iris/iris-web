@@ -29,6 +29,7 @@ from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
 from flask_sqlalchemy import SQLAlchemy
 from functools import partial
+from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
@@ -115,13 +116,13 @@ dropzone = Dropzone(app)
 
 celery = make_celery(app)
 
-# store = HttpExposedFileSystemStore(
-#     path='images',
-#     prefix='/static/assets/images/'
-# )
+store = HttpExposedFileSystemStore(
+    path='images',
+    prefix='/static/assets/images/'
+)
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
-#app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
+app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
 
 socket_io = SocketIO(app, cors_allowed_origins="*")
 

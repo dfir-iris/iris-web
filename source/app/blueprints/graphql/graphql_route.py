@@ -49,12 +49,6 @@ from app.blueprints.graphql.cases import CaseDelete
 from app.blueprints.graphql.cases import CaseUpdate
 from app.blueprints.graphql.cases import CaseConnection
 
-import warnings
-
-# Ignore all UserWarnings
-warnings.filterwarnings("ignore", category=UserWarning)
-
-
 
 class Query(ObjectType):
     """This is the IRIS GraphQL queries documentation!"""
