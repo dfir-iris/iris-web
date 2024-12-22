@@ -212,10 +212,12 @@ if is_authentication_oidc():
         # not all providers set email by default, use preferred_username where it's missing
         # Use the mapping from the configuration or default to email or preferred_username if not set
         email_field = app.config.get("OIDC_MAPPING_EMAIL")
-        username_field = app.config.get("OIDC_MAPPING_USERNAME")
+        login_field = app.config.get("OIDC_MAPPING_USERNAME")
+        name_field = app.config.get("OIDC_MAPPING_DISPLAYNAME")
 
-        user_login = access_token_resp['id_token'].get(email_field) or access_token_resp['id_token'].get(username_field)
-        user_name = access_token_resp['id_token'].get(email_field) or access_token_resp['id_token'].get(username_field)
+        user_email = access_token_resp['id_token'].get(email_field) or access_token_resp['id_token'].get(login_field)
+        user_login = access_token_resp['id_token'].get(login_field) or access_token_resp['id_token'].get(email_field)
+        user_name = access_token_resp['id_token'].get(name_field) or access_token_resp['id_token'].get(login_field)
 
         user = get_user(user_login, 'user')
 
@@ -240,7 +242,7 @@ if is_authentication_oidc():
             user = create_user(
                         user_name=user_name,
                         user_login=user_login,
-                        user_email=user_login,
+                        user_email=user_email,
                         user_password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
                         user_active=True,
                         user_is_service_account=False
