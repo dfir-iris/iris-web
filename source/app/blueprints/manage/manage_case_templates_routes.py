@@ -121,47 +121,53 @@ def add_template_modal():
     case_template = CaseTemplate()
     form = CaseTemplateForm()
     form.case_template_json.data = {
-        "name": "Template name",
-        "display_name": "Template Display Name",
-        "description": "Template description",
-        "author": "YOUR NAME",
-        "classification": "known-template-classification",
-        "title_prefix": "[PREFIX]",
-        "summary": "Summary to be set",
-        "tags": ["ransomware","malware"],
-        "tasks": [
-            {
-                "title": "Task 1",
-                "description": "Task 1 description",
-                "tags": ["tag1", "tag2"],
-                "actions": [
-                    {
-                        "webhook_id": "Webhook Id",
-                        "display_name": "Action Name",
-                    }
-                ],
-            }
-        ],
-        "note_directories": [
-            {
-                "title": "Note group 1",
-                "notes": [
-                    {
-                        "title": "Note 1",
-                        "content": "Note 1 content"
-                    }
-                ]
-            }
-        ],
-        "triggers": [
+    "name": "Template name",
+    "display_name": "Template Display Name",
+    "description": "Template description",
+    "author": "YOUR NAME",
+    "classification": "known-template-classification",
+    "title_prefix": "[PREFIX]",
+    "summary": "Summary to be set",
+    "tags": [
+        "ransomware",
+        "malware"
+    ],
+    "tasks": [
         {
-            "webhook_id": "Webhook Trigger ID",
+            "title": "Task 1",
+            "description": "Task 1 description",
+            "tags": [
+                "tag1",
+                "tag2"
+            ],
+            "actions": [
+                {
+                    "webhook_id": "Webhook Id",
+                    "display_name": "Action Name"
+                }
+            ]
+        }
+    ],
+    "note_directories": [
+        {
+            "title": "Note group 1",
+            "notes": [
+                {
+                    "title": "Note 1",
+                    "content": "Note 1 content"
+                }
+            ]
+        }
+    ],
+    "triggers": [
+        {
+            "webhook_id": "Webhook Id",
             "display_name": "Trigger Name",
             "input_params": {
-                "username": "User Name"
             }
         }
     ]
+
     }
 
     return render_template("modal_case_template.html", form=form, case_template=case_template)
