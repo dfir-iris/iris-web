@@ -127,7 +127,6 @@ function update_task_ext(task_id, do_close) {
   });
 }
 
-/* Delete an event from the timeline thank to its id */ 
 function delete_task(id) {
   do_deletion_prompt("You are about to delete task #" + id)
   .then((doDelete) => {
@@ -144,8 +143,6 @@ function delete_task(id) {
 }
 
 
-
-/* Fetch a modal that allows to add an event */
 function edit_task(id) {
   const url = '/case/tasks/' + id + '/modal' + case_param();
   const webHooksurl = "/manage/webhooks/list" + case_param();
@@ -175,7 +172,6 @@ function edit_task(id) {
     $('#modal_add_task').modal({ show: true });
     edit_in_task_desc();
     loadTableData()
-    // Define actionsList as a global variable if it's reused elsewhere
     const actionsList = $('#actionsList');
 
     fetch(webHooksurl, {
@@ -191,19 +187,13 @@ function edit_task(id) {
         return response.json();
       })
       .then((data) => {
-        console.log("Response Data:", data); // Debugging log
 
-        // Update fetchedData based on response status
         const fetchedData = data.status === "success" ? data.data : [];
 
-        // Log fetched data for debugging
-        console.log("Fetched Data:", fetchedData);
-
-        // Populate the dropdown
-        actionsList.empty(); // Clear existing items
+        actionsList.empty(); 
 
         if (fetchedData.length === 0) {
-          // Handle case where no actions are available
+
           actionsList.append(
             $('<a>', {
               class: 'dropdown-item disabled',
@@ -212,7 +202,7 @@ function edit_task(id) {
             })
           );
         } else {
-          // Add actions to the dropdown
+
           fetchedData.forEach(function (action) {
             actionsList.append(
               $('<a>', {
@@ -220,7 +210,7 @@ function edit_task(id) {
                 href: '#',
                 text: action.name,
                 click: function (e) {
-                  e.preventDefault(); // Prevent default link behavior
+                  e.preventDefault(); 
                   expandActionDiv(action.payload_schema, id , action.id);
                 },
               })
@@ -230,7 +220,7 @@ function edit_task(id) {
       })
       .catch((error) => {
         console.error("Error fetching data:", error);
-        // Handle error by displaying a message in the dropdown
+
         actionsList.empty().append(
           $('<a>', {
             class: 'dropdown-item disabled',
@@ -250,7 +240,6 @@ function loadTableData() {
         type: "GET",
         data: function (d) {
           if (d.status == "success") {
-            console.log("Response data:", d.data); // Log the data here
             return JSON.stringify(d.data);
           } else {
             return JSON.stringify([]);
@@ -273,9 +262,9 @@ function loadTableData() {
         {
           data: "body",
           render: function (data, type, row) {
-            console.log("Body data:", data); // Logs the raw data
+            console.log("Body data:", data); 
 
-            const task = row.id; // Get the task value from the row
+            const task = row.id; 
 
             return `
                 <button type="button" class="btn btn-primary btn-sm view-response"
@@ -295,6 +284,11 @@ function loadTableData() {
         },
       ],
     });
+    setInterval(() => {
+      console.log("calling every 3 second") 
+      $('#action_table').DataTable().ajax.reload(null, false);
+      console.log("calling every 3 second") // `null, false` prevents table state (pagination, etc.) from resetting
+    }, 3000);
 }
 
 
@@ -319,10 +313,10 @@ function expandActionDiv(actionDetails,task_id, action_id) {
   window.jsonEditor = new JSONEditor(jsonEditorContainer[0], {
     schema: actionDetails,
     theme: 'tailwind',
-    disable_edit_json: true, // Disables raw JSON editing
-    disable_properties: true, // Disables editing of object properties
-    disable_collapse: true,   // Disables the ability to collapse elements
-    disable_array_add: true,  // Disables adding items to arrays
+    disable_edit_json: true, 
+    disable_properties: true,
+    disable_collapse: true,
+    disable_array_add: true,
     disable_array_delete: true,  
     show_errors: "change",
     form_name_root: " "
@@ -357,11 +351,20 @@ function expandActionDiv(actionDetails,task_id, action_id) {
         false,
         function () {
             window.swal({
-                title: "Processing",
-                text: "Executing action, please wait...",
-                icon: "/static/assets/img/loader.gif",
-                button: false,
-                allowOutsideClick: false,
+              content: {
+                element: "div",
+                attributes: {
+                  innerHTML: `
+                      <div style="text-align: center; font-family: Arial, sans-serif;">
+                          <img src="/static/assets/img/loader.gif" alt="Loader" style="display: block; margin: 0 auto; width: 100px;">
+                          <h2 style="font-size: 24px; font-weight: 600; margin: 0;">Processing</h2>
+                          <p style="font-size: 16px; color: #666; margin-top: 10px;">Executing action, please wait...</p>
+                      </div>
+                  `
+              }
+            },
+            button: false,
+            allowOutsideClick: false,
             });
         }
     )
