@@ -14,6 +14,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
 import marshmallow
 import jsonschema
 from datetime import datetime
@@ -76,50 +77,51 @@ def delete_webhook_by_id(webhook_id: int):
     Webhook.query.filter_by(id=webhook_id).delete()
 
 
+import jsonschema
+from typing import Optional
+
+import json
+import jsonschema
+from typing import Optional
+
 def validate_webhook(data: dict, update: bool = False) -> Optional[str]:
-    valid_types = {"string", "number", "integer", "object", "array", "boolean", "null"}
     try:
+        # Check for the 'name' field
         if not update:
-            # If it's not an update, we check the required fields
             if "name" not in data:
-                return "Name is required."
+                return "<div><p><strong>Error:</strong> The 'name' field is required.</p></div>"
 
-        # We check that name is not empty
         if "name" in data and not data["name"].strip():
-            return "Name cannot be empty."    
-        
+            return "<div><p><strong>Error:</strong> The 'name' field cannot be empty.</p></div>"
 
-        # We check that tasks, if any, are a list of dictionaries with mandatory keys
-        if "header_auth" in data:
-            if not isinstance(data["header_auth"], list):
-                return "Header Auth must be a list."
-            for auth in data["header_auth"]:
-                if not isinstance(auth, dict):
-                    return "Each header auth must be a dictionary."
-                if "key" not in auth:
-                    return "Each auth must have a 'key' field."
-                if "value" not in auth:
-                    return "Each auth must have a 'value' field."
-                
+        # Check for the 'url' field
+        if "url" not in data:
+            # Log the missing 'url' field error
+            print("Error: The 'url' field is required but was not provided.")
+            return "<div><p><strong>Error:</strong> The 'url' field is required.</p></div>"
 
-        # We check that note groups, if any, are a list of dictionaries with mandatory keys
-        if "note_groups" in data:
-            return "Note groups has been replaced by note_directories."
-                        
-        # Validate the input_params field
+        # Validate 'payload_schema' field
         if "payload_schema" in data:
             try:
-                # Attempt to validate the payload_schema as a JSON Schema
                 jsonschema.Draft7Validator.check_schema(data["payload_schema"])
             except jsonschema.exceptions.SchemaError as e:
-                return f"Invalid JSON Schema in 'payload_schema': {e.message}"
-            except Exception as e:
-                return f"Unexpected error in 'payload_schema' validation: {str(e)}"
-
-        # If all checks succeeded, we return None to indicate everything is has been validated
+                error_path = " -> ".join(map(str, e.path)) if e.path else "schema root"
+                formatted_message = (
+                    json.dumps(e.message, indent=2) if isinstance(e.message, dict) else e.message
+                )
+                return (
+                    f"<div>"
+                    f"<p><strong>Error:</strong> The 'payload_schema' field contains an invalid JSON Schema.</p>"
+                    f"<p><strong>Error Location:</strong> {error_path}</p>"
+                    f"<p><strong>Invalid Code:</strong></p>"
+                    f"<pre style='background-color: #f9f9f9; border: 1px solid #ccc; padding: 10px; border-radius: 5px; "
+                    f"white-space: pre-wrap; word-wrap: break-word; font-family: monospace; overflow: hidden;'>{formatted_message}</pre>"
+                    f"</div>"
+                )
         return None
     except Exception as e:
-        return str(e)
+        return f"<div><p><strong>Error:</strong> An unexpected error occurred:</p><pre>{str(e)}</pre></div>"
+
 
 
 def webhook_pre_modifier(case_schema: CaseSchema, case_template_id: str):

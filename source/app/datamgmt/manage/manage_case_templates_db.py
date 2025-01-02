@@ -79,91 +79,98 @@ def delete_case_template_by_id(case_template_id: int):
 
 def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
     try:
+        # Check that the 'name' field is provided and not empty
         if not update:
             if "name" not in data:
-                return "Name is required."
-
+                return "<div><p><strong>Error:</strong> The 'name' field is required.</p></div>"
         if "name" in data and not data["name"].strip():
-            return "Name cannot be empty."
+            return "<div><p><strong>Error:</strong> The 'name' field cannot be empty.</p></div>"
 
+        # Validate 'tags' field
         if "tags" in data:
             if not isinstance(data["tags"], list):
-                return "Tags must be a list."
+                return "<div><p><strong>Error:</strong> 'tags' must be a list.</p></div>"
             for tag in data["tags"]:
                 if not isinstance(tag, str):
-                    return "Each tag must be a string."
-                    
-                        
+                    return "<div><p><strong>Error:</strong> Each tag must be a string.</p></div>"
+
+        # Validate 'tasks' field
         if "tasks" in data:
             if not isinstance(data["tasks"], list):
-                return "Tasks must be a list."
+                return "<div><p><strong>Error:</strong> 'tasks' must be a list.</p></div>"
             for task in data["tasks"]:
                 if not isinstance(task, dict):
-                    return "Each task must be a dictionary."
+                    return "<div><p><strong>Error:</strong> Each task must be a dictionary.</p></div>"
                 if "title" not in task:
-                    return "Each task must have a 'title' field."
+                    return "<div><p><strong>Error:</strong> Each task must have a 'title' field.</p></div>"
                 if "tags" in task:
                     if not isinstance(task["tags"], list):
-                        return "Task tags must be a list."
+                        return "<div><p><strong>Error:</strong> Task tags must be a list.</p></div>"
                     for tag in task["tags"]:
                         if not isinstance(tag, str):
-                            return "Each tag must be a string."
+                            return "<div><p><strong>Error:</strong> Each task tag must be a string.</p></div>"
                 if "actions" in task:
                     if not isinstance(task["actions"], list):
-                        return "Actions must be a list."
+                        return "<div><p><strong>Error:</strong> Actions must be a list.</p></div>"
                     for action in task["actions"]:
                         if not isinstance(action, dict):
-                            return "Each action must be a dictionary."
-                        # Check for required properties
+                            return "<div><p><strong>Error:</strong> Each action must be a dictionary.</p></div>"
                         if "webhook_id" not in action:
-                            return "Each action must have a 'webhook_id' field."
+                            return "<div><p><strong>Error:</strong> Each action must have a 'webhook_id' field.</p></div>"
                         if "display_name" not in action:
-                            return "Each action must have a 'display_name' field."
-                        # Check for extra properties
-                        allowed_keys = {"webhook_id", "display_name"}
-                        extra_keys = set(action.keys()) - allowed_keys
-                        if extra_keys:
-                            return f"Invalid properties in action: {', '.join(extra_keys)}. Only 'webhook_id' and 'display_name' are allowed."
+                            return "<div><p><strong>Error:</strong> Each action must have a 'display_name' field.</p></div>"
+
+                        # Validate webhook_id type (must be an integer)
+                        if not isinstance(action["webhook_id"], int):
+                            return f"<div><p><strong>Error:</strong> 'webhook_id' must be an integer, but got {type(action['webhook_id']).__name__}.</p></div>"
+
+                        # Check if webhook exists for the given webhook_id
                         webhook = get_webhook_by_id(action["webhook_id"])
                         if not webhook:
-                            return f"Webhook with id {action['webhook_id']} does not exist."
+                            return f"<div><p><strong>Error:</strong> Webhook with id {action['webhook_id']} does not exist.</p></div>"
 
-
+        # Validate 'triggers' field
         if "triggers" in data:
             if not isinstance(data["triggers"], list):
-                return "Trigger must be a list."
+                return "<div><p><strong>Error:</strong> 'triggers' must be a list.</p></div>"
             for trigger in data["triggers"]:
                 if not isinstance(trigger, dict):
-                    return "Each trigger must be a dictionary."
+                    return "<div><p><strong>Error:</strong> Each trigger must be a dictionary.</p></div>"
                 if "webhook_id" not in trigger:
-                    return "Each trigger must have a 'webhook_id' field."
+                    return "<div><p><strong>Error:</strong> Each trigger must have a 'webhook_id' field.</p></div>"
                 if "display_name" not in trigger:
-                    return "Each trigger must have a 'display_name' field."
+                    return "<div><p><strong>Error:</strong> Each trigger must have a 'display_name' field.</p></div>"
 
+                # Validate webhook_id type (must be an integer)
+                if not isinstance(trigger["webhook_id"], int):
+                    return f"<div><p><strong>Error:</strong> 'webhook_id' must be an integer, but got {type(trigger['webhook_id']).__name__}.</p></div>"
+
+                # Check if webhook exists for the given webhook_id
                 webhook = get_webhook_by_id(trigger["webhook_id"])
                 if not webhook:
-                    return f"Webhook with id {trigger['webhook_id']} does not exist."
+                    return f"<div><p><strong>Error:</strong> Webhook with id {trigger['webhook_id']} does not exist.</p></div>"
 
+                # Validate 'input_params' field
                 if "input_params" in trigger:
                     input_params = trigger["input_params"]
                     if not isinstance(input_params, dict):
-                        return "input_params must be a dictionary."
+                        return "<div><p><strong>Error:</strong> 'input_params' must be a dictionary.</p></div>"
 
                     payload_schema = webhook.payload_schema
                     if not payload_schema:
-                        return f"Webhook {webhook.name} has no payload schema."
+                        return f"<div><p><strong>Error:</strong> Webhook {webhook.name} has no payload schema.</p></div>"
 
-                    # Validate required fields
+                    # Validate required fields in payload_schema
                     required_fields = payload_schema.get("items", {}).get("required", [])
                     for field in required_fields:
                         if field not in input_params:
-                            return f"Field '{field}' is required in input_params for webhook '{webhook.name}'."
+                            return f"<div><p><strong>Error:</strong> Field '{field}' is required in 'input_params' for webhook '{webhook.name}'.</p></div>"
 
-                    # Validate properties
+                    # Validate properties in 'input_params'
                     properties = payload_schema.get("items", {}).get("properties", {})
                     for key, value in input_params.items():
                         if key not in properties:
-                            return f"Field '{key}' is not valid for webhook '{webhook.name}'."
+                            return f"<div><p><strong>Error:</strong> Field '{key}' is not valid for webhook '{webhook.name}'.</p></div>"
                         prop_schema = properties[key]
                         TYPE_MAPPING = {
                             "string": str,
@@ -174,39 +181,42 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
                         }
                         expected_type = prop_schema.get("type")
                         if expected_type:
-                            # Map schema type to Python type
                             python_type = TYPE_MAPPING.get(expected_type)
                             if not python_type:
-                                return f"Unsupported type '{expected_type}' in schema for field '{key}'."
+                                return f"<div><p><strong>Error:</strong> Unsupported type '{expected_type}' in schema for field '{key}'.</p></div>"
                             if not isinstance(value, python_type):
-                                return f"Field '{key}' must be of type '{expected_type}'."
+                                return f"<div><p><strong>Error:</strong> Field '{key}' must be of type '{expected_type}'.</p></div>"
 
+                        # Validate minLength property
                         if prop_schema.get("minLength") and len(value) < prop_schema["minLength"]:
-                            return f"Field '{key}' must have at least {prop_schema['minLength']} characters."
+                            return f"<div><p><strong>Error:</strong> Field '{key}' must have at least {prop_schema['minLength']} characters.</p></div>"
 
+        # Validate 'note_groups' field (deprecated)
         if "note_groups" in data:
-            return "Note groups have been replaced by note_directories."
+            return "<div><p><strong>Error:</strong> 'note_groups' has been replaced by 'note_directories'.</p></div>"
 
+        # Validate 'note_directories' field
         if "note_directories" in data:
             if not isinstance(data["note_directories"], list):
-                return "Note directories must be a list."
+                return "<div><p><strong>Error:</strong> 'note_directories' must be a list.</p></div>"
             for note_dir in data["note_directories"]:
                 if not isinstance(note_dir, dict):
-                    return "Each note directory must be a dictionary."
+                    return "<div><p><strong>Error:</strong> Each note directory must be a dictionary.</p></div>"
                 if "title" not in note_dir:
-                    return "Each note directory must have a 'title' field."
+                    return "<div><p><strong>Error:</strong> Each note directory must have a 'title' field.</p></div>"
                 if "notes" in note_dir:
                     if not isinstance(note_dir["notes"], list):
-                        return "Notes must be a list."
+                        return "<div><p><strong>Error:</strong> 'notes' must be a list.</p></div>"
                     for note in note_dir["notes"]:
                         if not isinstance(note, dict):
-                            return "Each note must be a dictionary."
+                            return "<div><p><strong>Error:</strong> Each note must be a dictionary.</p></div>"
                         if "title" not in note:
-                            return "Each note must have a 'title' field."
+                            return "<div><p><strong>Error:</strong> Each note must have a 'title' field.</p></div>"
 
         return None
     except Exception as e:
-        return str(e)
+        return f"<div><p><strong>Error:</strong> An unexpected error occurred:</p><pre>{str(e)}</pre></div>"
+
 
 
 def case_template_pre_modifier(case_schema: CaseSchema, case_template_id: str):
