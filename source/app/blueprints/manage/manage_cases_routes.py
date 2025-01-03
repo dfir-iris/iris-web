@@ -39,8 +39,8 @@ from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list
-from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
+from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, get_triggers_by_case_template_id
+from app.datamgmt.manage.manage_cases_db import execute_and_save_trigger, get_filtered_cases
 from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
@@ -347,12 +347,34 @@ def add_case_modal():
 @ac_api_requires(Permissions.standard_user)
 def api_add_case():
     case_schema = CaseSchema()
-
+    
     try:
-        case, msg = create(request.get_json())
+        # Extract case template data from the request
+        request_data = request.get_json()
+        print(request_data)
+        case_template_id = request_data.get("case_template_id")
+
+        if not case_template_id:
+            raise BusinessProcessingError("Missing 'case_template_id' in request.")
+
+        # Get triggers for the case_template_id
+        triggers = get_triggers_by_case_template_id(case_template_id)
+
+        if not triggers:
+            raise BusinessProcessingError("No triggers found for the provided case_template_id.")
+
+        # Execute and save each trigger
+        for trigger in triggers:
+            execute_and_save_trigger(trigger,case_template_id)
+
+        # Create the case
+        case, msg = create(request_data)
+
         return response_success(msg, data=case_schema.dump(case))
+
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
+
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])

@@ -30,7 +30,6 @@ from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import validate_case_template
 from app.datamgmt.manage.manage_case_templates_db import delete_case_template_by_id
-from app.datamgmt.manage.manage_case_templates_db import execute_and_save_trigger
 from app.forms import AddAssetForm, WebhookForm, CaseTemplateForm
 from app.models import CaseTemplate
 from app.models.authorization import Permissions
@@ -215,10 +214,10 @@ def add_case_template(caseid):
         # Commit the template to generate an ID
         db.session.commit()
 
-        # Execute and save triggers
-        for trigger in case_template_dict.get("triggers", []):
-            print(f"Executing trigger for case template ID {case_template.id}: {trigger}")
-            execute_and_save_trigger(trigger, case_template.id)
+        # # Execute and save triggers
+        # for trigger in case_template_dict.get("triggers", []):
+        #     print(f"Executing trigger for case template ID {case_template.id}: {trigger}")
+        #     execute_and_save_trigger(trigger, case_template.id)
 
     except Exception as e:
         print("Error adding case template:", e)  

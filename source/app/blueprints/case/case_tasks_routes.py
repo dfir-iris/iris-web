@@ -60,8 +60,8 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
-from app.datamgmt.manage.manage_case_templates_db import execute_and_save_action
-from source.app.datamgmt.manage.manage_task_response_db import get_task_response_by_id, get_task_responses_list
+from app.datamgmt.manage.manage_cases_db import execute_and_save_action
+from app.datamgmt.manage.manage_task_response_db import get_task_response_by_id, get_task_responses_list
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
