@@ -66,7 +66,7 @@ logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT
 
 app = Flask(__name__, static_folder='../static')
 
-CORS(app, supports_credentials=True, origins="*", resources={r"/*": {"origins": "*"}})
+CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://localhost:8000"])
 
 
 def ac_current_user_has_permission(*permissions):
@@ -102,7 +102,7 @@ app.config.from_object('app.configuration.Config')
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax'
+    SESSION_COOKIE_SAMESITE='None'
 )
 
 cache = Cache(app)
@@ -146,11 +146,10 @@ if app.config.get('AUTHENTICATION_TYPE') == "oidc":
 def shutdown_session(exception=None):
     db.session.remove()
 
-# @app.after_request
-# def after_request(response):
-#     response.headers.add('Access-Control-Allow-Origin', '*')
-#
-#     return response
+@app.after_request
+def after_request(response):
+
+    return response
 
 
 from app import views

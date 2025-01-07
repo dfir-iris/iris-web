@@ -66,7 +66,7 @@ def upgrade():
                         "ioc_misp": ioc.ioc_misp,
                         "ioc_tlp_id": ioc.ioc_tlp_id,
                         "custom_attributes": json.dumps(ioc.custom_attributes),
-                        "ioc_enrichment": ioc.ioc_enrichment,
+                        "ioc_enrichment": json.dumps(ioc.ioc_enrichment),
                         "modification_history": ioc.modification_history,
                         "case_id": ioc_link.case_id
                     }).fetchone()
@@ -138,10 +138,10 @@ def upgrade():
                 # Inserting the new case_event_ioc links
                 for case_event_link in case_event_links:
                     conn.execute(text(
-                        "INSERT INTO case_events_ioc(case_event_id, ioc_id, case_id)"
-                        "VALUES (:case_event_id, :ioc_id, :case_id)"),
+                        "INSERT INTO case_events_ioc(event_id, ioc_id, case_id)"
+                        "VALUES (:event_id, :ioc_id, :case_id)"),
                         {
-                            "case_event_id": case_event_link.case_event_id,
+                            "event_id": case_event_link.event_id,
                             "ioc_id": new_ioc_id,
                             "case_id": ioc_link.case_id
                         })
