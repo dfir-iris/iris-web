@@ -254,10 +254,10 @@ function loadTableData() {
           data: "id",
         },
         {
-          data: "task",
+          data: "action",
         },
         {
-          data: "action",
+          data: "task",
         },
         {
           data: "body",

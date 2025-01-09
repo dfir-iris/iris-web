@@ -51,12 +51,12 @@ from app.datamgmt.states import update_tasks_state
 from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.models.authorization import User
 from app.models.models import CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, ac_api_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
@@ -77,21 +77,17 @@ def case_tasks(caseid, url_redir):
     
     form = FlaskForm()
     case = get_case(caseid)
-
     return render_template("case_tasks.html", case=case, form=form)
 
 @case_tasks_blueprint.route('/case/jsoneditor', methods=['POST'])
-def save_data():
+@ac_case_requires(CaseAccessLevel.full_access)
+def save_data(caseid, url_redir):
     try:
-        # Debugging: Print raw request data
-        raw_data = request.data
-
-        # Get the JSON data
         data = request.get_json()
+
         if not isinstance(data, dict):
             raise ValueError("Request payload is not a valid JSON object")
         
-        # Extract values using dictionary keys
         payload = data.get('payload')
         task_id = data.get('task_id')
         action_id = data.get('action_id')
@@ -99,17 +95,15 @@ def save_data():
         if not payload or not task_id or not action_id:
             raise KeyError("Missing one or more required keys: 'payload', 'task_id', 'action_id'")
 
-        # Call the function with extracted values
         action_response = execute_and_save_action(payload, task_id, action_id)
-        # Return a success response
+
         return jsonify({"status": "success", "message": "Data saved successfully!", "data": action_response})
     except KeyError as e:
         return jsonify({"status": "error", "message": f"Missing key: {e}"}), 400
     except ValueError as e:
         return jsonify({"status": "error", "message": str(e)}), 400
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
+        return jsonify({"status": "error", "message": str(e)})
 
 
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
@@ -130,7 +124,6 @@ def case_get_tasks(caseid):
 
     return response_success("", data=ret)
 
-
 @case_tasks_blueprint.route('/case/tasks/state', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks_state(caseid):
@@ -139,7 +132,6 @@ def case_get_tasks_state(caseid):
         return response_success(data=os)
     else:
         return response_error('No tasks state for this case.')
-
 
 @case_tasks_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
@@ -239,7 +231,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
     comments_map = get_case_tasks_comments_count([task.id])
-    taskActionResponses = get_task_responses_list() 
+    taskActionResponses = get_task_responses_list(task.id) 
         # Serialize datetime objects for rendering
     return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
                            comments_map=comments_map, attributes=task.custom_attributes ,taskActionResponses=taskActionResponses)
