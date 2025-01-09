@@ -46,7 +46,7 @@ services:
       - ./ui/dist:/iriswebapp/static
 
   frontend:
-    image: node:18-alpine
+    image: node:22-alpine
     container_name: iris_sveltekit_frontend
     working_dir: /app
     environment:
