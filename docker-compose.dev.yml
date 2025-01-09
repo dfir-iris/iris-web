@@ -57,6 +57,7 @@ services:
       - ORIGIN=https://127.0.0.1
       - PROTOCOL_HEADER=x-forwarded-proto
       - HOST_HEADER=x-forwarded-host
+      - NODE_ENV=development
     volumes:
       - ${IRIS_SVELTEKIT_FRONTEND_DIR}:/app # Map the frontend directory dynamically
       - /app/node_modules # Ensure `node_modules` is preserved inside the container
