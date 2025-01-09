@@ -8,6 +8,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.2
 flask-marshmallow==1.2.1
 Flask-Caching==2.3.0
+flask-cors==5.0.0
 marshmallow==3.23.1
 marshmallow-sqlalchemy==1.1.0
 gunicorn==23.0.0

@@ -22,7 +22,7 @@ set -e
 
 # envsubst will make a substitution on every $variable in a file, since the nginx file contains nginx variable like $host, we have to limit the substitution to this set
 # otherwise, each nginx variable will be replaced by an empty string
-envsubst '${INTERFACE_HTTPS_PORT} ${IRIS_UPSTREAM_SERVER} ${IRIS_UPSTREAM_PORT} ${SERVER_NAME} ${KEY_FILENAME} ${CERT_FILENAME}' < /etc/nginx/nginx.conf > /tmp/nginx.conf
+envsubst '${INTERFACE_HTTPS_PORT} ${IRIS_UPSTREAM_SERVER} ${IRIS_UPSTREAM_PORT} ${SERVER_NAME} ${KEY_FILENAME} ${CERT_FILENAME} ${IRIS_FRONTEND_SERVER} ${IRIS_FRONTEND_PORT}' < /etc/nginx/nginx.conf > /tmp/nginx.conf
 cp /tmp/nginx.conf /etc/nginx/nginx.conf
 rm /tmp/nginx.conf
 

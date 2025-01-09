@@ -108,6 +108,8 @@ services:
     environment:
       - IRIS_UPSTREAM_SERVER
       - IRIS_UPSTREAM_PORT
+      - IRIS_FRONTEND_SERVER
+      - IRIS_FRONTEND_PORT
       - INTERFACE_HTTPS_PORT
       - SERVER_NAME
       - CERT_FILENAME

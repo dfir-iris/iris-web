@@ -66,7 +66,9 @@ logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT
 
 app = Flask(__name__, static_folder='../static')
 
-CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://localhost:8000"])
+# CORS(app,
+#      supports_credentials=True,
+#      resources={r"/api/*": {"origins": ["http://127.0.0.1:5137", "http://localhost:5173"]}})
 
 
 def ac_current_user_has_permission(*permissions):
@@ -102,7 +104,7 @@ app.config.from_object('app.configuration.Config')
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='None'
+    SESSION_COOKIE_SAMESITE='Lax'
 )
 
 cache = Cache(app)
@@ -148,6 +150,10 @@ def shutdown_session(exception=None):
 
 @app.after_request
 def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
 
     return response
 
