@@ -36,10 +36,10 @@ from app.models.authorization import User
 from app.schema.marshables import UserSchema
 
 
-auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-@auth_bp.post('/login')
+@auth_blueprint.post('/login')
 def login():
     """
     Login endpoint. Handles taking user/pass combo and authenticating a local session or returning an error.
@@ -67,7 +67,7 @@ def login():
     return response_api_success(data=authed_user)
 
 
-@auth_bp.get('/logout')
+@auth_blueprint.get('/logout')
 def logout():
     """
     Logout function. Erase its session and redirect to index i.e login
@@ -106,7 +106,7 @@ def logout():
     return redirect(not_authenticated_redirection_url('/'))
 
 
-@auth_bp.route('/whoami', methods=['GET'])
+@auth_blueprint.route('/whoami', methods=['GET'])
 def whoami():
     """
     Returns information about the currently authenticated user.
