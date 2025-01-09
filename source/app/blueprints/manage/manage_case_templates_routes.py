@@ -214,11 +214,6 @@ def add_case_template(caseid):
         # Commit the template to generate an ID
         db.session.commit()
 
-        # # Execute and save triggers
-        # for trigger in case_template_dict.get("triggers", []):
-        #     print(f"Executing trigger for case template ID {case_template.id}: {trigger}")
-        #     execute_and_save_trigger(trigger, case_template.id)
-
     except Exception as e:
         print("Error adding case template:", e)  
         db.session.rollback()  

@@ -1,6 +1,5 @@
 function toggleJsonViewer(button) {
     const responseId = button.getAttribute('data-task');
-    console.log("Task ID in toggle:", typeof responseId);
     let id = parseInt(responseId);
     if (isNaN(id)) {
         console.error("Invalid task ID:", responseId);

@@ -357,23 +357,26 @@ def api_add_case():
         if not case_template_id:
             raise BusinessProcessingError("Missing 'case_template_id' in request.")
 
+        # Create the case first
+        case, msg = create(request_data)
+        case_id = case.case_id  # Retrieve the case_id of the created case
+
         # Get triggers for the case_template_id
         triggers = get_triggers_by_case_template_id(case_template_id)
 
         if not triggers:
             raise BusinessProcessingError("No triggers found for the provided case_template_id.")
 
-        # Execute and save each trigger
+        # Execute and save each trigger using the case_id
         for trigger in triggers:
-            execute_and_save_trigger(trigger,case_template_id)
+            execute_and_save_trigger(trigger, case_id)
 
-        # Create the case
-        case, msg = create(request_data)
-
+        # Return success response
         return response_success(msg, data=case_schema.dump(case))
 
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
+
 
 
 

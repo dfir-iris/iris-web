@@ -24,11 +24,14 @@ from app.models.authorization import User
 from app.schema.marshables import CaseResponseSchema
 
 
-def get_case_responses_list() -> List[dict]:
-    """Get a list of case responses.
+def get_case_responses_list_by_case_id(case_id: int) -> List[dict]:
+    """Get a list of case responses filtered by case_id.
+
+    Args:
+        case_id (int): The ID of the case for which to fetch responses.
 
     Returns:
-        List[dict]: List of case responses.
+        List[dict]: List of case responses associated with the specified case_id.
     """
     case_response = CaseResponse.query.with_entities(
         CaseResponse.id,
@@ -38,9 +41,10 @@ def get_case_responses_list() -> List[dict]:
         CaseResponse.trigger,
         CaseResponse.body,
         User.name.label('created_by')
-    ).all()
+    ).filter(CaseResponse.case == case_id).all()  # Filter responses by case_id
 
     return [row._asdict() for row in case_response]
+
 
 
 def get_case_response_by_id(response_id: int) -> CaseResponse:

@@ -534,7 +534,7 @@ def get_filtered_cases(current_user_id,
     return filtered_cases
 
 
-def execute_and_save_trigger(trigger, case_template_id):
+def execute_and_save_trigger(trigger, case_id):
     try:
         # Extract webhook_id from the trigger
         webhook_id = trigger.get("webhook_id")
@@ -556,7 +556,7 @@ def execute_and_save_trigger(trigger, case_template_id):
 
         # Execute the webhook request
         print(f"Executing webhook request to URL: {url} with data: {trigger}")
-        response = requests.post(url, json=trigger)
+        response = requests.post(url, json=trigger , verify=False)
         print(f"Webhook Response Status Code: {response.status_code}")  # Log response status
         print(f"Webhook Response Content: {response.text}")  # Log response content
 
@@ -564,7 +564,7 @@ def execute_and_save_trigger(trigger, case_template_id):
         if response.status_code == 200:
             results = response.json()
             print(f"Webhook Execution Results: {results}")  # Log the result of the execution
-            save_results(results, case_template_id, webhook_id)  # Assuming save_results is implemented to handle the output
+            save_results(results, case_id, webhook_id)  # Assuming save_results is implemented to handle the output
             return f"Trigger executed successfully and saved for webhook_id {webhook_id}."
         else:
             raise ValueError(
@@ -577,7 +577,7 @@ def execute_and_save_trigger(trigger, case_template_id):
         return str(e)
 
 
-def save_results(data, case_template_id, webhook_id):
+def save_results(data, case_id, webhook_id):
     """
     Save the results of a webhook execution into the CaseResponse model.
     
@@ -588,7 +588,7 @@ def save_results(data, case_template_id, webhook_id):
     try:
         # Create a new CaseResponse object
         case_response = CaseResponse(
-            case=case_template_id,
+            case=case_id,
             trigger=webhook_id,
             body=data,
         )
