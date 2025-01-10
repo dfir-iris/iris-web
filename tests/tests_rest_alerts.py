@@ -40,11 +40,11 @@ class TestsRestAlerts(TestCase):
         self.assertEqual(200, response.status_code)
 
     def test_alerts_filter_with_alerts_filter_should_not_fail(self):
-        response = self._subject.get('/alerts/filter', query_parameters={'alert_assets': 'some assert name'})
+        response = self._subject.get('/api/v2/alerts', query_parameters={'alert_assets': 'some assert name'})
         self.assertEqual(200, response.status_code)
 
     def test_alerts_filter_with_iocs_filter_should_not_fail(self):
-        response = self._subject.get('/alerts/filter', query_parameters={'alert_iocs': 'some ioc value'})
+        response = self._subject.get('api/v2/alerts', query_parameters={'alert_iocs': 'some ioc value'})
         self.assertEqual(200, response.status_code)
 
     def test_merge_alert_into_a_case_should_not_fail(self):
