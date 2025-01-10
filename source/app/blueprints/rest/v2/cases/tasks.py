@@ -19,7 +19,6 @@
 from flask import Blueprint
 from flask import request
 
-from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
@@ -28,7 +27,6 @@ from app.blueprints.access_controls import ac_api_requires
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import ObjectNotFoundError
 from app.business.errors import BusinessProcessingError
-from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_create
 from app.business.tasks import tasks_get
 from app.models.authorization import CaseAccessLevel
@@ -83,31 +81,3 @@ def get_case_task(case_id, identifier):
         return response_api_created(task_schema.dump(task))
     except ObjectNotFoundError:
         return response_api_not_found()
-
-
-@case_tasks_bp.delete('/<int:identifier>')
-@ac_api_requires()
-def delete_case_task(case_id, identifier):
-    """
-    Handle deleting a task from a case
-
-    Args:
-        case_id (int): The case ID
-        identifier (int): The task ID    
-    """
-
-    try:
-        task = tasks_get(identifier)
-
-        if task.task_case_id != case_id:
-            raise ObjectNotFoundError()
-
-        if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.full_access]):
-            return ac_api_return_access_denied(caseid=identifier)
-
-        tasks_delete(task)
-        return response_api_deleted()
-    except ObjectNotFoundError:
-        return response_api_not_found()
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
