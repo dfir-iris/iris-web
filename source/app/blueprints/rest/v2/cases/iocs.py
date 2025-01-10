@@ -38,12 +38,12 @@ from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_api_return_access_denied
 
-case_iocs_bp = Blueprint('case_ioc_rest_v2',
-                         __name__,
-                         url_prefix='/<int:case_id>/iocs')
+case_iocs_blueprint = Blueprint('case_ioc_rest_v2',
+                                __name__,
+                                url_prefix='/<int:case_id>/iocs')
 
 
-@case_iocs_bp.get('', strict_slashes=False)
+@case_iocs_blueprint.get('', strict_slashes=False)
 @ac_api_requires()
 def get_case_iocs(case_id):
     """
@@ -98,7 +98,7 @@ def get_case_iocs(case_id):
     return response_api_success(data=iocs)
 
 
-@case_iocs_bp.post('', strict_slashes=False)
+@case_iocs_blueprint.post('', strict_slashes=False)
 @ac_api_requires()
 def add_ioc_to_case(case_id):
     """
@@ -121,7 +121,7 @@ def add_ioc_to_case(case_id):
         return response_api_error(e.get_message())
 
 
-@case_iocs_bp.delete('/<int:identifier>')
+@case_iocs_blueprint.delete('/<int:identifier>')
 @ac_api_requires()
 def delete_case_ioc(case_id, identifier):
     """
@@ -148,7 +148,7 @@ def delete_case_ioc(case_id, identifier):
         return response_api_error(e.get_message())
 
 
-@case_iocs_bp.get('/<int:identifier>')
+@case_iocs_blueprint.get('/<int:identifier>')
 @ac_api_requires()
 def get_case_ioc(case_id, identifier):
     """
@@ -171,7 +171,7 @@ def get_case_ioc(case_id, identifier):
         return response_api_not_found()
 
 
-@case_iocs_bp.put('/<int:identifier>')
+@case_iocs_blueprint.put('/<int:identifier>')
 @ac_api_requires()
 def update_ioc(case_id, identifier):
     """

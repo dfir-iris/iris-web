@@ -34,12 +34,12 @@ from app.business.tasks import tasks_get
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 
-case_tasks_bp = Blueprint('case_tasks',
-                          __name__,
-                          url_prefix='/cases/<int:case_id>/tasks')
+case_tasks_blueprint = Blueprint('case_tasks',
+                                 __name__,
+                                 url_prefix='/cases/<int:case_id>/tasks')
 
 
-@case_tasks_bp.post('', strict_slashes=False)
+@case_tasks_blueprint.post('', strict_slashes=False)
 @ac_api_requires()
 def add_case_task(case_id):
     """
@@ -59,7 +59,7 @@ def add_case_task(case_id):
         return response_api_error(e.get_message())
 
 
-@case_tasks_bp.get('/<int:identifier>')
+@case_tasks_blueprint.get('/<int:identifier>')
 @ac_api_requires()
 def get_case_task(case_id, identifier):
     """
@@ -85,7 +85,7 @@ def get_case_task(case_id, identifier):
         return response_api_not_found()
 
 
-@case_tasks_bp.delete('/<int:identifier>')
+@case_tasks_blueprint.delete('/<int:identifier>')
 @ac_api_requires()
 def delete_case_task(case_id, identifier):
     """

@@ -37,12 +37,12 @@ from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 from app.blueprints.access_controls import ac_api_return_access_denied
 
-case_assets_bp = Blueprint('case_assets',
-                           __name__,
-                           url_prefix='/<int:case_id>/assets')
+case_assets_blueprint = Blueprint('case_assets',
+                                  __name__,
+                                  url_prefix='/<int:case_id>/assets')
 
 
-@case_assets_bp.get('', strict_slashes=False)
+@case_assets_blueprint.get('', strict_slashes=False)
 @ac_api_requires()
 def case_list_assets(case_id):
     """
@@ -69,7 +69,7 @@ def case_list_assets(case_id):
         return response_api_error(e.get_message())
 
 
-@case_assets_bp.post('', strict_slashes=False)
+@case_assets_blueprint.post('', strict_slashes=False)
 @ac_api_requires()
 def add_asset(case_id):
     """
@@ -91,7 +91,7 @@ def add_asset(case_id):
         return response_api_error(e.get_message())
 
 
-@case_assets_bp.get('/<int:identifier>')
+@case_assets_blueprint.get('/<int:identifier>')
 @ac_api_requires()
 def get_asset(case_id, identifier):
     """
@@ -121,7 +121,7 @@ def get_asset(case_id, identifier):
         return response_api_error(e.get_message())
 
 
-@case_assets_bp.delete('/<int:identifier>')
+@case_assets_blueprint.delete('/<int:identifier>')
 @ac_api_requires()
 def delete_asset(case_id, identifier):
     """

@@ -28,9 +28,9 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
-from app.blueprints.rest.v2.cases.assets import case_assets_bp
-from app.blueprints.rest.v2.cases.iocs import case_iocs_bp
-from app.blueprints.rest.v2.cases.tasks import case_tasks_bp
+from app.blueprints.rest.v2.cases.assets import case_assets_blueprint
+from app.blueprints.rest.v2.cases.iocs import case_iocs_blueprint
+from app.blueprints.rest.v2.cases.tasks import case_tasks_blueprint
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.datamgmt.case.case_db import get_case
@@ -45,16 +45,16 @@ from app.models.authorization import CaseAccessLevel
 
 
 # Create blueprint & import child blueprints
-api_v2_case_blueprint = Blueprint('cases',
-                                  __name__,
-                                  url_prefix='/cases')
-api_v2_case_blueprint.register_blueprint(case_assets_bp)
-api_v2_case_blueprint.register_blueprint(case_iocs_bp)
-api_v2_case_blueprint.register_blueprint(case_tasks_bp)
+cases_blueprint = Blueprint('cases',
+                            __name__,
+                            url_prefix='/cases')
+cases_blueprint.register_blueprint(case_assets_blueprint)
+cases_blueprint.register_blueprint(case_iocs_blueprint)
+cases_blueprint.register_blueprint(case_tasks_blueprint)
 
 
 # Routes
-@api_v2_case_blueprint.post('', strict_slashes=False)
+@cases_blueprint.post('', strict_slashes=False)
 @ac_api_requires(Permissions.standard_user)
 def create_case():
     """
@@ -68,7 +68,7 @@ def create_case():
         return response_api_error(e.get_message(), e.get_data())
 
 
-@api_v2_case_blueprint.get('', strict_slashes=False)
+@cases_blueprint.get('', strict_slashes=False)
 @ac_api_requires()
 def get_cases() -> Response:
     """
@@ -133,7 +133,7 @@ def get_cases() -> Response:
     return response_api_success(data=cases)
 
 
-@api_v2_case_blueprint.get('/<int:identifier>')
+@cases_blueprint.get('/<int:identifier>')
 @ac_api_requires()
 def case_routes_get(identifier):
     """
@@ -148,7 +148,7 @@ def case_routes_get(identifier):
     return response_api_success(CaseSchemaForAPIV2().dump(case))
 
 
-@api_v2_case_blueprint.delete('/<int:identifier>')
+@cases_blueprint.delete('/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
     """
