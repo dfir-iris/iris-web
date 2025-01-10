@@ -75,6 +75,6 @@ class TestsRestAlerts(TestCase):
             'alert_customer_id': 1
         }
         self._subject.create('/alerts/add', body)
-        response = self._subject.get('/alerts/filter', query_parameters={'alert_title': alert_title}).json()
-        self.assertEqual(1, response['data']['total'])
+        response = self._subject.get('/api/v2/alerts', query_parameters={'alert_title': alert_title}).json()
+        self.assertEqual(1, response['total'])
 
