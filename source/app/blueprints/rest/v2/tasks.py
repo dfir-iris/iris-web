@@ -19,6 +19,7 @@
 from flask import Blueprint
 
 from app.blueprints.rest.endpoints import response_api_not_found
+from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.access_controls import ac_api_requires
@@ -28,6 +29,7 @@ from app.business.tasks import tasks_get
 from app.business.errors import ObjectNotFoundError
 from app.business.errors import BusinessProcessingError
 from app.models.authorization import CaseAccessLevel
+from app.schema.marshables import CaseTaskSchema
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 
 
@@ -35,15 +37,27 @@ tasks_blueprint = Blueprint('tasks',
                             __name__,
                             url_prefix='/tasks')
 
+
+@tasks_blueprint.get('/<int:identifier>')
+@ac_api_requires()
+def get_case_task(identifier):
+
+    try:
+        task = tasks_get(identifier)
+
+        if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=task.task_case_id)
+
+        task_schema = CaseTaskSchema()
+        # TODO should be response_api_success => add a test
+        return response_api_created(task_schema.dump(task))
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+
 @tasks_blueprint.delete('/<int:identifier>')
 @ac_api_requires()
 def delete_case_task(identifier):
-    """
-    Handle deleting a task from a case
-
-    Args:
-        identifier (int): The task identifier
-    """
 
     try:
         task = tasks_get(identifier)
