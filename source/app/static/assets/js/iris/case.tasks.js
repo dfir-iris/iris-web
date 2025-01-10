@@ -171,7 +171,7 @@ function edit_task(id) {
     load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
     $('#modal_add_task').modal({ show: true });
     edit_in_task_desc();
-    loadTableData()
+    loadTableData(g_task_id)
     const actionsList = $('#actionsList');
 
     fetch(webHooksurl, {
@@ -232,10 +232,10 @@ function edit_task(id) {
   });
 }
 
-function loadTableData() {
+function loadTableData(task_id) {
     $("#action_table").dataTable({
       ajax: {
-        url: "/case/task/action_response",
+        url: `/case/task/action_responses/${task_id}`,
         contentType: "application/json",
         type: "GET",
         data: function (d) {

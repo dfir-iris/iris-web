@@ -24,7 +24,7 @@ from app.models.authorization import User
 from app.schema.marshables import TaskResponseSchema
 
 
-def get_task_responses_list() -> List[dict]:
+def get_task_responses_list(task_id: int) -> List[dict]:
     """Get a list of task responses.
 
     Returns:
@@ -37,10 +37,7 @@ def get_task_responses_list() -> List[dict]:
         TaskResponse.task,
         TaskResponse.action,
         TaskResponse.body,
-        User.name.label('created_by'))
-    # ).join(
-    #     TaskResponse.created_by_user
-    # ).all()
+        User.name.label('created_by')).filter(TaskResponse.task == task_id).all()
 
     return [row._asdict() for row in task_responses]
 

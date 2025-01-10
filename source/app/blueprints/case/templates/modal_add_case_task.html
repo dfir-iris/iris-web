@@ -141,7 +141,7 @@
                             </button>
                         </div>
                     
-                        {% if taskActionResponses %}
+
                         <div class="card-body">
                             <div class="table-responsive" id="action_table_wrapper">
                                 <table class="table display wrap col-border table-striped table-hover dataTable"
@@ -156,9 +156,11 @@
                                             <th>Created By</th>
                                         </tr>
                                     </thead>
+                                    {% if taskActionResponses %}
                                     <tbody id="actionTableBody">
                                         <!-- table rows will be populated here -->
                                     </tbody>
+                                    {% endif %}
                                 </table>
                             </div>
                     
@@ -174,7 +176,6 @@
                         </div>
                         {% endif %}
                     </div>
-                    {% endif %}
                 </div>
             </div>
             {% include 'modals/modal_attributes_tabs.html' %}

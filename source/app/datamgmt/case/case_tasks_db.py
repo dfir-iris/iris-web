@@ -30,6 +30,7 @@ from app.models import Comments
 from app.models import TaskComments
 from app.models import TaskStatus
 from app.models.authorization import User
+from app.models.models import TaskResponse
 
 
 def get_tasks_status():
@@ -282,10 +283,12 @@ def get_case_task_comment(task_id, comment_id):
 
 def delete_task(task_id):
     with db.session.begin_nested():
+        # Delete task assignees
         TaskAssignee.query.filter(
             TaskAssignee.task_id == task_id
         ).delete()
 
+        # Get all comment IDs associated with the task
         com_ids = TaskComments.query.with_entities(
             TaskComments.comment_id
         ).filter(
@@ -293,13 +296,21 @@ def delete_task(task_id):
         ).all()
 
         com_ids = [c.comment_id for c in com_ids]
+
+        # Delete task comments
         TaskComments.query.filter(TaskComments.comment_id.in_(com_ids)).delete()
 
+        # Delete comments
         Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
 
+        # Delete task responses that reference the task
+        TaskResponse.query.filter(TaskResponse.task == task_id).delete()
+
+        # Finally, delete the task itself
         CaseTasks.query.filter(
             CaseTasks.id == task_id
         ).delete()
+
 
 
 def delete_task_comment(task_id, comment_id):

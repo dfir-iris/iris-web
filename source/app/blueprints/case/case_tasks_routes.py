@@ -231,15 +231,17 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
     comments_map = get_case_tasks_comments_count([task.id])
+    print(f"task id:",task.id)
     taskActionResponses = get_task_responses_list(task.id) 
         # Serialize datetime objects for rendering
     return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
                            comments_map=comments_map, attributes=task.custom_attributes ,taskActionResponses=taskActionResponses)
 
-@case_tasks_blueprint.route('/case/task/action_response', methods=['GET'])
-def case_task_action_response():
+@case_tasks_blueprint.route('/case/task/action_responses/<int:cur_id>', methods=['GET'])
+def case_task_action_response(cur_id):
     try:
-        taskActionResponses = get_task_responses_list()
+        
+        taskActionResponses = get_task_responses_list(cur_id)
 
         # Serialize datetime objects for rendering and the 'body' field
         for taskActionResponse in taskActionResponses:
