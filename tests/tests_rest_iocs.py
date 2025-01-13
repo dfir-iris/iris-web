@@ -194,3 +194,10 @@ class TestsRestIocs(TestCase):
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}', {'ioc_type_id': '123456789'})
         self.assertEqual(400, response.status_code)
 
+    def test_rest_case_should_return_error_ioc_when_permission_denied(self):
+        user = self._subject.create_dummy_user()
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 1, 'ioc_value': 'IOC value'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body)
+        response = user.get(f'/api/v2/cases/{case_identifier}/iocs')
+        self.assertEqual(403, response.status_code)
