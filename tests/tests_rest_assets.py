@@ -35,11 +35,12 @@ class TestsRestAssets(TestCase):
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
-        response = self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        response = self._subject.delete(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(204, response.status_code)
 
     def test_delete_asset_with_missing_asset_identifier_should_return_404(self):
-        response = self._subject.delete(f'/api/v2/assets/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.delete(f'/api/v2/{case_identifier}/assets/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_create_asset_should_work(self):
@@ -76,7 +77,7 @@ class TestsRestAssets(TestCase):
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
-        response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
+        response = self._subject.get(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(200, response.status_code)
 
     def test_get_asset_should_return_404_after_it_was_deleted(self):
@@ -84,8 +85,8 @@ class TestsRestAssets(TestCase):
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
-        self._subject.delete(f'/api/v2/assets/{asset_identifier}')
-        response = self._subject.get(f'/api/v2/assets/{asset_identifier}')
+        self._subject.delete(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
+        response = self._subject.get(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(404, response.status_code)
 
     def test_delete_asset_should_increment_asset_state(self):
@@ -95,7 +96,7 @@ class TestsRestAssets(TestCase):
         asset_identifier = response['asset_id']
         response = self._subject.get('/case/assets/state', {'cid': case_identifier}).json()
         state = response['data']['object_state']
-        self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        self._subject.delete(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
         response = self._subject.get('/case/assets/state', {'cid': case_identifier}).json()
         self.assertEqual(state + 1, response['data']['object_state'])
 
@@ -107,7 +108,7 @@ class TestsRestAssets(TestCase):
         body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test', 'ioc_links': [ioc_identifier]}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
-        response = self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        response = self._subject.delete(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(204, response.status_code)
 
     def test_delete_asset_should_not_fail_when_it_has_associated_comments(self):
@@ -116,7 +117,7 @@ class TestsRestAssets(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
         self._subject.create(f'/case/assets/{asset_identifier}/comments/add', {'comment_text': 'comment text'})
-        response = self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        response = self._subject.delete(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(204, response.status_code)
 
     def test_delete_asset_should_delete_associated_comments(self):
@@ -126,7 +127,7 @@ class TestsRestAssets(TestCase):
         asset_identifier = response['asset_id']
         response = self._subject.create(f'/case/assets/{asset_identifier}/comments/add', {'comment_text': 'comment text'}).json()
         comment_identifier = response['data']['comment_id']
-        self._subject.delete(f'/api/v2/assets/{asset_identifier}')
+        self._subject.delete(f'/api/v2/{case_identifier}/assets/{asset_identifier}')
         response = self._subject.create(f'/case/assets/{case_identifier}/comments/{comment_identifier}/edit', {'comment_text': 'new comment text'})
         # TODO should ideally rather be 404 here
         self.assertEqual(400, response.status_code)

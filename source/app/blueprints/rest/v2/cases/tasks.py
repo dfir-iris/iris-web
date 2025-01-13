@@ -31,7 +31,7 @@ from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
-                                 url_prefix='/cases/<int:case_id>/tasks')
+                                 url_prefix='/<int:case_id>/tasks')
 
 @case_tasks_blueprint.post('', strict_slashes=False)
 @ac_api_requires()

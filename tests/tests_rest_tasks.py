@@ -51,7 +51,7 @@ class TestsRestTasks(TestCase):
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         task_identifier = response['id']
-        response = self._subject.get(f'/api/v2/tasks/{task_identifier}')
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks/{task_identifier}')
         self.assertEqual(201, response.status_code)
 
     def test_get_task_with_missing_task_identifier_should_return_error(self):
@@ -59,7 +59,7 @@ class TestsRestTasks(TestCase):
         body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title', 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
-        response = self._subject.get(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_delete_task_should_return_204(self):
@@ -69,7 +69,7 @@ class TestsRestTasks(TestCase):
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         task_identifier = response['id']
-        test = self._subject.delete(f'/api/v2/tasks/{task_identifier}')
+        test = self._subject.delete(f'/api/v2/cases/{case_identifier}/tasks/{task_identifier}')
         self.assertEqual(204, test.status_code)
 
     def test_delete_task_with_missing_task_identifier_should_return_404(self):
@@ -78,5 +78,5 @@ class TestsRestTasks(TestCase):
         body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
-        test = self._subject.delete(f'/api/v2/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        test = self._subject.delete(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, test.status_code)

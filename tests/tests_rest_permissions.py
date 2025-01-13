@@ -111,7 +111,7 @@ class TestsRestPermissions(TestCase):
         }
         self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
 
-        response = user.delete(f'/api/v2/iocs/{ioc_identifier}')
+        response = user.delete(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}')
         self.assertEqual(403, response.status_code)
 
     def test_get_asset_should_return_403_when_user_has_insufficient_rights(self):
@@ -126,7 +126,7 @@ class TestsRestPermissions(TestCase):
         }
         self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
 
-        response = user.get(f'/api/v2/assets/{asset_identifier}')
+        response = user.get(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(403, response.status_code)
 
     def test_delete_asset_should_return_403_when_user_has_insufficient_rights(self):
@@ -141,7 +141,7 @@ class TestsRestPermissions(TestCase):
         }
         self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
 
-        response = user.delete(f'/api/v2/assets/{asset_identifier}')
+        response = user.delete(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(403, response.status_code)
 
     def test_get_task_should_return_403_when_user_has_insufficient_rights(self):
@@ -156,7 +156,7 @@ class TestsRestPermissions(TestCase):
         }
         self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
 
-        response = user.get(f'/api/v2/tasks/{task_identifier}')
+        response = user.get(f'/api/v2/{case_identifier}/tasks/{task_identifier}')
         self.assertEqual(403, response.status_code)
 
     def test_delete_task_should_return_403_when_user_has_insufficient_rights(self):
@@ -171,5 +171,5 @@ class TestsRestPermissions(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         task_identifier = response['id']
 
-        response = user.delete(f'/api/v2/tasks/{task_identifier}')
+        response = user.delete(f'/api/v2/{case_identifier}/tasks/{task_identifier}')
         self.assertEqual(403, response.status_code)

@@ -46,14 +46,14 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': ioc_type_id, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         test = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         current_id = test['ioc_id']
-        response = self._subject.get(f'/api/v2/iocs/{current_id}').json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs/{current_id}').json()
         self.assertEqual(ioc_type_id, response['ioc_type_id'])
 
     def test_get_ioc_with_missing_ioc_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
-        test = self._subject.get('/api/v2/iocs/None').json()
+        test = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs/None').json()
         self.assertEqual('error', test['status'])
 
     def test_delete_ioc_should_return_204(self):
@@ -61,11 +61,12 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
-        response = self._subject.delete(f'/api/v2/iocs/{ioc_identifier}')
+        response = self._subject.delete(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}')
         self.assertEqual(204, response.status_code)
 
     def test_delete_ioc_with_missing_ioc_identifier_should_return_404(self):
-        response = self._subject.delete(f'/api/v2/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.delete(f'/api/v2/cases/{case_identifier}/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_get_iocs_should_not_fail(self):
@@ -107,7 +108,8 @@ class TestsRestIocs(TestCase):
         self.assertIn(ioc_type_identifier, identifiers)
 
     def test_get_ioc_should_return_404_when_not_present(self):
-        response = self._subject.get(f'/api/v2/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_get_ioc_should_return_200_on_success(self):
@@ -115,7 +117,7 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
-        response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}')
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}')
         self.assertEqual(200, response.status_code)
 
     def test_get_iocs_should_include_tlp_information(self):
@@ -147,7 +149,7 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
-        response = self._subject.get(f'/api/v2/iocs/{ioc_identifier}').json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}').json()
         self.assertEqual([], response['link'])
 
     def test_create_ioc_should_not_create_two_iocs_with_identical_type_and_value(self):
@@ -163,7 +165,7 @@ class TestsRestIocs(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
         self._subject.create(f'/case/ioc/{ioc_identifier}/comments/add', {'comment_text': 'comment text'})
-        self._subject.delete(f'/api/v2/iocs/{ioc_identifier}')
+        self._subject.delete(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}')
         response = self._subject.delete(f'/api/v2/cases/{case_identifier}')
         self.assertEqual(204, response.status_code)
         
@@ -172,7 +174,7 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
-        response = self._subject.update(f'/api/v2/iocs/{ioc_identifier}', {'ioc_value': '9.9.9.9'})
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}', {'ioc_value': '9.9.9.9'})
         self.assertEqual(200, response.status_code)
 
     def test_update_ioc_should_return_updated_value(self):
@@ -181,7 +183,7 @@ class TestsRestIocs(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
         new_value = '9.9.9.9'
-        response = self._subject.update(f'/api/v2/iocs/{ioc_identifier}', {'ioc_value': new_value}).json()
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}', {'ioc_value': new_value}).json()
         self.assertEqual(new_value, response['ioc_value'])
 
     def test_update_ioc_should_return_an_error_when_ioc_type_identifier_is_out_of_range(self):
@@ -189,6 +191,6 @@ class TestsRestIocs(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
-        response = self._subject.update(f'/api/v2/iocs/{ioc_identifier}', {'ioc_type_id': '123456789'})
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}', {'ioc_type_id': '123456789'})
         self.assertEqual(400, response.status_code)
 
