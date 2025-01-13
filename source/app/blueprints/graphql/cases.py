@@ -54,6 +54,9 @@ class CaseObject(SQLAlchemyObjectType):
     @staticmethod
     def resolve_iocs(root, info, ioc_id=None, ioc_uuid=None, ioc_value=None, ioc_type_id=None, ioc_description=None, ioc_tlp_id=None, ioc_tags=None,
                      ioc_misp=None, user_id=None, **kwargs):
+
+        permissions_check_current_user_has_some_case_access(root.case_id, [CaseAccessLevel.full_access])
+
         return iocs_build_filter_query(ioc_id=ioc_id, ioc_uuid=ioc_uuid, ioc_value=ioc_value,
                                        ioc_type_id=ioc_type_id, ioc_description=ioc_description,
                                        ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
