@@ -2471,7 +2471,7 @@ class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     case_name: str = auto_field('name', required=True, validate=Length(min=2), allow_none=False)
     case_description: str = auto_field('description', required=True, validate=Length(min=2))
     case_soc_id: int = auto_field('soc_id', required=True)
-    case_customer: int = auto_field('client_id', required=True)
+    case_customer_id: int = auto_field('client_id', required=True)
     case_organisations: List[int] = fields.List(fields.Integer, required=False)
     protagonists: List[Dict[str, Any]] = fields.List(fields.Dict, required=False)
     case_tags: Optional[str] = fields.String(required=False)
@@ -2480,6 +2480,7 @@ class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     state = ma.Nested(CaseStateSchema)
+    case_customer = ma.Nested(CustomerSchema)
     review_status = ma.Nested(ReviewStatusSchema)
 
     class Meta:
