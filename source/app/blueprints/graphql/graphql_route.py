@@ -83,10 +83,12 @@ class Query(ObjectType):
 
     @staticmethod
     def resolve_case(root, info, case_id):
+        permissions_check_current_user_has_some_case_access(case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
         return cases_get_by_identifier(case_id)
 
     @staticmethod
     def resolve_ioc(root, info, ioc_id):
+        permissions_check_current_user_has_some_case_access(root.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
         return iocs_get(ioc_id)
 
 

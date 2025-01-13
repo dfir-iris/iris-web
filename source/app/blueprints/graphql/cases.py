@@ -62,6 +62,10 @@ class CaseObject(SQLAlchemyObjectType):
                                        ioc_tlp_id=ioc_tlp_id, ioc_tags=ioc_tags, ioc_misp=ioc_misp,
                                        user_id=user_id)
 
+    @staticmethod
+    def resolve_case(root, info, case_id):
+        permissions_check_current_user_has_some_case_access(case_id, [CaseAccessLevel.full_access])
+        return Cases.query.get(case_id)
 
 class CaseConnection(Connection):
     class Meta:
