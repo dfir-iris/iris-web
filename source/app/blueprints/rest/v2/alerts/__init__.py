@@ -29,11 +29,7 @@ from app.models.authorization import Permissions
 alerts_blueprint = Blueprint('alerts', __name__, url_prefix='/alerts')
 
 
-<<<<<<< HEAD
-@alerts_bp.get('')
-=======
-@alerts_blueprint.get('/filter')
->>>>>>> develop
+@alerts_blueprint.get('')
 @ac_api_requires(Permissions.alerts_read)
 def alerts_list_route() -> Response:
     """
