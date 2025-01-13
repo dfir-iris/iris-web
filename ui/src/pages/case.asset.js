@@ -172,7 +172,8 @@ function delete_asset(asset_id) {
     do_deletion_prompt("You are about to delete asset #" + asset_id)
     .then((doDelete) => {
         if (doDelete) {
-            delete_request_api(`/api/v2/assets/${asset_id}`)
+            let cid = get_caseid();
+            delete_request_api(`/api/v2/cases/${cid}/assets/${asset_id}`)
             .done((data, textStatus) => {
                 if (textStatus === 'nocontent') {
                     reload_assets();

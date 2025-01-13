@@ -133,7 +133,8 @@ function delete_task(id) {
     do_deletion_prompt("You are about to delete task #" + id)
     .then((doDelete) => {
         if (doDelete) {
-            delete_request_api(`/api/v2/tasks/${id}`)
+            let cid = get_caseid();
+            delete_request_api(`/api/v2/cases/${cid}/tasks/${id}`)
             .done((data, textStatus) => {
                  if (textStatus === 'nocontent') {
                     get_tasks();

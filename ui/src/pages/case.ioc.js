@@ -248,8 +248,8 @@ function update_ioc(ioc_id) {
     }
     data['ioc_description'] = g_ioc_desc_editor.getValue();
     data['custom_attributes'] = attributes;
-
-    put_request_api(`/api/v2/iocs/${ioc_id}`, JSON.stringify(data))
+    let cid = get_caseid();
+    put_request_api(`/api/v2/${cid}/iocs/${ioc_id}`, JSON.stringify(data))
     .done((data, textStatus) => {
         if (textStatus == 'success') {
             reload_iocs();
@@ -274,7 +274,8 @@ function delete_ioc(ioc_id) {
     do_deletion_prompt("You are about to delete IOC #" + ioc_id)
     .then((doDelete) => {
         if (doDelete) {
-            delete_request_api(`/api/v2/iocs/${ioc_id}`)
+            let cid = get_caseid();
+            delete_request_api(`/api/v2/${cid}/iocs/${ioc_id}`)
             .done((data, textStatus) => {
                 if (textStatus === 'nocontent') {
                     reload_iocs();

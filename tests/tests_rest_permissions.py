@@ -84,7 +84,7 @@ class TestsRestPermissions(TestCase):
         }
         self._subject.create(f'/manage/users/{user.get_identifier()}/cases-access/update', body)
 
-        response = user.get(f'/api/v2/iocs/{ioc_identifier}')
+        response = user.get(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}')
         self.assertEqual(403, response.status_code)
 
     def test_get_iocs_should_return_403_when_user_has_insufficient_rights(self):
