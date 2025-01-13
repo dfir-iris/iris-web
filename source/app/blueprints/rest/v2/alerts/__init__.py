@@ -26,10 +26,14 @@ from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.models.authorization import Permissions
 
 
-alerts_bp = Blueprint('alerts', __name__, url_prefix='/alerts')
+alerts_blueprint = Blueprint('alerts', __name__, url_prefix='/alerts')
 
 
+<<<<<<< HEAD
 @alerts_bp.get('')
+=======
+@alerts_blueprint.get('/filter')
+>>>>>>> develop
 @ac_api_requires(Permissions.alerts_read)
 def alerts_list_route() -> Response:
     """

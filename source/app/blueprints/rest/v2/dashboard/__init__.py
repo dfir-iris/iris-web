@@ -23,12 +23,12 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.datamgmt.dashboard.dashboard_db import list_user_cases, list_user_tasks, list_user_reviews
 from app.schema.marshables import CaseDetailsSchema, CaseTaskSchema, CaseSchema
 
-dashboard_bp = Blueprint('dashboard',
-                         __name__,
-                         url_prefix='/dashboard')
+dashboard_blueprint = Blueprint('dashboard',
+                                __name__,
+                                url_prefix='/dashboard')
 
 
-@dashboard_bp.route('/cases/list', methods=['GET'])
+@dashboard_blueprint.route('/cases/list', methods=['GET'])
 @ac_api_requires()
 def list_own_cases():
     cases = list_user_cases(
@@ -38,14 +38,14 @@ def list_own_cases():
     return response_api_success(data=CaseDetailsSchema(many=True).dump(cases))
 
 
-@dashboard_bp.route('/tasks/list', methods=['GET'])
+@dashboard_blueprint.route('/tasks/list', methods=['GET'])
 @ac_api_requires()
 def list_own_tasks():
     ct = list_user_tasks()
     return response_api_success(data=CaseTaskSchema(many=True).dump(ct))
 
 
-@dashboard_bp.route('/reviews/list', methods=['GET'])
+@dashboard_blueprint.route('/reviews/list', methods=['GET'])
 @ac_api_requires()
 def list_own_reviews():
     reviews = list_user_reviews()

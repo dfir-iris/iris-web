@@ -21,23 +21,23 @@ from flask import Blueprint
 from flask import request
 
 from app.blueprints.access_controls import ac_api_requires
-from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.endpoints import response_api_created, response_api_deleted, response_api_not_found
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
-from app.business.errors import BusinessProcessingError
-from app.business.iocs import iocs_create
+from app.business.errors import BusinessProcessingError, ObjectNotFoundError
+from app.business.iocs import iocs_create, iocs_get, iocs_delete, iocs_update
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_api_return_access_denied
 
-case_iocs_bp = Blueprint('case_ioc_rest_v2',
-                         __name__,
-                         url_prefix='/<int:case_id>/iocs')
+case_iocs_blueprint = Blueprint('case_ioc_rest_v2',
+                                __name__,
+                                url_prefix='/<int:case_id>/iocs')
 
 
-@case_iocs_bp.get('', strict_slashes=False)
+@case_iocs_blueprint.get('', strict_slashes=False)
 @ac_api_requires()
 def get_case_iocs(case_id):
     """
@@ -92,7 +92,7 @@ def get_case_iocs(case_id):
     return response_api_success(data=iocs)
 
 
-@case_iocs_bp.post('', strict_slashes=False)
+@case_iocs_blueprint.post('', strict_slashes=False)
 @ac_api_requires()
 def add_ioc_to_case(case_id):
     """
@@ -113,3 +113,80 @@ def add_ioc_to_case(case_id):
     except BusinessProcessingError as e:
         log.error(e)
         return response_api_error(e.get_message())
+
+
+@case_iocs_blueprint.delete('/<int:identifier>')
+@ac_api_requires()
+def delete_case_ioc(case_id, identifier):
+    """
+    Deletes an IOC from a case
+
+    Args:
+        case_id (int): The case ID
+        identifier (int): The IOC ID
+    """
+
+    try:
+        ioc = iocs_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=ioc.case_id)
+        if ioc.case_id != case_id:
+            raise ObjectNotFoundError()
+
+        iocs_delete(ioc)
+        return response_api_deleted()
+
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+
+
+@case_iocs_blueprint.get('/<int:identifier>')
+@ac_api_requires()
+def get_case_ioc(case_id, identifier):
+    """
+    Handle getting an IOC from a case
+
+    Args:
+        case_id (int): The Case ID
+        identifier (int): The IOC ID
+    """
+    ioc_schema = IocSchemaForAPIV2()
+    try:
+        ioc = iocs_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=ioc.case_id)
+        if ioc.case_id != case_id:
+            raise ObjectNotFoundError()
+
+        return response_api_success(ioc_schema.dump(ioc))
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+
+@case_iocs_blueprint.put('/<int:identifier>')
+@ac_api_requires()
+def update_ioc(case_id, identifier):
+    """
+    Handle updating an IOC from a case
+
+    Args:
+        case_id (int): The Case ID
+        identifier (int): The IOC ID
+    """
+    ioc_schema = IocSchemaForAPIV2()
+    try:
+        ioc = iocs_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id,
+                                                          [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=ioc.case_id)
+
+        ioc, _ = iocs_update(ioc, request.get_json())
+        return response_api_success(ioc_schema.dump(ioc))
+
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
