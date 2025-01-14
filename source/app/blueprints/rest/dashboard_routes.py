@@ -27,6 +27,7 @@ from flask_login import current_user, logout_user
 from app import db, app
 
 from app import oidc_client
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
@@ -255,6 +256,7 @@ def gtask_delete(cur_id, caseid):
 
 
 @dashboard_rest_blueprint.route('/user/cases/list', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/cases?case_owner_id=<user_id>')
 @ac_api_requires()
 def list_own_cases():
     cases = list_user_cases(
