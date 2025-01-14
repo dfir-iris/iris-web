@@ -101,7 +101,7 @@ def event_view_modal(cur_id, caseid, url_redir):
     form.event_in_summary.data = event.event_in_summary
 
     categories = get_events_categories()
-    form.event_category_id.choices = categories
+    form.event_category_id.choices = [(c.id, c.name) for c in categories]
 
     assets = get_case_assets_for_tm(caseid)
     iocs = get_case_iocs_for_tm(caseid)
