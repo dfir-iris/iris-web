@@ -64,7 +64,7 @@ from app.blueprints.access_controls import ac_api_return_access_denied
 case_assets_rest_blueprint = Blueprint('case_assets_rest', __name__)
 
 
-@case_assets_rest_blueprint.route('/case/assets/list', methods=['GET'])
+@case_assets_rest_blueprint.route('/case/assets/filter', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_list_assets(caseid):
