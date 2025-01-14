@@ -31,7 +31,7 @@ from app.business.assets import assets_create
 from app.business.assets import assets_get_detailed
 from app.business.assets import assets_get
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.case.case_assets_db import case_assets_db_exists
+from app.datamgmt.case.case_assets_db import case_assets_db_exists, get_raw_assets
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
@@ -66,7 +66,47 @@ case_assets_rest_blueprint = Blueprint('case_assets_rest', __name__)
 
 @case_assets_rest_blueprint.route('/case/assets/filter', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-@ac_api_requires()
+def case_filter_assets(caseid):
+    """
+    Returns the list of assets from the case.
+    :return: A JSON object containing the assets of the case, enhanced with assets seen on other cases.
+    """
+
+    # Get all assets objects from the case and the customer id
+    ret = {}
+    assets = CaseAssetsSchema().dump(get_raw_assets(caseid), many=True)
+    customer_id = get_case_client_id(caseid)
+
+    ioc_links_req = get_assets_ioc_links(caseid)
+
+    cache_ioc_link = {}
+    for ioc in ioc_links_req:
+
+        if ioc.asset_id not in cache_ioc_link:
+            cache_ioc_link[ioc.asset_id] = [ioc._asdict()]
+        else:
+            cache_ioc_link[ioc.asset_id].append(ioc._asdict())
+
+    cases_access = get_user_cases_fast(current_user.id)
+
+    for a in assets:
+        a['ioc_links'] = cache_ioc_link.get(a['asset_id'])
+
+        if len(assets) < 300:
+            # Find similar assets from other cases with the same customer
+            a['link'] = list(get_similar_assets(
+                a['asset_name'], a['asset_type_id'], caseid, customer_id, cases_access))
+        else:
+            a['link'] = []
+
+    ret['assets'] = assets
+
+    ret['state'] = get_assets_state(caseid=caseid)
+
+    return response_success("", data=ret)
+
+@case_assets_rest_blueprint.route('/case/assets/list', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
     """
     Returns the list of assets from the case.
