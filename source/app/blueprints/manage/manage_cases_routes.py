@@ -19,6 +19,9 @@ import logging as log
 import os
 import traceback
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
+from flask import jsonify, current_app, g
+from threading import Thread
 
 from flask import Blueprint
 from flask import redirect
@@ -347,7 +350,7 @@ def add_case_modal():
 @ac_api_requires(Permissions.standard_user)
 def api_add_case():
     case_schema = CaseSchema()
-    
+
     try:
         # Extract case template data from the request
         request_data = request.get_json()
@@ -367,11 +370,18 @@ def api_add_case():
         if not triggers:
             raise BusinessProcessingError("No triggers found for the provided case_template_id.")
 
-        # Execute and save each trigger using the case_id
-        for trigger in triggers:
-            execute_and_save_trigger(trigger, case_id)
+        # Function to execute a trigger in a new thread with app context
+        def execute_trigger_with_context(trigger, app):
+            with app.app_context():
+                print('in Execute')
+                execute_and_save_trigger(trigger, case_id)
+                print(f"Trigger {trigger} executed successfully.")
 
-        # Return success response
+        for trigger in triggers:
+            thread = Thread(target=execute_trigger_with_context, args=(trigger, current_app._get_current_object()))
+            thread.start()
+
+        # Return success response immediately
         return response_success(msg, data=case_schema.dump(case))
 
     except BusinessProcessingError as e:
