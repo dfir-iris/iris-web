@@ -65,6 +65,109 @@ from app.blueprints.responses import response_success
 alerts_rest_blueprint = Blueprint('alerts_rest', __name__)
 
 
+@alerts_rest_blueprint.route('/alerts/filter', methods=['GET'])
+@ac_api_requires(Permissions.alerts_read)
+def alerts_list_route() -> Response:
+    """
+    Get a list of alerts from the database
+
+    args:
+        caseid (str): The case id
+
+    returns:
+        Response: The response
+    """
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    alert_ids_str = request.args.get('alert_ids')
+    alert_ids = None
+    if alert_ids_str:
+        try:
+
+            if ',' in alert_ids_str:
+                alert_ids = [int(alert_id) for alert_id in alert_ids_str.split(',')]
+
+            else:
+                alert_ids = [int(alert_ids_str)]
+
+        except ValueError:
+            return response_error('Invalid alert id')
+
+    alert_assets_str = request.args.get('alert_assets')
+    alert_assets = None
+    if alert_assets_str:
+        try:
+
+            if ',' in alert_assets_str:
+                alert_assets = [str(alert_asset) for alert_asset in alert_assets_str.split(',')]
+
+            else:
+                alert_assets = [str(alert_assets_str)]
+
+        except ValueError:
+            return response_error('Invalid alert asset')
+
+    alert_iocs_str = request.args.get('alert_iocs')
+    alert_iocs = None
+    if alert_iocs_str:
+        try:
+
+            if ',' in alert_iocs_str:
+                alert_iocs = [str(alert_ioc) for alert_ioc in alert_iocs_str.split(',')]
+
+            else:
+                alert_iocs = [str(alert_iocs_str)]
+
+        except ValueError:
+            return response_error('Invalid alert ioc')
+
+    fields_str = request.args.get('fields')
+    if fields_str:
+        # Split into a list
+        fields = [field.strip() for field in fields_str.split(',') if field.strip()]
+    else:
+        fields = None
+
+    try:
+        filtered_data = get_filtered_alerts(
+            start_date=request.args.get('creation_start_date'),
+            end_date=request.args.get('creation_end_date'),
+            source_start_date=request.args.get('source_start_date'),
+            source_end_date=request.args.get('source_end_date'),
+            source_reference=request.args.get('source_reference'),
+            title=request.args.get('alert_title'),
+            description=request.args.get('alert_description'),
+            status=request.args.get('alert_status_id', type=int),
+            severity=request.args.get('alert_severity_id', type=int),
+            owner=request.args.get('alert_owner_id', type=int),
+            source=request.args.get('alert_source'),
+            tags=request.args.get('alert_tags'),
+            classification=request.args.get('alert_classification_id', type=int),
+            client=request.args.get('alert_customer_id'),
+            case_id=request.args.get('case_id', type=int),
+            alert_ids=alert_ids,
+            page=page,
+            per_page=per_page,
+            sort=request.args.get('sort', 'desc', type=str),
+            custom_conditions=request.args.get('custom_conditions'),
+            assets=alert_assets,
+            iocs=alert_iocs,
+            resolution_status=request.args.get('alert_resolution_id', type=int),
+            current_user_id=current_user.id,
+            fields=fields
+        )
+
+    except Exception as e:
+        app.app.logger.exception(e)
+        return response_error(str(e))
+
+    if filtered_data is None:
+        return response_error('Filtering error')
+
+    return response_success(data=filtered_data)
+
+
 @alerts_rest_blueprint.route('/alerts/add', methods=['POST'])
 @ac_api_requires(Permissions.alerts_write)
 def alerts_add_route() -> Response:
@@ -120,7 +223,8 @@ def alerts_add_route() -> Response:
                             creation_date=new_alert.alert_source_event_time)
 
 
-        register_related_alerts(new_alert, assets_list=assets, iocs_list=iocs)
+        # TODO: Remove or update as it take too long
+        # register_related_alerts(new_alert, assets_list=assets, iocs_list=iocs)
 
         new_alert = call_modules_hook('on_postload_alert_create', data=new_alert)
 
@@ -295,7 +399,7 @@ def alerts_update_route(alert_id) -> Response:
             add_obj_history_entry(updated_alert, f"updated alert: {','.join(activity_data)}")
         else:
             track_activity(f"updated alert #{alert_id}", ctx_less=True)
-            add_obj_history_entry(updated_alert, "updated alert")
+            add_obj_history_entry(updated_alert, f"updated alert")
 
         db.session.commit()
 
@@ -441,6 +545,7 @@ def alerts_delete_route(alert_id) -> Response:
     returns:
         Response: The response
     """
+
     alert = get_alert_by_id(alert_id)
     if not alert:
         return response_error('Alert not found')
@@ -486,6 +591,7 @@ def alerts_escalate_route(alert_id) -> Response:
     returns:
         Response: The response
     """
+
     alert = get_alert_by_id(alert_id)
     if not alert:
         return response_error('Alert not found')
@@ -819,6 +925,7 @@ def alerts_batch_escalate_route() -> Response:
         app.app.logger.exception(e)
         # Handle any errors during deserialization or DB operations
         return response_error(str(e))
+
 
 
 @alerts_rest_blueprint.route('/alerts/<int:alert_id>/comments/list', methods=['GET'])
