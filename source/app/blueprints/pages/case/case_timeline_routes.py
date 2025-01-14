@@ -139,6 +139,7 @@ def case_add_event_modal(caseid, url_redir):
     iocs = get_case_iocs_for_tm(caseid)
     def_cat = get_default_cat()
     categories = get_events_categories()
+    print(categories)
     form.event_category_id.choices = categories
     form.event_in_graph.data = True
 

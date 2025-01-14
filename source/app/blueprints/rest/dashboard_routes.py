@@ -252,3 +252,45 @@ def gtask_delete(cur_id, caseid):
     track_activity("deleted global task ID {}".format(cur_id), caseid=caseid)
 
     return response_success("Task deleted")
+
+
+@dashboard_rest_blueprint.route('/user/cases/list', methods=['GET'])
+@ac_api_requires()
+def list_own_cases():
+    cases = list_user_cases(
+        request.args.get('show_closed', 'false', type=str).lower() == 'true'
+    )
+
+    return response_success("", data=CaseDetailsSchema(many=True).dump(cases))
+
+
+
+@dashboard_rest_blueprint.route('/user/tasks/list', methods=['GET'])
+@ac_api_requires()
+def get_utasks():
+    ct = list_user_tasks()
+
+    if ct:
+        output = [c._asdict() for c in ct]
+    else:
+        output = []
+
+    ret = {
+        "tasks_status": get_tasks_status(),
+        "tasks": output
+    }
+
+    return response_success("", data=ret)
+
+
+@dashboard_rest_blueprint.route('/user/reviews/list', methods=['GET'])
+@ac_api_requires()
+def get_reviews():
+    ct = list_user_reviews()
+
+    if ct:
+        output = [c._asdict() for c in ct]
+    else:
+        output = []
+
+    return response_success("", data=output)
