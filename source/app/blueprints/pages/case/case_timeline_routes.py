@@ -38,6 +38,7 @@ from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.blueprints.access_controls import ac_case_requires
 from app.blueprints.responses import response_error
+from app.schema.marshables import EventCategorySchema
 
 _EVENT_TAGS = ['Network', 'Server', 'ActiveDirectory', 'Computer', 'Malware', 'User Interaction']
 
@@ -139,8 +140,7 @@ def case_add_event_modal(caseid, url_redir):
     iocs = get_case_iocs_for_tm(caseid)
     def_cat = get_default_cat()
     categories = get_events_categories()
-    print(categories)
-    form.event_category_id.choices = categories
+    form.event_category_id.choices = [(c.id, c.name) for c in categories]
     form.event_in_graph.data = True
 
     return render_template("modal_add_case_event.html", form=form, event=event,
