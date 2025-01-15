@@ -34,6 +34,7 @@ from app.blueprints.rest.v2.cases.tasks import case_tasks_blueprint
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.datamgmt.case.case_db import get_case
+from app.business.cases import cases_update
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.schema.marshables import CaseSchemaForAPIV2
@@ -161,5 +162,17 @@ def case_routes_delete(identifier):
     try:
         cases_delete(identifier)
         return response_api_deleted()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+
+@cases_blueprint.put('/<int:identifier>')
+@ac_api_requires(Permissions.standard_user)
+def rest_v2_cases_update(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    try:
+        case, _ = cases_update(identifier, request.get_json())
+        return response_api_success(CaseSchemaForAPIV2().dump(case))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())

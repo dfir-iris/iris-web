@@ -169,3 +169,8 @@ class TestsRestCases(TestCase):
         }
         response = self._subject.create('/api/v2/cases', body).json()
         self.assertIn('case_customer', response['data'])
+
+    def test_update_case_should_not_fail(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'case_name': 'new name' })
+        self.assertEqual(200, response.status_code)
