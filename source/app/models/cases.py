@@ -19,8 +19,8 @@ import uuid
 
 from datetime import datetime
 from flask_login import current_user
-# IMPORTS ------------------------------------------------
-from sqlalchemy import BigInteger, CheckConstraint
+from sqlalchemy import BigInteger
+from sqlalchemy import CheckConstraint
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Date
@@ -34,7 +34,8 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref
 
 from app import db
 from app.datamgmt.states import update_assets_state

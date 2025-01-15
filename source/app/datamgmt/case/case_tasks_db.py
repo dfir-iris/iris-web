@@ -26,7 +26,7 @@ from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_c
 from app.datamgmt.states import update_tasks_state
 from app.models import CaseTasks
 from app.models import TaskAssignee
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Comments
 from app.models import TaskComments
 from app.models import TaskStatus

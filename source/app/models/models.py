@@ -125,7 +125,6 @@ def get_or_create(session, model, **kwargs):
         return instance
 
 
-# CONTENT ------------------------------------------------
 class Client(db.Model):
     __tablename__ = 'client'
 

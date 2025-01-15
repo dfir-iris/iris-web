@@ -18,7 +18,7 @@
 from sqlalchemy import and_, case, or_, asc
 from sqlalchemy import desc
 
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import UserCaseEffectiveAccess

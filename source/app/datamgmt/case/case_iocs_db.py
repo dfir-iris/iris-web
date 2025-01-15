@@ -25,7 +25,7 @@ from app import db
 from app import app
 from app.datamgmt.states import update_ioc_state
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Client
 from app.models import Comments
 from app.models import Ioc

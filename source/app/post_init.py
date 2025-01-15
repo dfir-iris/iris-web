@@ -48,7 +48,7 @@ from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
-from app.models import create_safe_limited
+from app.models.models import create_safe_limited
 from app.models.alerts import Severity, AlertStatus, AlertResolutionStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
