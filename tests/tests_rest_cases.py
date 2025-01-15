@@ -183,3 +183,8 @@ class TestsRestCases(TestCase):
         identifier = self._subject.create_dummy_case()
         response = self._subject.update(f'/api/v2/cases/{identifier}', { 'case_name': 'new name' })
         self.assertEqual(200, response.status_code)
+
+    def test_update_case_should_update_severity(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'severity_id': 5 }).json()
+        self.assertEqual(5, response['severity_id'])
