@@ -199,3 +199,8 @@ class TestsRestCases(TestCase):
         identifier = self._subject.create_dummy_case()
         response = self._subject.update(f'/api/v2/cases/{identifier}', { 'owner_id': user.get_identifier() }).json()
         self.assertEqual(user.get_identifier(), response['owner']['id'])
+
+    def test_update_case_should_allow_to_update_state(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'state_id': 2 }).json()
+        self.assertEqual(2, response['state']['state_id'])
