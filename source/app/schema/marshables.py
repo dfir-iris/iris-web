@@ -81,9 +81,9 @@ from app.models import IocType
 from app.models import IrisModule
 from app.models import Notes
 from app.models import NotesGroup
-from app.models import ServerSettings
-from app.models import TaskStatus
-from app.models import Tlp
+from app.models.models import ServerSettings
+from app.models.models import TaskStatus
+from app.models.models import Tlp
 from app.models.alerts import Alert
 from app.models.alerts import Severity
 from app.models.alerts import AlertStatus
