@@ -188,7 +188,7 @@ if is_authentication_oidc():
         if not user:
             log.warning(f"OIDC user {user_login} not found in database")
             if app.config.get("AUTHENTICATION_CREATE_USER_IF_NOT_EXIST") is False:
-                log.warning(f"Authentication is set to not create user if not exists")
+                log.warning('Authentication is set to not create user if not exists')
                 track_activity(
                     f"OIDC user {user_login} not found in database",
                     ctx_less=True,
