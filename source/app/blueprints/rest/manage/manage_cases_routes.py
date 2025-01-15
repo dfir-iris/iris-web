@@ -264,6 +264,7 @@ def api_list_case():
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/cases/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
 def update_case_info(cur_id):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
