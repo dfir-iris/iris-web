@@ -19,24 +19,17 @@
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
-from flask import session
 from flask import url_for
 from flask_login import current_user
-from flask_login import logout_user
 from flask_wtf import FlaskForm
 
 from app import app
-from app import db
-from app import oidc_client
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.forms import CaseGlobalTaskForm
 from app.iris_engine.access_control.utils import ac_get_user_case_counts
-from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import User
 from app.models.models import GlobalTasks
-from app.blueprints.access_controls import ac_requires, is_authentication_oidc, not_authenticated_redirection_url
-
-from oic.oauth2.exception import GrantError
+from app.blueprints.access_controls import ac_requires
 
 dashboard_blueprint = Blueprint(
     'index',
