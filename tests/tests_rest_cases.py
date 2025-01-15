@@ -49,6 +49,15 @@ class TestsRestCases(TestCase):
         })
         self.assertEqual(201, response.status_code)
 
+    def test_create_case_with_spurious_slash_should_return_404(self):
+        response = self._subject.create('/api/v2/cases/', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        })
+        self.assertEqual(404, response.status_code)
+
     def test_create_case_with_missing_name_should_return_400(self):
         response = self._subject.create('/api/v2/cases', {
             'case_description': 'description',

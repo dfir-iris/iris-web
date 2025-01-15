@@ -55,7 +55,7 @@ cases_blueprint.register_blueprint(case_tasks_blueprint)
 
 
 # Routes
-@cases_blueprint.post('', strict_slashes=False)
+@cases_blueprint.post('')
 @ac_api_requires(Permissions.standard_user)
 def create_case():
     """
@@ -69,7 +69,7 @@ def create_case():
         return response_api_error(e.get_message(), e.get_data())
 
 
-@cases_blueprint.get('', strict_slashes=False)
+@cases_blueprint.get('')
 @ac_api_requires()
 def get_cases() -> Response:
     """
