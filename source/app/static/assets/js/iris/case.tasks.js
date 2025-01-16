@@ -346,38 +346,41 @@ function expandActionDiv(actionDetails,task_id, action_id) {
     };
   
     post_request_api(
-        "/case/jsoneditor",
-        JSON.stringify(requestData),
-        false,
-        function () {
-            window.swal({
+      "/case/jsoneditor",
+      JSON.stringify(requestData),
+      false,
+      function () {
+          window.swal({
               content: {
-                element: "div",
-                attributes: {
-                  innerHTML: `
-                      <div style="text-align: center; font-family: Arial, sans-serif;">
-                          <img src="/static/assets/img/loader.gif" alt="Loader" style="display: block; margin: 0 auto; width: 100px;">
-                          <h2 style="font-size: 24px; font-weight: 600; margin: 0;">Processing</h2>
-                          <p style="font-size: 16px; color: #666; margin-top: 10px;">Executing action, please wait...</p>
-                      </div>
-                  `
-              }
-            },
-            button: false,
-            allowOutsideClick: false,
-            });
-        }
-    )
-    .done((data) => {
-        if (notify_auto_api(data)) {
+                  element: "div",
+                  attributes: {
+                      innerHTML: `
+                          <div style="text-align: center; font-family: Arial, sans-serif;">
+                              <img src="/static/assets/img/loader.gif" alt="Loader" style="display: block; margin: 0 auto; width: 100px;">
+                              <h2 style="font-size: 24px; font-weight: 600; margin: 0;">Processing</h2>
+                              <p style="font-size: 16px; color: #666; margin-top: 10px;">Executing action in the background, please wait...</p>
+                          </div>
+                      `
+                  }
+              },
+              button: false,
+              allowOutsideClick: false,
+              timer: 3000,
+              timerProgressBar: true, 
+          });
+      }
+  )
+  .done((data) => {
+      if (notify_auto_api(data)) {
           refresh_action_rsponse_table();
-        }
-    })
-    .always(() => {
-        window.swal.close(); // Close the loading dialog
-    });
+      }
+  })
+  .always(() => {
+      window.swal.close(); 
+  });
   
-    return false;
+  return false;
+  
   });
 
   function refresh_action_rsponse_table(){

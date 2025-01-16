@@ -395,3 +395,20 @@ def get_triggers_by_case_template_id(case_template_id) -> CaseTemplate:
 
     # Return the triggers array from the template
     return case_template.triggers or []
+
+def get_action_by_case_template_id(case_template_id) -> CaseTemplate:
+    """
+    Retrieves the actions array for a given case_template_id.
+
+    :param case_template_id: The ID of the case template to look up.
+    :param db_session: SQLAlchemy database session.
+    :return: A list of actions or an empty list if none are found.
+    """
+    # Query the case template by ID
+    case_template = CaseTemplate.query.filter_by(id=case_template_id).first()
+    
+    if not case_template:
+        return []  # Return an empty list if the template is not found
+
+    # Return the actions array from the template
+    return case_template.actions or []
