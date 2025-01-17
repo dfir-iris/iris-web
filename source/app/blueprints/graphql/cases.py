@@ -103,7 +103,7 @@ class CaseCreate(Mutation):
             request['case_soc_id'] = soc_id
         if classification_id:
             request['classification_id'] = classification_id
-        case, _ = cases_create(request)
+        case = cases_create(request)
         return CaseCreate(case=case)
 
 

@@ -63,7 +63,7 @@ def create_case():
     """
 
     try:
-        case, _ = cases_create(request.get_json())
+        case = cases_create(request.get_json())
         return response_api_created(CaseSchemaForAPIV2().dump(case))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), e.get_data())
