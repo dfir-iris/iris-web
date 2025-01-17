@@ -228,3 +228,9 @@ class TestsRestCases(TestCase):
         user = self._subject.create_dummy_user()
         response = self._subject.update(f'/api/v2/cases/{identifier}', {'reviewer_id': user.get_identifier()}).json()
         self.assertEqual(user.get_identifier(), response['reviewer_id'])
+
+    def test_update_case_should_allow_to_update_tags(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_tags': 'tag1,tag2'}).json()
+        self.assertEqual('tag1,tag2', response['case_tags'])
+
