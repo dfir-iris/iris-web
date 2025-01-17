@@ -19,13 +19,19 @@
 from flask import Blueprint
 from flask import request
 
-from app.blueprints.rest.endpoints import response_api_error, response_api_not_found, response_api_deleted
+from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.endpoints import response_api_not_found
+from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.access_controls import ac_api_requires
 from app.schema.marshables import CaseTaskSchema
-from app.business.errors import BusinessProcessingError, ObjectNotFoundError
-from app.business.tasks import tasks_create, tasks_get, tasks_delete
+from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
+from app.business.tasks import tasks_create
+from app.business.tasks import tasks_get
+from app.business.tasks import tasks_delete
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 
@@ -74,7 +80,7 @@ def get_case_task(case_id, identifier):
             return ac_api_return_access_denied(caseid=task.task_case_id)
 
         task_schema = CaseTaskSchema()
-        return response_api_created(task_schema.dump(task))
+        return response_api_success(task_schema.dump(task))
     except ObjectNotFoundError:
         return response_api_not_found()
 
