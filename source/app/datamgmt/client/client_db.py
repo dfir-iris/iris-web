@@ -22,7 +22,7 @@ from typing import List
 from app import db
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Client
 from app.models import Contact
 from app.models.authorization import User, UserClient

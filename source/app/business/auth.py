@@ -9,7 +9,7 @@ from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
-from app.models import Cases
+from app.models.cases import Cases
 from app.schema.marshables import UserSchema
 
 log = app.logger

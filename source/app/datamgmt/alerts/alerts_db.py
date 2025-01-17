@@ -37,8 +37,16 @@ from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.states import update_timeline_state
 from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.common import parse_bf_date_format
-from app.models import Cases, EventCategory, Tags, AssetsType, Comments, CaseAssets, alert_assets_association, \
-    alert_iocs_association, Ioc, Client
+from app.models.cases import Cases
+from app.models import EventCategory
+from app.models import Tags
+from app.models import AssetsType
+from app.models import Comments
+from app.models import CaseAssets
+from app.models import alert_assets_association
+from app.models import alert_iocs_association
+from app.models import Ioc
+from app.models import Client
 from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus, \
     AlertSimilarity, Severity
 from app.models.authorization import Permissions, User

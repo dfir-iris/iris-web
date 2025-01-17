@@ -27,6 +27,11 @@ jobs:
     steps:
       - name: Check out iris
         uses: actions/checkout@v4
+      - name: Check code with ruff
+        uses: astral-sh/ruff-action@v2
+        with:
+          args: check --output-format=github
+          src: ./source
       - name: Build dockers
         run: |
           # TODO using the environment file from tests to build here. 

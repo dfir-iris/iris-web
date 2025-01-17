@@ -22,7 +22,10 @@ from app import db
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.models import CaseTemplate, Cases, Tags, NoteDirectory
+from app.models.cases import Cases
+from app.models import CaseTemplate
+from app.models import Tags
+from app.models import NoteDirectory
 from app.models.authorization import User
 from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseNoteDirectorySchema, CaseNoteSchema
 

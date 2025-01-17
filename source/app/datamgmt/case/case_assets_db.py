@@ -29,7 +29,7 @@ from app.models import AssetComments
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseEventsAssets
-from app.models import Cases
+from app.models.cases import Cases
 from app.models import Comments
 from app.models import CompromiseStatus
 from app.models import Ioc
