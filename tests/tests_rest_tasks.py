@@ -44,6 +44,13 @@ class TestsRestTasks(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         self.assertEqual(400, response.status_code)
 
+    def test_create_case_with_spurious_slash_should_return_404(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+                'task_title': 'dummy title', 'custom_attributes': {}}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks/', body)
+        self.assertEqual(404, response.status_code)
+
     def test_get_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'task_assignees_id': [2], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
