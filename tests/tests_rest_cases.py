@@ -222,3 +222,9 @@ class TestsRestCases(TestCase):
         customer_identifier = response['data']['customer_id']
         response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_customer': customer_identifier}).json()
         self.assertEqual(customer_identifier, response['case_customer_id'])
+
+    def test_update_case_should_allow_to_update_reviewer(self):
+        identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'reviewer_id': user.get_identifier()}).json()
+        self.assertEqual(user.get_identifier(), response['reviewer_id'])
