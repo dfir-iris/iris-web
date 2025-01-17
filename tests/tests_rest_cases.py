@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from unittest import TestCase
+from uuid import uuid4
 from iris import Iris
 
 
@@ -169,6 +170,11 @@ class TestsRestCases(TestCase):
         response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
         self.assertIn('case_name', response)
 
+    def test_get_case_should_have_field_case_customer_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
+        self.assertIn('case_customer_id', response)
+
     def test_create_case_should_return_data_with_case_customer_when_case_customer_is_an_empty_string(self):
         body = {
             'case_name': 'case name',
@@ -209,3 +215,10 @@ class TestsRestCases(TestCase):
         identifier = self._subject.create_dummy_case()
         response = self._subject.update(f'/api/v2/cases/{identifier}', { 'status_id': 2 }).json()
         self.assertEqual(2, response['status_id'])
+
+    def test_update_case_should_allow_to_update_customer(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.create('/manage/customers/add', { 'customer_name': f'customer{uuid4()}'}).json()
+        customer_identifier = response['data']['customer_id']
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_customer': customer_identifier}).json()
+        self.assertEqual(customer_identifier, response['case_customer_id'])
