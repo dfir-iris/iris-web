@@ -148,6 +148,19 @@ def case_routes_get(identifier):
     return response_api_success(CaseSchemaForAPIV2().dump(case))
 
 
+@cases_blueprint.put('/<int:identifier>')
+@ac_api_requires(Permissions.standard_user)
+def rest_v2_cases_update(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    try:
+        case, _ = cases_update(identifier, request.get_json())
+        return response_api_success(CaseSchemaForAPIV2().dump(case))
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+
+
 @cases_blueprint.delete('/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
@@ -161,17 +174,5 @@ def case_routes_delete(identifier):
     try:
         cases_delete(identifier)
         return response_api_deleted()
-    except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
-
-@cases_blueprint.put('/<int:identifier>')
-@ac_api_requires(Permissions.standard_user)
-def rest_v2_cases_update(identifier):
-    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=identifier)
-
-    try:
-        case, _ = cases_update(identifier, request.get_json())
-        return response_api_success(CaseSchemaForAPIV2().dump(case))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
