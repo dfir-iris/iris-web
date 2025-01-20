@@ -26,13 +26,12 @@ from app import app
 from app import db
 from app import oidc_client
 from app.blueprints.access_controls import is_authentication_ldap
-from app.blueprints.access_controls import is_authentication_oidc, \
-    not_authenticated_redirection_url
+from app.blueprints.access_controls import is_authentication_oidc
+from app.blueprints.access_controls import not_authenticated_redirection_url
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
 from app.business.auth import validate_ldap_login, validate_local_login
 from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import User
 from app.schema.marshables import UserSchema
 
 

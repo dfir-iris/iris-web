@@ -249,8 +249,8 @@ def api_add_case():
     case_schema = CaseSchema()
 
     try:
-        case, msg = cases_create(request.get_json())
-        return response_success(msg, data=case_schema.dump(case))
+        case = cases_create(request.get_json())
+        return response_success('Case created', data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
 
@@ -264,6 +264,7 @@ def api_list_case():
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/cases/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
 def update_case_info(cur_id):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):

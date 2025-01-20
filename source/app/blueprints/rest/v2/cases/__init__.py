@@ -34,6 +34,7 @@ from app.blueprints.rest.v2.cases.tasks import case_tasks_blueprint
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.datamgmt.case.case_db import get_case
+from app.business.cases import cases_update
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.schema.marshables import CaseSchemaForAPIV2
@@ -54,7 +55,7 @@ cases_blueprint.register_blueprint(case_tasks_blueprint)
 
 
 # Routes
-@cases_blueprint.post('', strict_slashes=False)
+@cases_blueprint.post('')
 @ac_api_requires(Permissions.standard_user)
 def create_case():
     """
@@ -62,13 +63,13 @@ def create_case():
     """
 
     try:
-        case, _ = cases_create(request.get_json())
+        case = cases_create(request.get_json())
         return response_api_created(CaseSchemaForAPIV2().dump(case))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), e.get_data())
 
 
-@cases_blueprint.get('', strict_slashes=False)
+@cases_blueprint.get('')
 @ac_api_requires()
 def get_cases() -> Response:
     """
@@ -123,7 +124,6 @@ def get_cases() -> Response:
 
     cases = {
         'total': filtered_cases.total,
-        # TODO should maybe really uniform all return types of paginated list and replace field cases by field data
         'data': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
         'last_page': filtered_cases.pages,
         'current_page': filtered_cases.page,
@@ -146,6 +146,19 @@ def case_routes_get(identifier):
     if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=identifier)
     return response_api_success(CaseSchemaForAPIV2().dump(case))
+
+
+@cases_blueprint.put('/<int:identifier>')
+@ac_api_requires(Permissions.standard_user)
+def rest_v2_cases_update(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    try:
+        case, _ = cases_update(identifier, request.get_json())
+        return response_api_success(CaseSchemaForAPIV2().dump(case))
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
 
 
 @cases_blueprint.delete('/<int:identifier>')

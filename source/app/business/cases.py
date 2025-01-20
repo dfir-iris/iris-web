@@ -78,9 +78,9 @@ def cases_exists(identifier):
     return case_db_exists(identifier)
 
 
-def cases_create(request_json):
+def cases_create(request_data):
     # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
-    request_data = call_modules_hook('on_preload_case_create', request_json, None)
+    request_data = call_modules_hook('on_preload_case_create', request_data, None)
 
     case = _load(request_data)
 
@@ -115,7 +115,7 @@ def cases_create(request_json):
     add_obj_history_entry(case, 'created')
     track_activity(f'new case "{case.name}" created', caseid=case.case_id, ctx_less=False)
 
-    return case, 'Case created'
+    return case
 
 
 def cases_delete(case_identifier):

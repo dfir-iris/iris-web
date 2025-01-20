@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from unittest import TestCase
+from uuid import uuid4
 from iris import Iris
 
 
@@ -48,6 +49,15 @@ class TestsRestCases(TestCase):
             'case_soc_id': ''
         })
         self.assertEqual(201, response.status_code)
+
+    def test_create_case_with_spurious_slash_should_return_404(self):
+        response = self._subject.create('/api/v2/cases/', {
+            'case_name': 'name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        })
+        self.assertEqual(404, response.status_code)
 
     def test_create_case_with_missing_name_should_return_400(self):
         response = self._subject.create('/api/v2/cases', {
@@ -160,6 +170,11 @@ class TestsRestCases(TestCase):
         response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
         self.assertIn('case_name', response)
 
+    def test_get_case_should_have_field_case_customer_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}').json()
+        self.assertIn('case_customer_id', response)
+
     def test_create_case_should_return_data_with_case_customer_when_case_customer_is_an_empty_string(self):
         body = {
             'case_name': 'case name',
@@ -169,3 +184,53 @@ class TestsRestCases(TestCase):
         }
         response = self._subject.create('/api/v2/cases', body).json()
         self.assertIn('case_customer', response['data'])
+
+    def test_update_case_should_not_fail(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'case_name': 'new name' })
+        self.assertEqual(200, response.status_code)
+
+    def test_update_case_should_allow_to_update_severity(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'severity_id': 5 }).json()
+        self.assertEqual(5, response['severity_id'])
+
+    def test_update_case_should_allow_to_update_classification(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'classification_id': 3 }).json()
+        self.assertEqual(3, response['classification_id'])
+
+    def test_update_case_should_allow_to_update_owner(self):
+        user = self._subject.create_dummy_user()
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'owner_id': user.get_identifier() }).json()
+        self.assertEqual(user.get_identifier(), response['owner']['id'])
+
+    def test_update_case_should_allow_to_update_state(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'state_id': 2 }).json()
+        self.assertEqual(2, response['state']['state_id'])
+
+    def test_update_case_should_allow_to_update_status(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'status_id': 2 }).json()
+        self.assertEqual(2, response['status_id'])
+
+    def test_update_case_should_allow_to_update_customer(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.create('/manage/customers/add', { 'customer_name': f'customer{uuid4()}'}).json()
+        customer_identifier = response['data']['customer_id']
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_customer': customer_identifier}).json()
+        self.assertEqual(customer_identifier, response['case_customer_id'])
+
+    def test_update_case_should_allow_to_update_reviewer(self):
+        identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'reviewer_id': user.get_identifier()}).json()
+        self.assertEqual(user.get_identifier(), response['reviewer_id'])
+
+    def test_update_case_should_allow_to_update_tags(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_tags': 'tag1,tag2'}).json()
+        self.assertEqual('tag1,tag2', response['case_tags'])
+

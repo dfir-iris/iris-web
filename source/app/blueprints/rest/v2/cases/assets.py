@@ -38,7 +38,7 @@ case_assets_blueprint = Blueprint('case_assets',
                                   url_prefix='/<int:case_id>/assets')
 
 
-@case_assets_blueprint.get('', strict_slashes=False)
+@case_assets_blueprint.get('')
 @ac_api_requires()
 def case_list_assets(case_id):
     """
@@ -65,7 +65,7 @@ def case_list_assets(case_id):
         return response_api_error(e.get_message())
 
 
-@case_assets_blueprint.post('', strict_slashes=False)
+@case_assets_blueprint.post('')
 @ac_api_requires()
 def add_asset(case_id):
     """

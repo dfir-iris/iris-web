@@ -98,7 +98,7 @@ from app.blueprints.rest.reports_route import reports_rest_blueprint
 from app.blueprints.rest.search_routes import search_rest_blueprint
 from app.blueprints.graphql.graphql_route import graphql_blueprint
 
-from app.blueprints.rest.v2 import rest_v2_bp
+from app.blueprints.rest.v2 import rest_v2_blueprint
 from app.models.authorization import User
 from app.post_init import run_post_init
 
@@ -184,7 +184,7 @@ app.register_blueprint(alerts_rest_blueprint)
 app.register_blueprint(rest_api_blueprint)
 app.register_blueprint(demo_blueprint)
 
-app.register_blueprint(rest_v2_bp)
+app.register_blueprint(rest_v2_blueprint)
 
 
 try:

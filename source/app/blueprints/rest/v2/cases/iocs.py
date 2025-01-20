@@ -37,7 +37,7 @@ case_iocs_blueprint = Blueprint('case_ioc_rest_v2',
                                 url_prefix='/<int:case_id>/iocs')
 
 
-@case_iocs_blueprint.get('', strict_slashes=False)
+@case_iocs_blueprint.get('')
 @ac_api_requires()
 def get_case_iocs(case_id):
     """
@@ -92,7 +92,7 @@ def get_case_iocs(case_id):
     return response_api_success(data=iocs)
 
 
-@case_iocs_blueprint.post('', strict_slashes=False)
+@case_iocs_blueprint.post('')
 @ac_api_requires()
 def add_ioc_to_case(case_id):
     """
