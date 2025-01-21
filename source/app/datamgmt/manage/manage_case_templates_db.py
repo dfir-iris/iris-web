@@ -22,7 +22,7 @@ from typing import List, Optional, Union
 
 from app import db
 from app.datamgmt.case.case_notes_db import add_note
-from app.datamgmt.case.case_tasks_db import add_task
+from app.datamgmt.case.case_tasks_db import add_task, get_task
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models import CaseTemplate, Cases, Tags, NoteDirectory, CaseResponse, TaskResponse
@@ -258,7 +258,7 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
             mapped_task_template = call_modules_hook('on_preload_task_create', data=mapped_task_template, caseid=case.case_id)
 
             task = task_schema.load(mapped_task_template)
-
+            
             assignee_id_list = []
 
             ctask = add_task(task=task,
@@ -387,28 +387,39 @@ def get_triggers_by_case_template_id(case_template_id) -> CaseTemplate:
     :param db_session: SQLAlchemy database session.
     :return: A list of triggers or an empty list if none are found.
     """
-    # Query the case template by ID
+
     case_template = CaseTemplate.query.filter_by(id=case_template_id).first()
     
     if not case_template:
-        return []  # Return an empty list if the template is not found
+        return []  
 
-    # Return the triggers array from the template
+ 
     return case_template.triggers or []
 
-def get_action_by_case_template_id(case_template_id) -> CaseTemplate:
+def get_action_by_case_template_id_and_task_id(case_template_id, task_id, caseid) -> list:
     """
-    Retrieves the actions array for a given case_template_id.
+    Retrieves the actions array for a given case_template_id and task_id.
 
     :param case_template_id: The ID of the case template to look up.
-    :param db_session: SQLAlchemy database session.
+    :param task_id: The ID of the task to look up within the case template.
     :return: A list of actions or an empty list if none are found.
     """
-    # Query the case template by ID
-    case_template = CaseTemplate.query.filter_by(id=case_template_id).first()
-    
-    if not case_template:
-        return []  # Return an empty list if the template is not found
 
-    # Return the actions array from the template
-    return case_template.actions or []
+    case_template = CaseTemplate.query.filter_by(id=case_template_id).first()
+    case_task = get_task(task_id=task_id, caseid=caseid)
+    if not case_template:
+        return []  
+
+    actions = []
+
+    for task in case_template.tasks:
+     
+        if case_task.task_title == task["title"]: 
+           if 'actions' in task:
+
+            for action in task['actions']:
+                actions.append(dict(action))  
+
+    return actions
+
+

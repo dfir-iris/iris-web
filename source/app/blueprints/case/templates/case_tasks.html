@@ -97,8 +97,12 @@
 
 {% endblock content %}
 
+
 {% block javascripts %}
 {% include 'includes/footer_case.html' %}
+<script>
+    const caseTemplateId = {{ case.case_template_id }};
+</script>
 
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
 <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>

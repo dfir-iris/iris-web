@@ -67,7 +67,6 @@ def list_case_templates():
         Response: List of case templates
     """
     case_templates = get_case_templates_list()
-
     # Return the attributes
     return response_success("", data=case_templates)
 

@@ -144,9 +144,9 @@ function delete_task(id) {
 
 
 function edit_task(id) {
+  case_temp_id = caseTemplateId.toString();
   const url = '/case/tasks/' + id + '/modal' + case_param();
-  const webHooksurl = "/manage/webhooks/list" + case_param();
-
+  const webHooksurl = `/manage/webhooks/listbyCasetemplateId/${case_temp_id}/${id}`+case_param();
   $('#modal_add_task_content').load(url, function (response, status, xhr) {
     hide_minimized_modal_box();
     if (status !== "success") {
@@ -171,67 +171,97 @@ function edit_task(id) {
     load_menu_mod_options_modal(id, 'task', $("#task_modal_quick_actions"));
     $('#modal_add_task').modal({ show: true });
     edit_in_task_desc();
-    loadTableData(g_task_id)
+    loadTableData(g_task_id);
+
     const actionsList = $('#actionsList');
 
     fetch(webHooksurl, {
       method: "GET",
       headers: {
-        "Content-Type": "application/json",
+          "Content-Type": "application/json",
       },
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+      // Get the fetched data, assuming the success status is available
+      const fetchedData = data.status === "success" ? data.data : [];
 
-        const fetchedData = data.status === "success" ? data.data : [];
+      // Clear previous items in the actions list
+      actionsList.empty(); 
 
-        actionsList.empty(); 
-
-        if (fetchedData.length === 0) {
-
-          actionsList.append(
-            $('<a>', {
-              class: 'dropdown-item disabled',
-              href: '#',
-              text: 'No actions available',
-            })
-          );
-        } else {
-
-          fetchedData.forEach(function (action) {
-            actionsList.append(
-              $('<a>', {
-                class: 'dropdown-item',
-                href: '#',
-                text: action.name,
-                click: function (e) {
-                  e.preventDefault(); 
-                  expandActionDiv(action.payload_schema, id , action.id);
-                },
-              })
-            );
-          });
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-
-        actionsList.empty().append(
+      if (fetchedData.length === 0) {
+        // If no actions are available, show a disabled item
+        actionsList.append(
           $('<a>', {
             class: 'dropdown-item disabled',
             href: '#',
-            text: 'Failed to load actions',
+            text: 'No actions available',
           })
         );
-      });
-  });
-}
+      } else {
 
+        fetchedData.forEach(function (action) {
+          actionsList.append(
+            $('<a>', {
+              class: 'dropdown-item',
+              href: '#',
+              text: action.display_name, 
+              click: function (e) {
+                e.preventDefault(); 
+                fetchWebhook(action.webhook_id, id)
+              },
+            })
+          );
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching data:", error);
+
+      actionsList.empty().append(
+        $('<a>', {
+          class: 'dropdown-item disabled',
+          href: '#',
+          text: 'Failed to load actions',
+        })
+      );
+    });
+
+  }); 
+} 
+
+function fetchWebhook(action_id , id) {
+  const webhookUrl = '/manage/webhooks/' + action_id;
+
+  fetch(webhookUrl, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      return response.json();
+    })
+    .then((data) => {
+
+      if (data.status === "success") {
+        const actionDetails = data.data; 
+      
+        expandActionDiv(actionDetails, id,action_id); 
+      }
+    })
+    .catch((error) => {
+      console.error('Error fetching action data:', error);
+    });
+}
 function loadTableData(task_id) {
     $("#action_table").dataTable({
       ajax: {
@@ -262,8 +292,6 @@ function loadTableData(task_id) {
         {
           data: "body",
           render: function (data, type, row) {
-            console.log("Body data:", data); 
-
             const task = row.id; 
 
             return `
@@ -285,9 +313,9 @@ function loadTableData(task_id) {
       ],
     });
     setInterval(() => {
-      console.log("calling every 3 second") 
+
       $('#action_table').DataTable().ajax.reload(null, false);
-      console.log("calling every 3 second") // `null, false` prevents table state (pagination, etc.) from resetting
+
     }, 3000);
 }
 
@@ -295,93 +323,86 @@ function loadTableData(task_id) {
 
 
 
-function expandActionDiv(actionDetails,task_id, action_id) {
-  // Reference to the collapsible content div
-  const collapsibleContent = $('#collapsibleContent');
-  const jsonEditorContainer = $('#jsoneditor');
+function expandActionDiv(actionDetails, task_id, action_id) {
 
-  // Show the collapsible content
-  collapsibleContent.slideDown();
+const collapsibleContent = $('#collapsibleContent');
+const jsonEditorContainer = $('#jsoneditor');
 
-  // Reinitialize JSONEditor
-  if (window.jsonEditor) {
-    window.jsonEditor.destroy();
-    window.jsonEditor = null; 
+collapsibleContent.slideDown();
+
+if (window.jsonEditor) {
+  window.jsonEditor.destroy();
+  window.jsonEditor = null;
+}
+
+window.jsonEditor = new JSONEditor(jsonEditorContainer[0], {
+  schema: actionDetails?.payload_schema || {},  // Ensure actionDetails is set before using it
+  theme: 'tailwind',
+  disable_edit_json: true, 
+  disable_properties: true,
+  disable_collapse: true,
+  disable_array_add: true,
+  disable_array_delete: true,  
+  show_errors: "change",
+  form_name_root: " "
+});
+
+window.jsonEditor.on('ready', function () {
+  if (actionDetails?.default) {
+    window.jsonEditor.setValue(actionDetails.default);
+  } else {
+    window.jsonEditor.setValue({});
   }
+});
 
+// Clicking on execute button in the HTML this click event is triggered
+$('#executeBtn').off('click').on('click', function (e) {
+  e.preventDefault();
 
-  window.jsonEditor = new JSONEditor(jsonEditorContainer[0], {
-    schema: actionDetails,
-    theme: 'tailwind',
-    disable_edit_json: true, 
-    disable_properties: true,
-    disable_collapse: true,
-    disable_array_add: true,
-    disable_array_delete: true,  
-    show_errors: "change",
-    form_name_root: " "
+  const updatedData = window.jsonEditor.getValue();
 
-  });
+  const requestData = {
+    action_id: action_id,
+    task_id: task_id,
+    payload: updatedData,
+  };
 
-
-  window.jsonEditor.on('ready', function () {
-
-    if (actionDetails.default) {
-      window.jsonEditor.setValue(actionDetails.default);
-    } else {
-      window.jsonEditor.setValue({});
+  post_request_api(
+    "/case/jsoneditor",
+    JSON.stringify(requestData),
+    false,
+    function () {
+      window.swal({
+        content: {
+          element: "div",
+          attributes: {
+            innerHTML: `
+              <div style="text-align: center; font-family: Arial, sans-serif;">
+                <img src="/static/assets/img/loader.gif" alt="Loader" style="display: block; margin: 0 auto; width: 100px;">
+                <h2 style="font-size: 24px; font-weight: 600; margin: 0;">Processing</h2>
+                <p style="font-size: 16px; color: #666; margin-top: 10px;">Executing action in the background, please wait...</p>
+              </div>
+            `
+          }
+        },
+        button: false,
+        allowOutsideClick: false,
+        timer: 3000,
+        timerProgressBar: true,
+      });
     }
-  });
-
-  // clicking on execute button in the html this click event is triggered
-  $('#executeBtn').off('click').on('click', function (e) {
-    e.preventDefault();
-  
-    const updatedData = window.jsonEditor.getValue();
-  
-    const requestData = {
-        action_id: action_id,
-        task_id: task_id,
-        payload: updatedData,
-    };
-  
-    post_request_api(
-      "/case/jsoneditor",
-      JSON.stringify(requestData),
-      false,
-      function () {
-          window.swal({
-              content: {
-                  element: "div",
-                  attributes: {
-                      innerHTML: `
-                          <div style="text-align: center; font-family: Arial, sans-serif;">
-                              <img src="/static/assets/img/loader.gif" alt="Loader" style="display: block; margin: 0 auto; width: 100px;">
-                              <h2 style="font-size: 24px; font-weight: 600; margin: 0;">Processing</h2>
-                              <p style="font-size: 16px; color: #666; margin-top: 10px;">Executing action in the background, please wait...</p>
-                          </div>
-                      `
-                  }
-              },
-              button: false,
-              allowOutsideClick: false,
-              timer: 3000,
-              timerProgressBar: true, 
-          });
-      }
   )
   .done((data) => {
-      if (notify_auto_api(data)) {
-          refresh_action_rsponse_table();
-      }
+    if (notify_auto_api(data)) {
+      refresh_action_rsponse_table();
+    }
   })
   .always(() => {
-      window.swal.close(); 
+    window.swal.close();
   });
-  
+
   return false;
-  
-  });
+});
 
   function refresh_action_rsponse_table(){
     $('#action_table').DataTable().ajax.reload();

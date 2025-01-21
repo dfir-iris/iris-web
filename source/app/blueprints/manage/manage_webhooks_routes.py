@@ -23,6 +23,7 @@ from app.util import ac_requires_case_identifier
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from app.datamgmt.manage.manage_case_templates_db import get_action_by_case_template_id_and_task_id
 
 manage_webhooks_blueprint = Blueprint('manage_webhooks',
                                             __name__,
@@ -49,10 +50,26 @@ def list_webhooks():
     Returns:
         Response: List of webhooks
     """
+    case_id = request.args.get("cid")  # Use 'cid' since it's coming from query parameters
     webhooks = get_webhooks_list()
 
     # Return the attributes
     return response_success("", data=webhooks)
+
+@manage_webhooks_blueprint.route('/manage/webhooks/listbyCasetemplateId/<int:cur_id>/<int:task_id>', methods=['GET'])
+@ac_api_requires()
+def list_webhooks_by_case_template_id(cur_id, task_id):
+    """Show a list of webhooks by case template id
+
+    Returns:
+        Response: List of webhooks by case template id
+    """
+
+    caseid = request.args.get('cid')
+    webhooks = get_action_by_case_template_id_and_task_id(cur_id, task_id, caseid)
+
+    # Return the attributes
+    return response_success("",data = webhooks)
 
 @manage_webhooks_blueprint.route('/manage/webhooks/<int:cur_id>', methods=['GET'])
 @ac_api_requires(Permissions.webhooks_read)
