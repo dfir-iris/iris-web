@@ -86,6 +86,8 @@ class Cases(db.Model):
 
     review_status = relationship('ReviewStatus')
 
+    case_template_id = Column(String(256), nullable=True)
+
     def __init__(self,
                  name=None,
                  soc_id=None,
@@ -94,7 +96,8 @@ class Cases(db.Model):
                  user=None,
                  custom_attributes=None,
                  classification_id=None,
-                 state_id=None
+                 state_id=None,
+                 case_template_id=None
                  ):
         self.name = name[:200] if name else None,
         self.soc_id = soc_id,
@@ -112,6 +115,7 @@ class Cases(db.Model):
         self.status_id = 0
         self.classification_id = classification_id
         self.state_id = state_id
+        self.case_template_id = case_template_id
 
     def save(self):
         """
