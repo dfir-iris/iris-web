@@ -232,7 +232,7 @@ class EvidenceTypes(db.Model):
 
 
 class Webhook(db.Model):
-    __tablename__ = 'webhooks'
+    __tablename__ = 'webhooksss'
 
     # Metadata
     id = Column(Integer, primary_key=True)
@@ -256,7 +256,7 @@ class Webhook(db.Model):
 
 
 class CaseTemplate(db.Model):
-    __tablename__ = 'case_templatess'
+    __tablename__ = 'case_templatessss'
 
     # Metadata
     id = Column(Integer, primary_key=True)
@@ -276,6 +276,55 @@ class CaseTemplate(db.Model):
     classification = Column(String, nullable=True)
     actions = Column(JSON, nullable=True)
     triggers = Column(JSON, nullable=True)
+    input_params = Column(JSON, nullable=True)
+
+    created_by_user = relationship('User')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_from_dict(self, data: dict):
+        for field, value in data.items():
+            setattr(self, field, value)
+
+class TaskResponse(db.Model):
+    __tablename__ = 'task_response'
+
+    # Metadata
+    id = Column(Integer, primary_key=True)
+    created_by_user_id = Column(Integer, db.ForeignKey('user.id'))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+
+    # Data
+    task = Column(Integer, db.ForeignKey('case_tasks.id'))
+    action = Column(Integer)
+    body = Column(JSON, nullable=True)
+    execution_time = Column(DateTime, server_default=func.now())
+
+    created_by_user = relationship('User')
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def update_from_dict(self, data: dict):
+        for field, value in data.items():
+            setattr(self, field, value)
+
+class CaseResponse(db.Model):
+    __tablename__ = 'case_response'
+
+    # Metadata
+    id = Column(Integer, primary_key=True)
+    created_by_user_id = Column(Integer, db.ForeignKey('user.id'))
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, onupdate=func.now())
+    
+    # Data
+    case = Column(Integer)
+    trigger = Column(Integer)
+    body = Column(JSON, nullable=True)
+    execution_time = Column(DateTime, server_default=func.now())
 
     created_by_user = relationship('User')
 

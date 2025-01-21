@@ -811,6 +811,43 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('asset_id'), 'asset')
 
         return data
+    
+class TaskResponseSchema(ma.Schema):
+    """Schema for serializing and deserializing Task Response objects.
+
+    This schema defines the fields to include when serializing and deserializing Task Response objects.
+    It includes fields for the task response ID, the task ID of the user who created the template, the creation and update
+    timestamps, the task, action, body and execution time of the Task Response.
+
+    """
+    id: int = fields.Integer(dump_only=True)
+    created_by_user_id: int = fields.Integer(required=True)
+    created_at: datetime = fields.DateTime(dump_only=True)
+    updated_at: datetime = fields.DateTime(dump_only=True)
+
+    task: int = fields.Integer(dump_only=True)
+    action: int = fields.Integer(dump_only=True)
+    body: Optional[dict] = fields.Dict(allow_none=True, missing={})
+    execution_time: datetime = fields.DateTime(dump_only=True)
+
+class CaseResponseSchema(ma.Schema):
+    """Schema for serializing and deserializing Case Response objects.
+
+    This schema defines the fields to include when serializing and deserializing case Response objects.
+    It includes fields for the case response ID, the task ID of the user who created the template, the creation and update
+    timestamps, the case, action, body and execution time of the Case Response.
+
+    """
+    id: int = fields.Integer(dump_only=True)
+    created_by_user_id: int = fields.Integer(required=True)
+    created_at: datetime = fields.DateTime(dump_only=True)
+    updated_at: datetime = fields.DateTime(dump_only=True)
+
+    case: int = fields.Integer(dump_only=True)
+    trigger: int = fields.Integer(dump_only=True)
+    body: Optional[dict] = fields.Dict(allow_none=True, missing={})
+    execution_time: datetime = fields.DateTime(dump_only=True)
+
 
 class WebhookSchema(ma.Schema):
     """Schema for serializing and deserializing Webhook objects.
@@ -826,12 +863,8 @@ class WebhookSchema(ma.Schema):
     updated_at: datetime = fields.DateTime(dump_only=True)
     name: str = fields.String(required=True)
     header_auth: Optional[List[Dict[str, str]]] = fields.List(fields.Dict(), allow_none=True, missing=[])
-    payload_schema: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(fields.Dict(),
-                                                                                                allow_none=True,
-                                                                                                missing=[])
     url: Optional[str] = fields.String(allow_none=True, missing="")
-
-
+    payload_schema: Optional[dict] = fields.Dict(allow_none=True, missing={})
 
     def validate_string_or_list(value: Union[str, List[str]]) -> Union[str, List[str]]:
         """Validates that a value is a string or a list of strings.
@@ -906,6 +939,7 @@ class CaseTemplateSchema(ma.Schema):
     title_prefix: Optional[str] = fields.String(allow_none=True, validate=Length(max=32), missing="")
     summary: Optional[str] = fields.String(allow_none=True, missing="")
     tags: Optional[List[str]] = fields.List(fields.String(), allow_none=True, missing=[])
+    input_params: Optional[List[str]] = fields.List(fields.String(), allow_none=True, missing=[])
     classification: Optional[str] = fields.String(allow_none=True, missing="")
     note_directories: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(fields.Dict(),
                                                                                                 allow_none=True,
@@ -963,7 +997,7 @@ class CaseTemplateSchema(ma.Schema):
         return value
 
     tasks: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
-        fields.Dict(keys=fields.Str(), values=fields.Raw()),  # Removed validate_string_or_list
+        fields.Dict(keys=fields.Str(), values=fields.Raw()), 
         allow_none=True,
         missing=[]
     )
@@ -975,7 +1009,7 @@ class CaseTemplateSchema(ma.Schema):
     )
 
     triggers: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
-        fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list])),
+        fields.Dict(keys=fields.Str(), values=fields.Raw()), 
         allow_none=True,
         missing=[]
     )

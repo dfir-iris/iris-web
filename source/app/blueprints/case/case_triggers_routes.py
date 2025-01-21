@@ -1,63 +1,56 @@
-#  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS) - DFIR-IRIS Team
-#  ir@cyberactionlab.net - contact@dfir-iris.org
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU Lesser General Public
-#  License as published by the Free Software Foundation; either
-#  version 3 of the License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#  Lesser General Public License for more details.
-#
-#  You should have received a copy of the GNU Lesser General Public License
-#  along with this program; if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 # IMPORTS ------------------------------------------------
-from datetime import datetime
-
-import marshmallow
-from flask import Blueprint
-from flask import redirect
-from flask import render_template
-from flask import request
-from flask import url_for
-from flask_login import current_user
+from flask import Blueprint, jsonify, request, redirect, render_template, url_for
+import json
 from flask_wtf import FlaskForm
-
-from app import db
-from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
-from app.datamgmt.states import get_tasks_state
-from app.datamgmt.states import update_tasks_state
-from app.forms import CaseTaskForm
-from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import CaseAccessLevel
-from app.models.authorization import User
-from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
-from app.util import ac_case_requires
-from app.util import response_error
-from app.util import response_success
+from app.datamgmt.manage.manage_case_response_db import get_case_responses_list_by_case_id
 
 case_triggers_blueprint = Blueprint('case_triggers',
-                                 __name__,
-                                 template_folder='templates')
+                                    __name__,
+                                    template_folder='templates')
 
-
-# CONTENT ------------------------------------------------
 @case_triggers_blueprint.route('/case/triggers', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
-def case_tasks(caseid, url_redir):
+def case_triggers():
+    # Retrieve query parameters from the URL
+    caseid = request.args.get('cid')
+    url_redir = request.args.get('url_redir', type=bool)
+
     if url_redir:
-        return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
+        return redirect(url_for('case_triggers.case_triggers', cid=caseid, redirect=True))
 
     form = FlaskForm()
     case = get_case(caseid)
-
     return render_template("case_triggers.html", case=case, form=form)
+
+
+@case_triggers_blueprint.route('/case/triggers-list/<int:cur_id>', methods=['GET'])
+def case_triggers_list(cur_id):
+
+    try:
+        # Retrieve the triggers list
+        triggers = get_case_responses_list_by_case_id(cur_id)
+        print(f"triggers", triggers)
+        # Serialize datetime objects for rendering
+        for trigger in triggers:
+            # Format created_at
+            if 'created_at' in trigger and trigger['created_at']:
+                trigger['created_at'] = trigger['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+
+            # Format updated_at
+            if 'updated_at' in trigger and trigger['updated_at']:
+                trigger['updated_at'] = trigger['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
+
+            # Serialize body
+            if 'body' in trigger and trigger['body']:
+                try:
+                    trigger['body'] = json.dumps(trigger['body'])
+                except (TypeError, ValueError):
+                    trigger['body'] = str(trigger['body'])  # Fallback to string representation
+
+        # Return the JSON response
+        return jsonify({"success": True, "data": triggers})
+
+    except Exception as e:
+        # Log the exception for debugging (optional: use a logger instead of print)
+        print(f"Error processing case triggers: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500

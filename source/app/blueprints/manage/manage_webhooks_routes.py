@@ -1,6 +1,6 @@
 # IMPORTS ------------------------------------------------
 import json
-from flask import Blueprint
+from flask import Blueprint, abort, jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -23,6 +23,7 @@ from app.util import ac_requires_case_identifier
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from app.datamgmt.manage.manage_case_templates_db import get_action_by_case_template_id_and_task_id
 
 manage_webhooks_blueprint = Blueprint('manage_webhooks',
                                             __name__,
@@ -49,10 +50,49 @@ def list_webhooks():
     Returns:
         Response: List of webhooks
     """
+    case_id = request.args.get("cid")  # Use 'cid' since it's coming from query parameters
     webhooks = get_webhooks_list()
 
     # Return the attributes
     return response_success("", data=webhooks)
+
+@manage_webhooks_blueprint.route('/manage/webhooks/listbyCasetemplateId/<int:cur_id>/<int:task_id>', methods=['GET'])
+@ac_api_requires()
+def list_webhooks_by_case_template_id(cur_id, task_id):
+    """Show a list of webhooks by case template id
+
+    Returns:
+        Response: List of webhooks by case template id
+    """
+
+    caseid = request.args.get('cid')
+    webhooks = get_action_by_case_template_id_and_task_id(cur_id, task_id, caseid)
+
+    # Return the attributes
+    return response_success("",data = webhooks)
+
+@manage_webhooks_blueprint.route('/manage/webhooks/<int:cur_id>', methods=['GET'])
+@ac_api_requires(Permissions.webhooks_read)
+def get_webhook(cur_id):
+    """Fetch a webhook by ID
+
+    Args:
+        cur_id (int): webhook ID
+
+    Returns:
+        JSON Response: Webhook details
+    """
+    webhook = get_webhook_by_id(cur_id)
+    if not webhook:
+        return response_error(f"Invalid webhook ID {cur_id}")
+
+    try:
+        webhook_data = WebhookSchema().dump(webhook)
+    except ValidationError as error:
+        return response_error("Could not serialize webhook", data=str(error))
+
+    return response_success("Webhook retrieved successfully", data=webhook_data)
+
 
 
 @manage_webhooks_blueprint.route('/manage/webhooks/<int:cur_id>/modal', methods=['GET'])
@@ -98,21 +138,38 @@ def add_template_modal():
         "name": "webhook name",
         "header_auth": [
             {
-                "key": "Value 1"
+                "key": "key 1",
+                "value": "value 1"
             }
         ],
-        "payload_schema": json.loads('''[
-            {
-                "type": "object",
-                "properties": [
-                    {
-                        "property": "property name",
-                        "type": "string"
+        "payload_schema": {
+        "type": "Webhook Payload Type",
+        "description": "Webhook payload Description",
+        "minItems": 1,
+        "uniqueItems": "true",
+        "items": {
+            "type": "object",
+            "required": [
+                "property"
+            ],
+            "properties": {
+                "property 1": {
+                    "type": "property type",
+                    "minLength": 1
+                },
+                "property 2": {
+                    "type": "object",
+                    "properties": {
+                        "sub property 1": {
+                            "type": "property type",
+                            "minLength": 1
+                        }
                     }
-                ]
+                }
             }
-        ]'''),
-        "url": "webhook URL",
+        }
+    },
+    "url": "http://webhookexampleurl.com"
     }
 
     return render_template("modal_webhook.html", form=form, webhook=webhook)

@@ -80,6 +80,7 @@ def create(request_json):
         case = _load(request_data)
         case.owner_id = current_user.id
         case.severity_id = 4
+        case.case_template_id = case_template_id
 
         if case_template_id and len(case_template_id) > 0:
             case = case_template_pre_modifier(case, case_template_id)
@@ -89,6 +90,8 @@ def create(request_json):
         case.state_id = get_case_state_by_name('Open').state_id
 
         case.save()
+        print("CASE TEMP ID:", case_template_id)
+        print("CASE CASE TEMP ID:", case.case_template_id)
 
         if case_template_id and len(case_template_id) > 0:
             try:

@@ -14,7 +14,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+import json
 import marshmallow
+import jsonschema
 from datetime import datetime
 from typing import List, Optional, Union
 
@@ -38,10 +40,10 @@ def get_webhooks_list() -> List[dict]:
         Webhook.id,
         Webhook.name,
         Webhook.header_auth,
-        Webhook.payload_schema,
         Webhook.url,
         Webhook.created_at,
         Webhook.updated_at,
+        Webhook.payload_schema,
         User.name.label('added_by')
     ).join(
         Webhook.created_by_user
@@ -60,6 +62,8 @@ def get_webhook_by_id(cur_id: int) -> Webhook:
     Returns:
         Webhook: Webhook
     """
+    print(f"Received request for webhook ID: {cur_id}")
+
     webhook = Webhook.query.filter_by(id=cur_id).first()
     return webhook
 
@@ -73,85 +77,51 @@ def delete_webhook_by_id(webhook_id: int):
     Webhook.query.filter_by(id=webhook_id).delete()
 
 
+import jsonschema
+from typing import Optional
+
+import json
+import jsonschema
+from typing import Optional
+
 def validate_webhook(data: dict, update: bool = False) -> Optional[str]:
-    valid_types = {"string", "number", "integer", "object", "array", "boolean", "null"}
     try:
+        # Check for the 'name' field
         if not update:
-            # If it's not an update, we check the required fields
             if "name" not in data:
-                return "Name is required."
+                return "<div><p><strong>Error:</strong> The 'name' field is required.</p></div>"
 
-            # if "display_name" not in data or not data["display_name"].strip():
-            #     data["display_name"] = data["name"]
-        # We check that name is not empty
         if "name" in data and not data["name"].strip():
-            return "Name cannot be empty."
+            return "<div><p><strong>Error:</strong> The 'name' field cannot be empty.</p></div>"
 
-        # # We check that author length is not above 128 chars
-        # if "author" in data and len(data["author"]) > 128:
-        #     return "Author cannot be longer than 128 characters."
+        # Check for the 'url' field
+        if "url" not in data:
+            # Log the missing 'url' field error
+            print("Error: The 'url' field is required but was not provided.")
+            return "<div><p><strong>Error:</strong> The 'url' field is required.</p></div>"
 
-        # # We check that author length is not above 128 chars
-        # if "author" in data and len(data["author"]) > 128:
-        #     return "Author cannot be longer than 128 characters."
-
-        # # We check that prefix length is not above 32 chars
-        # if "title_prefix" in data and len(data["title_prefix"]) > 32:
-        #     return "Prefix cannot be longer than 32 characters."
-
-        # # We check that tags, if any, are a list of strings
-        # if "tags" in data:
-        #     if not isinstance(data["tags"], list):
-        #         return "Tags must be a list."
-        #     for tag in data["tags"]:
-        #         if not isinstance(tag, str):
-        #             return "Each tag must be a string."
-
-        
-
-        # We check that tasks, if any, are a list of dictionaries with mandatory keys
-        if "header_auth" in data:
-            if not isinstance(data["header_auth"], list):
-                return "Header Auth must be a list."
-            for auth in data["header_auth"]:
-                if not isinstance(auth, dict):
-                    return "Each header auth must be a dictionary."
-                if "key" not in auth:
-                    return "Each auth must have a 'key' field."
-                # if "tags" in task:
-                #     if not isinstance(task["tags"], list):
-                #         return "Task tags must be a list."
-                #     for tag in task["tags"]:
-                #         if not isinstance(tag, str):
-                #             return "Each tag must be a string."
-
-        # We check that note groups, if any, are a list of dictionaries with mandatory keys
-        if "note_groups" in data:
-            return "Note groups has been replaced by note_directories."
-
+        # Validate 'payload_schema' field
         if "payload_schema" in data:
-            if not isinstance(data["payload_schema"], list):
-                return "Payload Schema must be a list."
-            for payload in data["payload_schema"]:
-                if not isinstance(payload, dict):
-                    return "Each payload schema must be a dictionary."
-                if "type" not in payload:
-                    return "Each payload directory must have a 'type' field."
-                if "properties" in payload:
-                    if not isinstance(payload["properties"], list):
-                        return "Properties must be a list."
-                    for property in payload["properties"]:
-                        if not isinstance(property, dict):
-                            return "Each property must be a dictionary."
-                        if "type" not in property:
-                            return "Each property must have a 'type' field."
-                        if property["type"] not in valid_types:
-                            return f"Invalid type '{property['type']}'. Valid types are: {', '.join(valid_types)}."
-
-        # If all checks succeeded, we return None to indicate everything is has been validated
+            try:
+                jsonschema.Draft7Validator.check_schema(data["payload_schema"])
+            except jsonschema.exceptions.SchemaError as e:
+                error_path = " -> ".join(map(str, e.path)) if e.path else "schema root"
+                formatted_message = (
+                    json.dumps(e.message, indent=2) if isinstance(e.message, dict) else e.message
+                )
+                return (
+                    f"<div>"
+                    f"<p><strong>Error:</strong> The 'payload_schema' field contains an invalid JSON Schema.</p>"
+                    f"<p><strong>Error Location:</strong> {error_path}</p>"
+                    f"<p><strong>Invalid Code:</strong></p>"
+                    f"<pre style='background-color: #f9f9f9; border: 1px solid #ccc; padding: 10px; border-radius: 5px; "
+                    f"white-space: pre-wrap; word-wrap: break-word; font-family: monospace; overflow: hidden;'>{formatted_message}</pre>"
+                    f"</div>"
+                )
         return None
     except Exception as e:
-        return str(e)
+        return f"<div><p><strong>Error:</strong> An unexpected error occurred:</p><pre>{str(e)}</pre></div>"
+
 
 
 def webhook_pre_modifier(case_schema: CaseSchema, case_template_id: str):

@@ -18,9 +18,10 @@
 
 # IMPORTS ------------------------------------------------
 from datetime import datetime
+import json
 
 import marshmallow
-from flask import Blueprint
+from flask import Blueprint, jsonify
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -50,15 +51,17 @@ from app.datamgmt.states import update_tasks_state
 from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.models.authorization import User
 from app.models.models import CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, ac_api_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from app.datamgmt.manage.manage_cases_db import execute_and_save_action
+from app.datamgmt.manage.manage_task_response_db import get_task_response_by_id, get_task_responses_list
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
@@ -71,11 +74,36 @@ case_tasks_blueprint = Blueprint('case_tasks',
 def case_tasks(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_tasks.case_tasks', cid=caseid, redirect=True))
-
+    
     form = FlaskForm()
     case = get_case(caseid)
-
     return render_template("case_tasks.html", case=case, form=form)
+
+@case_tasks_blueprint.route('/case/jsoneditor', methods=['POST'])
+@ac_case_requires(CaseAccessLevel.full_access)
+def save_data(caseid, url_redir):
+    try:
+        data = request.get_json()
+
+        if not isinstance(data, dict):
+            raise ValueError("Request payload is not a valid JSON object")
+        
+        payload = data.get('payload')
+        task_id = data.get('task_id')
+        action_id = data.get('action_id')
+
+        if not payload or not task_id or not action_id:
+            raise KeyError("Missing one or more required keys: 'payload', 'task_id', 'action_id'")
+
+        action_response = execute_and_save_action(payload, task_id, action_id)
+
+        return jsonify({"status": "success", "message": "Data saved successfully!", "data": action_response})
+    except KeyError as e:
+        return jsonify({"status": "error", "message": f"Missing key: {e}"}), 400
+    except ValueError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
 
 
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
@@ -96,7 +124,6 @@ def case_get_tasks(caseid):
 
     return response_success("", data=ret)
 
-
 @case_tasks_blueprint.route('/case/tasks/state', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks_state(caseid):
@@ -105,7 +132,6 @@ def case_get_tasks_state(caseid):
         return response_success(data=os)
     else:
         return response_error('No tasks state for this case.')
-
 
 @case_tasks_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
@@ -138,7 +164,7 @@ def case_add_task_modal(caseid):
     form.task_assignees_id.choices = []
 
     return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None,
-                           attributes=task.custom_attributes)
+                           attributes=task.custom_attributes )
 
 
 @case_tasks_blueprint.route('/case/tasks/add', methods=['POST'])
@@ -205,9 +231,46 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     form.task_description.data = task.task_description
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
     comments_map = get_case_tasks_comments_count([task.id])
-
+    print(f"task id:",task.id)
+    taskActionResponses = get_task_responses_list(task.id) 
+        # Serialize datetime objects for rendering
     return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
-                           comments_map=comments_map, attributes=task.custom_attributes)
+                           comments_map=comments_map, attributes=task.custom_attributes ,taskActionResponses=taskActionResponses)
+
+@case_tasks_blueprint.route('/case/task/action_responses/<int:cur_id>', methods=['GET'])
+def case_task_action_response(cur_id):
+    try:
+        
+        taskActionResponses = get_task_responses_list(cur_id)
+
+        # Serialize datetime objects for rendering and the 'body' field
+        for taskActionResponse in taskActionResponses:
+            if isinstance(taskActionResponse['created_at'], datetime):
+                taskActionResponse['created_at'] = taskActionResponse['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+            if taskActionResponse.get('updated_at') and isinstance(taskActionResponse['updated_at'], datetime):
+                taskActionResponse['updated_at'] = taskActionResponse['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
+            if taskActionResponse.get('body'):
+                try:
+                    taskActionResponse['body'] = json.dumps(taskActionResponse['body'])
+                except (TypeError, ValueError) as e:
+                    taskActionResponse['body'] = str(taskActionResponse['body'])
+        
+        return jsonify({"success": True, "data": taskActionResponses})  # Properly return as JSON
+
+    except Exception as e:
+        # Log the exception for debugging
+        return jsonify({"success": False, "error": str(e)}), 500
+    
+@case_tasks_blueprint.route('/case/task/action_response/<int:cur_id>', methods=['GET'])
+def case_task_action_response_by_id(cur_id):
+    action_response = get_task_response_by_id(cur_id)
+
+    if action_response:
+        return response_success("Task action response fetched successfully", data=action_response)
+    else:
+        return response_error("No action response found for this task", 404)
+
+
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])

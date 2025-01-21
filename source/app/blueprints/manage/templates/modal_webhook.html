@@ -101,29 +101,47 @@
                   An webhook is defined as below.
                   <pre>
 
-{
-    "name": "webhook 1",
-    "header_auth": [
-        {
-            "key": "auth 1"
-        },
-        {
-            "key": "auth 2"
-        }
-    ],
-    "payload_schema": [
-        {
-            "type": "object",
-            "properties": [
-                {
-                    "property": "property name",
-                    "type": "string"
-                }
-            ]
-        }
-    ],
-    "url": "www.some-webhook1.com",
-}
+                    {
+                      "name": "Webhook Name",
+                      "header_auth": [
+                          {
+                              "key": "Webhook Header Key",
+                              "value": "Webhook Header Value"
+                          }
+                      ],
+                      "payload_schema": {
+                          "type": "Webhook Payload Type",
+                          "description": "Webhook payload Description",
+                          "minItems": 1,
+                          "uniqueItems": true,
+                          "items": {
+                              "type": "object",
+                              "required": [
+                                  "property"
+                              ],
+                              "properties": {
+                                  "property 1": {
+                                      "type": "property type",
+                                      "minLength": 1
+                                  },
+                                  "property 2": {
+                                      "type": "property type",
+                                      "minLength": 1
+                                  },
+                                  "property 3": {
+                                      "type": "object",
+                                      "properties": {
+                                          "sub property 1": {
+                                              "type": "property type",
+                                              "minLength": 1
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      },
+                      "url": "http://webhookexampleurl.com"
+                  }
                                     </pre
                   >
                   <p>

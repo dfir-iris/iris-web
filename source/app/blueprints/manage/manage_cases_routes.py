@@ -19,6 +19,9 @@ import logging as log
 import os
 import traceback
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
+from flask import jsonify, current_app, g
+from threading import Thread
 
 from flask import Blueprint
 from flask import redirect
@@ -39,8 +42,8 @@ from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list
-from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
+from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, get_triggers_by_case_template_id
+from app.datamgmt.manage.manage_cases_db import execute_and_save_trigger, get_filtered_cases
 from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
 from app.datamgmt.manage.manage_cases_db import get_case_protagonists
@@ -349,10 +352,42 @@ def api_add_case():
     case_schema = CaseSchema()
 
     try:
-        case, msg = create(request.get_json())
+        # Extract case template data from the request
+        request_data = request.get_json()
+        print(request_data)
+        case_template_id = request_data.get("case_template_id")
+
+        if not case_template_id:
+            raise BusinessProcessingError("Missing 'case_template_id' in request.")
+
+        # Create the case first
+        case, msg = create(request_data)
+        case_id = case.case_id  # Retrieve the case_id of the created case
+
+        # Get triggers for the case_template_id
+        triggers = get_triggers_by_case_template_id(case_template_id)
+
+        if not triggers:
+            raise BusinessProcessingError("No triggers found for the provided case_template_id.")
+
+        # Function to execute a trigger in a new thread with app context
+        def execute_trigger_with_context(trigger, app):
+            with app.app_context():
+                print('in Execute')
+                execute_and_save_trigger(trigger, case_id)
+                print(f"Trigger {trigger} executed successfully.")
+
+        for trigger in triggers:
+            thread = Thread(target=execute_trigger_with_context, args=(trigger, current_app._get_current_object()))
+            thread.start()
+
+        # Return success response immediately
         return response_success(msg, data=case_schema.dump(case))
+
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
+
+
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])

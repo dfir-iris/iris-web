@@ -38,6 +38,7 @@
                             <button class="btn btn-dark btn-sm" onclick="add_task();">
                                 <span class="menu-title">Add task</span>
                             </button>
+
                         </li>
 					</ul>
                 </div>
@@ -83,7 +84,6 @@
         <div class="modal " tabindex="-1" role="dialog" id="modal_add_task" data-backdrop="true">
             <div class="modal-xxl modal-dialog" role="document">
                 <div class="modal-content" id="modal_add_task_content">
-
                 </div>
                 <!-- /.modal-content -->
             </div>
@@ -92,14 +92,17 @@
         {% endif %}
 
     </div>
-
     {% include 'includes/footer.html' %}
 </div>
 
 {% endblock content %}
 
+
 {% block javascripts %}
 {% include 'includes/footer_case.html' %}
+<script>
+    const caseTemplateId = {{ case.case_template_id }};
+</script>
 
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
 <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
