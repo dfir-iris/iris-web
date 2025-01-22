@@ -20,10 +20,10 @@ from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.states import update_timeline_state
-from app.models import AssetsType
-from app.models import CaseAssets
-from app.models import CaseEventCategory
-from app.models import CaseEventsAssets
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.models.models import CaseEventCategory
+from app.models.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models.cases import CasesEvent
 from app.models import Comments
