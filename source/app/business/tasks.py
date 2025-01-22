@@ -35,10 +35,10 @@ from app.business.errors import ObjectNotFoundError
 from marshmallow.exceptions import ValidationError
 
 
-def _load(request_data):
+def _load(request_data, **kwargs):
     try:
         add_task_schema = CaseTaskSchema()
-        return add_task_schema.load(request_data)
+        return add_task_schema.load(request_data, **kwargs)
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
 
@@ -93,10 +93,9 @@ def tasks_update(task: CaseTasks, request_json):
 
     task_assignee_list = request_data['task_assignees_id']
     del request_data['task_assignees_id']
-    task_schema = CaseTaskSchema()
 
     request_data['id'] = task.id
-    task = task_schema.load(request_data, instance=task)
+    task = _load(request_data, instance=task)
 
     task.task_userid_update = current_user.id
     task.task_last_update = datetime.utcnow()
@@ -111,6 +110,7 @@ def tasks_update(task: CaseTasks, request_json):
 
     if task:
         track_activity(f'updated task "{task.task_title}" (status {task.status.status_name})', caseid=case_identifier)
+        task_schema = CaseTaskSchema()
         return 'Task "{}" updated'.format(task.task_title), task_schema.dump(task)
 
     raise BusinessProcessingError('Unable to update task for internal reasons')
