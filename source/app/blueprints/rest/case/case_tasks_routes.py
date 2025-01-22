@@ -36,7 +36,6 @@ from app.datamgmt.case.case_tasks_db import delete_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
 from app.datamgmt.case.case_tasks_db import get_task
-from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_status
@@ -121,7 +120,7 @@ def deprecated_case_add_task(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_case_task_view(cur_id, caseid):
-    task = get_task_with_assignees(task_id=cur_id)
+    task = get_task(task_id=cur_id)
     if not task:
         return response_error('Invalid task ID for this case')
 
