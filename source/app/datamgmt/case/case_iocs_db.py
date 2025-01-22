@@ -26,10 +26,10 @@ from app import app
 from app.datamgmt.states import update_ioc_state
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.models.cases import Cases
-from app.models import Client
-from app.models import Comments
-from app.models import Ioc
-from app.models import IocComments
+from app.models.models import Client
+from app.models.models import Comments
+from app.models.models import Ioc
+from app.models.models import IocComments
 from app.models import IocType
 from app.models import Tlp
 from app.models.authorization import User
