@@ -28,7 +28,7 @@ from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import CaseTasks
+from app.models.models import CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
