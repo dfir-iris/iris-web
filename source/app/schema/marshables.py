@@ -70,8 +70,8 @@ from app.models import CaseReceivedFile
 from app.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models import Client
-from app.models import Comments
+from app.models.models import Client
+from app.models.models import Comments
 from app.models import Contact
 from app.models import DataStoreFile
 from app.models import EventCategory
@@ -80,7 +80,7 @@ from app.models import Ioc
 from app.models import IocType
 from app.models import IrisModule
 from app.models import Notes
-from app.models import NotesGroup
+from app.models.models import NotesGroup
 from app.models.models import ServerSettings
 from app.models.models import TaskStatus
 from app.models.models import Tlp
