@@ -112,9 +112,9 @@
 
     var data = [];
     if (current_users_list.length === 0) {
-            refresh_users(do_list_users, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+            refresh_users(do_list_users, [{% for assignee in task_assignees %} {{ assignee.id }}, {% endfor %}]);
     } else {
-        do_list_users(current_users_list, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+        do_list_users(current_users_list, [{% for assignee in task_assignees %} {{ assignee.id }}, {% endfor %}]);
     }
 
     $('form#form_new_task').validate();

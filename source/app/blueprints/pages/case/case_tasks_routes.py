@@ -26,7 +26,7 @@ from flask_wtf import FlaskForm
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import get_case_tasks_comments_count
 from app.datamgmt.case.case_tasks_db import get_task
-from app.datamgmt.case.case_tasks_db import get_task_with_assignees
+from app.datamgmt.case.case_tasks_db import get_task_assignees
 from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.forms import CaseTaskForm
@@ -77,7 +77,8 @@ def case_task_view_modal(cur_id, caseid, url_redir):
 
     form = CaseTaskForm()
 
-    task = get_task_with_assignees(task_id=cur_id)
+    task = get_task(task_id=cur_id)
+    task_assignees = get_task_assignees(cur_id)
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
     form.task_assignees_id.choices = []
 
@@ -89,8 +90,8 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     user_name, = User.query.with_entities(User.name).filter(User.id == task.task_userid_update).first()
     comments_map = get_case_tasks_comments_count([task.id])
 
-    return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
-                           comments_map=comments_map, attributes=task.custom_attributes)
+    return render_template("modal_add_case_task.html", form=form, task=task, task_assignees=task_assignees,
+                           user_name=user_name, comments_map=comments_map, attributes=task.custom_attributes)
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/modal', methods=['GET'])

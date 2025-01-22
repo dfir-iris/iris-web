@@ -18,7 +18,8 @@
 
 from datetime import datetime
 from flask_login import current_user
-from sqlalchemy import desc, and_
+from sqlalchemy import desc
+from sqlalchemy import and_
 
 from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
@@ -103,21 +104,7 @@ def get_task(task_id) -> CaseTasks:
     return CaseTasks.query.filter(CaseTasks.id == task_id).first()
 
 
-def get_task_with_assignees(task_id: int):
-    """
-    Returns a task with its assignees
-
-    Args:
-        task_id (int): Task ID
-
-    Returns:
-        dict: Task with its assignees
-    """
-    task = get_task(task_id)
-
-    if not task:
-        return None
-
+def get_task_assignees(task_identifier: int):
     get_assignee_list = TaskAssignee.query.with_entities(
         TaskAssignee.task_id,
         User.user,
@@ -126,7 +113,7 @@ def get_task_with_assignees(task_id: int):
     ).join(
         TaskAssignee.user
     ).filter(
-        TaskAssignee.task_id == task_id
+        TaskAssignee.task_id == task_identifier
     ).all()
 
     assignee_list = {}
@@ -145,9 +132,7 @@ def get_task_with_assignees(task_id: int):
                 'id': member.id
             })
 
-    setattr(task, 'task_assignees', assignee_list.get(task.id, []))
-
-    return task
+    return assignee_list.get(task_identifier, [])
 
 
 def update_task_status(task_status, task_id, caseid):
