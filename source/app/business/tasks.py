@@ -86,7 +86,7 @@ def tasks_get(identifier) -> CaseTasks:
 
 
 def tasks_update(current_identifier, request_json):
-    task = get_task_with_assignees(task_id=current_identifier)
+    task = get_task_with_assignees(current_identifier)
     case_identifier = task.task_case_id
 
     if task:
@@ -99,7 +99,7 @@ def tasks_update(current_identifier, request_json):
         del request_data['task_assignees_id']
         task_schema = CaseTaskSchema()
 
-        request_data['id'] = current_identifier
+        request_data['id'] = task.id
         task = task_schema.load(request_data, instance=task)
 
         task.task_userid_update = current_user.id
