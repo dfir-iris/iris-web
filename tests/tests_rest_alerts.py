@@ -39,13 +39,25 @@ class TestsRestAlerts(TestCase):
         response = self._subject.create('/alerts/add', body)
         self.assertEqual(200, response.status_code)
 
-    def test_alerts_filter_with_alerts_filter_should_not_fail(self):
+    def test_alerts_with_filter_alerts_assets_should_not_fail(self):
         response = self._subject.get('/api/v2/alerts', query_parameters={'alert_assets': 'some assert name'})
         self.assertEqual(200, response.status_code)
 
-    def test_alerts_filter_with_iocs_filter_should_not_fail(self):
+    def test_alerts_filter_with_filter_alert_iocs_should_not_fail(self):
         response = self._subject.get('api/v2/alerts', query_parameters={'alert_iocs': 'some ioc value'})
         self.assertEqual(200, response.status_code)
+
+    def test_get_alerts_filter_should_show_newly_created_alert_for_administrator(self):
+        alert_title = f'title{uuid4()}'
+        body = {
+            'alert_title': alert_title,
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1
+        }
+        self._subject.create('/alerts/add', body)
+        response = self._subject.get('/api/v2/alerts', query_parameters={'alert_title': alert_title}).json()
+        self.assertEqual(1, response['total'])
 
     def test_merge_alert_into_a_case_should_not_fail(self):
         case_identifier = self._subject.create_dummy_case()
@@ -65,16 +77,3 @@ class TestsRestAlerts(TestCase):
         response = self._subject.create(f'/alerts/merge/{alert_identifier}', body)
         # TODO should be 201
         self.assertEqual(200, response.status_code)
-
-    def test_get_alerts_filter_should_show_newly_created_alert_for_administrator(self):
-        alert_title = f'title{uuid4()}'
-        body = {
-            'alert_title': alert_title,
-            'alert_severity_id': 4,
-            'alert_status_id': 3,
-            'alert_customer_id': 1
-        }
-        self._subject.create('/alerts/add', body)
-        response = self._subject.get('/api/v2/alerts', query_parameters={'alert_title': alert_title}).json()
-        self.assertEqual(1, response['total'])
-
