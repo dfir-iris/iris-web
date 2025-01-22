@@ -135,7 +135,11 @@ def deprecated_case_task_view(cur_id, caseid):
 @ac_api_requires()
 def deprecated_case_edit_task(cur_id, caseid):
     try:
-        msg = tasks_update(cur_id, request.get_json())
+        task = get_task(cur_id)
+        if not task:
+            return response_error(msg='Invalid task ID for this case')
+
+        msg = tasks_update(task, request.get_json())
         return response_success(msg)
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg='Data error', data=e.messages)

@@ -84,8 +84,7 @@ def tasks_get(identifier) -> CaseTasks:
     return task
 
 
-def tasks_update(current_identifier, request_json):
-    task = get_task(current_identifier)
+def tasks_update(task: CaseTasks, request_json):
     case_identifier = task.task_case_id
 
     if task:
