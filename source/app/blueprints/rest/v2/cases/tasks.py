@@ -98,7 +98,7 @@ def update_case_task(case_identifier, identifier):
         if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=task.task_case_id)
 
-        task = tasks_update(identifier, case_identifier, request.get_json())
+        task = tasks_update(identifier, request.get_json())
 
         return response_api_success(task)
     except ObjectNotFoundError:

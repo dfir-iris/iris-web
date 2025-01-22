@@ -85,9 +85,9 @@ def tasks_get(identifier) -> CaseTasks:
     return task
 
 
-def tasks_update(current_identifier, case_identifier, request_json):
-
+def tasks_update(current_identifier, request_json):
     task = get_task_with_assignees(task_id=current_identifier)
+    case_identifier = task.task_case_id
 
     if task:
         request_data = call_modules_hook('on_preload_task_update', data=request_json, caseid=case_identifier)
