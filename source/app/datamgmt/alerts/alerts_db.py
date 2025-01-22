@@ -158,8 +158,7 @@ def get_filtered_alerts(
         sort: str = 'desc',
         current_user_id: int = None,
         source_reference=None,
-        custom_conditions: List[dict] = None,
-        fields: List[str] = None):
+        custom_conditions: List[dict] = None):
     """
     Get a list of alerts that match the given filter conditions
 

@@ -154,8 +154,7 @@ def alerts_list_route() -> Response:
             assets=alert_assets,
             iocs=alert_iocs,
             resolution_status=request.args.get('alert_resolution_id', type=int),
-            current_user_id=current_user.id,
-            fields=fields
+            current_user_id=current_user.id
         )
 
     except Exception as e:
