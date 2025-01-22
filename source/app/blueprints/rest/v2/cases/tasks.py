@@ -100,7 +100,8 @@ def update_case_task(case_identifier, identifier):
 
         task = tasks_update(task, request.get_json())
 
-        return response_api_success(task)
+        task_schema = CaseTaskSchema()
+        return response_api_success(task_schema.dump(task))
     except ObjectNotFoundError:
         return response_api_not_found()
     except BusinessProcessingError as e:

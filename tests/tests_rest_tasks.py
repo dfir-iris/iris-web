@@ -115,3 +115,12 @@ class TestsRestTasks(TestCase):
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
                                         {'task_title': 'new title', 'task_assignees_id': []})
         self.assertEqual(400, response.status_code)
+
+    def test_update_task_should_return_a_task(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+                                        {'task_title': 'new title', 'task_status_id': 1, 'task_assignees_id': []}).json()
+        self.assertEqual('new title', response['task_title'])
