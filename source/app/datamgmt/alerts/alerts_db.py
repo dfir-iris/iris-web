@@ -339,16 +339,6 @@ def get_filtered_alerts(
 
     order_func = desc if sort == "desc" else asc
 
-    # If fields are provided, use them in the schema
-    if fields:
-        try:
-            alert_schema = AlertSchema(only=fields)
-        except Exception as e:
-            app.app.logger.exception(f"Error selecting fields in AlertSchema: {str(e)}")
-            alert_schema = AlertSchema()
-    else:
-        alert_schema = AlertSchema()
-
     try:
         # Query the alerts using the filter conditions
 
@@ -359,13 +349,7 @@ def get_filtered_alerts(
             order_func(Alert.alert_source_event_time)
         ).paginate(page=page, per_page=per_page, error_out=False)
 
-        return {
-            'total': filtered_alerts.total,
-            'alerts': alert_schema.dump(filtered_alerts, many=True),
-            'last_page': filtered_alerts.pages,
-            'current_page': filtered_alerts.page,
-            'next_page': filtered_alerts.next_num if filtered_alerts.has_next else None,
-        }
+        return filtered_alerts
 
     except Exception as e:
         app.app.logger.exception(f"Error getting alerts: {str(e)}")

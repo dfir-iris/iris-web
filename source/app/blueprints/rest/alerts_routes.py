@@ -31,8 +31,8 @@ from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.datamgmt.alerts.alerts_db import get_alert_by_id
-from app.datamgmt.alerts.alerts_db import create_case_from_alert, \
-    register_related_alerts, delete_related_alerts_cache
+from app.datamgmt.alerts.alerts_db import create_case_from_alert
+from app.datamgmt.alerts.alerts_db import delete_related_alerts_cache
 from app.datamgmt.alerts.alerts_db import merge_alert_in_case
 from app.datamgmt.alerts.alerts_db import unmerge_alert_from_case
 from app.datamgmt.alerts.alerts_db import cache_similar_alert
@@ -50,7 +50,7 @@ from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.alerts import AlertStatus, AlertSimilarity, Alert
+from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema
 from app.schema.marshables import CaseSchema
@@ -130,7 +130,7 @@ def alerts_list_route() -> Response:
         fields = None
 
     try:
-        filtered_data = get_filtered_alerts(
+        filtered_alerts = get_filtered_alerts(
             start_date=request.args.get('creation_start_date'),
             end_date=request.args.get('creation_end_date'),
             source_start_date=request.args.get('source_start_date'),
@@ -162,8 +162,26 @@ def alerts_list_route() -> Response:
         app.app.logger.exception(e)
         return response_error(str(e))
 
-    if filtered_data is None:
+    if filtered_alerts is None:
         return response_error('Filtering error')
+
+    # If fields are provided, use them in the schema
+    if fields:
+        try:
+            alert_schema = AlertSchema(only=fields)
+        except Exception as e:
+            app.app.logger.exception(f"Error selecting fields in AlertSchema: {str(e)}")
+            alert_schema = AlertSchema()
+    else:
+        alert_schema = AlertSchema()
+
+    filtered_data = {
+        'total': filtered_alerts.total,
+        'alerts': alert_schema.dump(filtered_alerts, many=True),
+        'last_page': filtered_alerts.pages,
+        'current_page': filtered_alerts.page,
+        'next_page': filtered_alerts.next_num if filtered_alerts.has_next else None,
+    }
 
     return response_success(data=filtered_data)
 

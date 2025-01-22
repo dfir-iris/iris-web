@@ -29,7 +29,7 @@ class TestsRestAlerts(TestCase):
     def tearDown(self):
         self._subject.clear_database()
         response = self._subject.get('api/v2/alerts').json()
-        for alert in response['alerts']:
+        for alert in response['data']:
             identifier = alert['alert_id']
             self._subject.create(f'/alerts/delete/{identifier}', {})
 
@@ -65,8 +65,7 @@ class TestsRestAlerts(TestCase):
 
     def test_get_alerts_should_return_field_data(self):
         response = self._subject.get('/api/v2/alerts').json()
-        # TODO should be data
-        self.assertEqual([], response['alerts'])
+        self.assertEqual([], response['data'])
 
     def test_merge_alert_into_a_case_should_not_fail(self):
         case_identifier = self._subject.create_dummy_case()
