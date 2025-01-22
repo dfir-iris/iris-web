@@ -24,7 +24,6 @@ from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
-from flask_cors import CORS
 
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
