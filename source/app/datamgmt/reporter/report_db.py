@@ -26,9 +26,9 @@ from app.models import AnalysisStatus
 from app.models import CompromiseStatus
 from app.models import TaskAssignee
 from app.models import AssetsType
-from app.models import CaseAssets
-from app.models import CaseEventsAssets
-from app.models import CaseEventsIoc
+from app.models.models import CaseAssets
+from app.models.models import CaseEventsAssets
+from app.models.models import CaseEventsIoc
 from app.models import CaseReceivedFile
 from app.models import CaseTasks
 from app.models.cases import Cases
