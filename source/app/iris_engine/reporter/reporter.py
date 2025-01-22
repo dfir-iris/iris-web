@@ -34,14 +34,14 @@ from app.datamgmt.activities.activities_db import get_auto_activities
 from app.datamgmt.activities.activities_db import get_manual_activities
 from app.datamgmt.case.case_db import case_get_desc_crc
 
-from app.models import AssetsType
-from app.models import CaseAssets
-from app.models import CaseEventsAssets
-from app.models import CaseReceivedFile
-from app.models import CaseTemplateReport
+from app.models.models import AssetsType
+from app.models.models import CaseAssets
+from app.models.models import CaseEventsAssets
+from app.models.models import CaseReceivedFile
+from app.models.models import CaseTemplateReport
 from app.models.cases import CasesEvent
-from app.models import Ioc
-from app.models import IocAssetLink
+from app.models.models import Ioc
+from app.models.models import IocAssetLink
 
 from app.iris_engine.reporter.ImageHandler import ImageHandler
 from app.iris_engine.utils.common import IrisJinjaEnv
