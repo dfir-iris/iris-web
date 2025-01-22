@@ -108,9 +108,9 @@ def tasks_update(task: CaseTasks, request_json):
 
     task = call_modules_hook('on_postload_task_update', data=task, caseid=case_identifier)
 
-    if task:
-        track_activity(f'updated task "{task.task_title}" (status {task.status.status_name})', caseid=case_identifier)
-        task_schema = CaseTaskSchema()
-        return 'Task "{}" updated'.format(task.task_title), task_schema.dump(task)
+    if not task:
+        raise BusinessProcessingError('Unable to update task for internal reasons')
 
-    raise BusinessProcessingError('Unable to update task for internal reasons')
+    track_activity(f'updated task "{task.task_title}" (status {task.status.status_name})', caseid=case_identifier)
+    task_schema = CaseTaskSchema()
+    return 'Task "{}" updated'.format(task.task_title), task_schema.dump(task)
