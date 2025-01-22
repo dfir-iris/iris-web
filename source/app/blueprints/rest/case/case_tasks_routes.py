@@ -138,7 +138,7 @@ def case_edit_task(cur_id, caseid):
         msg = tasks_update(cur_id, caseid, request.get_json())
         return response_success(msg)
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])
