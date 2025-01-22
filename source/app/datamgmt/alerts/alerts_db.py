@@ -46,11 +46,18 @@ from app.models import CaseAssets
 from app.models import alert_assets_association
 from app.models import alert_iocs_association
 from app.models import Ioc
-from app.models import Client
-from app.models.alerts import Alert, AlertStatus, AlertCaseAssociation, SimilarAlertsCache, AlertResolutionStatus, \
-    AlertSimilarity, Severity
-from app.models.authorization import Permissions, User
-from app.schema.marshables import EventSchema, AlertSchema
+from app.models.models import Client
+from app.models.alerts import Alert
+from app.models.alerts import AlertStatus
+from app.models.alerts import AlertCaseAssociation
+from app.models.alerts import SimilarAlertsCache
+from app.models.alerts import AlertResolutionStatus
+from app.models.alerts import AlertSimilarity
+from app.models.alerts import Severity
+from app.models.authorization import Permissions
+from app.models.authorization import User
+from app.schema.marshables import EventSchema
+from app.schema.marshables import AlertSchema
 from app.util import add_obj_history_entry
 
 
