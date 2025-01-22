@@ -87,3 +87,12 @@ class TestsRestTasks(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         test = self._subject.delete(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, test.status_code)
+
+    def test_update_task_should_not_fail(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+                                        {'task_title': 'new title', 'task_status_id': 1, 'task_assignees_id': []})
+        self.assertEqual(200, response.status_code)

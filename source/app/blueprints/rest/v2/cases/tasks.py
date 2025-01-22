@@ -31,6 +31,7 @@ from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from app.business.tasks import tasks_create
 from app.business.tasks import tasks_get
+from app.business.tasks import tasks_update
 from app.business.tasks import tasks_delete
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
@@ -85,6 +86,27 @@ def get_case_task(case_identifier, identifier):
         return response_api_not_found()
 
 
+@case_tasks_blueprint.put('/<int:identifier>')
+@ac_api_requires()
+def update_case_task(case_identifier, identifier):
+    try:
+        task = tasks_get(identifier)
+
+        if task.task_case_id != case_identifier:
+            raise ObjectNotFoundError()
+
+        if not ac_fast_check_current_user_has_case_access(task.task_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=task.task_case_id)
+
+        task = tasks_update(identifier, case_identifier, request.get_json())
+
+        return response_api_success(task)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+
+
 @case_tasks_blueprint.delete('/<int:identifier>')
 @ac_api_requires()
 def delete_case_task(case_identifier, identifier):
@@ -112,5 +134,3 @@ def delete_case_task(case_identifier, identifier):
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
-
-# TODO: Add task update endpoint
