@@ -38,7 +38,8 @@ from app.schema.marshables import UserSchema
 auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
 
 
-@auth_blueprint.post('/login')
+# TODO put this endpoint back after thinking about it (doesn't feel REST)
+#@auth_blueprint.post('/login')
 def login():
     """
     Login endpoint. Handles taking user/pass combo and authenticating a local session or returning an error.
@@ -66,7 +67,8 @@ def login():
     return response_api_success(data=authed_user)
 
 
-@auth_blueprint.get('/logout')
+# TODO put this endpoint back after thinking about it (doesn't feel REST)
+#@auth_blueprint.get('/logout')
 def logout():
     """
     Logout function. Erase its session and redirect to index i.e login
@@ -105,7 +107,8 @@ def logout():
     return redirect(not_authenticated_redirection_url('/'))
 
 
-@auth_blueprint.route('/whoami', methods=['GET'])
+# TODO shouldn't we rather have /api/v2/users/{identifier}?
+#@auth_blueprint.route('/whoami', methods=['GET'])
 def whoami():
     """
     Returns information about the currently authenticated user.

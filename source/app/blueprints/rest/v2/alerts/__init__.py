@@ -29,7 +29,8 @@ from app.models.authorization import Permissions
 alerts_blueprint = Blueprint('alerts', __name__, url_prefix='/alerts')
 
 
-@alerts_blueprint.get('')
+# TODO put this endpoint back once it adheres to the conventions (return value for paginated data: field alerts should be field data)
+#@alerts_blueprint.get('')
 @ac_api_requires(Permissions.alerts_read)
 def alerts_list_route() -> Response:
     """
