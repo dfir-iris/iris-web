@@ -131,6 +131,7 @@ def deprecated_case_task_view(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/cases/<int:case_identifier>/tasks/<int:identifier>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_case_edit_task(cur_id, caseid):
