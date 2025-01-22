@@ -39,9 +39,9 @@ from app.models import alert_assets_association
 from app.models import CaseStatus
 from app.models import TaskAssignee
 from app.models import NoteDirectory
-from app.models import Tags
-from app.models import CaseEventCategory
-from app.models import CaseEventsAssets
+from app.models.models import Tags
+from app.models.models import CaseEventCategory
+from app.models.models import CaseEventsAssets
 from app.models import CaseEventsIoc
 from app.models import CaseReceivedFile
 from app.models import CaseTasks

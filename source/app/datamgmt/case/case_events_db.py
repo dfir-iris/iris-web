@@ -24,11 +24,11 @@ from app.models.models import AssetsType
 from app.models.models import CaseAssets
 from app.models.models import CaseEventCategory
 from app.models.models import CaseEventsAssets
-from app.models import CaseEventsIoc
+from app.models.models import CaseEventsIoc
 from app.models.cases import CasesEvent
-from app.models import Comments
-from app.models import EventCategory
-from app.models import EventComments
+from app.models.models import Comments
+from app.models.models import EventCategory
+from app.models.models import EventComments
 from app.models import Ioc
 from app.models import IocAssetLink
 from app.models import IocType
