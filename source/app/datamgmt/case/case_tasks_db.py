@@ -166,13 +166,10 @@ def update_task_status(task_status, task_id, caseid):
         return False
 
 
-def update_task_assignees(task, task_assignee_list, caseid):
-    if not task:
-        return None
-
+def update_task_assignees(task_identifier, task_assignee_list, caseid):
     cur_assignee_list = TaskAssignee.query.with_entities(
         TaskAssignee.user_id
-    ).filter(TaskAssignee.task_id == task.id).all()
+    ).filter(TaskAssignee.task_id == task_identifier).all()
 
     # Some formatting
     set_cur_assignees = set([assignee[0] for assignee in cur_assignee_list])
@@ -190,19 +187,17 @@ def update_task_assignees(task, task_assignee_list, caseid):
         user = User.query.filter(User.id == uid).first()
         if user:
             ta = TaskAssignee()
-            ta.task_id = task.id
+            ta.task_id = task_identifier
             ta.user_id = user.id
             db.session.add(ta)
 
     for uid in assignees_to_remove:
         TaskAssignee.query.filter(
-            and_(TaskAssignee.task_id == task.id,
+            and_(TaskAssignee.task_id == task_identifier,
                  TaskAssignee.user_id == uid)
         ).delete()
 
     db.session.commit()
-
-    return task
 
 
 def add_task(task, assignee_id_list, user_id, caseid):
@@ -221,7 +216,7 @@ def add_task(task, assignee_id_list, user_id, caseid):
     db.session.commit()
 
     update_task_status(task.task_status_id, task.id, caseid)
-    update_task_assignees(task, assignee_id_list, caseid)
+    update_task_assignees(task.id, assignee_id_list, caseid)
 
     return task
 

@@ -24,7 +24,6 @@ from app import db
 from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
-from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -86,7 +85,7 @@ def tasks_get(identifier) -> CaseTasks:
 
 
 def tasks_update(current_identifier, request_json):
-    task = get_task_with_assignees(current_identifier)
+    task = get_task(current_identifier)
     case_identifier = task.task_case_id
 
     if task:
@@ -105,7 +104,7 @@ def tasks_update(current_identifier, request_json):
         task.task_userid_update = current_user.id
         task.task_last_update = datetime.utcnow()
 
-        update_task_assignees(task, task_assignee_list, case_identifier)
+        update_task_assignees(task.id, task_assignee_list, case_identifier)
 
         update_tasks_state(caseid=case_identifier)
 
@@ -114,9 +113,9 @@ def tasks_update(current_identifier, request_json):
         task = call_modules_hook('on_postload_task_update', data=task, caseid=case_identifier)
 
         if task:
-            track_activity(f"updated task \"{task.task_title}\" (status {task.status.status_name})", caseid=case_identifier)
-            return "Task '{}' updated".format(task.task_title), task_schema.dump(task)
+            track_activity(f'updated task "{task.task_title}" (status {task.status.status_name})', caseid=case_identifier)
+            return 'Task "{}" updated'.format(task.task_title), task_schema.dump(task)
 
-        raise BusinessProcessingError("Unable to update task for internal reasons")
+        raise BusinessProcessingError('Unable to update task for internal reasons')
 
-    raise BusinessProcessingError("Invalid task ID for this case")
+    raise BusinessProcessingError('Invalid task ID for this case')

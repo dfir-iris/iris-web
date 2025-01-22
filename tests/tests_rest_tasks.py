@@ -95,3 +95,14 @@ class TestsRestTasks(TestCase):
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
                                         {'task_title': 'new title', 'task_status_id': 1, 'task_assignees_id': []})
         self.assertEqual(200, response.status_code)
+
+    def test_update_task_should_update_assignees(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+                             {'task_title': 'dummy title', 'task_status_id': 1, 'task_assignees_id': [user.get_identifier()]})
+        response = self._subject.get('/case/tasks/list', query_parameters={'cid': case_identifier}).json()
+        self.assertEqual(user.get_identifier(), response['data']['tasks'][0]['task_assignees'][0]['id'])
