@@ -32,28 +32,28 @@ class TestsRestTasks(TestCase):
 
     def test_add_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title', 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         self.assertEqual(201, response.status_code)
 
     def test_add_task_with_missing_task_title_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         self.assertEqual(400, response.status_code)
 
     def test_create_case_with_spurious_slash_should_return_404(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title', 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks/', body)
         self.assertEqual(404, response.status_code)
 
     def test_get_task_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [2], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title',
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
@@ -63,7 +63,7 @@ class TestsRestTasks(TestCase):
 
     def test_get_task_with_missing_task_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title', 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
@@ -71,7 +71,7 @@ class TestsRestTasks(TestCase):
 
     def test_delete_task_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title',
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
@@ -81,8 +81,7 @@ class TestsRestTasks(TestCase):
 
     def test_delete_task_with_missing_task_identifier_should_return_404(self):
         case_identifier = self._subject.create_dummy_case()
-        task_id = 1
-        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         test = self._subject.delete(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
