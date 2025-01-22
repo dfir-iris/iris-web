@@ -47,8 +47,8 @@ from app.models import CaseReceivedFile
 from app.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models import Client
-from app.models import DataStoreFile
+from app.models.models import Client
+from app.models.models import DataStoreFile
 from app.models import DataStorePath
 from app.models import IocAssetLink
 from app.models import Notes
