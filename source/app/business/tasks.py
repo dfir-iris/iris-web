@@ -24,22 +24,21 @@ from app import db
 from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
-from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import CaseTasks
+from app.models.models import CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from marshmallow.exceptions import ValidationError
 
 
-def _load(request_data):
+def _load(request_data, **kwargs):
     try:
         add_task_schema = CaseTaskSchema()
-        return add_task_schema.load(request_data)
+        return add_task_schema.load(request_data, **kwargs)
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
 
@@ -85,38 +84,32 @@ def tasks_get(identifier) -> CaseTasks:
     return task
 
 
-def tasks_update(current_identifier, case_identifier, request_json):
+def tasks_update(task: CaseTasks, request_json):
+    case_identifier = task.task_case_id
+    request_data = call_modules_hook('on_preload_task_update', data=request_json, caseid=case_identifier)
 
-    task = get_task_with_assignees(task_id=current_identifier)
+    if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
+        raise BusinessProcessingError('task_assignee_id is not valid anymore since v1.5.0')
 
-    if task:
-        request_data = call_modules_hook('on_preload_task_update', data=request_json, caseid=case_identifier)
+    task_assignee_list = request_data['task_assignees_id']
+    del request_data['task_assignees_id']
 
-        if 'task_assignee_id' in request_data or 'task_assignees_id' not in request_data:
-            raise BusinessProcessingError('task_assignee_id is not valid anymore since v1.5.0')
+    request_data['id'] = task.id
+    task = _load(request_data, instance=task)
 
-        task_assignee_list = request_data['task_assignees_id']
-        del request_data['task_assignees_id']
-        task_schema = CaseTaskSchema()
+    task.task_userid_update = current_user.id
+    task.task_last_update = datetime.utcnow()
 
-        request_data['id'] = current_identifier
-        task = task_schema.load(request_data, instance=task)
+    update_task_assignees(task.id, task_assignee_list, case_identifier)
 
-        task.task_userid_update = current_user.id
-        task.task_last_update = datetime.utcnow()
+    update_tasks_state(caseid=case_identifier)
 
-        update_task_assignees(task, task_assignee_list, case_identifier)
+    db.session.commit()
 
-        update_tasks_state(caseid=case_identifier)
+    task = call_modules_hook('on_postload_task_update', data=task, caseid=case_identifier)
 
-        db.session.commit()
+    if not task:
+        raise BusinessProcessingError('Unable to update task for internal reasons')
 
-        task = call_modules_hook('on_postload_task_update', data=task, caseid=case_identifier)
-
-        if task:
-            track_activity(f"updated task \"{task.task_title}\" (status {task.status.status_name})", caseid=case_identifier)
-            return "Task '{}' updated".format(task.task_title), task_schema.dump(task)
-
-        raise BusinessProcessingError("Unable to update task for internal reasons")
-
-    raise BusinessProcessingError("Invalid task ID for this case")
+    track_activity(f'updated task "{task.task_title}" (status {task.status.status_name})', caseid=case_identifier)
+    return task

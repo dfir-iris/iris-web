@@ -147,7 +147,7 @@ function delete_task(id) {
 
 /* Edit and event from the timeline thanks to its ID */
 function edit_task(id) {
-  url = '/case/tasks/'+ id + '/modal' + case_param();
+  url = `/case/tasks/${id}/modal${case_param()}`;
   $('#modal_add_task_content').load(url, function (response, status, xhr) {
         hide_minimized_modal_box();
         if (status !== "success") {

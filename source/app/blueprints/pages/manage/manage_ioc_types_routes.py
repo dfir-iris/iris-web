@@ -22,7 +22,7 @@ from flask import url_for
 from werkzeug.utils import redirect
 
 from app.forms import AddIocTypeForm
-from app.models import IocType
+from app.models.models import IocType
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_requires
 from app.blueprints.responses import response_error

@@ -27,7 +27,7 @@ from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import validate_case_template
 from app.datamgmt.manage.manage_case_templates_db import delete_case_template_by_id
-from app.models import CaseTemplate
+from app.models.models import CaseTemplate
 from app.models.authorization import Permissions
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseTemplateSchema

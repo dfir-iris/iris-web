@@ -32,28 +32,28 @@ class TestsRestTasks(TestCase):
 
     def test_add_task_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title', 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         self.assertEqual(201, response.status_code)
 
     def test_add_task_with_missing_task_title_identifier_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         self.assertEqual(400, response.status_code)
 
     def test_create_case_with_spurious_slash_should_return_404(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title', 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks/', body)
         self.assertEqual(404, response.status_code)
 
     def test_get_task_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [2], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title',
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
@@ -63,7 +63,7 @@ class TestsRestTasks(TestCase):
 
     def test_get_task_with_missing_task_identifier_should_return_error(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title', 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
@@ -71,7 +71,7 @@ class TestsRestTasks(TestCase):
 
     def test_delete_task_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
                 'task_title': 'dummy title',
                 'custom_attributes': {}}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
@@ -81,8 +81,7 @@ class TestsRestTasks(TestCase):
 
     def test_delete_task_with_missing_task_identifier_should_return_404(self):
         case_identifier = self._subject.create_dummy_case()
-        task_id = 1
-        body = {'task_assignees_id': [task_id], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
+        body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         test = self._subject.delete(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
@@ -105,3 +104,41 @@ class TestsRestTasks(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
         response = user.get('/user/tasks/list').json()
         self.assertEqual(f'#{case_identifier} - case name', response['data']['tasks'][0]['task_case'])
+
+    def test_update_task_should_not_fail(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+                                        {'task_title': 'new title', 'task_status_id': 1, 'task_assignees_id': []})
+        self.assertEqual(200, response.status_code)
+
+    def test_update_task_should_update_assignees(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+                             {'task_title': 'dummy title', 'task_status_id': 1, 'task_assignees_id': [user.get_identifier()]})
+        response = self._subject.get('/case/tasks/list', query_parameters={'cid': case_identifier}).json()
+        self.assertEqual(user.get_identifier(), response['data']['tasks'][0]['task_assignees'][0]['id'])
+
+    def test_update_task_without_task_status_id_should_return_400(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+                                        {'task_title': 'new title', 'task_assignees_id': []})
+        self.assertEqual(400, response.status_code)
+
+    def test_update_task_should_return_a_task(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+                                        {'task_title': 'new title', 'task_status_id': 1, 'task_assignees_id': []}).json()
+        self.assertEqual('new title', response['task_title'])

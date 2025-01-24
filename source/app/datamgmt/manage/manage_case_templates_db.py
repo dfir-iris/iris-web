@@ -23,11 +23,14 @@ from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models.cases import Cases
-from app.models import CaseTemplate
-from app.models import Tags
-from app.models import NoteDirectory
+from app.models.models import CaseTemplate
+from app.models.models import Tags
+from app.models.models import NoteDirectory
 from app.models.authorization import User
-from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseNoteDirectorySchema, CaseNoteSchema
+from app.schema.marshables import CaseSchema
+from app.schema.marshables import CaseTaskSchema
+from app.schema.marshables import CaseNoteDirectorySchema
+from app.schema.marshables import CaseNoteSchema
 
 
 def get_case_templates_list() -> List[dict]:

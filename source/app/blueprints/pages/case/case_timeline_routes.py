@@ -38,7 +38,6 @@ from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.blueprints.access_controls import ac_case_requires
 from app.blueprints.responses import response_error
-from app.schema.marshables import EventCategorySchema
 
 _EVENT_TAGS = ['Network', 'Server', 'ActiveDirectory', 'Computer', 'Malware', 'User Interaction']
 
