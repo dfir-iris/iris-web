@@ -99,7 +99,18 @@ def list_user_reviews():
 
 
 def list_user_tasks():
-    ct = CaseTasks.query.join(
+    ct = CaseTasks.query.with_entities(
+        CaseTasks.id.label("task_id"),
+        CaseTasks.task_title,
+        CaseTasks.task_description,
+        CaseTasks.task_last_update,
+        CaseTasks.task_tags,
+        Cases.name.label('task_case'),
+        CaseTasks.task_case_id.label('case_id'),
+        CaseTasks.task_status_id,
+        TaskStatus.status_name,
+        TaskStatus.status_bscolor
+    ).join(
         CaseTasks.case
     ).order_by(
         desc(TaskStatus.status_name)
