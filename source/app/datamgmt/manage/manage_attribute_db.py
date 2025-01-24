@@ -20,9 +20,9 @@ import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
 from app import db, app
-from app.models import CaseAssets
-from app.models import CaseReceivedFile
-from app.models import CaseTasks
+from app.models.models import CaseAssets
+from app.models.models import CaseReceivedFile
+from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.models.models import Client
