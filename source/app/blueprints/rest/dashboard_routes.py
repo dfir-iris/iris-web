@@ -20,13 +20,12 @@ import marshmallow
 from datetime import datetime
 from datetime import timedelta
 
-from flask import Blueprint, session, redirect
+from flask import Blueprint
 from flask import request
-from flask_login import current_user, logout_user
+from flask_login import current_user
 
 from app import db, app
 
-from app import oidc_client
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
@@ -43,18 +42,15 @@ from app.models.models import TaskStatus
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import GlobalTasksSchema
-from app.blueprints.access_controls import ac_requires_case_identifier, is_authentication_oidc, \
-    not_authenticated_redirection_url
+from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
 
-from oic.oauth2.exception import GrantError
 
 log = app.logger
 
 
-# CONTENT ------------------------------------------------
 dashboard_rest_blueprint = Blueprint(
     'dashboard_rest',
     __name__,

@@ -36,7 +36,6 @@ from app.datamgmt.case.case_tasks_db import delete_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comment
 from app.datamgmt.case.case_tasks_db import get_case_task_comments
 from app.datamgmt.case.case_tasks_db import get_task
-from app.datamgmt.case.case_tasks_db import get_task_with_assignees
 from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_status
@@ -121,7 +120,7 @@ def deprecated_case_add_task(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_case_task_view(cur_id, caseid):
-    task = get_task_with_assignees(task_id=cur_id)
+    task = get_task(task_id=cur_id)
     if not task:
         return response_error('Invalid task ID for this case')
 
@@ -131,14 +130,21 @@ def deprecated_case_task_view(cur_id, caseid):
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/cases/<int:case_identifier>/tasks/<int:identifier>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_edit_task(cur_id, caseid):
+def deprecated_case_edit_task(cur_id, caseid):
     try:
-        msg = tasks_update(cur_id, caseid, request.get_json())
-        return response_success(msg)
+        task = get_task(cur_id)
+        if not task:
+            return response_error(msg='Invalid task ID for this case')
+
+        task = tasks_update(task, request.get_json())
+        task_schema = CaseTaskSchema()
+        result = 'Task "{}" updated'.format(task.task_title), task_schema.dump(task)
+        return response_success(result)
     except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+        return response_error(msg='Data error', data=e.messages)
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])

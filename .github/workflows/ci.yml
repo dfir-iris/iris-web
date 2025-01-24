@@ -21,8 +21,8 @@ on: [push, pull_request]
 
 jobs:
 
-  tests:
-    name: API tests
+  static-checks:
+    name: Static analyis checks
     runs-on: ubuntu-22.04
     steps:
       - name: Check out iris
@@ -32,6 +32,13 @@ jobs:
         with:
           args: check --output-format=github
           src: ./source
+
+  tests:
+    name: API tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out iris
+        uses: actions/checkout@v4
       - name: Build dockers
         run: |
           # TODO using the environment file from tests to build here. 
