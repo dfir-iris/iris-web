@@ -16,7 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 from datetime import datetime
 from flask import request
 from flask_login import current_user
@@ -28,7 +27,6 @@ from app.models.models import UserActivity
 log = app.app.logger
 
 
-# CONTENT ------------------------------------------------
 def track_activity(message, caseid=None, ctx_less=False, user_input=False, display_in_ui=True):
     """
     Register a user activity in DB.
