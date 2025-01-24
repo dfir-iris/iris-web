@@ -36,6 +36,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
 from app.iris_engine.access_control.oidc_handler import get_oidc_client
+from app.post_init import run_post_init
 
 
 class ReverseProxied(object):
@@ -157,4 +158,19 @@ def after_request(response):
     return response
 
 
-from app import views
+from app.views import register_blusprints
+from app.views import load_user
+from app.views import load_user_from_request
+
+register_blusprints(app)
+
+try:
+
+    run_post_init(development=app.config["DEVELOPMENT"])
+
+except Exception as e:
+    app.logger.exception(f"Post init failed. IRIS not started")
+    raise e
+
+lm.user_loader(load_user)
+lm.request_loader(load_user_from_request)
