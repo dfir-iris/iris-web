@@ -25,7 +25,7 @@ from app.business.errors import BusinessProcessingError, UnhandledBusinessError
 from app.datamgmt.case.case_notes_db import get_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models import NoteRevisions
+from app.models.models import NoteRevisions
 from app.models.authorization import User
 from app.schema.marshables import CaseNoteSchema
 from app.util import add_obj_history_entry
