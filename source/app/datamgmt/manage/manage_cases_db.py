@@ -50,9 +50,9 @@ from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.models.models import Client
 from app.models.models import DataStoreFile
-from app.models import DataStorePath
-from app.models import IocAssetLink
-from app.models import Notes
+from app.models.models import DataStorePath
+from app.models.models import IocAssetLink
+from app.models.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
 from app.models import UserActivity

@@ -56,11 +56,11 @@ from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models.models import AnalysisStatus
 from app.models.models import CaseClassification
 from app.models.models import SavedFilter
-from app.models import DataStorePath
-from app.models import IrisModuleHook
-from app.models import Tags
-from app.models import ReviewStatus
-from app.models import EvidenceTypes
+from app.models.models import DataStorePath
+from app.models.models import IrisModuleHook
+from app.models.models import Tags
+from app.models.models import ReviewStatus
+from app.models.models import EvidenceTypes
 from app.models.models import CaseStatus
 from app.models.models import NoteDirectory
 from app.models.models import NoteRevisions
