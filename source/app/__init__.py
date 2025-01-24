@@ -36,7 +36,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
 from app.iris_engine.access_control.oidc_handler import get_oidc_client
-from app.post_init import run_post_init
 
 
 class ReverseProxied(object):
@@ -163,6 +162,8 @@ from app.views import load_user
 from app.views import load_user_from_request
 
 register_blusprints(app)
+
+from app.post_init import run_post_init
 
 try:
 
