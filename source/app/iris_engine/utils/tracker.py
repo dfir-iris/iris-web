@@ -23,7 +23,7 @@ from flask_login import current_user
 
 import app
 from app import db
-from app.models import UserActivity
+from app.models.models import UserActivity
 
 log = app.app.logger
 
