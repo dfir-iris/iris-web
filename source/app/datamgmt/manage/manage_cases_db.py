@@ -33,8 +33,9 @@ from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets, NoteRevisions
-from app.models import CaseClassification
+from app.models.models import CaseAssets
+from app.models.models import NoteRevisions
+from app.models.models import CaseClassification
 from app.models import alert_assets_association
 from app.models.models import CaseStatus
 from app.models.models import TaskAssignee

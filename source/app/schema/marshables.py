@@ -53,9 +53,9 @@ from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.datamgmt.case.case_iocs_db import get_ioc_links
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
-from app.models import AnalysisStatus
-from app.models import CaseClassification
-from app.models import SavedFilter
+from app.models.models import AnalysisStatus
+from app.models.models import CaseClassification
+from app.models.models import SavedFilter
 from app.models import DataStorePath
 from app.models import IrisModuleHook
 from app.models import Tags

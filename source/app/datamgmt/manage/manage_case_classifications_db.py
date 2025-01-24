@@ -17,7 +17,7 @@
 from sqlalchemy import func
 from typing import List
 
-from app.models import CaseClassification
+from app.models.models import CaseClassification
 
 
 def get_case_classifications_list() -> List[dict]:
