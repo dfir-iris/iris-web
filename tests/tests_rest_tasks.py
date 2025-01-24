@@ -147,3 +147,8 @@ class TestsRestTasks(TestCase):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks')
         self.assertEqual(200, response.status_code)
+
+    def test_get_tasks_should_return_empty_list_for_field_data_when_there_are_no_tasks(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
+        self.assertEqual([], response['data'])

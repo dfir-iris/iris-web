@@ -71,13 +71,8 @@ def case_get_tasks(case_identifier):
 
     tasks = get_tasks(case_identifier)
 
-    if not tasks:
-        output = []
-    else:
-        output = tasks
-
     result = {
-        'tasks': output,
+        'data': tasks
     }
 
     return response_api_success(result)
