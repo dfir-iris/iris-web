@@ -53,9 +53,9 @@ from app.models.models import DataStoreFile
 from app.models.models import DataStorePath
 from app.models.models import IocAssetLink
 from app.models.models import Notes
-from app.models import NotesGroup
-from app.models import NotesGroupLink
-from app.models import UserActivity
+from app.models.models import NotesGroup
+from app.models.models import NotesGroupLink
+from app.models.models import UserActivity
 from app.models.alerts import AlertCaseAssociation
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import GroupCaseAccess
