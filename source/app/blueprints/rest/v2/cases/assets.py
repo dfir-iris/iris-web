@@ -38,7 +38,8 @@ case_assets_blueprint = Blueprint('case_assets',
                                   url_prefix='/<int:case_id>/assets')
 
 
-@case_assets_blueprint.get('')
+# TODO put this endpoint back once it adheres to the conventions (return value for paginated data: field assets should be field data, spurious field state, missing total, last_page, current_page and next_page)
+#@case_assets_blueprint.get('')
 @ac_api_requires()
 def case_list_assets(case_id):
     """

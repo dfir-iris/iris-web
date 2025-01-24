@@ -24,6 +24,7 @@ from app.blueprints.rest.endpoints import response_api_success, response_api_err
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.models.authorization import Permissions
+from app.schema.marshables import AlertSchema
 
 
 alerts_blueprint = Blueprint('alerts', __name__, url_prefix='/alerts')
@@ -74,7 +75,7 @@ def alerts_list_route() -> Response:
         except ValueError:
             return response_api_error('Invalid alert ioc')
 
-    filtered_data = get_filtered_alerts(
+    filtered_alerts = get_filtered_alerts(
         start_date=request.args.get('creation_start_date'),
         end_date=request.args.get('creation_end_date'),
         source_start_date=request.args.get('source_start_date'),
@@ -101,7 +102,15 @@ def alerts_list_route() -> Response:
         current_user_id=current_user.id
     )
 
-    if filtered_data is None:
+    if filtered_alerts is None:
         return response_api_error('Filtering error')
 
+    alert_schema = AlertSchema()
+    filtered_data = {
+        'total': filtered_alerts.total,
+        'data': alert_schema.dump(filtered_alerts, many=True),
+        'last_page': filtered_alerts.pages,
+        'current_page': filtered_alerts.page,
+        'next_page': filtered_alerts.next_num if filtered_alerts.has_next else None,
+    }
     return response_api_success(data=filtered_data)

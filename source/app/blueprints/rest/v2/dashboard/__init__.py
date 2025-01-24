@@ -28,7 +28,9 @@ dashboard_blueprint = Blueprint('dashboard',
                                 url_prefix='/dashboard')
 
 
-@dashboard_blueprint.route('/cases/list', methods=['GET'])
+# TODO this endpoint does not adhere to the conventions (verb in URL).
+#      Prefer to use GET /api/v2/cases. Check it is possible. If not, evolve /api/v2/cases
+#@dashboard_blueprint.route('/cases/list', methods=['GET'])
 @ac_api_requires()
 def list_own_cases():
     cases = list_user_cases(
@@ -38,14 +40,18 @@ def list_own_cases():
     return response_api_success(data=CaseDetailsSchema(many=True).dump(cases))
 
 
-@dashboard_blueprint.route('/tasks/list', methods=['GET'])
+# TODO this endpoint does not adhere to the conventions (verb in URL).
+#      We should rather have /api/v2/tasks?
+#@dashboard_blueprint.route('/tasks/list', methods=['GET'])
 @ac_api_requires()
 def list_own_tasks():
     ct = list_user_tasks()
     return response_api_success(data=CaseTaskSchema(many=True).dump(ct))
 
 
-@dashboard_blueprint.route('/reviews/list', methods=['GET'])
+# TODO this endpoint does not adhere to the conventions (verb in URL).
+#      We should rather have /api/v2/reviews?
+#@dashboard_blueprint.route('/reviews/list', methods=['GET'])
 @ac_api_requires()
 def list_own_reviews():
     reviews = list_user_reviews()

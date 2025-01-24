@@ -29,7 +29,8 @@ from app.models.models import Client
 api_v2_context_blueprint = Blueprint('context_api_v2', __name__, url_prefix='/api/v2')
 
 
-@api_v2_context_blueprint.route('/context/search-cases', methods=['GET'])
+# TODO put this endpoint back once it adheres to the conventions (verb in URL)
+#@api_v2_context_blueprint.route('/context/search-cases', methods=['GET'])
 @ac_api_requires()
 def cases_context_search_v2():
     """
@@ -40,7 +41,8 @@ def cases_context_search_v2():
     return response_api_success(data=data)
 
 
-@api_v2_context_blueprint.route('/context/set', methods=['POST'])
+# TODO put this endpoint back once it adheres to the conventions (verb in URL)
+#@api_v2_context_blueprint.route('/context/set', methods=['POST'])
 @ac_api_requires()
 def set_ctx_v2():
     """
