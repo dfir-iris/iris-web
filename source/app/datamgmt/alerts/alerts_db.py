@@ -57,7 +57,6 @@ from app.models.alerts import Severity
 from app.models.authorization import Permissions
 from app.models.authorization import User
 from app.schema.marshables import EventSchema
-from app.schema.marshables import AlertSchema
 from app.util import add_obj_history_entry
 
 
