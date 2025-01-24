@@ -61,9 +61,9 @@ from app.models import IrisModuleHook
 from app.models import Tags
 from app.models import ReviewStatus
 from app.models import EvidenceTypes
-from app.models import CaseStatus
-from app.models import NoteDirectory
-from app.models import NoteRevisions
+from app.models.models import CaseStatus
+from app.models.models import NoteDirectory
+from app.models.models import NoteRevisions
 from app.models import AssetsType
 from app.models import CaseAssets
 from app.models import CaseReceivedFile
