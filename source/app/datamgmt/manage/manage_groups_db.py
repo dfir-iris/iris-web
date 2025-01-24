@@ -32,6 +32,13 @@ from app.models.authorization import UserGroup
 from app.schema.marshables import AuthorizationGroupSchema
 
 
+def create_group(name, description):
+    group = Group(group_name=name, group_description=description, group_permissions=0)
+    db.session.add(group)
+    db.session.commit()
+    return group
+
+
 def get_groups_list():
     groups = Group.query.all()
 
