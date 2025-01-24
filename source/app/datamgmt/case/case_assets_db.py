@@ -32,9 +32,9 @@ from app.models.models import CaseAssets
 from app.models.models import CaseEventsAssets
 from app.models.cases import Cases
 from app.models.models import Comments
-from app.models import CompromiseStatus
-from app.models import Ioc
-from app.models import IocAssetLink
+from app.models.models import CompromiseStatus
+from app.models.models import Ioc
+from app.models.models import IocAssetLink
 from app.models import IocType
 from app.models.authorization import User
 

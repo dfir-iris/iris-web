@@ -22,10 +22,10 @@ from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
 from app.datamgmt.case.case_notes_db import get_case_note_comments
-from app.models import AnalysisStatus
-from app.models import CompromiseStatus
-from app.models import TaskAssignee
-from app.models import AssetsType
+from app.models.models import AnalysisStatus
+from app.models.models import CompromiseStatus
+from app.models.models import TaskAssignee
+from app.models.models import AssetsType
 from app.models.models import CaseAssets
 from app.models.models import CaseEventsAssets
 from app.models.models import CaseEventsIoc
