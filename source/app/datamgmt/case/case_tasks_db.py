@@ -40,7 +40,7 @@ def get_tasks_status():
 
 def get_tasks(caseid):
     return CaseTasks.query.with_entities(
-        CaseTasks.id.label("task_id"),
+        CaseTasks.id.label('task_id'),
         CaseTasks.task_uuid,
         CaseTasks.task_title,
         CaseTasks.task_description,
