@@ -20,20 +20,22 @@ from copy import deepcopy
 import json
 from datetime import datetime, timedelta
 from flask_login import current_user
-from functools import reduce
 from sqlalchemy import desc, asc, func, tuple_, or_, not_, and_
 from sqlalchemy.orm import aliased, make_transient, selectinload
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 
 import app
 from app import db
-from app.datamgmt.case.case_assets_db import create_asset, set_ioc_links, get_unspecified_analysis_status_id
-from app.datamgmt.case.case_events_db import update_event_assets, update_event_iocs
+from app.datamgmt.case.case_assets_db import create_asset
+from app.datamgmt.case.case_assets_db import set_ioc_links
+from app.datamgmt.case.case_assets_db import get_unspecified_analysis_status_id
+from app.datamgmt.case.case_events_db import update_event_assets
+from app.datamgmt.case.case_events_db import update_event_iocs
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
-from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id, \
-    case_template_post_modifier
+from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
+from app.datamgmt.manage.manage_case_templates_db import case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
 from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.common import parse_bf_date_format
