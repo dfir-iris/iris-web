@@ -30,9 +30,9 @@ from app import db
 from app.models.models import CaseReceivedFile
 from app.models.models import DataStoreFile
 from app.models.models import DataStorePath
-from app.models import Ioc
-from app.models import IocType
-from app.models import Tlp
+from app.models.models import Ioc
+from app.models.models import IocType
+from app.models.models import Tlp
 
 
 def datastore_get_root(cid):

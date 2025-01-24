@@ -30,8 +30,8 @@ from app.models.models import Client
 from app.models.models import Comments
 from app.models.models import Ioc
 from app.models.models import IocComments
-from app.models import IocType
-from app.models import Tlp
+from app.models.models import IocType
+from app.models.models import Tlp
 from app.models.authorization import User
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import CaseAccessLevel

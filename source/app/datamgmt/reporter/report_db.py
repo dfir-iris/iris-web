@@ -34,11 +34,11 @@ from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
 from app.models.models import Comments
-from app.models import EventCategory
-from app.models import Ioc
+from app.models.models import EventCategory
+from app.models.models import Ioc
 from app.models import IocAssetLink
-from app.models import IocType
-from app.models import Notes
+from app.models.models import IocType
+from app.models.models import Notes
 from app.models import NotesGroup
 from app.models import TaskStatus
 from app.models import Tlp

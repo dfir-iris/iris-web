@@ -35,7 +35,7 @@ from app.models.models import Comments
 from app.models.models import CompromiseStatus
 from app.models.models import Ioc
 from app.models.models import IocAssetLink
-from app.models import IocType
+from app.models.models import IocType
 from app.models.authorization import User
 
 
