@@ -29,8 +29,8 @@ from app.models.models import CaseTasks
 from app.models.models import TaskAssignee
 from app.models.cases import Cases
 from app.models.models import Comments
-from app.models import TaskComments
-from app.models import TaskStatus
+from app.models.models import TaskComments
+from app.models.models import TaskStatus
 from app.models.authorization import User
 
 
