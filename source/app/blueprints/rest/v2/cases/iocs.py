@@ -83,7 +83,7 @@ def get_case_iocs(case_identifier):
         'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
     }
 
-    return response_api_success(data=iocs)
+    return response_api_success(iocs)
 
 
 @case_iocs_blueprint.post('')
