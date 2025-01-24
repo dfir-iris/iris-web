@@ -36,7 +36,7 @@ from app.datamgmt.states import delete_case_states
 from app.models.models import CaseAssets
 from app.models.models import NoteRevisions
 from app.models.models import CaseClassification
-from app.models import alert_assets_association
+from app.models.models import alert_assets_association
 from app.models.models import CaseStatus
 from app.models.models import TaskAssignee
 from app.models.models import NoteDirectory
