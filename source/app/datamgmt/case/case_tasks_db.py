@@ -38,8 +38,18 @@ def get_tasks_status():
     return TaskStatus.query.all()
 
 
-def get_tasks(caseid):
-    return CaseTasks.query.with_entities(
+def get_filtered_tasks(caseid, page=1, per_page=100):
+    return CaseTasks.query.filter(
+        CaseTasks.task_case_id == caseid
+    ).join(
+        CaseTasks.status
+    ).order_by(
+        desc(TaskStatus.status_name)
+    ).paginate(page=page, per_page=per_page, error_out=False)
+
+
+def get_tasks_with_assignees(caseid):
+    tasks = CaseTasks.query.with_entities(
         CaseTasks.id.label('task_id'),
         CaseTasks.task_uuid,
         CaseTasks.task_title,
@@ -56,10 +66,6 @@ def get_tasks(caseid):
     ).order_by(
         desc(TaskStatus.status_name)
     ).all()
-
-
-def get_tasks_with_assignees(caseid):
-    tasks = get_tasks(caseid)
     if not tasks:
         return None
 

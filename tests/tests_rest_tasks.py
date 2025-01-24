@@ -152,3 +152,10 @@ class TestsRestTasks(TestCase):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
         self.assertEqual([], response['data'])
+
+    def test_get_tasks_should_return_total(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
+        self.assertEqual(1, response['total'])
