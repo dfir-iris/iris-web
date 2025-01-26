@@ -45,7 +45,6 @@ services:
       - ./source/app:/iriswebapp/app
       - ./ui/dist:/iriswebapp/static
     healthcheck:
-      disable: true
       test: curl --head --fail http://localhost:8000 || exit 1
       start_period: 60s
 
