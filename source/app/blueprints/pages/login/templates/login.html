@@ -1,0 +1,66 @@
+{% extends "layouts/static-default.html" %}
+{% block title %} {{ organisation_name }} Login {% endblock title %}
+
+{% block stylesheets %}
+
+    <link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/assets/css/atlantis.css">
+    <link rel="stylesheet" href="/static/assets/css/login.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+<body class="login">
+    <div class="login__wrapper row">
+        <div class="login__left_part col-xs-12 col-md-8">
+            <div class="login__logo">
+                <img src="/static/assets/img/logo-white.png">
+            </div>
+            <h3 class="text-white">{{ organisation_name }}</h3>
+            <span class="text-white text-center mt-4">{{ login_banner|replace('\n', '<br>')|safe }}</span>
+        </div>
+        <div class="login__right_part col-xs-12 col-md-4">
+            <h3 class="login__form_title">Sign In</h3>
+
+            {% if auth_type == "oidc" %}
+                <a href="{{ url_for('login.oidc_login') }}" class="btn btn-primary login__submit_button login__form_title">OIDC Sign In</a>
+            {% else %}
+                <form method="post" action="" class="login__form">
+                    {{ form.hidden_tag() }}
+                    <div class="login__form">
+                        <div class="login__form_field_container">
+                            <label for="username"><b>Username</b></label>
+                            <input id="username" name="username" type="text" class="form-control" required="">
+                        </div>
+                        <div class="login__form_field_container">
+                            <label for="password"><b>Password</b></label>
+                            <div class="login__form_input">
+                                <input id="password" name="password" type="password" class="form-control" required="">
+                                <div class="login__show_password" id="togglePassword">
+                                    <i class="icon-eye"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% if msg %}
+                            <div class="alert alert-danger"> <b>Error:</b> {{ msg }} </div>
+                        {% endif %}
+                        <div class="login__form_field_container">
+                            <button type="submit" class="btn btn-primary login__submit_button">Sign In</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="login__contact_container">
+                    {% if ptfm_contact %}
+                        <span>Don't have an account yet ?</span><br/>
+                        {{ ptfm_contact }}
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script type="module" src="/static/assets/js/iris/login.js"></script>
+</body>
+
+{% endblock content %}

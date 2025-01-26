@@ -24,7 +24,8 @@ from app import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
-from app.models import CaseTasks, TaskAssignee
+from app.models import CaseTasks
+from app.models import TaskAssignee
 from app.models import Cases
 from app.models import Comments
 from app.models import TaskComments
@@ -98,25 +99,21 @@ def get_tasks_with_assignees(caseid):
     return task_with_assignees
 
 
-def get_task(task_id, caseid):
-    return CaseTasks.query.filter(CaseTasks.id == task_id, CaseTasks.task_case_id == caseid).first()
+def get_task(task_id) -> CaseTasks:
+    return CaseTasks.query.filter(CaseTasks.id == task_id).first()
 
 
-def get_task_with_assignees(task_id: int, case_id: int):
+def get_task_with_assignees(task_id: int):
     """
     Returns a task with its assignees
 
     Args:
         task_id (int): Task ID
-        case_id (int): Case ID
 
     Returns:
         dict: Task with its assignees
     """
-    task = get_task(
-        task_id=task_id,
-        caseid=case_id
-    )
+    task = get_task(task_id)
 
     if not task:
         return None
@@ -154,7 +151,7 @@ def get_task_with_assignees(task_id: int, case_id: int):
 
 
 def update_task_status(task_status, task_id, caseid):
-    task = get_task(task_id, caseid)
+    task = get_task(task_id)
     if task:
         try:
             task.task_status_id = task_status

@@ -1,0 +1,329 @@
+<div class="modal-header">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}
+                    {% if event.modification_history %}
+                        <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
+                                title="Modifications history"
+                                data-content="<small>{% for mod in event.modification_history %}<code>{{ mod|format_datetime('%Y-%m-%d %H:%M') }}</code> -  {{ event.modification_history[mod].action }} by {{ event.modification_history[mod].user }}<br/>{% endfor %}</small>">
+                        </i>
+                    {% endif %}
+                </h4>
+                <small><i class="text-muted">{% if event.event_uuid %}#{{ event.event_uuid }}{% endif %}</i></small>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col ">
+                <div class="row float-right">
+                {% if event.event_id %}
+                    <div class="dropdown">
+                        <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                        </button>
+                        <div class="dropdown-menu pull-right" id="event_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                            <a class="dropdown-item" href="#" onclick='copy_object_link({{event.event_id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                            <a class="dropdown-item" href="#" onclick='copy_object_link_md("event", {{event.event_id}});return false;'><i class="fa-brands fa-markdown mr-2"></i>Markdown Link</a>
+                            <a class="dropdown-item" href="#" onclick='duplicate_event({{event.event_id}});return false;'><i class="fa fa-clone mr-2"></i>Duplicate</a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ event.event_id }}, 'timeline/events')" title="Comments">
+                        <span class="btn-label">
+                            <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length }}</span>
+                        </span>
+                    </button>
+                {% endif %}
+
+                    <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_event', '{% if event.event_id %} Event ID #{{ event.event_id }} {% else %} Add event {% endif %}');"> <i class='fa fa-minus'></i> </button>
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                    <div class="container col-md-12">
+                        <form method="post" action="" id="form_new_event">
+                            <div class="col-md-12 col-lg-12 col-sm-12">
+                                {{ form.hidden_tag() }}
+                                <div class="row">
+                                    <div class="form-group col-xl-5 col-md-12">
+                                        <label for="event_title" class="placeholder">{{ form.event_title.label.text }} *</label>
+                                        {{ form.event_title(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group col-xl-7 col-md-12">
+                                        <label for="event_timetitle" class="placeholder ml-2">Event Time *</label>
+                                        <div class="row ml-2" id="event_date_inputs">
+                                                <input class="form-control col-5 mr-2" type="date" id="event_date" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%Y-%m-%d') }}"{% endif %}>
+                                                <span></span>
+                                                <input class="form-control col-4" type="time" step="0.001" id="event_time" {% if event.event_date_wtz %} value="{{ event.event_date_wtz.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
+                                                <span></span>
+                                                <input class="form-control col-2" type="text" id="event_tz" {% if event.event_tz %} value="{{ event.event_tz }}" {% else %} value="+00:00" {% endif %}>
+                                                <button class="btn btn-sm btn-outline-white" type="button" onclick="show_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                                        </div>
+                                        <div class="row ml-2" id="event_date_convert" style="display:none;">
+                                            <div class="input-group ">
+                                                <input class="form-control col-9" type="text" id="event_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter();return false;">Submit</button>
+                                                    <button class="btn btn-sm btn-outline" type="button" onclick="hide_time_converter();return false;"><i class="fas fa-magic"></i></button>
+                                                </div>
+                                            </div>
+                                            <span id="convert_bad_feedback" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group mt-3 col-12">
+                                        <label for="event_content" class="placeholder">Event description</label>
+                                        <div class="md_description_field">
+                                            <div class="form-group mt--2">
+                                                    <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_event_desc();" >
+                                                    </button>
+                                                    <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2 mt-2"
+                                                            onclick="preview_event_description();" id="event_preview_button"><i class="fa-solid fa-eye"></i></button>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col mb--2 ml--2" id="event_edition_btn" style="display:none;">
+                                                </div>
+                                            </div>
+                                            <div class="row" style="margin-left:0px;">
+                                                <div class="col-12" id="container_event_desc_content">
+                                                    <div id="event_description" contenteditable="true" spellcheck="true" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if event.event_content %}{{ event.event_content  }}{% endif %}</div>
+                                                    <textarea id="event_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                                </div>
+                                                <div class="col-12" id="container_event_description" style="display:none">
+                                                    <div id="target_event_desc"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-12 mt-1">
+                                          <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseRawEvent" role="button" aria-expanded="false" aria-controls="collapseRawEvent">> Edit raw event data</a>
+                                        <div class="collapse" id="collapseRawEvent">
+                                            <div class="card card-body">
+                                                <label for="event_raw" class="placeholder">{{ form.event_raw.label.text }}</label>
+                                                {{ form.event_raw(class='form-control sizable-textarea',  autocomplete="off") }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-xl-6 col-md-12">
+                                        <label for="event_title" class="placeholder">{{ form.event_source.label.text }}</label>
+                                        {{ form.event_source(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group col-xl-6 col-md-12">
+                                        <label for="event_tags">Event tags
+                                        </label>
+                                        <input type="text" id="event_tags"
+                                            class="form-control col-md-12" {% if event.event_tags %} value="{{ event.event_tags }}" {% endif %}/>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-12 col-md-6">
+                                        <label for="event_assets">Link to assets
+                                        </label>
+                                        <div class="select2-input ml-12" data-select2-id="6">
+                                            <select id="event_assets" name="event_assets" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="event_assets" tabindex="-1" aria-hidden="true" style="width: 100%">
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-12 col-md-6">
+                                        <label for="event_assets">Link to IOCs
+                                        </label>
+                                        <div class="select2-input ml-12" data-select2-id="6">
+                                            <select id="event_iocs" name="event_iocs" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="event_iocs" tabindex="-1" aria-hidden="true" style="width: 100%">
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="form-group col-6">
+                                        <label for="event_category_id" class="form-label">{{ form.event_category_id.label.text }}</label>
+                                        <div class="row col-12">
+                                            {{ form.event_category_id(class="selectpicker") }}
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="parent_event_id" class="form-label">Parent Event ID</label>
+                                        <div class="row col-12">
+                                            <select class="selectpicker form-control" id="parent_event_id"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                     <div class="form-group col-md-12 col-xl-2">
+                                       <div class="form-check">
+                                            <label class="form-check-label mt-3">
+                                                <input class="form-check-input" type="checkbox" id="event_sync_iocs_assets" checked>
+                                                    <span class="form-check-sign"> Push IOCs to assets
+                                                        <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the IOCs related to this event will be associated with the specified assets" style="cursor:pointer;"></i>
+                                                    </span>
+                                            </label>
+                                       </div>
+                                    </div>
+                                    <div class="form-group col-xl-2 col-md-12">
+                                        <div class="form-check">
+                                            <label class="form-check-label mt-3">
+                                                {{ form.event_in_summary(class="form-check-input", type="checkbox") }}
+                                                <span class="form-check-sign"> Add to summary
+                                                    <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the event will be integrated in the Timeline Visualization" style="cursor:pointer;"></i>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-xl-2 col-md-12">
+                                        <div class="form-check">
+                                            <label class="form-check-label mt-3">
+                                                {{ form.event_in_graph(class="form-check-input", type="checkbox") }}
+                                                <span class="form-check-sign"> Display in graph
+                                                    <i class="ml-1 mt-1 fa-regular fa-circle-question" title="If checked, the event will be integrated in the Graph section of the case" style="cursor:pointer;"></i>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-xl-3 col-md-12">
+                                        <label class="form-label">Event color</label>
+                                        <div class="row gutters-xs">
+                                            <div class="col-auto">
+                                                <label class="selectgroup-item">
+                                                    <input name="event_color" type="radio" value="#fff" {% if event.event_color == "#fff" %} checked="checked" {% endif %} class="colorinput-input">
+                                                    <span class="colorinput-color bg-white"></span>
+                                                </label>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="selectgroup-item">
+                                                    <input name="event_color" type="radio" value="#1572E899" {% if event.event_color == "#1572E899" %} checked="checked" {% endif %} class="colorinput-input">
+                                                    <span class="colorinput-color bg-primary"></span>
+                                                </label>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="selectgroup-item">
+                                                    <input name="event_color" type="radio" value="#6861CE99" {% if event.event_color == "#6861CE99" %} checked="checked" {% endif %} class="colorinput-input">
+                                                    <span class="colorinput-color bg-secondary"></span>
+                                                </label>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="selectgroup-item">
+                                                    <input name="event_color" type="radio" value="#48ABF799" {% if event.event_color == "#48ABF799" %} checked="checked" {% endif %}class="colorinput-input">
+                                                    <span class="colorinput-color bg-info"></span>
+                                                </label>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="selectgroup-item">
+                                                    <input name="event_color" type="radio" value="#31CE3699" {% if event.event_color == "#31CE3699" %} checked="checked" {% endif %} class="colorinput-input">
+                                                    <span class="colorinput-color bg-success"></span>
+                                                </label>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="selectgroup-item">
+                                                    <input name="event_color" type="radio" value="#F2596199" {% if event.event_color == "#F2596199" %} checked="checked" {% endif %} class="colorinput-input">
+                                                    <span class="colorinput-color bg-danger"></span>
+                                                </label>
+                                            </div>
+                                            <div class="col-auto">
+                                                <label class="selectgroup-item">
+                                                    <input name="event_color" type="radio" value="#FFAD4699" {% if event.event_color == "#FFAD4699" %} checked="checked" {% endif %} class="colorinput-input">
+                                                    <span class="colorinput-color bg-warning"></span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+              {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+        {% if event.event_id %}
+            <button type="button" class="btn btn-outline-danger mt-5"
+            onclick="delete_event({{ event.event_id }} );">Delete</button>
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_event"
+            onclick="update_event({{ event.event_id }} );">Update</button>
+
+        {% else %}
+
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+            id="submit_new_event">Save</button>
+
+        {% endif %}
+    </div>
+</div>
+<script>
+    set_suggest_tags('event_tags');
+
+$('[data-toggle="popover"]').popover();
+$('#event_category_id').selectpicker({
+    width:"100%",
+    liveSearch: true,
+    title: "None",
+    style: "btn-outline-white",
+    });
+</script>
+
+{% if assets %}
+    <script>
+        var data = [
+            {% for e in assets %}
+                {
+                    id: {{ e.asset_id }},
+                    text: {{ e.asset_name| tojson  }}
+                },
+            {% endfor %}
+        ];
+        $('#event_assets').select2({ data: data });
+    </script>
+{% endif %}
+
+{% if iocs %}
+    <script>
+        var data = [
+            {% for e in iocs %}
+                {
+                    id: {{ e.ioc_id }},
+                    text: {{ e.ioc_value| tojson  }}
+                },
+            {% endfor %}
+        ];
+        $('#event_iocs').select2({ data: data });
+    </script>
+{% endif %}
+
+{% if category %}
+    <script>
+        $('#event_category_id').val([
+            {{ category[0].id }},
+        ]);
+        $('#event_category_id').trigger('change');
+    </script>
+{% else %}
+    <script>
+        $('#event_category_id').val(1);
+        $('#event_category_id').trigger('change');
+    </script>
+{% endif %}
+
+{% if assets_prefill %}
+    <script>
+        $('#event_assets').val([
+            {% for asset in assets_prefill %} {{ asset }}, {% endfor %}
+        ]);
+        $('#event_assets').trigger('change');
+    </script>
+{% endif %}
+
+{% if iocs_prefill %}
+    <script>
+        $('#event_iocs').val([
+            {% for ioc in iocs_prefill %} {{ ioc }}, {% endfor %}
+        ]);
+        $('#event_iocs').trigger('change');
+    </script>
+{% endif %}

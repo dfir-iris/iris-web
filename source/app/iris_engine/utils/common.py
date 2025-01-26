@@ -18,6 +18,7 @@
 import os
 from datetime import datetime
 from jinja2.sandbox import SandboxedEnvironment
+from werkzeug.utils import secure_filename
 
 from app import app
 
@@ -39,6 +40,7 @@ def build_upload_path(case_customer, case_name, module, create=False):
                 module=module.replace('.', '').replace(' ', '_').replace('/', '')
             )
 
+            path = secure_filename(path)
             fpath = os.path.join(app.config['UPLOADED_PATH'], path)
 
             if create:

@@ -14,14 +14,20 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from app import db, ac_current_user_has_permission
+
+from app import ac_current_user_has_permission
 from app.models import Cases
-from app.models.authorization import Group, UserClient, Permissions, CaseAccessLevel
+from app.models.authorization import Group
+from app.models.authorization import UserClient
+from app.models.authorization import Permissions
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
 from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
+
+from typing import Optional
 
 
 def manage_ac_audit_users_db():
@@ -70,7 +76,7 @@ def manage_ac_audit_users_db():
     return ret
 
 
-def check_ua_case_client(user_id: int, case_id: int) -> UserClient:
+def check_ua_case_client(user_id: int, case_id: int) -> Optional[UserClient]:
     """Check if the user has access to the case, through the customer of the case
        (in other words, check that the customer of the case is assigned to the user)
 
@@ -123,12 +129,8 @@ def get_user_clients_id(user_id: int) -> list:
     Returns:
         list: List of clients
     """
-    filters = []
-    if not ac_current_user_has_permission(Permissions.server_administrator):
-        filters.append(UserClient.user_id == user_id)
-
     result = UserClient.query.filter(
-        *filters
+        UserClient.user_id == user_id
     ).with_entities(
         UserClient.client_id
     ).all()

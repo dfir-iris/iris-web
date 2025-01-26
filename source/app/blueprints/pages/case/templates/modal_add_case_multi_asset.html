@@ -1,0 +1,160 @@
+<div class="modal-header">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">Add multiple assets</h4>
+                <small><a class="text-muted"></a></small>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col">
+                <div class="row float-right">
+                    <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_asset', 'Add asset');"> <i class='fa fa-minus'></i> </button>
+                    <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                    <div class="container col-md-12">
+                        <form method="post" action="" id="form_new_assets">
+                            <div class="col-md-12 col-lg-12 col-sm-12">
+                                {{ form.hidden_tag() }}
+                                <div class="form-row ml-2">
+                                    <div class="form-group col-12">
+                                        <label for="asset_type" class="placeholder">Assets Type *</label>
+                                        {{ form.asset_type_id(class="selectpicker form-control") }}
+                                    </div>
+                                    <div class="form-group col-12">
+                                        <label for="name" class="placeholder">Assets Name *</label>
+                                        <textarea class="form-control sizable-textarea" autocomplete="off" rows="1" name="assets_name" id="assets_name" placeholder="One asset per line"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-group mt-3">
+                                    <label for="asset_description" class="placeholder">Description</label>
+                                     <div class="md_description_field">
+                                            <div class="form-group mt--2">
+                                                <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_asset_desc();">
+                                                </button>
+                                                <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2 mt-2" onclick="preview_asset_description();" id="asset_preview_button"><i class="fa-solid fa-eye"></i></button>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col mb--2 ml--2" id="asset_edition_btn" style="display:none;">
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-left:0px;">
+                                            <div class="col-12" id="container_asset_desc_content">
+                                                <div id="asset_description" contenteditable="true" spellcheck="true" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if asset %}{{ asset.asset_description  }}{% endif %}</div>
+                                                <textarea id="asset_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                            </div>
+                                            <div class="col-12" id="container_asset_description" style="display:none">
+                                                <div id="target_asset_desc"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row ml-2">
+                                    <div class="form-group col-6">
+                                            <label for="asset_domain" class="placeholder">Domain</label>
+                                            {{ form.asset_domain(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                    <div class="form-group col-6">
+                                            <label for="asset_ip" class="placeholder">IP</label>
+                                            {{ form.asset_ip(class='form-control',  autocomplete="off") }}
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseAddInfo" role="button" aria-expanded="false" aria-controls="collapseAddInfo">> Additional information</a>
+                                    <div class="collapse" id="collapseAddInfo">
+                                        <div class="card card-body">
+                                        <label for="asset_info" class="placeholder">Additional information</label>
+                                        {{ form.asset_info(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row ml-2">
+                                    <div class="form-group col-6">
+                                        <label for="asset_compromise_status_id" class="placeholder mt-2">Compromise Status  </label>
+                                        {{ form.asset_compromise_status_id(class="selectpicker col-9") }}
+                                    </div>
+                                    <div class="form-group col-6">
+                                        <label for="analysis_status_id" class="placeholder mt-2">Analysis Status  </label>
+                                        {{ form.analysis_status_id(class="selectpicker col-9 float-right") }}
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="asset_tags">Asset tags
+                                    </label>
+                                    <input type="text" id="asset_tags"
+                                        class="form-control col-md-12"/>
+                                </div>
+                                <div class="form-group" data-select2-id="7">
+                                    <label>Related IOC</label>
+                                    <div class="select2-input ml-12" data-select2-id="6">
+                                        <select id="ioc_links" name="ioc_links" class="form-control select2-hidden-accessible ml-12" multiple="" data-select2-id="ioc_links" tabindex="-1" aria-hidden="true" style="width: 100%">
+
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+               {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+        <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  id="submit_new_assets">Save</button>
+    </div>
+</div>
+    <script>
+    $('form#form_new_case').validate();
+    set_suggest_tags('asset_tags');
+
+    $('#asset_type_id').selectpicker({
+        liveSearch: true,
+        title: "None",
+        style: "btn-outline-white",
+
+    });
+    $('#analysis_status_id').selectpicker({
+        liveSearch: true,
+        title: "None",
+        style: "btn-outline-white"
+    });
+    $('#analysis_status_id').selectpicker('val', '1');
+
+    $('#asset_compromise_status_id').selectpicker({
+        liveSearch: true,
+        title: "To be determined",
+        style: "btn-outline-white"
+    });
+    $('#asset_compromise_status_id').selectpicker('val', '0');
+    </script>
+
+
+{% if ioc %}
+    <script>
+        var data = [
+            {% for e in ioc %}
+                {
+                    id: {{ e.ioc_id }},
+                    text: {{ e.ioc_value| tojson }}
+                },
+            {% endfor %}
+        ];
+        $('#ioc_links').select2({ data: data });
+    </script>
+{% endif %}
+
+{% if ioc_prefill %}
+    <script>
+        $('#ioc_links').val([
+            {% for ioc in ioc_prefill %} {{ ioc[0] }}, {% endfor %}
+        ]);
+        $('#ioc_links').trigger('change');
+    </script>
+{% endif %}

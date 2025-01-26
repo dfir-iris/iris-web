@@ -1,0 +1,52 @@
+
+            <div class="modal-header">
+                <div style="display:none;" id="current_username">{{current_user.user}}</div>
+                <div class="col md-12">
+                    <div class="row">
+                        <div class="col-8">
+                            <h4 class="modal-title mt-2 mr-4 text-truncate">Comments on <i>{{ title }}</i></h4>
+                        </div>
+                        <div class="col">
+                            <div class="row float-right">
+                                <button class="btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_comment', 'Comment {{ element_type }}');"> <i class='fa fa-minus'></i> </button>
+                                <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                                    aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-body comments-listing">
+                <div id="comments_list">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="col">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col mb--2 ml--2" id="comment_edition_btn">
+                                </div>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-12 comment-content" id="container_comment_content">
+                                    <div id="comment_message" contenteditable="true" spellcheck="true" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
+                                    <textarea id="comment_content" rows="2" style="display: none"></textarea>
+                                </div>
+                                <div class="col-12 comment-content" id="container_comment_preview" style="display:none;">
+                                    <div id="target_comment_content"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12" id="container_comment_submit">
+                            <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_submit" onclick="save_comment({{ element_id }}, '{{ element_type }}');"><i class="fa-regular fa-paper-plane"></i> Comment</button>
+                            <button type="button" class="btn btn-primary btn-sm float-right ml-2" id="comment_edition" style="display: none;" onclick="save_edit_comment({{ element_id }}, '{{ element_type }}');"><i class="fa-regular fa-paper-plane"></i> Save</button>
+                            <button type="button" class="btn btn-danger btn-sm float-right ml-2" id="cancel_edition" style="display: none;" onclick="cancel_edition();"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                            <button type="button" class="btn btn-dark btn-sm float-right ml-2" onclick="preview_comment();" id="comment_preview_button"><i class="fa-solid fa-eye"></i> Preview</button>
+                            <button type="button" class="btn btn-light btn-sm float-left" onclick="load_comments({{ element_id }}, '{{ element_type }}', null, true);"><i class="fa-solid fa-refresh"></i> Refresh</button>
+                        </div>
+                    </div>
+                </div>
+            </div>

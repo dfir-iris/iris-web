@@ -1,0 +1,135 @@
+<div class="modal-header">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}</h4>
+                <small><i class="text-muted">#{{ task.task_uuid }}</i></small>
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col">
+                <div class="row float-right">
+                {% if task.id %}
+                 <div class="dropdown">
+                      <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                          <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                      </button>
+                      <div class="dropdown-menu pull-right" id="task_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                          <a class="dropdown-item" href="#" onclick='copy_object_link({{task.id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                          <a class="dropdown-item" href="#" onclick='copy_object_link_md("task", {{task.id}});return false;'><i class="fa-brands fa-markdown mr-2"></i>Markdown Link</a>
+                      </div>
+                 </div>
+                 <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ task.id }}, 'tasks')" title="Comments">
+                        <span class="btn-label">
+                            <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length }}</span>
+                        </span>
+                </button>
+                {% endif %}
+                    <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_task', '{% if task.id %} Task ID #{{ task.id }}{% else %} Add task {% endif %}');"> <i class='fa fa-minus'></i> </button>
+                    <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-body">
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                    <div class="container col-md-12">
+                        <form method="post" action="" id="form_new_task">
+                            <div class="col-md-12 col-lg-12 col-sm-12">
+                                {{ form.hidden_tag() }}
+                                <div class="form-group mt-3 row">
+                                    <div class="col-6 col-xs-12">
+                                        <label for="task_assignee_id" class="placeholder">Assigned to *</label>
+                                        {{ form.task_assignees_id(class="selectpicker col-12", data_actions_box="true", data_dropup_auto="false") }}
+
+                                    </div>
+                                    <div class="col-6 col-xs-12">
+                                        <label for="task_status_id" class="placeholder">Status *</label>
+                                        {{ form.task_status_id(class="selectpicker col-12") }}
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="task_title" class="placeholder">{{ form.task_title.label.text }} *</label>
+                                    {{ form.task_title(class='form-control col-md-12 col-sm-12',  autocomplete="off") }}
+                                </div>
+                                <div class="form-group mt-3">
+                                    <label for="task_description" class="placeholder">Description</label>
+                                     <div class="md_description_field">
+                                        <div class="form-group mt--2">
+                                                <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_task_desc();">
+                                                </button>
+                                                <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2 mt-2"
+                                                            onclick="preview_task_description();" id="task_preview_button"><i class="fa-solid fa-eye"></i></button>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col mb--2 ml--2" id="task_edition_btn" style="display:none;">
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-left:0px;">
+                                            <div class="col-12" id="container_task_desc_content">
+                                                <div id="task_description" contenteditable="true" spellcheck="true" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if task.task_description %}{{ task.task_description  }}{% endif %}</div>
+                                                <textarea id="task_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                            </div>
+                                            <div class="col-12" id="container_task_description" style="display:none">
+                                                <div id="target_task_desc"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group mt-3">
+                                    <label for="task_tags">Task tags
+                                    </label>
+                                    <input type="text" id="task_tags"
+                                        class="form-control col-md-12" {% if task.task_tags %} value="{{ task.task_tags }}" {% endif %}/>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+    </div>
+    {% if task.id %}
+        <button type="button" class="btn btn-outline-danger mt-5"
+        onclick="delete_task({{ task.id }});">Delete</button>
+
+        <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right" id="submit_new_task"
+        onclick="update_task({{ task.id }});">Update</button>
+
+    {% else %}
+
+        <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+        id="submit_new_task">Save</button>
+
+    {% endif %}
+</div>
+
+<script>
+
+    var data = [];
+    if (current_users_list.length === 0) {
+            refresh_users(do_list_users, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+    } else {
+        do_list_users(current_users_list, [{% for assignee in task.task_assignees %} {{ assignee.id }}, {% endfor %}]);
+    }
+
+    $('form#form_new_task').validate();
+    set_suggest_tags('task_tags');
+
+    $('#task_status_id').selectpicker({
+        liveSearch: true,
+        title: "Select task status"
+    });
+
+    {% if task.task_status_id %}
+        $('#task_status_id').selectpicker('val', '{{task.task_status_id}}');
+     {% else %}
+        $('#task_status_id').selectpicker('val', 'To do');
+    {% endif %}
+    $('[data-toggle="popover"]').popover();
+</script>
+

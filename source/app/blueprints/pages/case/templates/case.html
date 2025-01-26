@@ -1,0 +1,343 @@
+{% extends "layouts/default_ext.html" %} {% block title %} Case summary {% endblock title %}
+{% block stylesheets %}
+{% include 'includes/header_case.html' %}
+<link rel="stylesheet" href="/static/assets/css/select2.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-multiselect.min.css">
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+{% endblock stylesheets %}
+{% block content %}
+{% if current_user.is_authenticated %}
+
+{% include 'includes/navigation_ext.html' %}
+{% include 'includes/sidenav.html' %}
+
+<div class="main-panel">
+
+    <div class="content">
+        {% if case.close_date %}
+        <div class="panel-header bg-close-gradient">
+            {% else %}
+            <div class="panel-header bg-info-gradient">
+            {% endif %}
+                <div class="page-inner py-5">
+                    <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row mt--3">
+                        <div class="col">
+                            <div class="row">
+                                <div class="col">
+                                    <h2 class="text-white pb-2 fw-bold case-name"> {{ case.name|unquote }}
+                                    </h2>
+                                </div>
+                            </div>
+                             <div class="row">
+                                <div class="col">
+                                <h5 class="text-white op-7 mb-1"><b>Open on</b> {{ case.open_date }} by {{ case.user.name }}</h5>
+                                <h5 class="text-white op-7 mb-3"><b>Owned by</b> {{ case.owner.name }}</h5>
+                                {% if case.close_date %}
+                                <h5 class="text-warning  mb-1">Closed on {{ case.close_date }}</h5>
+                                {% endif %}
+                            </div>
+                                <div class="col mt-auto">
+                                <div class="row">
+                                    {% if case.severity %}<span onclick="case_detail('{{ case.case_id }}', true);" class="btn btn-rounded badge-pill hidden-caret btn-sm ml-2 mb-2 ml-auto {% if case.severity.severity_id > 4 %} badge-danger {% elif case.severity.severity_id == 4 %} bg-warning-gradient text-dark {% else %} btn-light {% endif %} ml-2" title="Case severity"><i class="fa-solid fa-bolt mr-1"></i> {{ case.severity.severity_name }}</span>{% endif %}
+                                     <span title="Case outcome" class="float-right btn btn-rounded badge-pill hidden-caret btn-sm ml-2 mb-2 {% if case.status_id == 1%}badge-success{% elif case.status_id == 2 %}badge-danger{% else %}btn-light{% endif %}"
+                                        onclick="case_detail('{{ case.case_id }}', true);"
+                                     ><i class="fa-solid fa-group-arrows-rotate mr-2"></i>{{ case.status_name }}</span>
+                                </div>
+                                <div class="row">
+                                      <div class="ml-auto">
+                                        <div class="row">
+                                            <h5 class="text-white op-7 mb-2 float-right mr-4"><b>Customer</b> : {{ case.client.name }}</h5>
+                                        </div>
+                                          <div class="row">
+                                            {% if case.soc_id %} <h5 class="text-white op-7 mb-2 mr-4"><b>SOC ID :</b> {{ case.soc_id }}</h5> {% endif %}
+                                          </div>
+                                    </div>
+                                </div>
+                            </div>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="row mt-2 mb--2">
+
+                        <div class="ml-2 col">
+                            <div class="row ml-1">
+                                {% if case.state %}<h5 title="Case state" onclick="case_detail('{{ case.case_id }}', true);" style="cursor:pointer;"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light" title="Case state"><i class="fa-solid fa-business-time  mr-1"></i> {{ case.state.state_name }}</span></h5>{% endif %}
+                                {% if case.classification %}<h5 title="Classification" onclick="case_detail('{{ case.case_id }}', true);" style="cursor:pointer;"><span class="btn-rounded badge-pill hidden-caret btn-sm btn-light ml-2"><i class="fa-solid fa-shield-virus mr-1"></i>{{ case.classification.name_expanded }}</span></h5>{% endif %}
+                                {% if case.alerts| length > 0 %}<h5 title="Alerts"><a class="btn-rounded badge-pill hidden-caret btn-sm btn-dark ml-2 bg-warning-gradient text-dark" href="/alerts?cid={{ case.case_id }}&sort=desc&case_id={{ case.case_id }}" target="_blank" rel="noopener"><i class="fa-solid fa-bell mr-1"></i> {{ case.alerts| length }} related alerts</a></h5>{% endif %}
+                                {% if case.review_status.status_name == "Reviewed" %}
+                                <h5 title="Reviewed"> <a class="text-white btn-rounded badge-pill hidden-caret btn-sm ml-2 badge-success"><i class="fa-regular fa-circle-check mr-2"></i>Case reviewed by {% if case.reviewer.id == current_user.id %} you {% else %} {{ case.reviewer.name }} {% endif %}</a></h5>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col mr-1">
+                            {% if case.case_tags %}
+                            {% for tag in case.case_tags %}
+                            <span class="badge badge-pill badge-light ml-1 pull-right"><i class="fa fa-tag mr-1"></i> {{ tag }}</span>
+                            {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-inner mt--5">
+                <div class="row row-card-no-pd" style="padding-top: 0px;padding-bottom: 3px;">
+                    {% include 'case-nav_landing.html' %}
+                </div>
+                <div id="caseReviewState" data-review-state="{{ case.review_status.status_name }}" data-reviewer-id="{{ case.reviewer_id }}" data-reviewer-name="{{ case.reviewer.name }}" style="display: none;"></div>
+
+                {% if case.reviewer_id == current_user.id and case.review_status.status_name != "Reviewed" and case.review_status.status_name != "Not reviewed" %}
+                    <div class="row row-card-no-pd review-card mt--3 mb--3 bg-warning-gradient" style="display: none;">
+                        <div class="col-md-12">
+                            <h4 class="font-weight-bold"><i class="fa-solid fa-triangle-exclamation text-danger ml-2 mr-2"></i>Review requested
+                                <button class="btn btn-sm float-right btn-dark mr-3 mt-2 btn-start-review">Start review</button>
+                                <button class="btn btn-sm float-right btn-success mr-3 mt-2 btn-confirm-review" style="display:none">Confirm review</button>
+                                <button class="btn btn-sm float-right btn-light mr-3 mt-2 btn-cancel-review" style="display:none">Cancel review</button></h4>
+
+                            <span class="ml-2" id="reviewSubtitle">You have been requested to review this case.</span>
+                        </div>
+                    </div>
+                {% elif case.review_status.status_name == "Review in progress" %}
+                    <div class="row row-card-no-pd mt--3 mb--3 bg-warning-gradient">
+                        <div class="col-md-12">
+                            <h4 class="font-weight-bold mt-1"><i class="fa-solid fa-list-check ml-2 mr-2"></i>Review by {{ case.reviewer.name }} in progress</h4>
+                        </div>
+                    </div>
+                {% elif case.review_status.status_name == "Pending review" %}
+                    <div class="row row-card-no-pd mt--3 mb--3 bg-warning-gradient">
+                        <div class="col-md-12">
+                            <h4 class="font-weight-bold mt-1"><i class="fa-solid fa-triangle-exclamation text-danger ml-2 mr-2"></i>Review by {{ case.reviewer.name }} pending</h4>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <div class="row row-card-no-pd">
+                    <div class="col-md-12">
+                        <div class="card mb-4" id="rescard1">
+                            <div class="card-header">
+                                <div class="row">
+                                    {{ form.hidden_tag() }}
+                                    <a href="#case_summary_card" class="d-block nav-link mr-auto" data-toggle="collapse" aria-expanded="true" aria-controls="case_summary_card">
+                                        <h4 class="m-0 font-weight-bold">Case summary {{ "(Syncing with DB )" if case.id }}</h4>
+                                    </a>
+                                    <div class="mr-0 float-right">
+                                        <small id="content_typing" class="mr-3 mt-1"></small>
+                                        <small id="content_last_saved_by" class="mr-3 mt-1"></small>
+                                        <span id="last_saved" class="badge mr-3 ml-2"></span>
+                                        <small id="content_last_sync"></small>
+                                        <button class="btn btn-sm mr-2 ml-3" onclick="edit_case_summary();" id="sum_edit_btn" >Edit</button>
+                                        <button type="button" id="sum_refresh_btn" class="btn btn-sm btn-outline-default mr-3" onclick="sync_editor();">
+                                            Refresh
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="collapsed" id="case_summary_card">
+                                <div class="card-body">
+                                   <div class="row mb-1">
+                                        <div class="col" id="summary_edition_btn" style="display:none;">
+                                                <div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="editor.insertSnippet('**${1:$SELECTION}**');editor.focus();"><i class="fa-solid fa-bold"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="editor.insertSnippet('*${1:$SELECTION}*');editor.focus();"><i class="fa-solid fa-italic"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="editor.insertSnippet('# ${1:$SELECTION}');editor.focus();">H1</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="editor.insertSnippet('## ${1:$SELECTION}');editor.focus();">H2</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="editor.insertSnippet('### ${1:$SELECTION}');editor.focus();">H3</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="editor.insertSnippet('#### ${1:$SELECTION}');editor.focus();">H4</div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert code" onclick="editor.insertSnippet('```${1:$SELECTION}```');editor.focus();"><i class="fa-solid fa-code"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert link" onclick="editor.insertSnippet('[${1:$SELECTION}](url)');editor.focus();"><i class="fa-solid fa-link"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');editor.focus();"><i class="fa-solid fa-table"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="editor.insertSnippet('\n- \n- \n- ');editor.focus();"><i class="fa-solid fa-list"></i></div>
+                                                <div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6" id="container_editor_summary">
+                                            <div style="display: none" id="fetched_crc"></div>
+                                            <div id="editor_summary" contenteditable="true" spellcheck="true" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
+                                            <textarea id="case_summary" rows="10" cols="82" style="display: none"></textarea>
+                                        </div>
+                                        <div class="col-md-6" id="ctrd_casesum">
+                                            <div id="targetDiv"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal " tabindex="-1" role="dialog" id="modal_select_report" data-backdrop="true">
+                <div class="modal-lg modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                      <h5>Select report template</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                      </div>
+                      <div class="modal-body">
+                          {% if reports| length == 0 %}
+                              <div class="alert alert-warning" role="alert">
+                                  <h4 class="alert-heading">No report template found</h4>
+                                  <p>Report templates are configured in <a href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
+                              </div>
+                          {% else %}
+                          <div class="col">
+                            <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
+                          </div>
+
+                          <select class="selectpicker form-control bg-outline-success dropdown-submenu" data-show-subtext="true" data-live-search="true" id="select_report">
+                                {% for report in reports %}
+                                      <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
+                                {% endfor %}
+                          </select>
+                      </div>
+                      <div class="modal-footer">
+                          <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_report(true);">
+                              <span class="btn-label">
+                                <i class="fa fa-file-download"></i>
+                              </span>
+                              Generate in Safe Mode
+                          </a>
+                          <a href="#" class="btn btn-light float-right mt-2 ml-2" onclick="gen_report(false);">
+                              <span class="btn-label">
+                                <i class="fa fa-file-download"></i>
+                              </span>
+                              Generate
+                            </a>
+                          {% endif %}
+                      </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div>
+            <div class="modal " tabindex="-1" role="dialog" id="modal_select_report_act" data-backdrop="true">
+                <div class="modal-lg modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                      <h5>Select activity report template</h5>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                      </div>
+                      <div class="modal-body">
+                          {% if reports| length == 0 %}
+                              <div class="alert alert-warning" role="alert">
+                                  <h4 class="alert-heading">No report template found</h4>
+                                  <p>Report templates are configured in <a href="/manage/templates?cid={{case.case_id}}">the management section</a>.</p>
+                              </div>
+                          {% else %}
+                              <div class="col">
+                                <p>Since IRIS v2.0.0, the report generation supports images. Integration of images might fail depending on the situation.<br/><code>Safe Mode</code> can be used to generate the report without them.</p>
+                              </div>
+                              <select class="selectpicker form-control bg-outline-success dropdown-submenu mb-2" data-show-subtext="true" data-live-search="true" id="select_report_act">
+                                    {% for report in reports_act %}
+                                          <option data-toggle="tooltip"  value="{{ report[0] }}"  data-subtext="{{ report[3] }}">{{ report[1] }} ({{ report[2].capitalize() }})</option>
+                                    {% endfor %}
+                              </select>
+
+                      </div>
+
+                      <div class="modal-footer">
+                          <a href="#" class="btn btn-light float-left mt-2 mr-auto" onclick="gen_act_report(true);">
+                              <span class="btn-label">
+                                <i class="fa fa-file-download"></i>
+                              </span>
+                              Generate in Safe Mode
+                          </a>
+                          <a href="#" class="btn btn-light float-right mt-2 ml-2" onclick="gen_act_report(false);">
+                              <span class="btn-label">
+                                <i class="fa fa-file-download"></i>
+                              </span>
+                              Generate
+                            </a>
+                          {% endif %}
+                      </div>
+                  </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div>
+            <div class="modal " tabindex="-1" role="dialog" id="modal_choose_reviewer" data-backdrop="true">
+              <div class="modal-lg modal-dialog" role="document">
+                  <div class="modal-content">
+                    <form method="post" action="" id="form_choose_reviewer">
+                          <div class="modal-header">
+                          <h5>Choose reviewer</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                                aria-hidden="true">&times;</span></button>
+                          </div>
+                          <div class="modal-body">
+                              <div class="row mb-2">
+                                  <div class="col-12">
+                                      <div class="form-group">
+                                        <select class="selectpicker form-control" data-dropup-auto="false" data-live-search="true" id="reviewer_id">
+                                        </select>
+                                      </div>
+                                  </div>
+                              </div>
+                             <div class="row mt-4">
+                                 <div class="col-12 d-flex">
+                                     <button type="button" class="btn btn-default mr-auto" data-dismiss="modal">Cancel</button>
+                                     <button type="button" class="btn btn-outline-success ml-auto" id="submit_set_reviewer">Request</button>
+                                 </div>
+                             </div>
+                          </div>
+                    </form>
+                  </div><!-- /.modal-content -->
+              </div><!-- /.modal-dialog -->
+            </div>
+            <div class="modal" tabindex="-1" role="dialog" id="modal_case_detail" data-backdrop="true">
+                <div class="modal-xl modal-dialog" role="document">
+                    <div class="modal-content" id="info_case_modal_content">
+
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div>
+            <div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_ac_additional" data-backdrop="true">
+            </div>
+            <div class="modal bg-shadow-gradient" tabindex="-1" role="dialog" id="modal_case_review" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog modal-lg" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Case Review</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-12">
+                                    <p>Do you confirm that the case has been reviewed?</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-danger float-left" data-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-success float-right" id="confirmReview">Confirm Review</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'includes/footer.html' %}
+{% endif %} {% endblock content %} {% block javascripts %}
+
+<script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
+<script src="/static/assets/js/core/socket.io.js"></script>
+<script src="/static/assets/js/plugin/select/select2.js"></script>
+
+<script src="/static/assets/js/plugin/showdown/showdown.min.js"></script>
+<script src="/static/assets/js/iris/datatablesUtils.js"></script>
+<script src="/static/assets/js/iris/case.js"></script>
+<script src="/static/assets/js/iris/manage.cases.common.js"></script>
+<script src="/static/assets/js/iris/case.common.js"></script>
+<script src="/static/assets/js/iris/case.summary.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
+<script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>
+
+<script>
+    $('#modal_select_report').selectpicker();
+    load_menu_mod_options_modal([{{case.case_id}}], 'case', $("#case_modal_quick_actions"));
+</script>
+
+{% endblock javascripts %}

@@ -30,11 +30,13 @@ from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
 from flask_sqlalchemy import SQLAlchemy
 from functools import partial
+
 from sqlalchemy_imageattach.stores.fs import HttpExposedFileSystemStore
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
 from app.iris_engine.tasker.celery import make_celery
+from app.iris_engine.access_control.oidc_handler import get_oidc_client
 
 
 class ReverseProxied(object):
@@ -62,7 +64,7 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../static')
 
 
 def ac_current_user_has_permission(*permissions):
@@ -129,6 +131,9 @@ socket_io = SocketIO(app, cors_allowed_origins="*")
 alerts_namespace = AlertsNamespace('/alerts')
 socket_io.on_namespace(alerts_namespace)
 
+oidc_client = None
+if app.config.get('AUTHENTICATION_TYPE') == "oidc":
+    oidc_client = get_oidc_client(app)
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):

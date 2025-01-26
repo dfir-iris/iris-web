@@ -1,142 +1,178 @@
 ## @section rabbitmq Configuration
 ##
 rabbitmq:
-   ## @param rabbitmq.app App name for rabbitmq
-   ##
-   app: rabbitmq
-   ## @param rabbitmq.name Name for rabbitmq
-   ##
-   name: rabbitmq
-   ## @param rabbitmq.image Image rabbitmq deployment
-   ##
-   image: rabbitmq
-   ## @param rabbitmq.tag Tag for rabbitmq
-   ##
-   tag: 3-management-alpine
-   ## @param rabbitmq.imagePullPolicy Policy for rabbitmq
-   ##
-   imagePullPolicy: "IfNotPresent"
-   ## @param rabbitmq.replicaCount ReplicaCount for rabbitmq
-   ##
-   replicaCount: 1
+  ## @param rabbitmq.app App name for rabbitmq
+  ##
+  app: rabbitmq
+  ## @param rabbitmq.name Name for rabbitmq
+  ##
+  name: rabbitmq
+  ## @param rabbitmq.image Image rabbitmq deployment
+  ##
+  image: rabbitmq
+  ## @param rabbitmq.tag Tag for rabbitmq
+  ##
+  tag: 3-management-alpine
+  ## @param rabbitmq.imagePullPolicy Policy for rabbitmq
+  ##
+  imagePullPolicy: "IfNotPresent"
+  ## @param rabbitmq.replicaCount ReplicaCount for rabbitmq
+  ##
+  replicaCount: 1
+  ## @param rabbitmq.resources Resources for rabbitmq
+  ##
+  resources: {}
+  ## @param rabbitmq.securityContext securityContext for rabbitmq
+  ##
+  securityContext: {}
+  ## @param rabbitmq.podSecurityContext podSecurityContext for rabbitmq
+  ##
+  podSecurityContext: {}
    
 
 ## @section PostgreSQL Configuration
 ##
 postgres:
-   ## @param postgres.app PostgreSQL App
-   ##
-   app: postgres
-   ## @param postgres.name PostgreSQL Name
-   ##
-   name: postgres
-   ## @param postgres.image PostgreSQL Image
-   ##
-   image: <postgres_image>
-   ## @param postgres.tag PostgreSQL Tag
-   tag: <tag>
-   ## @param postgres.imagePullPolicy PostgreSQL PullPolicy
-   ##
-   imagePullPolicy: "IfNotPresent"
-   ## @param postgres.replicaCount PostgreSQL ReplicaCount
-   ##
-   replicaCount: 1
-   
-   ## @param postgres.service PostgreSQL Service
-   ##
-   service:
-    port: 5432
+  ## @param postgres.app PostgreSQL App
+  ##
+  app: postgres
+  ## @param postgres.name PostgreSQL Name
+  ##
+  name: postgres
+  ## @param postgres.image PostgreSQL Image
+  ##
+  image: <postgres_image>
+  ## @param postgres.tag PostgreSQL Tag
+  tag: <tag>
+  ## @param postgres.imagePullPolicy PostgreSQL PullPolicy
+  ##
+  imagePullPolicy: "IfNotPresent"
+  ## @param postgres.replicaCount PostgreSQL ReplicaCount
+  ##
+  replicaCount: 1
+  ## @param postgres.resources Resources for postgres
+  ##
+  resources: {}
+  
+  
+  ## @param postgres.service PostgreSQL Service
+  ##
+  service:
+   port: 5432
 
-   ## @param  PostgreSQL Environments
-   ##
-   POSTGRES_USER: postgres
-   POSTGRES_PASSWORD: postgres
-   POSTGRES_ADMIN_USER: raptor
-   POSTGRES_ADMIN_PASSWORD: postgres
-   POSTGRES_DB: iris_db
-   POSTGRES_PORT: 5432
-
+  ## @param  PostgreSQL Environments
+  ##
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_ADMIN_USER: raptor
+  POSTGRES_ADMIN_PASSWORD: postgres
+  POSTGRES_DB: iris_db
+  POSTGRES_PORT: 5432
+  ## @param postgres.securityContext securityContext for postgres
+  ##
+  securityContext: {}
+  ## @param postgres.podSecurityContext podSecurityContext for postgres
+  ##
+  podSecurityContext: {}
 
 ## @section Iris Frontend Configuration
 ##
 irisapp:
-   ## @param irisapp.app Iris Frontend App
-   ##
-   app: iriswebapp-app
-   ## @param irisapp.name Iris Frontend Name
-   ##
-   name: iriswebapp-app
-   ## @param irisapp.image Iris Frontend Image
-   ##
-   image: <irisapp_image>
-   ## @param irisapp.tag Iris Frontend Tag
-   ##
-   tag: <tag>
-   ## @param irisapp.imagePullPolicy Iris Frontend imagePullPolicy
-   ##
-   imagePullPolicy: "IfNotPresent"
-   ## @param irisapp.replicaCount Iris Frontend replicaCount
-   ##
-   replicaCount: 1
+  ## @param irisapp.app Iris Frontend App
+  ##
+  app: iriswebapp-app
+  ## @param irisapp.name Iris Frontend Name
+  ##
+  name: iriswebapp-app
+  ## @param irisapp.image Iris Frontend Image
+  ##
+  image: <irisapp_image>
+  ## @param irisapp.tag Iris Frontend Tag
+  ##
+  tag: <tag>
+  ## @param irisapp.imagePullPolicy Iris Frontend imagePullPolicy
+  ##
+  imagePullPolicy: "IfNotPresent"
+  ## @param irisapp.replicaCount Iris Frontend replicaCount
+  ##
+  replicaCount: 1
+  ## @param irisapp.resources Resources for irisapp
+  ##
+  resources: {}
 
-   ## @param irisapp.service Iris Frontend Service
-   ##
-   service:
-     port: 8000
+  ## @param irisapp.service Iris Frontend Service
+  ##
+  service:
+    port: 8000
     
-   ## @param irisapp.type Iris Frontend Service type
-   ##
-   type: NodePort
+  ## @param irisapp.type Iris Frontend Service type
+  ##
+  type: NodePort
 
-   ## @param  Iris Frontend Environments
-   ##
-   POSTGRES_USER: raptor
-   POSTGRES_PASSWORD: postgres
-   POSTGRES_ADMIN_USER: raptor
-   POSTGRES_ADMIN_PASSWORD: postgres
-   POSTGRES_PORT: 5432
-   POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
-   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
-   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
-   IRIS_ADM_USERNAME: administrator
-   # Must be 12 characters minimum and contains a capital letter and a number. 
-   IRIS_ADM_PASSWORD: Hello12345!
-   DB_RETRY_COUNT: 5
-   DB_RETRY_DELAY: 5
-   INTERFACE_HTTPS_PORT: 443
+  ## @param  Iris Frontend Environments
+  ##
+  POSTGRES_USER: raptor
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_ADMIN_USER: raptor
+  POSTGRES_ADMIN_PASSWORD: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+  IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
+  IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+  IRIS_ADM_USERNAME: administrator
+  # Must be 12 characters minimum and contains a capital letter and a number. 
+  IRIS_ADM_PASSWORD: Hello12345!
+  DB_RETRY_COUNT: 5
+  DB_RETRY_DELAY: 5
+  INTERFACE_HTTPS_PORT: 443
+  ## @param irisapp.securityContext securityContext for irisapp
+  ##
+  securityContext: {}
+  ## @param irisapp.podSecurityContext podSecurityContext for irisapp
+  ##
+  podSecurityContext: {}
 
 ## @section Iris Backend Configuration
 ##
 irisworker:
-   ## @param irisworker.app Iris Backend App
-   ##    
-   app: iriswebapp-worker
-   ## @param irisworker.name Iris Backend Name
-   ##
-   name: iriswebapp-worker
-   ## @param irisworker.image Iris Backend Image
-   ##
-   image: <irisworker_image>
-   ## @param irisworker.tag Iris Backend Tag
-   ##
-   tag: <tag>
-   ## @param irisworker.imagePullPolicy Iris Backend imagePullPolicy
-   ##
-   imagePullPolicy: "IfNotPresent"
-   ## @param irisworker.replicaCount Iris Backend replicaCount
-   ##
-   replicaCount: 1
+  ## @param irisworker.app Iris Backend App
+  ##    
+  app: iriswebapp-worker
+  ## @param irisworker.name Iris Backend Name
+  ##
+  name: iriswebapp-worker
+  ## @param irisworker.image Iris Backend Image
+  ##
+  image: <irisworker_image>
+  ## @param irisworker.tag Iris Backend Tag
+  ##
+  tag: <tag>
+  ## @param irisworker.imagePullPolicy Iris Backend imagePullPolicy
+  ##
+  imagePullPolicy: "IfNotPresent"
+  ## @param irisworker.replicaCount Iris Backend replicaCount
+  ##
+  replicaCount: 1
+  ## @param irisworker.resources Resources for irisworker
+  ##
+  resources: {}
 
-   ## @param  Iris Backend Environments
-   ##
-   POSTGRES_USER: raptor
-   POSTGRES_PASSWORD: postgres
-   POSTGRES_ADMIN_USER: raptor
-   POSTGRES_ADMIN_PASSWORD: postgres
-   POSTGRES_PORT: 5432
-   POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
-   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
-   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+  ## @param  Iris Backend Environments
+  ##
+  POSTGRES_USER: raptor
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_ADMIN_USER: raptor
+  POSTGRES_ADMIN_PASSWORD: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+  IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
+  IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
+  ## @param irisworker.securityContext securityContext for irisworker
+  ##
+  securityContext: {}
+  ## @param irisworker.podSecurityContext podSecurityContext for irisworker
+  ##
+  podSecurityContext: {}
 
 ## @section Nginx Ingress Configuration
 ##

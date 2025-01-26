@@ -18,6 +18,7 @@
 
 import requests
 from requests.exceptions import ConnectionError
+from requests.exceptions import JSONDecodeError
 from urllib import parse
 
 
@@ -30,19 +31,40 @@ class RestApi:
     def _build_url(self, path):
         return parse.urljoin(self._url, path)
 
-    def get(self, path, query_parameters=None):
-        url = self._build_url(path)
-        response = requests.get(url, headers=self._headers, params=query_parameters)
-        body = response.json()
-        print(f'GET {url} => {response.status_code} {body}')
-        return body
+    @staticmethod
+    def _convert_response_to_string(response):
+        try:
+            return f'{response.status_code} {response.json()}'
+        except JSONDecodeError:
+            return f'{response.status_code}'
 
     def post(self, path, payload, query_parameters=None):
         url = self._build_url(path)
         response = requests.post(url, headers=self._headers, params=query_parameters, json=payload)
-        body = response.json()
-        print(f'POST {url} {payload} => {response.status_code} {body}')
-        return body
+        response_as_string = self._convert_response_to_string(response)
+        print(f'POST {url} {payload} => {response_as_string}')
+        return response
+
+    def get(self, path, query_parameters=None):
+        url = self._build_url(path)
+        response = requests.get(url, headers=self._headers, params=query_parameters)
+        response_as_string = self._convert_response_to_string(response)
+        print(f'GET {url} => {response_as_string}')
+        return response
+
+    def put(self, path, payload):
+        url = self._build_url(path)
+        response = requests.put(url, headers=self._headers, json=payload)
+        response_as_string = self._convert_response_to_string(response)
+        print(f'PUT {url} {payload} => {response_as_string}')
+        return response
+
+    def delete(self, path, query_parameters=None):
+        url = self._build_url(path)
+        response = requests.delete(url, headers=self._headers, params=query_parameters)
+        response_as_string = self._convert_response_to_string(response)
+        print(f'DELETE {url} => {response_as_string}')
+        return response
 
     def is_ready(self):
         try:

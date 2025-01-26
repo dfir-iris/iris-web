@@ -1,0 +1,145 @@
+<div class="modal-header">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{% if rfile.id %}Edit evidence #{{rfile.id}}{% else %}Register evidence{% endif %}</h4>
+                {% if rfile.id %}<small><i class="text-muted">#{{ rfile.file_uuid }}</i></small>{% endif %}
+            </div>
+            {% include 'modals/modal_attributes_nav.html' %}
+            <div class="col">
+                <div class="row float-right">
+                    {% if rfile.id %}
+                     <div class="dropdown">
+                          <button class="btn bg-transparent pull-right" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                              <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+                          </button>
+                          <div class="dropdown-menu pull-right" id="evidence_modal_quick_actions" aria-labelledby="dropdownMenuButton">
+                              <a class="dropdown-item" href="#" onclick='copy_object_link({{rfile.id}});return false;'><i class="fa fa-share mr-2"></i>Share</a>
+                              <a class="dropdown-item" href="#" onclick='copy_object_link_md("evidence", {{rfile.id}});return false;'><i class="fa-brands fa-markdown mr-2"></i>Markdown Link</a>
+                          </div>
+                     </div>
+                    <button type="button" class="btn bg-transparent btn-xs" onclick="comment_element({{ rfile.id }}, 'evidences')" title="Comments">
+                        <span class="btn-label">
+                            <i class="fa-solid fa-comments"></i><span class="notification" id="object_comments_number">{{ comments_map|length }}</span>
+                        </span>
+                    </button>
+                    {% endif %}
+                        <button class="float-right btn bg-transparent" title="Minimize" onclick="modal_minimized('modal_add_rfiles', 'Edit evidence #{{rfile.id}}');"> <i class='fa fa-minus'></i> </button>
+                        <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div role="tabpanel">
+          <div class="tab-content">
+                <div class="tab-pane active" id="details">
+                    <div class="container col-md-12">
+                        <form method="post" action="" id="form_edit_rfile">
+                            <div class="col-md-12 col-lg-12 col-sm-12">
+                                <div class="form-group">
+                                    <label for="rfile_filename" class="placeholder">Name *</label>
+                                    <input class="form-control" placeholder="Name" id="filename" required name="filename" value="{{rfile.filename }}"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_type" class="placeholder">Type </label>
+                                    <span style="display: none" data-file-type-id="{{rfile.type_id}}" id=store_type_id></span>
+                                    <select class="selectpicker form-control" id="file_type_id"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_size" class="placeholder">Size (bytes)</label>
+                                    <input class="form-control" placeholder="Size in bytes" id="file_size" name="file_size" value="{{ rfile.file_size }}"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="rfile_hash" class="placeholder">Hash</label>
+                                    <input class="form-control" placeholder="Hash" id="file_hash" name="file_hash" value="{{ rfile.file_hash }}"/>
+                                </div>
+                                <div class="form-group" id="dates_details">
+                                    <a class="btn btn-light btn-sm" data-toggle="collapse" href="#collapseAddDates" role="button" aria-expanded="false" aria-controls="collapseAddInfo">> Date time information</a>
+                                    <div class="collapse {% if (rfile.start_date or rfile.end_date) %}show{% endif %}" id="collapseAddDates">
+                                        <label for="start_date" class="placeholder mt-2">Evidence start date time (UTC)</label>
+                                        <div class="row ml-1" id="start_date_inputs">
+                                                <input class="form-control col-6 mr-2" type="date" id="start_date" {% if rfile.start_date %}value="{{ rfile.start_date.strftime('%Y-%m-%d') }}" {% endif %}>
+                                                <span></span>
+                                                <input class="form-control col-5 mr-2" type="time" step="0.001" id="start_time" {% if rfile.start_date %}value="{{ rfile.start_date.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
+                                                <span></span>
+                                                <button class="btn btn-sm btn-outline-white" type="button" onclick="show_x_time_converter('start');return false;"><i class="fas fa-magic"></i></button>
+                                        </div>
+                                        <div class="row ml-1" id="start_date_convert" style="display:none;">
+                                            <div class="input-group ">
+                                                <input class="form-control col-11" type="text" id="start_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter('start');return false;">Submit</button>
+                                                    <button class="btn btn-sm btn-outline" type="button" onclick="hide_x_time_converter('start');return false;"><i class="fas fa-magic"></i></button>
+                                                </div>
+                                            </div>
+                                            <span id="convert_bad_feedback_start" class="text-danger"></span>
+                                        </div>
+                                        <label for="end_date" class="placeholder mt-2">Evidence end date time (UTC)</label>
+                                        <div class="row ml-1" id="end_date_inputs">
+                                                <input class="form-control col-6 mr-2" type="date" id="end_date" {% if rfile.end_date %}value="{{ rfile.end_date.strftime('%Y-%m-%d') }}" {% endif %}>
+                                                <span></span>
+                                                <input class="form-control col-5 mr-2" type="time" step="0.001" id="end_time" {% if rfile.end_date %}value="{{ rfile.end_date.strftime('%H:%M:%S.%f')[:-3] }}" {% else %} value="00:00:00.000" {% endif %}>
+                                                <span></span>
+                                                <button class="btn btn-sm btn-outline-white" type="button" onclick="show_x_time_converter('end');return false;"><i class="fas fa-magic"></i></button>
+                                        </div>
+                                        <div class="row ml-1" id="end_date_convert" style="display:none;">
+                                            <div class="input-group ">
+                                                <input class="form-control col-11" type="text" id="end_date_convert_input" placeholder="Enter date in any format and submit to try auto-parsing">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-sm btn-outline-secondary mr-2" type="button" onclick="time_converter('end');return false;">Submit</button>
+                                                    <button class="btn btn-sm btn-outline" type="button" onclick="hide_x_time_converter('end');return false;"><i class="fas fa-magic"></i></button>
+                                                </div>
+                                            </div>
+                                            <span id="convert_bad_feedback_end" class="text-danger"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="rfile_desc" class="placeholder">Description</label>
+                                     <div class="md_description_field">
+                                        <div class="form-group mt--2">
+                                            <button type="button" class="float-right icon-note btn btn-circle btn-sm mt-2" onclick="edit_in_evidence_desc();" >
+                                            </button>
+                                            <button type="button" style="display: none;" class="btn btn-dark btn-sm float-right mr-2 mt-2"
+                                                    onclick="preview_evidence_description();" id="evidence_preview_button"><i class="fa-solid fa-eye"></i></button>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col mb--2 ml--2" id="evidence_edition_btn" style="display:none;">
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-left:0px;">
+                                            <div class="col-12" id="container_evidence_desc_content">
+                                                <div id="evidence_description" contenteditable="true" spellcheck="true" class="mr-2" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}">{% if rfile %}{{ rfile.file_description  }}{% endif %}</div>
+                                                <textarea id="evidence_desc_content" rows="10" cols="82" style="display: none"></textarea>
+                                            </div>
+                                            <div class="col-12" id="container_evidence_description" style="display:none">
+                                                <div id="target_evidence_desc"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <p>Locally compute file information by selecting it below. <span class="text-danger">The file is not be uploaded on the server nor saved.</span></p>
+                                    <input id="input_autofill" type="file">
+                                    <button class="btn btn-sm" type="button" onclick="get_hash()" id="btn_rfile_proc">Process</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+              {% include 'modals/modal_attributes_tabs.html' %}
+          </div>
+        {% if rfile.id %}
+         <button type="button" class="btn btn-outline-danger mt-5"
+                onclick="delete_rfile('{{ rfile.id }}');">Delete</button>
+                <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"
+                onclick="update_rfile('{{ rfile.id }}');" id="submit_new_rfiles">Update</button>
+        {% else %}
+            <button type="button" class="btn btn-outline-success float-right" onclick="add_rfile();">Register</button>
+        {% endif %}
+    </div>
+</div>

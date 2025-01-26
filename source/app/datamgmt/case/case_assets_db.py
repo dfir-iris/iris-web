@@ -34,12 +34,12 @@ from app.models import Comments
 from app.models import CompromiseStatus
 from app.models import Ioc
 from app.models import IocAssetLink
-from app.models import IocLink
 from app.models import IocType
 from app.models.authorization import User
 
 
 log = app.logger
+
 
 def create_asset(asset, caseid, user_id):
 
@@ -54,6 +54,17 @@ def create_asset(asset, caseid, user_id):
     db.session.commit()
 
     return asset
+
+
+def case_assets_db_exists(asset: CaseAssets):
+    assets = CaseAssets.query.filter(
+        func.lower(CaseAssets.asset_name) == func.lower(asset.asset_name),
+        CaseAssets.asset_type_id == asset.asset_type_id,
+        CaseAssets.asset_id != asset.asset_id,
+        CaseAssets.case_id == asset.case_id
+    )
+
+    return assets.first() is not None
 
 
 def get_assets(caseid):
@@ -93,10 +104,9 @@ def get_assets_name(caseid):
     return assets_names
 
 
-def get_asset(asset_id, caseid):
+def get_asset(asset_id) -> CaseAssets:
     asset = CaseAssets.query.filter(
         CaseAssets.asset_id == asset_id,
-        CaseAssets.case_id == caseid
     ).first()
 
     return asset
@@ -104,7 +114,7 @@ def get_asset(asset_id, caseid):
 
 def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_domain,
                  asset_compromise_status_id, asset_type, asset_id, caseid, analysis_status, asset_tags):
-    asset = get_asset(asset_id, caseid)
+    asset = get_asset(asset_id)
     asset.asset_name = asset_name
     asset.asset_description = asset_description
     asset.asset_ip = asset_ip
@@ -121,7 +131,7 @@ def update_asset(asset_name, asset_description, asset_ip, asset_info, asset_doma
 
 
 def delete_asset(asset_id, caseid):
-    case_asset = get_asset(asset_id, caseid)
+    case_asset = get_asset(asset_id)
     if case_asset is None:
         return
 
@@ -226,8 +236,7 @@ def get_assets_ioc_links(caseid):
         IocAssetLink.asset_id
     ).filter(
         Ioc.ioc_id == IocAssetLink.ioc_id,
-        IocLink.case_id == caseid,
-        IocLink.ioc_id == Ioc.ioc_id
+        Ioc.case_id == caseid
     ).all()
 
     return ioc_links_req

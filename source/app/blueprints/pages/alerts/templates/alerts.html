@@ -1,0 +1,324 @@
+{% extends "layouts/default.html" %}
+
+{% block title %} Alerts {% endblock title %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="/static/assets/css/suggestags.css">
+    <link rel="stylesheet" href="/static/assets/css/alerts.css">
+
+{% endblock stylesheets %}
+
+{% block content %}
+<div class="page-inner">
+    <div class="">
+        {{ form.csrf_token }}
+        <div class="container-fluid">
+            <div class="row justify-content-between align-items-center">
+                <div class="card-title mb-2">
+                    <span id="alertsInfoFilter">Loading..</span>
+                </div>
+            </div>
+            <div class="row justify-content-between align-items-center">
+                <div class="col">
+                    <div class="card-subtitle mt-2">
+                        <div class="d-flex">
+                            <button class="btn btn-sm" href="#filterCardBody" title="Filter" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="filterCardBody">Filter</button>
+                            <div class="preset-dropdown-container">
+                                <div id="savedFiltersDropdown" class="dropdown"></div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-dark ml-2" id="resetFilters" style="display: none;">Clear Filters</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <div class="card-subtitle mt-2">
+                        <div class="d-flex">
+                        <div id="alerts-batch-actions" style="display:none;" class="mr-4">
+                            <button type="button" class="btn btn-sm ml-2 btn-alert-primary" onclick="mergeMultipleAlertsModal();">Merge</button>
+                            <div class="dropdown ml-2 d-inline-block">
+                                <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Assign
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="updateBatchAlerts({alert_owner_id: userWhoami.user_id});">Assign to me</a>
+                                    <a class="dropdown-item" href="#" onclick="changeBatchAlertOwner();">Assign</a>
+                                </div>
+                            </div>
+
+                            <div class="dropdown ml-2 d-inline-block">
+                                <button type="button" class="btn btn-alert-primary btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    Set status
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('New');">New</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('In progress');">In progress</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Pending');">Pending</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Closed');">Closed</a>
+                                    <a class="dropdown-item" href="#" onclick="changeStatusBatchAlerts('Merged');">Merged</a>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="closeBatchAlerts();">Close with note</button>
+                            <button type="button" class="btn btn-alert-danger btn-sm ml-2" onclick="deleteBatchAlerts();"><i class="fa fa-trash mr-2"></i>Delete</button>
+                        </div>
+                        <button class="btn btn-sm mr-2" id="select-deselect-all" style="display:none;">Select all</button>
+
+                        <button class="btn btn-sm mr-2" id="toggle-selection-mode">Select</button>
+                        <button class="btn btn-sm mr-2" id="orderAlertsBtn"><i class="fas fa-arrow-up-short-wide"></i></button>
+                        <button id="toggleAllAlertsBtn" class="btn btn-sm mr-2" onclick="toggleCollapseAllAlerts()" data-is-expanded="false">Expand All</button>
+                        <div class="d-inline-block position-relative">
+                            <button class="btn btn-sm mr-2 ml-2" onclick="refreshAlerts();">Refresh</button>
+                            <span class="badge badge-pill badge-danger position-absolute" id="newAlertsBadge" style="top: -10px; right: -10px; display: none;">0</span>
+                        </div>
+                        <div class="pagination-dropdown-container ml-3 mt-1">
+                            <label for="alertsPerPage">Alerts per page:</label>
+                            <select id="alertsPerPage">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                                <option value="1000">1000</option>
+                          </select>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="collapse" id="filterCardBody">
+            <form id="alertFilterForm" class="container mt-4">
+                <div class="form-row">
+                    <div class="col-md-3 form-group">
+                        <label for="alert_title">Title</label>
+                        <input type="text" class="form-control" id="alert_title" name="alert_title">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_description">Description</label>
+                        <input type="text" class="form-control" id="alert_description" name="alert_description">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_source">Source</label>
+                        <input type="text" class="form-control" id="alert_source" name="alert_source">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_tags">Tags</label>
+                        <input type="text" class="form-control" id="alert_tags" name="alert_tags">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-md-3 form-group">
+                        <label for="alert_status_id">Status</label>
+                        <select class="form-control" id="alert_status_id" name="alert_status_id">
+                        </select>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_severity_id">Severity</label>
+                        <select class="form-control" id="alert_severity_id" name="alert_severity_id">
+                        </select>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_classification_id">Classification</label>
+                        <select class="form-control" id="alert_classification_id" name="alert_classification_id">
+                        </select>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_customer_id">Customer</label>
+                        <select class="form-control" id="alert_customer_id" name="alert_customer_id">
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-md-3 form-group">
+                        <label for="source_start_date">Source Start Date</label>
+                        <input type="date" class="form-control" id="source_start_date" name="source_start_date">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="source_end_date">Source End Date</label>
+                        <input type="date" class="form-control" id="source_end_date" name="source_end_date">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="source_start_date">Creation Start Date</label>
+                        <input type="date" class="form-control" id="creation_start_date" name="creation_start_date">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="source_end_date">Creation End Date</label>
+                        <input type="date" class="form-control" id="creation_end_date" name="creation_end_date">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_assets">Asset(s) name</label>
+                        <input class="form-control" id="alert_assets" name="alert_assets">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_iocs">IOC(s)</label>
+                        <input class="form-control" id="alert_iocs" name="alert_iocs">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_ids">Alert(s) ID</label>
+                        <input class="form-control" id="alert_ids" name="alert_ids">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="case_id">Case ID</label>
+                        <input type="number" class="form-control" id="case_id" name="case_id">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_owner_id">Owner</label>
+                        <select class="form-control" id="alert_owner_id" name="alert_owner_id">
+                        </select>
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label for="alert_resolution_id">Resolution Status</label>
+                            <select class="form-control" id="alert_resolution_id" name="alert_resolution_id">
+                            </select>
+                    </div>
+                </div>
+                <div class="form-row mt-3">
+                    <div class="col centered">
+                        <button type="submit" class="btn btn-sm btn-primary">Apply Filters</button>
+                        <button type="button" class="btn btn-sm btn-outline-success float-right" id="saveFilters">Save as filter</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mt-4 mb-4 ml-1">
+        <div class="col">
+            <span id="alertsInfoFilterTags"></span>
+        </div>
+    </div>
+
+    <div class="row mt-2">
+        <div class="col">
+            <nav class="mt-3 float-right">
+                <ul class="pagination pagination-container">
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="list-group alerts-container">
+    </div>
+    <nav class="mt-3 float-right">
+        <ul class="pagination pagination-container">
+        </ul>
+    </nav>
+</div>
+<div class="dropdown-menu" id="context-menu-relationships" style="display: none;">
+    <a id="view-alert" class="dropdown-item" style="cursor: pointer;" onclick="viewAlertGraph();">
+        <i class="fas fa-eye mr-2"></i><span id="view-alert-text">View Alert</span></a>
+</div>
+
+<div class="modal" role="dialog" tabindex="-1" id="modal_comment" data-backdrop="false">
+    <div class="modal-lg modal-dialog modal-comment" role="document">
+        <div class="modal-content shadow-xl" id="modal_comment_content">
+        </div>
+    </div>
+</div>
+<div class="modal" role="dialog" tabindex="-1" id="modal_graph_options" data-backdrop="false">
+    <div class="modal-lg modal-dialog modal-comment" role="document">
+        <div class="modal-content shadow-xl" id="modal_graph_options_content">
+        </div>
+    </div>
+</div>
+<div class="modal" role="dialog" tabindex="-1" id="modal_alert_history">
+    <div class="modal-lg modal-dialog" role="document">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+              <h5 class="modal-title">Alert history</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+        <div class="modal-body" id="modal_alert_history_content">
+
+        </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="editAlertModal" tabindex="-1" role="dialog" aria-labelledby="closeAlertModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+          <h5 class="modal-title" id="closeAlertModalLabel"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="form-group ml-auto mr-auto">
+              <label class="form-label">Resolution status</label><br>
+              <div class="selectgroup ml-auto mr-auto">
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="not_applicable" class="selectgroup-input" checked="">
+                  <span class="selectgroup-button">Not applicable</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="false_positive" class="selectgroup-input">
+                  <span class="selectgroup-button">False positive</span>
+                </label>
+                <label class="selectgroup-item selectgroup-warning">
+                  <input type="radio" name="resolutionStatus" value="true_positive_without_impact" class="selectgroup-input">
+                  <span class="selectgroup-button">True positive without impact</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="true_positive_with_impact" class="selectgroup-input">
+                  <span class="selectgroup-button">True positive with impact</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="legitimate" class="selectgroup-input">
+                  <span class="selectgroup-button">Legitimate</span>
+                </label>
+                <label class="selectgroup-item">
+                  <input type="radio" name="resolutionStatus" value="unknown" class="selectgroup-input">
+                  <span class="selectgroup-button">Unknown</span>
+                </label>
+              </div>
+          </div>
+          <div class="form-group">
+
+            <label for="editAlertNote">Note</label>
+            <textarea class="form-control" id="editAlertNote" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="editAlertTags">Tags</label>
+            <input type="text" class="form-control" id="editAlertTags">
+          </div>
+
+        </form>
+          <div class="form-group alert-edition-part">
+            <label for="editAlertClassification">Classification</label>
+            <select class="form-control" id="editAlertClassification">
+            </select>
+          </div>
+           <div class="form-group alert-edition-part">
+            <label for="editAlertSeverity">Severity</label>
+            <select class="form-control" id="editAlertSeverity">
+            </select>
+          </div>
+          <div class="mt-4">
+            <button type="button" class="btn btn-primary float-right mr-2" id="confirmAlertEdition">Close Alert</button>
+            <button type="button" class="btn btn-dark float-right mr-2" data-dismiss="modal">Cancel</button>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% include 'modal_escalate.html' %}
+{% include 'modal_enrichment.html' %}
+{% include 'modal_new_alert_owner.html' %}
+
+{% endblock content %}
+
+{% block javascripts %}
+    <script src="/static/assets/js/plugin/vis/vis.min.js"></script>
+    <script src="/static/assets/js/plugin/vis/vis-network.min.js"></script>
+    <script src="/static/assets/js/iris/alerts.js"></script>
+    <script src="/static/assets/js/iris/comments.js"></script>
+    <script src="/static/assets/js/core/socket.io.js"></script>
+{% endblock javascripts %}
+

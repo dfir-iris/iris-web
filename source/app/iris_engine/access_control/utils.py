@@ -5,8 +5,10 @@ from sqlalchemy import and_
 import app
 from app import db
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
-from app.models import Cases, Client
-from app.models.authorization import CaseAccessLevel, UserClient
+from app.models import Cases
+from app.models import Client
+from app.models.authorization import CaseAccessLevel
+from app.models.authorization import UserClient
 from app.models.authorization import Group
 from app.models.authorization import GroupCaseAccess
 from app.models.authorization import Organisation
@@ -286,9 +288,11 @@ def ac_trace_effective_user_permissions(user_id):
     return perms
 
 
-def ac_fast_check_user_has_case_access(user_id, cid, access_level):
+def ac_fast_check_user_has_case_access(user_id, cid, access_level: list[CaseAccessLevel]):
     """
-    Returns true if the user has access to the case
+    Checks the user has access to the case with at least one of the access_level
+    if the user has access, returns the access level of the user to the case
+    Returns None otherwise
     """
     ucea = UserCaseEffectiveAccess.query.with_entities(
         UserCaseEffectiveAccess.access_level

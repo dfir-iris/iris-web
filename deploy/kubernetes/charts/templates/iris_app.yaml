@@ -52,8 +52,14 @@ spec:
       labels:
         app: {{ .Values.irisapp.app }}
     spec:
+      securityContext:
+        {{- toYaml .Values.irisapp.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Values.irisapp.name }}
+          securityContext:
+            {{- toYaml .Values.irisapp.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.irisapp.resources | nindent 12 }}
           image: "{{ .Values.irisapp.image}}:{{ .Values.irisapp.tag }}"
           imagePullPolicy: "{{ .Values.irisapp.imagePullPolicy }}"
           command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']

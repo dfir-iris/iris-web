@@ -20,25 +20,19 @@ from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
-from app.models import Ioc, IocLink
-from app.models.authorization import CaseAccessLevel
+from app.models import Ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
-from app.datamgmt.case.case_iocs_db import add_ioc_link
+from app.datamgmt.case.case_iocs_db import case_iocs_db_exists
 from app.datamgmt.case.case_iocs_db import check_ioc_type_id
-from app.datamgmt.case.case_iocs_db import get_iocs_by_case
+from app.datamgmt.case.case_iocs_db import get_iocs
 from app.datamgmt.case.case_iocs_db import delete_ioc
 from app.datamgmt.states import update_ioc_state
 from app.schema.marshables import IocSchema
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.business.errors import BusinessProcessingError
-from app.business.permissions import check_current_user_has_some_case_access_stricter
+from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_iocs_db import get_ioc
-
-
-def get_ioc_by_identifier(ioc_identifier):
-
-    return get_ioc(ioc_identifier)
 
 
 def _load(request_data):
@@ -49,67 +43,69 @@ def _load(request_data):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def create(request_json, case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+def iocs_get(ioc_identifier) -> Ioc:
+    ioc = get_ioc(ioc_identifier)
+    if not ioc:
+        raise ObjectNotFoundError()
+    return ioc
+
+
+def iocs_create(request_json, case_identifier):
 
     # TODO ideally schema validation should be done before, outside the business logic in the REST API
     #      for that the hook should be called after schema validation
     request_data = call_modules_hook('on_preload_ioc_create', data=request_json, caseid=case_identifier)
-    ioc = _load(request_data)
+    ioc = _load({**request_data, 'case_id': case_identifier})
+
+    if not ioc:
+        raise BusinessProcessingError('Unable to create IOC for internal reasons')
 
     if not check_ioc_type_id(type_id=ioc.ioc_type_id):
         raise BusinessProcessingError('Not a valid IOC type')
 
-    ioc, existed = add_ioc(ioc=ioc, user_id=current_user.id, caseid=case_identifier)
+    if case_iocs_db_exists(ioc):
+        raise BusinessProcessingError('IOC with same value and type already exists')
 
-    link_existed = add_ioc_link(ioc.ioc_id, case_identifier)
+    add_ioc(ioc, current_user.id, case_identifier)
 
-    if link_existed:
-        # note: I am no big fan of returning tuples.
-        # It is a code smell some type is missing, or the code is badly designed.
-        return ioc, 'IOC already exists and linked to this case'
-
-    if not link_existed:
-        ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=case_identifier)
+    ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=case_identifier)
 
     if ioc:
         track_activity(f'added ioc "{ioc.ioc_value}"', caseid=case_identifier)
 
-        msg = 'IOC already existed in DB. Updated with info on DB.' if existed else 'IOC added'
+        msg = 'IOC added'
         return ioc, msg
 
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
 
 
-# TODO most probably this method should not require a case_identifier... Since the IOC gets modified for all cases...
-def update(identifier, request_json, case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
-
+def iocs_update(ioc: Ioc, request_json: dict):
+    """
+    Identifier: the IOC identifier
+    Request JSON: the Request
+    """
     try:
-        ioc = get_ioc(identifier, caseid=case_identifier)
-        if not ioc:
-            raise BusinessProcessingError('Invalid IOC ID for this case')
-
         # TODO ideally schema validation should be done before, outside the business logic in the REST API
         #      for that the hook should be called after schema validation
-        request_data = call_modules_hook('on_preload_ioc_update', data=request_json, caseid=case_identifier)
+        request_data = call_modules_hook('on_preload_ioc_update', data=request_json, caseid=ioc.case_id)
 
         # validate before saving
         ioc_schema = IocSchema()
-        request_data['ioc_id'] = identifier
+        request_data['ioc_id'] = ioc.ioc_id
+        request_data['case_id'] = ioc.case_id
         ioc_sc = ioc_schema.load(request_data, instance=ioc, partial=True)
         ioc_sc.user_id = current_user.id
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             raise BusinessProcessingError('Not a valid IOC type')
 
-        update_ioc_state(case_identifier)
+        update_ioc_state(ioc.case_id)
         db.session.commit()
 
-        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=case_identifier)
+        ioc_sc = call_modules_hook('on_postload_ioc_update', data=ioc_sc, caseid=ioc.case_id)
 
         if ioc_sc:
-            track_activity(f'updated ioc "{ioc_sc.ioc_value}"', caseid=case_identifier)
+            track_activity(f'updated ioc "{ioc_sc.ioc_value}"', caseid=ioc.case_id)
             return ioc, f'Updated ioc "{ioc_sc.ioc_value}"'
 
         raise BusinessProcessingError('Unable to update ioc for internal reasons')
@@ -122,42 +118,32 @@ def update(identifier, request_json, case_identifier):
         raise BusinessProcessingError('Unexpected error server-side', e)
 
 
-def delete(identifier, case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.full_access])
+def iocs_delete(ioc: Ioc):
+    call_modules_hook('on_preload_ioc_delete', data=ioc.ioc_id)
 
-    call_modules_hook('on_preload_ioc_delete', data=identifier, caseid=case_identifier)
-    ioc = get_ioc(identifier, case_identifier)
+    delete_ioc(ioc)
 
-    if not ioc:
-        raise BusinessProcessingError('Not a valid IOC for this case')
+    call_modules_hook('on_postload_ioc_delete', data=ioc.ioc_id, caseid=ioc.case_id)
 
-    if not delete_ioc(ioc, case_identifier):
-        track_activity(f'unlinked IOC ID {ioc.ioc_value}', caseid=case_identifier)
-        return f'IOC {identifier} unlinked'
-
-    call_modules_hook('on_postload_ioc_delete', data=identifier, caseid=case_identifier)
-
-    track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=case_identifier)
-    return f'IOC {identifier} deleted'
+    track_activity(f'deleted IOC "{ioc.ioc_value}"', caseid=ioc.case_id)
+    return f'IOC {ioc.ioc_id} deleted'
 
 
-def get_iocs(case_identifier):
-    check_current_user_has_some_case_access_stricter([CaseAccessLevel.read_only, CaseAccessLevel.full_access])
+def iocs_exports_to_json(case_id):
+    iocs = get_iocs(case_id)
 
-    return get_iocs_by_case(case_identifier)
+    return IocSchema().dump(iocs, many=True)
 
 
-def build_filter_case_ioc_query(ioc_id: int = None,
-                                ioc_uuid: str = None,
-                                ioc_value: str = None,
-                                ioc_type_id: int = None,
-                                ioc_description: str = None,
-                                ioc_tlp_id: int = None,
-                                ioc_tags: str = None,
-                                ioc_misp: str = None,
-                                user_id: float = None,
-                                linked_cases: float = None
-                                ):
+def iocs_build_filter_query(ioc_id: int = None,
+                            ioc_uuid: str = None,
+                            ioc_value: str = None,
+                            ioc_type_id: int = None,
+                            ioc_description: str = None,
+                            ioc_tlp_id: int = None,
+                            ioc_tags: str = None,
+                            ioc_misp: str = None,
+                            user_id: float = None):
     """
     Get a list of iocs from the database, filtered by the given parameters
     """
@@ -181,9 +167,4 @@ def build_filter_case_ioc_query(ioc_id: int = None,
     if user_id is not None:
         conditions.append(Ioc.user_id == user_id)
 
-    query = Ioc.query.filter(*conditions)
-
-    if linked_cases is not None:
-        return query.join(IocLink, Ioc.ioc_id == IocLink.ioc_id).filter(IocLink.case_id == linked_cases)
-
-    return query
+    return Ioc.query.filter(*conditions)

@@ -1,0 +1,449 @@
+{% set attributes = data.custom_attributes %}
+<div class="modal-header">
+    <div class="col md-12">
+        <div class="row">
+            <div class="col align-self-center">
+                <h4 class="modal-title mr-4">{{ data.name|unquote }}
+                    {% if data.modification_history %}
+                        <i class="fa-solid fa-clock-rotate-left ml-3 mt-2" data-toggle="popover" data-html="true" id="pop_history" style="cursor: pointer;"
+                                title="Modifications history"
+                                data-content="<small>{% for mod in data.modification_history %}<code>{{ mod|format_datetime('%Y-%m-%d %H:%M') }}</code> -  {{ data.modification_history[mod].action }} by {{ data.modification_history[mod].user }}<br/>{% endfor %}</small>">
+                        </i>
+                    {% endif %}
+                </h4>
+            </div>
+
+            <div class="row text-center">
+                    <ul class="nav nav-pills nav-default mr-4" id="pills-tab-custom-attr" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active show" id="pills-home-tab-nobd" data-toggle="pill" href="#details" role="tab" aria-controls="pills-home-nobd" aria-selected="false">Info</a>
+                    </li>
+                    <li class="nav-item submenu">
+                        <a class="nav-link"  data-toggle="pill" href="#case-info-access" role="tab" aria-controls="case-info-access" aria-selected="false">Access</a>
+                    </li>
+                    {% if attributes and attributes|length > 0 %}
+                        {% for ca in attributes %}
+                            <li class="nav-item submenu">
+                                <a class="nav-link"  data-toggle="pill" href="#{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" role="tab" aria-controls="{{page_uid}}{{ loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}" aria-selected="false">{{ca}}</a>
+                            </li>
+                        {% endfor %}
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col ">
+                <div class="row float-right">
+                    <button type="button" class="float-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+                        aria-hidden="true"><i class="fa fa-times"></i></span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="container col-md-12">
+        <div role="tabpanel">
+          <div class="tab-content">
+              <div class="tab-pane active" id="details">
+                <div id="case_gen_info_content">
+                    <h4>General info <button class="ml-2 btn btn-sm float-right" onclick="edit_case_info();">Edit</button></h4>
+                    <div class="row">
+                        <div class="col-6 col-xs-12 col-md-6">
+                            <div class="form-group">
+                                <label>Case name :</label>
+                                <span type="text" class="">{{ data.name|unquote }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case description :</label>
+                                <span type="text" class="">{{ data.description[0:50] }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Customer :</label>
+                                <span type="text" class="text-faded">{{ data.client.customer_name }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case tags :</label>
+                                <span type="text" class="text-faded">{% if data.tags %} {% for tag in data.tags %}
+                                    <span class="badge badge-pill badge-light ml-1"><i class="fa fa-tag mr-1"></i>{{ tag.tag_title }}</span> {% endfor %}{% endif %}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>SOC ID :</label>
+                                <span type="text" class="text-faded">{{ data.soc_id }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case ID :</label>
+                                <span type="text" class="text-faded">{{ data.case_id }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Case UUID :</label>
+                                <span type="text" class="text-faded">{{ data.case_uuid }}</span>
+                            </div>
+                        </div>
+                        <div class="col-6 col-xs-12 col-md-6">
+                            <div class="form-group mt--3">
+                                <label>Classification :</label>
+                                {% if data.classification %}
+                                    <span type="text" class="text-faded">{{ data.classification.name }}</span>
+                                    {% else %}
+                                    <span type="text" class="text-faded">Unknown</span>
+                                {% endif %}
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>State :</label>
+                                <span type="text" class="text-faded">{{ data.state.state_name }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Severity :</label>
+                                <span type="text" class="text-faded">{{ data.severity.severity_name }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Open date :</label>
+                                <span type="text" class="">{{ data.open_date }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Opening user :</label>
+                                <span type="text" class="">{{ data.user.user_name }}</span>
+                            </div>
+                            <div class="form-group mt--3">
+                                <label>Owner :</label>
+                                <span type="text" class="">{{ data.owner.user_name }}</span>
+                            </div>
+                            {% if data.reviewer %}
+                                <div class="form-group mt--3">
+                                    <label>Reviewer :</label>
+                                    <span type="text" class="">{{ data.reviewer.user_name }}</span>
+                                </div>
+                            {% endif %}
+                            {% if data.review_status %}
+                                <div class="form-group mt--3">
+                                    <label>Reviewer :</label>
+                                    <span type="text" class="">{{ data.review_status.status_name }}</span>
+                                </div>
+                            {% endif %}
+                            {% if data.close_date %}
+                                <div class="form-group mt--3">
+                                    <label>Close date :</label>
+                                    <span type="text" class="">{{ data.close_date }}</span>
+                                </div>
+                            {% endif %}
+                            {% if protagonists %}
+                                {% for protagonist in protagonists %}
+                                    <div class="form-group mt--3">
+                                        <label>{{ protagonist.role }}: </label>
+                                        <span type="text" class="">{{ protagonist.name }} ({{protagonist.contact}})</span>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div id="case_gen_info_edit" style="display:none;">
+                    <form method="post" action='' id="form_update_case" autocomplete="off">
+                        <h4 class=" pb-3">Edit case information</h4>
+                            <div class="col-12">
+                            {{ form.hidden_tag() }}
+                            <div class="mt-4">
+                                <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">Case name  <i class="ml-2">{{"#{} - ".format(data.case_id)}}</i></span>
+                                            </div>
+                                             <input type="text" class="form-control" name="case_name" value="{{ data.name.replace('#{} - '.format(data.case_id), '')}}">
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">SOC ticket ID</span>
+                                            </div>
+                                            <input type="text" class="form-control" name="case_soc_id" value="{{ data.soc_id }}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Classification</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_classification" name="classification_id">
+                                                {% for clc in case_classifications %}
+                                                    <option value="{{ clc.id }}" {% if data.classification_id == clc.id %}selected{% endif %} class="badge-text">{{ clc.name_expanded }}</option>
+                                                {% endfor %}
+                                          </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Owner</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_owner" name="owner_id">
+                                           </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                 <div class="row">
+                                     <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">State</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_state" name="state_id">
+                                                {% for clc in case_states %}
+                                                    <option value="{{ clc.state_id }}" {% if data.state_id == clc.state_id %}selected{% endif %} class="badge-text">{{ clc.state_name }}</option>
+                                                {% endfor %}
+                                          </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Outcome</span>
+                                            </div>
+                                            <select class="form-control selectpicker"
+                                                  id="case_quick_status" name="status_id">
+                                                {{ data }}
+                                              <option value="0" {% if data.status_name == "unknown" %}selected{% endif %} class="badge-text">Unknown</option>
+                                              <option value="1" {% if data.status_name == "false_positive" %}selected{% endif %} class="badge-text">False Positive</option>
+                                              <option value="2" {% if data.status_name == "true_positive_with_impact" %}selected{% endif %} class="badge-text">True Positive with impact</option>
+                                              <option value="4" {% if data.status_name == "true_positive_without_impact" %}selected{% endif %} class="badge-text">True Positive without impact</option>
+                                              <option value="5" {% if data.status_name == "legitimate" %}selected{% endif %} class="badge-text">Legitimate</option>
+                                              <option value="3" {% if data.status_name == "not_applicable" %}selected{% endif %} class="badge-text">Not applicable</option>
+                                          </select>
+                                        </div>
+                                    </div>
+                                 </div>
+                                 <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-2">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Customer</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_customer" name="case_customer">
+                                                {% for cst in customers %}
+                                                    <option value="{{ cst.customer_id }}" {% if data.client_id == cst.customer_id %}selected{% endif %} class="badge-text">{{ cst.customer_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-4">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Reviewer</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_reviewer" name="reviewer_id">
+                                           </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-12 col-6">
+                                        <div class="input-group mb-2">
+                                            <div class="input-group-prepend fix-label-item">
+                                                <span class="input-group-text">Severity</span>
+                                            </div>
+                                            <select class="selectpicker form-control"
+                                                  id="case_quick_severity" name="severity_id">
+                                                {% for cst in severities %}
+                                                    <option value="{{ cst.severity_id }}" {% if data.severity_id == cst.severity_id %}selected{% endif %} class="badge-text">{{ cst.severity_name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-12 col-6">
+
+                                    </div>
+                                </div>
+                                <div class="form-group px-0">
+                                    <label for="case_tags">Case tags
+                                    </label>
+                                    <input type="text" id="case_tags"
+                                        class="form-control col-md-12" {% if data.tags %} value="{% for tag in data.tags %}{{ tag.tag_title }},{% endfor %}" {% endif %}/>
+                                </div>
+                                <div class="form-group px-4 py-4 mt-3" id="protagonists_form_group">
+                                    {% if protagonists %}
+                                    <label>Protagonists
+                                    </label>
+                                    {% for iprota in protagonists %}
+                                        <div class="input-group mb-2 mt-2" id="protagonist_{{loop.index}}">
+                                            <div class="col-6">
+                                                    <h6># {{loop.index}}</h6>
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="ingrole_{{loop.index}}">Role</span>
+                                                        </div>
+                                                        <input type="text" aria-describedby="ingrole_{{loop.index}}" list="roles-list"  class="form-control" name="protagonist_role_{{loop.index}}" value="{{ iprota.role }}" placeholder="Role">
+                                                    </div>
+
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="ingname_{{loop.index}}">Name</span>
+                                                        </div>
+                                                        <input type="text" aria-describedby="ingname_{{loop.index}}" class="form-control" name="protagonist_name_{{loop.index}}" placeholder="Name" list="username-list" value="{{ iprota.name }}">
+                                                    </div>
+
+                                                    <div class="input-group mb-3">
+                                                        <div class="input-group-prepend">
+                                                            <span class="input-group-text" id="ingp_{{loop.index}}">Contact</span>
+                                                        </div>
+                                                        <input type="text" aria-describedby="ingp_{{loop.index}}" class="form-control" name="protagonist_contact_{{loop.index}}" value="{{ iprota.contact }}" placeholder="Contact" list="emails-list">
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('{{loop.index}}');">
+                                                        Remove
+                                                    </button>
+                                                    <hr/>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                    {% endif %}
+                                    <div id="protagonist_list_edit">
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-dark mt-2 mr-2" id="add_protagonist_btn"  onclick="add_protagonist();">Add protagonist</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+              </div>
+              <div class="tab-pane" id="case-info-access">
+                    <div class="row">
+                        <div class="col">
+                            <div class="card-title">Case access</div>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-dark btn-sm ml-3 float-right" onclick="access_case_info_reload('{{ data.case_id }}');">Refresh</button>
+                            <button class="btn btn-dark btn-sm ml-2 float-right" onclick="view_case_access_via_group('{{ data.case_id }}');">Set access via group</button>
+                        </div>
+                    </div>
+                      <div class="row mt-4">
+                          <div class="col">
+                              <table class="table display table-striped table-hover responsive" width="100%" cellspacing="0" id="case_access_users_list_table" >
+                                <thead>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User Name</th>
+                                      <th>User Login</th>
+                                      <th>User Access</th>
+                                  </tr>
+                                </thead>
+                                <tfoot>
+                                  <tr>
+                                      <th>User ID</th>
+                                      <th>User Name</th>
+                                      <th>User Login</th>
+                                      <th>User Access</th>
+                                  </tr>
+                                </tfoot>
+                              </table>
+                          </div>
+                  </div>
+              </div>
+              {% include 'modals/modal_attributes_tabs.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+<div id="protagonist_list_edit_template" style="display:none;">
+    <div class="input-group mb-2 mt-2" id="protagonist___PROTAGONIST_ID__">
+        <div class="col-6">
+                <h5>Protagonist</h5>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="ingrole___PROTAGONIST_ID__">Role</span>
+                    </div>
+                    <input type="text" aria-describedby="ingrole___PROTAGONIST_ID__" list="roles-list"  class="form-control" name="protagonist_role___PROTAGONIST_ID__" value="" placeholder="Role">
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="ingname___PROTAGONIST_ID__">Name</span>
+                    </div>
+                    <input type="text" aria-describedby="ingname___PROTAGONIST_ID__" class="form-control" name="protagonist_name___PROTAGONIST_ID__" placeholder="Name" list="username-list" value="">
+                </div>
+
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="ingp___PROTAGONIST_ID__">Contact</span>
+                    </div>
+                    <input type="text" aria-describedby="ingp___PROTAGONIST_ID__" class="form-control" name="protagonist_contact___PROTAGONIST_ID__" value="" list="emails-list" placeholder="Contact">
+                </div>
+                <button type="button" class="btn btn-sm  btn-outline-dark mr-2 mt-1" onclick="remove_protagonist('__PROTAGONIST_ID__');">
+                    Remove
+                </button>
+                <hr/>
+        </div>
+    </div>
+
+</div>
+<datalist id="roles-list">
+    <option value="Analyst">
+    <option value="Lead">
+    <option value="Communication">
+    <option value="Customer contact">
+</datalist>
+
+<datalist id="username-list">
+</datalist>
+<datalist id="emails-list">
+</datalist>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-danger " onclick="remove_case('{{ data.case_id }}');"
+            id="delete_case_info">Delete case</button>
+
+    {% if not data.close_date %}
+        <button type="button" class="btn btn-outline-warning mr-auto" onclick="close_case('{{ data.case_id }}');"
+                id="close_case_info">Close case</button>
+    {% else %}
+        <button type="button" class="btn btn-success" onclick="reopen_case('{{ data.case_id }}');"
+                id="reopen_case_info">Reopen case</button>
+    {% endif %}
+    <button type="button" class="btn btn-outline-dark mr-2" style="display:none;" id="cancel_case_info"  onclick="cancel_case_edit();">Cancel</button>
+    <button type="button" class="btn btn-outline-success mr-2" style="display:none;" id="save_case_info" onclick="save_case_edit({{ data.case_id }});">Save</button>
+</div>
+
+<script>
+    $('[data-toggle="popover"]').popover();
+    $('#case_quick_classification').selectpicker({
+        liveSearch: true,
+        title: "Classification",
+        style: "btn-outline-white"
+    });
+    $('#case_quick_owner').selectpicker({
+        liveSearch: true,
+        title: "Owner",
+        style: "btn-outline-white"
+    });
+    $('#case_quick_reviewer').selectpicker({
+        liveSearch: true,
+        title: "Reviewer",
+        style: "btn-outline-white"
+    });
+    $('#case_state').selectpicker({
+        liveSearch: true,
+        title: "Case state",
+        style: "btn-outline-white"
+    });
+    $('#case_quick_status').selectpicker({
+        liveSearch: true,
+        title: "Outcome",
+        style: "btn-outline-white"
+    });
+    $('#case_quick_customer').selectpicker({
+        liveSearch: true,
+        title: "Customer",
+        style: "btn-outline-white"
+    });
+    $('#case_quick_severity').selectpicker({
+        liveSearch: true,
+        title: "Severity",
+        style: "btn-outline-white"
+    });
+    access_case_info_reload('{{ data.case_id }}', '{{ data.owner_id }}', '{{ data.reviewer_id }}');
+</script>

@@ -16,6 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import datetime
 import logging as log
 import traceback
 
@@ -23,21 +24,22 @@ from flask_login import current_user
 
 from marshmallow.exceptions import ValidationError
 
-from app.schema.marshables import CaseSchema
-
 from app import app
 from app import db
 
 from app.util import add_obj_history_entry
+from app.schema.marshables import CaseSchema
 
-from app.models.authorization import CaseAccessLevel
-from app.models.authorization import Permissions
 from app.models import ReviewStatusList
+
+from app.business.errors import BusinessProcessingError
+from app.business.iocs import iocs_exports_to_json
 
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.iris_engine.access_control.utils import ac_set_new_case_access
 
+from app.datamgmt.case.case_db import case_db_exists
 from app.datamgmt.case.case_db import save_case_tags
 from app.datamgmt.case.case_db import register_case_protagonists
 from app.datamgmt.case.case_db import get_review_id_from_name
@@ -51,16 +53,14 @@ from app.datamgmt.manage.manage_cases_db import reopen_case
 from app.datamgmt.manage.manage_cases_db import map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import close_case
 from app.datamgmt.case.case_db import get_case
-
-from app.business.errors import BusinessProcessingError
-from app.business.permissions import check_current_user_has_some_case_access
-from app.business.permissions import check_current_user_has_some_permission
-
-
-def get_case_by_identifier(case_identifier):
-    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
-
-    return get_case(case_identifier)
+from app.datamgmt.reporter.report_db import export_caseinfo_json
+from app.datamgmt.reporter.report_db import process_md_images_links_for_report
+from app.datamgmt.reporter.report_db import export_case_evidences_json
+from app.datamgmt.reporter.report_db import export_case_tm_json
+from app.datamgmt.reporter.report_db import export_case_assets_json
+from app.datamgmt.reporter.report_db import export_case_tasks_json
+from app.datamgmt.reporter.report_db import export_case_comments_json
+from app.datamgmt.reporter.report_db import export_case_notes_json
 
 
 def _load(request_data, **kwargs):
@@ -71,59 +71,55 @@ def _load(request_data, **kwargs):
         raise BusinessProcessingError('Data error', e.messages)
 
 
-def create(request_json):
-    try:
-        # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
-        request_data = call_modules_hook('on_preload_case_create', request_json, None)
-        case_template_id = request_data.pop('case_template_id', None)
-
-        case = _load(request_data)
-        case.owner_id = current_user.id
-        case.severity_id = 4
-
-        if case_template_id and len(case_template_id) > 0:
-            case = case_template_pre_modifier(case, case_template_id)
-            if case is None:
-                raise BusinessProcessingError(f'Invalid Case template ID {case_template_id}')
-
-        case.state_id = get_case_state_by_name('Open').state_id
-
-        case.save()
-
-        if case_template_id and len(case_template_id) > 0:
-            try:
-                case, logs = case_template_post_modifier(case, case_template_id)
-                if len(logs) > 0:
-                    raise BusinessProcessingError(f'Could not update new case with {case_template_id}', logs)
-
-            except Exception as e:
-                log.error(e.__str__())
-                raise BusinessProcessingError(f'Unexpected error when loading template {case_template_id} to new case.')
-
-        ac_set_new_case_access(None, case.case_id, case.client_id)
-
-        # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
-        case = call_modules_hook('on_postload_case_create', case, None)
-
-        add_obj_history_entry(case, 'created')
-        track_activity(f'new case "{case.name}" created', caseid=case.case_id, ctx_less=False)
-
-        return case, 'Case created'
-
-    # TODO maybe remove validationerror (because unnecessary)
-    except ValidationError as e:
-        raise BusinessProcessingError('Data error', e.messages)
-
-    except Exception as e:
-        log.error(e.__str__())
-        log.error(traceback.format_exc())
-        raise BusinessProcessingError('Error creating case - check server logs')
+def cases_get_by_identifier(case_identifier):
+    return get_case(case_identifier)
 
 
-def delete(case_identifier):
-    check_current_user_has_some_permission([Permissions.standard_user])
-    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
+def cases_exists(identifier):
+    return case_db_exists(identifier)
 
+
+def cases_create(request_json):
+    # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
+    request_data = call_modules_hook('on_preload_case_create', request_json, None)
+
+    case = _load(request_data)
+
+    case.owner_id = current_user.id
+    case.severity_id = 4
+
+    case_template_id = request_data.pop('case_template_id', None)
+    if case_template_id and len(case_template_id) > 0:
+        case = case_template_pre_modifier(case, case_template_id)
+        if case is None:
+            raise BusinessProcessingError(f'Invalid Case template ID {case_template_id}')
+
+    case.state_id = get_case_state_by_name('Open').state_id
+
+    case.save()
+
+    if case_template_id and len(case_template_id) > 0:
+        try:
+            case, logs = case_template_post_modifier(case, case_template_id)
+            if len(logs) > 0:
+                raise BusinessProcessingError(f'Could not update new case with {case_template_id}', logs)
+
+        except Exception as e:
+            log.error(e.__str__())
+            raise BusinessProcessingError(f'Unexpected error when loading template {case_template_id} to new case.')
+
+    ac_set_new_case_access(None, case.case_id, case.client_id)
+
+    # TODO remove caseid doesn't seems to be useful for call_modules_hook => remove argument
+    case = call_modules_hook('on_postload_case_create', case, None)
+
+    add_obj_history_entry(case, 'created')
+    track_activity(f'new case "{case.name}" created', caseid=case.case_id, ctx_less=False)
+
+    return case, 'Case created'
+
+
+def cases_delete(case_identifier):
     if case_identifier == 1:
         track_activity(f'tried to delete case {case_identifier}, but case is the primary case',
                        caseid=case_identifier, ctx_less=True)
@@ -143,10 +139,7 @@ def delete(case_identifier):
         raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
 
 
-def update(case_identifier, request_data):
-    check_current_user_has_some_permission([Permissions.standard_user])
-    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.full_access])
-
+def cases_update(case_identifier, request_data):
     case_i = get_case(case_identifier)
     if not case_i:
         raise BusinessProcessingError('Case not found')
@@ -231,3 +224,51 @@ def update(case_identifier, request_data):
         log.error(e.__str__())
         log.error(traceback.format_exc())
         raise BusinessProcessingError('Error updating case - check server logs')
+
+
+def cases_export_to_json(case_id):
+    """Fully export a case a JSON"""
+    export = {}
+    case = export_caseinfo_json(case_id)
+
+    if not case:
+        export['errors'] = ["Invalid case number"]
+        return export
+
+    case['description'] = process_md_images_links_for_report(case['description'])
+
+    export['case'] = case
+    export['evidences'] = export_case_evidences_json(case_id)
+    export['timeline'] = export_case_tm_json(case_id)
+    export['iocs'] = iocs_exports_to_json(case_id)
+    export['assets'] = export_case_assets_json(case_id)
+    export['tasks'] = export_case_tasks_json(case_id)
+    export['comments'] = export_case_comments_json(case_id)
+    export['notes'] = export_case_notes_json(case_id)
+    export['export_date'] = datetime.datetime.utcnow()
+
+    return export
+
+
+def cases_export_to_report_json(case_id):
+    """Fully export of a case for report generation"""
+    export = {}
+    case = export_caseinfo_json(case_id)
+
+    if not case:
+        export['errors'] = ["Invalid case number"]
+        return export
+
+    case['description'] = process_md_images_links_for_report(case['description'])
+
+    export['case'] = case
+    export['evidences'] = export_case_evidences_json(case_id)
+    export['timeline'] = export_case_tm_json(case_id)
+    export['iocs'] = iocs_exports_to_json(case_id)
+    export['assets'] = export_case_assets_json(case_id)
+    export['tasks'] = export_case_tasks_json(case_id)
+    export['notes'] = export_case_notes_json(case_id)
+    export['comments'] = export_case_comments_json(case_id)
+    export['export_date'] = datetime.datetime.utcnow()
+
+    return export

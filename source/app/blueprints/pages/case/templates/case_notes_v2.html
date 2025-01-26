@@ -1,0 +1,238 @@
+{% extends "layouts/default_ext.html" %} {% block title %} Case notes {% endblock title %} {% block stylesheets %}
+{% include 'includes/header_case.html' %}
+<link rel="stylesheet" href="/static/assets/css/bootstrap-select.min.css">
+{% endblock stylesheets %}
+{% block content %}
+{% include 'includes/navigation_ext.html' %}
+
+{% include 'includes/sidenav.html' %}
+<div class="main-panel">
+
+    <div class="content">
+
+        <div class="page-inner page-inner-fill">
+            <div class="page-with-aside  bg-white">
+                <div class="page-aside bg-grey1">
+                    <div class="aside-header mt--2">
+						<div class="row mt-1">
+							<div class="col">
+								<div class="input-group">
+									<input type="text" placeholder="Search in notes" class="form-control" id="search-input">
+									  <div class="input-group-append">
+										<button class="btn btn-sm btn-light" type="button" id="clear-search">
+										  &times;
+										</button>
+									  </div>
+								</div>
+							</div>
+						</div>
+						<div class="row mt-2">
+							<div class="col">
+								<button class="btn btn-light btn-sm" title="Add folder" onclick="add_folder();return false;">
+									<i class="fa fa-folder-plus"></i>
+								</button>
+								<button class="btn btn-light btn-sm" title="Fold/unfold directories" onclick="toggleDirectories();return false;">
+									<i class="fa-solid fa-folder-tree"></i>
+								</button>
+								<button class="btn btn-light btn-sm" title="Refresh list" onclick="refresh_folders();return false;">
+									<i class="fa fa-refresh"></i>
+								</button>
+							</div>
+						</div>
+
+                    </div>
+					<div class="aside-nav" id="notes-nav">
+						<ul class="nav" id="directoriesListing">
+						</ul>
+					</div>
+				</div>
+				{{ form.csrf_token }}
+				<div class="page-content" id="emptyNoteDisplay">
+					<div class="mt-4">
+						<h4 class="text-dark text-sm text-center ml-mr-auto">It looks pretty empty <i class="fa-solid fa-mug-hot ml-2"></i></h4>
+						<h4 class="text-dark text-sm text-center ml-mr-auto"><a href="#" onclick="add_folder();return false;">Select a note on the left pane or click here to add a directory</a></h4>
+						<h4 class="text-dark text-sm text-center ml-mr-auto">Right-click on a directory to add a note</h4>
+
+					</div>
+				</div>
+				<div class="page-content note-content" id="currentNoteContent" style="display: none;">
+					<div class="mt-2 ml-2 mr-2 d-lg-flex d-block">
+						<div class="col">
+							<h4 class="page-title mb-0" id="currentNoteTitle"></h4>
+							<small>
+								<i class="text-muted" id="currentNoteIDLabel"></i>
+								<i class="fa fa-cloud-upload-alt ml-2" title="Auto saving enabled"></i>
+								<a class="bg-transparent" onclick="load_note_revisions()"><i class="fa-solid fa-clock-rotate-left ml-2 mt-2" style="cursor: pointer;" title="Modifications history"></i></a>
+							</small>
+
+						</div>
+						<div class="col">
+							<div class="row float-right">
+								<span class="float-right mr-2 mt-1" id="content_typing"></span>
+								<span class="float-right mr-2 mt-1" id="content_last_saved_by"></span>
+								<div class="avatar-group-note mt-1 mr-2 float-right" id="ppl_list_viewing">
+								</div>
+								  <button type="button" class="btn bg-transparent btn-xs" onclick="proxy_comment_element();" title="Comments">
+									<span class="btn-label">
+										<i class="fa-solid fa-comments mr-2"></i><span class="notification" id="object_comments_number"></span>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="proxy_copy_object_link();return false;" title="Copy shared link">
+									<span class="btn-label">
+										<i class="fa fa-share mr-2"></i>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="proxy_copy_object_link_md();return false;" title="Copy MD link">
+									<span class="btn-label">
+										<i class="fa-brands fa-markdown mr-2"></i>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="download_note();return false;" title="Download as MD">
+									<span class="btn-label">
+										<i class="fa-solid fa-download mr-2"></i>
+									</span>
+								</button>
+								<button type="button" class="btn bg-transparent btn-xs" onclick="delete_note();return false;" title="Delete note">
+									<span class="btn-label">
+										<i class="fa-solid fa-trash mr-2 text-danger"></i>
+									</span>
+								</button>
+								<div class="dropdown">
+									  <button class="btn bg-transparent" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+										  <span aria-hidden="true"><i class="fas fa-ellipsis-v"></i></span>
+									  </button>
+									  <div class="dropdown-menu pull-right" id="note_quick_actions" aria-labelledby="dropdownMenuButton">
+									  </div>
+								 </div>
+						  	</div>
+						</div>
+					</div>
+					<div class="note-body">
+						<div class="row mb-1 mt-3 ml-2">
+							<div class="col-10" id="notes_edition_btn">
+									<div class="btn btn-sm btn-light mr-1 " title="CTRL-S" id="last_saved" onclick="save_note();"><i class="fa-solid fa-file-circle-check"></i></div>
+									<div class="btn btn-sm btn-light mr-1 " title="CTRL-B" onclick="note_editor.insertSnippet('**${1:$SELECTION}**');note_editor.focus();"><i class="fa-solid fa-bold"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="CTRL-I" onclick="note_editor.insertSnippet('*${1:$SELECTION}*');note_editor.focus();"><i class="fa-solid fa-italic"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-1" onclick="note_editor.insertSnippet('# ${1:$SELECTION}');note_editor.focus();">H1</div>
+									<div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-2" onclick="note_editor.insertSnippet('## ${1:$SELECTION}');note_editor.focus();">H2</div>
+									<div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-3" onclick="note_editor.insertSnippet('### ${1:$SELECTION}');note_editor.focus();">H3</div>
+									<div class="btn btn-sm btn-light mr-1" title="CTRL-SHIFT-4" onclick="note_editor.insertSnippet('#### ${1:$SELECTION}');note_editor.focus();">H4</div>
+									<div class="btn btn-sm btn-light mr-1" title="CTRL+\`" onclick="note_editor.insertSnippet('```${1:$SELECTION}```');note_editor.focus();"><i class="fa-solid fa-code"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="CTRL-K" onclick="note_editor.insertSnippet('[${1:$SELECTION}](url)');note_editor.focus();"><i class="fa-solid fa-link"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="Insert table" onclick="note_editor.insertSnippet('|\t|\t|\t|\n|--|--|--|\n|\t|\t|\t|\n|\t|\t|\t|');note_editor.focus();"><i class="fa-solid fa-table"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="Insert bullet list" onclick="note_editor.insertSnippet('\n- \n- \n- ');note_editor.focus();"><i class="fa-solid fa-list"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="Insert numbered list" onclick="note_editor.insertSnippet('\n1. a  \n2. b  \n3. c  ');note_editor.focus();"><i class="fa-solid fa-list-ol"></i></div>
+									<div class="btn btn-sm btn-light mr-1" title="Toggle editor expansion" onclick="toggle_max_editor();" id="btn_max_editor"><i class="fa-solid fa-maximize"></i></div>
+									<div class="btn btn-sm btn-transparent mr-1" title="Help" onclick="get_md_helper_modal();"><i class="fa-solid fa-question-circle"></i></div>
+							</div>
+							<div class="col">
+								<button type="button" class="float-right icon-note btn btn-light btn-circle btn-sm mr-2" onclick="edit_innote();"></button>
+								<button type="button" class="float-right btn btn-light btn-sm mr-2" onclick="save_note();return false;" title="Save note">
+									<span class="btn-label">
+										<i class="fa fa-save mr-2"></i>Save note
+									</span>
+								</button>
+							</div>
+						</div>
+						<div class="row" id="noteContentScroll">
+							<div class="col-md-12 col-lg-6" id="container_note_content">
+								<div style="display: none" id="fetched_crc"></div>
+								<div id="editor_detail" contenteditable="true" spellcheck="true" data-theme="{% if current_user.in_dark_mode %}dark{% else %}light{% endif %}"></div>
+								<textarea id="note_content" rows="10" cols="82" style="display: none"></textarea>
+							</div>
+							<div class="col-md-12 col-lg-6" id="ctrd_notesum">
+								<div id="targetDiv"></div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+    </div>
+	<div class="modal" id="moveFolderModal" tabindex="-1" role="dialog" aria-labelledby="moveFolderModalLabel" aria-hidden="true">
+		<div class="modal-dialog" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="moveFolderModalLabel">Move item</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="row">
+						<div class="col">
+							<span>Select the directory to move the item to.</span>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col">
+							<div id="dirListingMove">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal" id="noteModificationHistoryModal" tabindex="-1" role="dialog" aria-labelledby="moveFolderModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg" role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" >Note revisions</h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="row mt-2">
+						<div class="col">
+							<div id="revisionList" class="list-group-lg">
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal bg-dark-gradient" id="notePreviewModal" tabindex="-1" role="dialog" aria-hidden="true">
+		<div class="modal-dialog modal-xxl " role="document">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" >Preview of revision <span id="previewRevisionID"></span></h5>
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">&times;</span>
+					</button>
+				</div>
+				<div class="modal-body">
+					<div class="row mt-2 mb-2">
+						<div class="col">
+							<h3 id="notePreviewModalTitle"></h3>
+							<div id="notePreviewModalContent">
+							</div>
+						</div>
+					</div>
+					<div class="row mt-2">
+						<div class="col">
+							<button class="btn btn-light float-right" onclick="note_revision_revert();">Revert to this revision</button>
+							<button class="btn btn-outline-danger float-right mr-2" onclick="note_revision_delete();">Delete revision</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+    {% include 'includes/footer.html' %}
+</div>
+{% endblock content %}
+{% block javascripts %}
+{% include 'includes/footer_case.html' %}
+<script src="/static/assets/js/plugin/sortable/sortable.js "></script>
+<script src="/static/assets/js/core/socket.io.js"></script>
+<script src="/static/assets/js/iris/case.notes.js "></script>
+
+
+{% endblock javascripts %}

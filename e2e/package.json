@@ -1,0 +1,21 @@
+{
+  "name": "tests_end_to_end",
+  "description": "End to end tests to avoid UI regressions",
+  "scripts": {
+    "start": "docker compose -f ../docker-compose.dev.yml up --detach && wait-on http://127.0.0.1:8000",
+    "stop": "docker compose down",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:report": "playwright show-report",
+    "record": "playwright codegen --ignore-https-errors  --load-storage playwright/.auth/administrator.json https://localhost",
+    "test": "npm run start && npm run e2e && npm run stop"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.47.0",
+    "@types/node": "^22.5.4",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  }
+}

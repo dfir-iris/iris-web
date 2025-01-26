@@ -1,0 +1,92 @@
+<div class="modal-header">
+    <h4 class="modal-title mt-2 mr-4">Datastore Files</h4>
+    <div class="row text-right">
+         <button type="button" class="pull-right btn bg-transparent" data-dismiss="modal" aria-label="Close"><span
+            aria-hidden="true"><i class="fa fa-times"></i></span></button>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="container col-md-12">
+        <form method="post" action="" id="form_new_ds_files">
+            <div class="col-md-12 col-lg-12 col-sm-12">
+                {{ form.hidden_tag() }}
+                <div class="row ml-2">
+                     <p>The files will be saved in virtual folder <code>{{ dsp.path_name }}</code>.</p>
+                 </div>
+                <div class="form-row ml-2">
+                    <div class="form-group col-12">
+                        <label for="input_upload_ds_file" class="form-label">Choose files to upload : </label>
+                        <input id="input_upload_ds_files" class="form-control" type="file" multiple>
+                    </div>
+                </div>
+                <div class="form-row ml-2">
+                    <div class="form-group col-12">
+                            <label for="file_description" class="placeholder">Description</label>
+                            {{ form.file_description(class='form-control col-md-12 col-sm-12 sizable-textarea', autocomplete="off") }}
+                    </div>
+                </div>
+                <div class="form-row ml-2">
+                    <div class="form-group col-6 col-xs-12">
+                        <label for="file_password" class="placeholder">Password<i class="ml-1 mt-1 fa-regular text-dark fa-circle-question"
+                                                                                  title="Help" data-toggle="popover" data-html="true"
+                                                                                  data-trigger="hover" style="cursor: pointer;"
+                                                                                  data-content="If set, the files are locally encrypted with this password.<br/><b class='text-danger'>Passwords are stored in clear text server side. Do not put sensitive password here.</b><br/>Encrypted files cannot be used in notes.<br/>IOC are automatically encrypted with password <code>infected</code> unless specified otherwise here.">
+
+                        </i></label>
+                         <div class="input-group mb-2 mr-sm-2">
+                             {{ form.file_password(class='form-control',  autocomplete="off", type="password") }}
+                             <div class="input-group-append">
+                              <div class="input-group-text" id="toggle_file_password"><i class="fa-solid fa-eye"></i></div>
+                            </div>
+                         </div>
+                    </div>
+                    <div class="form-group col-6 col-xs-12">
+                        <label for="file_tags">Files tags</label>
+                        <input type="text" id="file_tags" name="file_tags"
+                            class="form-control col-md-12"/>
+                    </div>
+                </div>
+                <div class="form-row ml-2">
+                    <div class="form-group col-6 col-xs-12">
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                {{ form.file_is_ioc(class="form-check-input", type="checkbox") }}
+                                <span class="form-check-sign"> Files are IOC <i class="ml-1 mt-1 fa-regular text-dark fa-circle-question"
+                                                                                  title="Help" data-toggle="popover" data-html="true"
+                                                                                  data-trigger="hover" style="cursor: pointer;"
+                                                                                  data-content="If set, the files are stored in a dedicated IOC folder on the server and are encrypted with password <code>infected</code> unless specified otherwise in the password field.<br/> The file is also added to the case IOC.">
+
+                                </i></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group col-6 col-xs-12">
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                {{ form.file_is_evidence(class="form-check-input", type="checkbox") }}
+                                <span class="form-check-sign"> Files are Evidence <i class="ml-1 mt-1 fa-regular text-dark fa-circle-question"
+                                                                                  title="Help" data-toggle="popover" data-html="true"
+                                                                                  data-trigger="hover" style="cursor: pointer;"
+                                                                                  data-content="If set, the files are stored in a dedicated Evidence folder on the server and added to the case Evidence.">
+
+                                </i></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline-success ml-4 mt-5 float-right"  onclick="save_ds_multi_files({{dsp.path_id}});return false;">Save</button>
+        </form>
+    </div>
+</div>
+<script>
+    $('[data-toggle="popover"]').popover();
+    $('#toggle_file_password').on('click', function (e) {
+        const type = $('#file_password').attr('type') === 'password' ? 'text' : 'password';
+        $('#file_password').attr('type', type);
+
+        $('#toggle_file_password > i').attr('class', type === 'password' ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash');
+    });
+    set_suggest_tags('file_tags');
+
+</script>

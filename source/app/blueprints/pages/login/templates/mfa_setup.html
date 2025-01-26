@@ -1,0 +1,58 @@
+
+{% extends "layouts/static-default.html" %}
+
+{% block title %} MFA Setup {% endblock title %}
+
+{% block stylesheets %}
+
+    <link rel="stylesheet" href="/static/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/assets/css/atlantis.css">
+    <link rel="stylesheet" href="/static/assets/css/login.css">
+
+
+{% endblock stylesheets %}
+
+{% block content %}
+    <div class="content-full">
+        <div class="wrapper row">
+            <div class="radial-bg-primary col-xs-12 col-md-8">
+                <div class="d-flex flex-column justify-content-center align-items-center" style="height: 100%;">
+                    <h1 class="text-white mb-3">Setup MFA</h1>
+                    <img src="data:image/png;base64,{{ img_data }}">
+                    <p class="text-white mb-3">{{ otp_setup_key }}</p>
+                </div>
+                <span class="text-white text-center mt-4">{{ login_banner|replace('\n', '<br>')|safe }}</span>
+            </div>
+            <div class=" col-xs-12 col-md-4">
+                <div class="d-flex flex-column justify-content-center align-items-center" style="height: 100%;">
+                    <h3 class="login__form_title">Your organisation requires to setup MFA</h3>
+                    <p>Scan the QR code with your authenticator app and enter the token and your password.</p>
+                      <form method="POST" action="">
+                        <div class="col-md-12 col-lg-12 col-sm-12">
+                          <div class="form-row ml-2">
+                            <div class="form-group col-12">
+                                {{ form.hidden_tag() }}
+                                {{ form.mfa_secret(size=32, class="hidden", style="display:None;") }}
+                                <label for="token">Password</label>
+                                {{ form.user_password(class="form-control") }}
+
+                                <label for="token">Token</label>
+                                {{ form.token(size=32, class="form-control") }}
+                            </div>
+                          </div>
+                          <div class="form-row ml-2">
+                             <div class="form-group col-6">
+                               <button type="submit" class="btn btn-primary">Submit</button>
+                             </div>
+                          </div>
+                        </div>
+                      </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
+
+{% block javascripts %}
+
+{% endblock javascripts %}

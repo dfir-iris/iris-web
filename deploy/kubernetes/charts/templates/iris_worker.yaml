@@ -52,8 +52,14 @@ spec:
       labels:
         app: {{ .Values.irisworker.app }}
     spec:
+      securityContext:
+        {{- toYaml .Values.irisworker.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Values.irisworker.name }}
+          securityContext:
+            {{- toYaml .Values.irisworker.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.irisworker.resources | nindent 12 }}
           image: "{{ .Values.irisworker.image}}:{{ .Values.irisworker.tag }}"
           imagePullPolicy: "{{ .Values.irisworker.imagePullPolicy }}"
           command: ['./wait-for-iriswebapp.sh', "{{ .Values.irisapp.name }}:{{ .Values.irisapp.service.port }}", './iris-entrypoint.sh', 'iris-worker']
@@ -86,6 +92,9 @@ spec:
 
           - name:  IRIS_SECURITY_PASSWORD_SALT
             value: {{ .Values.irisworker.IRIS_SECURITY_PASSWORD_SALT | quote }}
+
+          - name: NUMBER_OF_CHILD
+            value: {{ .Values.irisworker.NUMBER_OF_CHILD | quote }}
 
 
           volumeMounts:

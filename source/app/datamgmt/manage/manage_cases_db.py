@@ -20,17 +20,20 @@ from datetime import date
 from datetime import timedelta
 from pathlib import Path
 
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_
+from sqlalchemy import desc
+from sqlalchemy import asc
 from sqlalchemy.orm import aliased
 from functools import reduce
 
-from app import db, app
+from app import db
+from app import app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
-from app.models import CaseAssets
+from app.models import CaseAssets, NoteRevisions
 from app.models import CaseClassification
 from app.models import alert_assets_association
 from app.models import CaseStatus
@@ -48,7 +51,6 @@ from app.models import Client
 from app.models import DataStoreFile
 from app.models import DataStorePath
 from app.models import IocAssetLink
-from app.models import IocLink
 from app.models import Notes
 from app.models import NotesGroup
 from app.models import NotesGroupLink
@@ -60,6 +62,7 @@ from app.models.authorization import OrganisationCaseAccess
 from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
+from app.models.models import Ioc
 from app.models.cases import CaseProtagonist
 from app.models.cases import CaseTags
 from app.models.cases import CaseState
@@ -317,7 +320,7 @@ def delete_case(case_id):
     delete_case_states(caseid=case_id)
     UserActivity.query.filter(UserActivity.case_id == case_id).delete()
     CaseReceivedFile.query.filter(CaseReceivedFile.case_id == case_id).delete()
-    IocLink.query.filter(IocLink.case_id == case_id).delete()
+    Ioc.query.filter(Ioc.case_id == case_id).delete()
 
     CaseTags.query.filter(CaseTags.case_id == case_id).delete()
     CaseProtagonist.query.filter(CaseProtagonist.case_id == case_id).delete()
@@ -369,6 +372,13 @@ def delete_case(case_id):
     NotesGroupLink.query.filter(NotesGroupLink.case_id == case_id).delete()
     NotesGroup.query.filter(NotesGroup.group_case_id == case_id).delete()
 
+    NoteRevisions.query.filter(
+        and_(
+            Notes.note_case_id == case_id,
+            NoteRevisions.note_id == Notes.note_id
+        )
+    ).delete()
+
     Notes.query.filter(Notes.note_case_id == case_id).delete()
     NoteDirectory.query.filter(NoteDirectory.case_id == case_id).delete()
 
@@ -394,6 +404,8 @@ def delete_case(case_id):
     return True
 
 
+# TODO is it really necessary to have both case_name and search_value
+#      as of now, it seems case_name does a case.name.ilike, whereas search_value does a case.name.like
 def build_filter_case_query(current_user_id,
                             start_open_date: str = None,
                             end_open_date: str = None,
@@ -411,7 +423,8 @@ def build_filter_case_query(current_user_id,
                             case_open_since: int = None,
                             search_value=None,
                             sort_by=None,
-                            sort_dir='asc'
+                            sort_dir='asc',
+                            is_open: bool=None
                             ):
     """
     Get a list of cases from the database, filtered by the given parameters
@@ -457,6 +470,13 @@ def build_filter_case_query(current_user_id,
         result = date.today() - timedelta(case_open_since)
         conditions.append(Cases.open_date == result)
 
+    if is_open is not None:
+
+        if is_open:
+            conditions.append(Cases.close_date.is_(None))
+        else:
+            conditions.append(Cases.close_date.is_not(None))
+
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
     conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
@@ -466,7 +486,7 @@ def build_filter_case_query(current_user_id,
         return query.join(Tags, Tags.tag_title.ilike(f'%{case_tags}%')).filter(CaseTags.case_id == Cases.case_id)
 
     if sort_by is not None:
-        order_func = desc if sort_dir == "desc" else asc
+        order_func = desc if sort_dir == 'desc' else asc
 
         if sort_by == 'owner':
             query = query.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
@@ -503,20 +523,22 @@ def get_filtered_cases(current_user_id,
                        page: int = None,
                        search_value=None,
                        sort_by=None,
-                       sort_dir='asc'
+                       sort_dir='asc',
+                       is_open: bool = None
                        ):
     data = build_filter_case_query(case_classification_id=case_classification_id, case_customer_id=case_customer_id, case_description=case_description,
                                    case_ids=case_ids, case_name=case_name, case_opening_user_id=case_opening_user_id, case_owner_id=case_owner_id,
                                    case_severity_id=case_severity_id, case_soc_id=case_soc_id, case_open_since=case_open_since,
                                    case_state_id=case_state_id, current_user_id=current_user_id, end_open_date=end_open_date,
-                                   search_value=search_value, sort_by=sort_by, sort_dir=sort_dir, start_open_date=start_open_date)
+                                   search_value=search_value, sort_by=sort_by, sort_dir=sort_dir, start_open_date=start_open_date,
+                                   is_open=is_open)
 
     try:
 
         filtered_cases = data.paginate(page=page, per_page=per_page, error_out=False)
 
     except Exception as e:
-        app.logger.exception(f"Error getting cases: {str(e)}")
+        app.logger.exception(f'Error getting cases: {str(e)}')
         return None
 
     return filtered_cases

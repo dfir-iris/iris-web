@@ -1,0 +1,45 @@
+{
+  "name": "iris-web-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "watch": "vite build --mode development --watch",
+    "lint": "eslint ./src"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
+    "@types/jquery": "^3.5.30",
+    "eslint": "^9.9.1",
+    "eslint-plugin-svelte": "^2.43.0",
+    "globals": "^15.9.0",
+    "svelte": "^4.2.19",
+    "vite": "^5.3.4",
+    "vite-plugin-static-copy": "^1.0.6"
+  },
+  "dependencies": {
+    "ace-builds": "^1.4.9",
+    "bootstrap": "^4.0.0",
+    "bootstrap-slider": "^11.0.2",
+    "chart.js": "^2.7.2",
+    "dropzone": "^5.7.0",
+    "html2canvas": "^1.4.0",
+    "jquery": "^3.2.1",
+    "jquery-ui": "^1.12.1",
+    "jquery-ui-touch-punch": "^0.2.3",
+    "jquery-validation": "^1.19.3",
+    "jquery.scrollbar": "^0.2.10",
+    "jqvmap": "^1.5.1",
+    "moment": "^2.22.2",
+    "showdown": "^1.9.0",
+    "socket.io": "^4.3.2",
+    "sortablejs": "^1.7.0",
+    "vis": "^4.21.0-EOL",
+    "webfontloader": "^1.6.16",
+    "xss": "^1.0.15"
+  }
+}

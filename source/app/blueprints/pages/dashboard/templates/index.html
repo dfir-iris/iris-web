@@ -1,0 +1,399 @@
+
+{% extends "layouts/default.html" %}
+
+{% block title %} Dashboard {% endblock title %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="/static/assets/css/suggestags.css">
+<link href="/static/assets/css/dataTables.contextualActions.min.css" rel="stylesheet">
+<link href="/static/assets/css/dataTables.select.min.css" rel="stylesheet">
+{% endblock stylesheets %}
+
+{% block content %}
+
+    <div class="panel-header bg-primary-gradient mt--4">
+      <div class="page-inner py-5">
+        <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row ">
+          <div>
+            <h2 class="text-white pb-2 fw-bold">Dashboard</h2>
+          </div>
+          <div class="ml-md-auto py-2 py-md-0">
+            <a href="javascript:void(0);" onclick="load_add_case();" class="btn btn-white btn-sm btn-border btn-round mr-2">
+              <span class="btn-label">
+                <i class="fa fa-plus"></i>
+              </span>
+              Create new case
+            </a>
+          </div>
+        </div>
+          <div class="chart-container mt--2 mb--2">
+            <canvas id="htmlLegendsChart" style="display: block; width: auto; height: 100px;" width="auto" height="100px" class="chartjs-render-monitor"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="page-inner mt--5">
+      <div class="row row-card-no-pd">
+          <div class="col-sm-6 col-md-4">
+            <div class="card card-stats card-round">
+                <div class="card-body ">
+                    <div class="row">
+                        <div class="col-5">
+                            <div class="icon-big text-center">
+                                <i class="flaticon-file-1 text-success"></i>
+                            </div>
+                        </div>
+                        <div class="col-7 col-stats">
+                            <div class="numbers">
+                                <p class="card-category">Cases (open / all)</p>
+                                <h4 class="card-title">{{ data.cases_open_count }} / {{ data.cases_count }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4">
+            <div class="card card-stats card-round">
+                <div class="card-body ">
+                    <div class="row">
+                        <div class="col-5">
+                            <div class="icon-big text-center">
+                                <i class="flaticon-suitcase text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="col-7 col-stats">
+                            <div class="numbers">
+                                <p class="card-category">Attributed open cases</p>
+                                <h4 class="card-title">{{ data.user_open_count }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-md-4">
+            <div class="card card-stats card-round">
+                <div class="card-body ">
+                    <div class="row">
+                        <div class="col-5">
+                            <div class="icon-big text-center">
+                                <i id='icon_user_task' class=""></i>
+                            </div>
+                        </div>
+                        <div class="col-7 col-stats">
+                            <div class="numbers">
+                                <p class="card-category">Attributed open tasks</p>
+                                <h4 class="card-title" id="user_attr_count"></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div>
+    <div class="row" id="rowPendingCasesReview" style="display: none;">
+      <div class="col-md-12">
+            <section class="card">
+                <div class="card-header">
+                  <div class="card-title">Attributed cases review
+                    <div class="text-faded float-right">
+                      <small id="ureviews_last_updated"></small>
+                      <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_ureviews_list();">Refresh
+                        </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" id="ureviews_table_wrapper">
+                      <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="ureview_table" >
+                        <thead>
+                          <tr>
+                              <th>Case name</th>
+                              <th>Review Status</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>Case name</th>
+                              <th>Review Status</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+            {{ form.hidden_tag() }}
+            <section class="card">
+                <div class="card-header">
+                  <div class="card-title">Attributed open tasks
+                    <div class="text-faded float-right">
+                      <small id="utasks_last_updated"></small>
+                      <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_utasks_list();">Refresh
+                        </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" id="utasks_table_wrapper">
+                      <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="utasks_table" >
+                        <thead>
+                          <tr>
+                              <th>Title</th>
+                              <th>Description</th>
+                              <th>Status</th>
+                              <th>Case</th>
+                              <th>Last update</th>
+                              <th>Tags</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>Title</th>
+                              <th>Description</th>
+                              <th>Status</th>
+                              <th>Case</th>
+                              <th>Last update</th>
+                              <th>Tags</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <section class="card">
+                <div class="card-header">
+                  <div class="card-title">Attributed open cases
+                    <div class="text-faded float-right">
+                      <small id="ucases_last_updated"></small>
+                        <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_ucases_list(true);">Show closed cases
+                        </button>
+                        <button type="button" class="btn btn-xs btn-dark ml-2"
+                          onclick="update_ucases_list();">Refresh
+                        </button>
+                    </div>
+                  </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" id="ucases_table_wrapper">
+                      <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="ucases_table" >
+                        <thead>
+                          <tr>
+                              <th>Title</th>
+                              <th>Description</th>
+                              <th>Client</th>
+                              <th>Opening date</th>
+                              <th>Tags</th>
+                          </tr>
+                        </thead>
+                        <tfoot>
+                          <tr>
+                              <th>Title</th>
+                              <th>Description</th>
+                              <th>Client</th>
+                              <th>Opening date</th>
+                              <th>Tags</th>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+      <div class="row">
+          <div class="col-md-12">
+
+				<section class="card">
+                    <div class="card-header">
+                      <div class="card-title">Global tasks
+                        <div class="text-faded float-right">
+                          <small id="tasks_last_updated"></small>
+                            <button type="button" class="btn btn-xs btn-dark ml-2"
+                              onclick="add_gtask();">
+                              Add global task
+                            </button>
+                            <button type="button" class="btn btn-xs btn-dark ml-2"
+                              onclick="update_gtasks_list();">Refresh
+                            </button>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" id="gtasks_table_wrapper">
+                          <table class="table display table-striped table-hover" width="100%" cellspacing="0" id="gtasks_table" >
+                            <thead>
+                              <tr>
+                                  <th>Title</th>
+                                  <th>Description</th>
+                                  <th>Status</th>
+                                  <th>Assigned to</th>
+                                  <th>Last update</th>
+                                  <th>Tags</th>
+                              </tr>
+                            </thead>
+                            <tfoot>
+                              <tr>
+                                  <th>Title</th>
+                                  <th>Description</th>
+                                  <th>Status</th>
+                                  <th>Assigned to</th>
+                                  <th>Last update</th>
+                                  <th>Tags</th>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                    </div>
+				</section>
+			</div>
+        </div>
+    </div>
+
+    <div class="modal " tabindex="-1" role="dialog" id="modal_add_gtask" data-backdrop="true">
+        <div class="modal-xl modal-dialog" role="document">
+            <div class="modal-content" id="modal_add_gtask_content">
+
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+{% endblock content %}
+
+{% block javascripts %}
+    <script src="/static/assets/js/plugin/tagsinput/suggesttag.js"></script>
+    <script src="/static/assets/js/plugin/select/select2.js"></script>
+
+    <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.buttons.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.contextualActions.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/dataTables.select.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/buttons.html5.min.js"></script>
+    <script src="/static/assets/js/plugin/datatables/buttons.print.min.js"></script>
+    <script src="/static/assets/js/iris/dashboard.js"></script>
+    <script src="/static/assets/js/core/charts.js"></script>
+    <script src="/static/assets/js/core/Chart.PieceLabel.min.js"></script>
+
+  <script>
+
+		htmlLegendsChart = document.getElementById('htmlLegendsChart').getContext('2d');
+
+        $.ajax({
+            url: '/dashboard/case_charts' + case_param(),
+            type: "GET",
+            dataType: "JSON",
+            success: function (data) {
+                jsdata = data;
+                if (jsdata.status == "success") {
+                    // Chart with HTML Legends
+                    var gradientStroke = htmlLegendsChart.createLinearGradient(500, 0, 100, 0);
+                    gradientStroke.addColorStop(0, '#177dff');
+                    gradientStroke.addColorStop(1, '#80b6f4');
+
+                    var gradientFill = htmlLegendsChart.createLinearGradient(500, 0, 100, 0);
+                    gradientFill.addColorStop(0, "rgba(23, 125, 255, 0.7)");
+                    gradientFill.addColorStop(1, "rgba(128, 182, 244, 0.3)");
+
+
+                    var myHtmlLegendsChart = new Chart(htmlLegendsChart, {
+                        type: 'line',
+                        data: {
+                            labels: jsdata.data[0],
+                            datasets: [  {
+                                label: "Open case",
+                                borderColor: gradientStroke,
+                                pointBackgroundColor: gradientStroke,
+                                pointRadius: 0,
+                                backgroundColor: gradientFill,
+                                legendColor: '#fff',
+                                fill: true,
+                                borderWidth: 1,
+                                data: jsdata.data[1]
+                            }]
+                        },
+                        options : {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            legend: {
+                                display: false
+                            },
+                            tooltips: {
+                                bodySpacing: 4,
+                                mode:"nearest",
+                                intersect: 0,
+                                position:"nearest",
+                                xPadding:10,
+                                yPadding:10,
+                                caretPadding:10
+                            },
+                            layout:{
+                                padding:{left:15,right:15,top:15,bottom:15}
+                            },
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        display: false
+                                    },
+                                    gridLines: {
+                                        drawTicks: false,
+                                        display: false
+                                    }
+                                }],
+                                xAxes: [{
+                                    gridLines: {
+                                        zeroLineColor: "transparent",
+                                        display: false
+                                    },
+                                    ticks: {
+                                        padding: 20,
+                                        fontColor: "rgba(0,0,0,0.5)",
+                                        fontStyle: "500",
+                                        display: false
+                                    }
+                                }]
+                            },
+                            legendCallback: function(chart) {
+                                var text = [];
+                                text.push('<ul class="' + chart.id + '-legend html-legend">');
+                                for (var i = 0; i < chart.data.datasets.length; i++) {
+                                    text.push('<li><span style="background-color:' + chart.data.datasets[i].legendColor + '"></span>');
+                                    if (chart.data.datasets[i].label) {
+                                        text.push(chart.data.datasets[i].label);
+                                    }
+                                    text.push('</li>');
+                                }
+                                text.push('</ul>');
+                                return text.join('');
+                            }
+                        }
+                    });
+
+                    //var myLegendContainer = document.getElementById("myChartLegend");
+
+                    // generate HTML legend
+                    //myLegendContainer.innerHTML = myHtmlLegendsChart.generateLegend();
+                }
+            },
+            error: function (error) {
+                notify_error(error);
+            }
+        });
+
+
+
+  </script>
+{% endblock javascripts %}

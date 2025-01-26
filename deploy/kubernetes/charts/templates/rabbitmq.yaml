@@ -13,13 +13,18 @@ spec:
       labels:
         app: {{ .Values.rabbitmq.app }}
     spec:
+      securityContext:
+        {{- toYaml .Values.rabbitmq.podSecurityContext | nindent 8 }}
       containers:
-      - image: "{{ .Values.rabbitmq.image}}:{{ .Values.rabbitmq.tag}}"
-        imagePullPolicy: {{ .Values.rabbitmq.imagePullPolicy}}
-        name:  {{ .Values.rabbitmq.name }}
-        ports:
-        - containerPort: 5672
-        
+        - image: "{{ .Values.rabbitmq.image}}:{{ .Values.rabbitmq.tag}}"
+          securityContext:
+            {{- toYaml .Values.rabbitmq.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.rabbitmq.resources | nindent 12 }}
+          imagePullPolicy: {{ .Values.rabbitmq.imagePullPolicy}}
+          name:  {{ .Values.rabbitmq.name }}
+          ports:
+          - containerPort: 5672
 ---
 apiVersion: v1
 kind: Service

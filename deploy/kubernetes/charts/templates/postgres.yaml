@@ -48,8 +48,14 @@ spec:
       labels:
         app: {{ .Values.postgres.app }}
     spec:
+      securityContext:
+        {{- toYaml .Values.postgres.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Values.postgres.name }}
+          securityContext:
+            {{- toYaml .Values.postgres.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
           image: "{{ .Values.postgres.image}}:{{ .Values.postgres.tag }}"
           imagePullPolicy: "{{ .Values.postgres.imagePullPolicy }}"
 

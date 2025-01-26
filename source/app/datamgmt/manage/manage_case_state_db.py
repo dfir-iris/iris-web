@@ -53,8 +53,7 @@ def get_case_state_by_name(cur_name: str) -> CaseState:
     Returns:
         CaseState: Case state
     """
-    case_state = CaseState.query.filter_by(state_name=cur_name).first()
-    return case_state
+    return CaseState.query.filter_by(state_name=cur_name).first()
 
 
 def get_cases_using_state(cur_id: int) -> List[dict]:
