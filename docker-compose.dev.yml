@@ -76,16 +76,16 @@ services:
     container_name: iris_sveltekit_frontend
     working_dir: /app
     environment:
-      - IRIS_SVELTEKIT_FRONTEND_DIR=${IRIS_SVELTEKIT_FRONTEND_DIR:-../frontend}
-      - PUBLIC_EXTERNAL_API_URL=https://127.0.0.1
-      - PUBLIC_INTERNAL_API_URL=http://app:8000
+      - IRIS_SVELTEKIT_FRONTEND_DIR=${IRIS_SVELTEKIT_FRONTEND_DIR:-../iris-frontend}
+      - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-https://127.0.0.1}
+      - PUBLIC_INTERNAL_API_URL=http://${IRIS_UPSTREAM_SERVER}:${IRIS_UPSTREAM_PORT}
       - PUBLIC_USE_MOCK_API_DATA=false
       - ORIGIN=https://127.0.0.1
       - PROTOCOL_HEADER=x-forwarded-proto
       - HOST_HEADER=x-forwarded-host
       - NODE_ENV=development
     volumes:
-      - ${IRIS_SVELTEKIT_FRONTEND_DIR}:/app # Map the frontend directory dynamically
+      - ${IRIS_SVELTEKIT_FRONTEND_DIR:-../iris-frontend}:/app # Map the frontend directory dynamically
       - /app/node_modules # Ensure `node_modules` is preserved inside the container
     ports:
       - "5173:5173"
