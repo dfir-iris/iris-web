@@ -234,4 +234,8 @@ class TestsRestCases(TestCase):
         response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_tags': 'tag1,tag2'}).json()
         self.assertEqual('tag1,tag2', response['case_tags'])
 
-    def test_update_case_should_allow_to_update_outcome(self):
+    def test_update_case_should_return_invalid_integer_on_case_severity_update(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'severity_id': 'invalid_integer'})
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(['Not a valid integer.'], response.json()['data']['severity_id'])
