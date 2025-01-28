@@ -419,7 +419,7 @@ def case_comment_note_add(cur_id, caseid):
         call_modules_hook('on_postload_note_commented', data=hook_data, caseid=caseid)
 
         track_activity("note \"{}\" commented".format(note.note_title), caseid=caseid)
-        return response_success("Event commented", data=comment_schema.dump(comment))
+        return response_success("Note commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages())

@@ -284,7 +284,7 @@ def case_comment_ioc_add(cur_id, caseid):
         call_modules_hook('on_postload_ioc_commented', data=hook_data, caseid=ioc.case_id)
 
         track_activity(f'ioc "{ioc.ioc_value}" commented', caseid=ioc.case_id)
-        return response_success('Event commented', data=comment_schema.dump(comment))
+        return response_success('IOC commented', data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg='Data error', data=e.normalized_messages())

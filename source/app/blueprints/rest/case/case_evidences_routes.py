@@ -206,7 +206,7 @@ def case_comment_evidence_add(cur_id, caseid):
         call_modules_hook('on_postload_evidence_commented', data=hook_data, caseid=caseid)
 
         track_activity(f"evidence \"{evidence.filename}\" commented", caseid=caseid)
-        return response_success("Event commented", data=comment_schema.dump(comment))
+        return response_success("Evidence commented", data=comment_schema.dump(comment))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.normalized_messages())
