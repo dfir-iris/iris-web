@@ -234,3 +234,4 @@ class TestsRestCases(TestCase):
         response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_tags': 'tag1,tag2'}).json()
         self.assertEqual('tag1,tag2', response['case_tags'])
 
+    def test_update_case_should_allow_to_update_outcome(self):

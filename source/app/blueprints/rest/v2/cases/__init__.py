@@ -158,7 +158,7 @@ def rest_v2_cases_update(identifier):
         case, _ = cases_update(identifier, request.get_json())
         return response_api_success(CaseSchemaForAPIV2().dump(case))
     except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
+        return response_api_error(e.get_message(), e.get_data())
 
 
 @cases_blueprint.delete('/<int:identifier>')
@@ -175,4 +175,4 @@ def case_routes_delete(identifier):
         cases_delete(identifier)
         return response_api_deleted()
     except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
+        return response_api_error(e.get_message(), e.get_data())

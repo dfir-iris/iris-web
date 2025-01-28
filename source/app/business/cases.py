@@ -214,15 +214,18 @@ def cases_update(case_identifier, request_data):
         add_obj_history_entry(case_i, 'case info updated')
         track_activity(f'case updated "{case.name}"', caseid=case_identifier)
 
-        return case, 'updated'
+        return case, 'Updated'
 
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
 
+    except BusinessProcessingError as e:
+        raise e
+
     except Exception as e:
         log.error(e.__str__())
         log.error(traceback.format_exc())
-        raise BusinessProcessingError('Error updating case - check server logs')
+        raise BusinessProcessingError('Data error', str(e))
 
 
 def cases_export_to_json(case_id):
