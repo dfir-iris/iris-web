@@ -125,15 +125,6 @@ jobs:
           docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
-      - name: Build dockers
-        run: |
-          # TODO using the environment file from tests to build here. 
-          #      I am a bit uneasy with this choice.
-          #      For now this works, but if we come to have different .env files for different tests, it won't anymore.
-          #      Maybe the .env should be split to differentiate the variables used during the build from the variables used at runtime, 
-          #      or maybe the docker building phase should also be part of the tests 
-          #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
-          cp tests/data/basic.env .env
       - name: Run tests
         working-directory: tests
         run: |
