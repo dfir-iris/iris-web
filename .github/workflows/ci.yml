@@ -45,6 +45,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: docker/db
+          tags: iriswebapp_db:develop
           outputs: type=docker,dest=${{ runner.temp }}/iriswebapp_db.tar
           cache-from: type=gha
           cache-to: type=gha,mode=max
