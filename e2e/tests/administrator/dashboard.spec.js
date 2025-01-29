@@ -12,3 +12,10 @@ test('create case with empty name should present error', async ({ page }) => {
     // FIXME: Locator should be: page.getByRole('alert', { name: 'Invalid data type' });
     await expect(page.getByText('Invalid data type')).toBeVisible();
 });
+
+test('logout should go back to login page', async ({ page }) => {
+    await page.getByRole('link', { name: 'administrator' }).click();
+    await page.getByRole('link', { name: 'Logout' }).click();
+
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+})
