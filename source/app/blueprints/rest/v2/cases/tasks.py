@@ -75,7 +75,10 @@ def case_get_tasks(case_identifier):
 
     result = {
         'total': tasks.total,
-        'data': tasks.items
+        'data': tasks.items,
+        'last_page': tasks.pages,
+        'current_page': tasks.page,
+        'next_page': tasks.next_num if tasks.has_next else None
     }
 
     return response_api_success(result)
