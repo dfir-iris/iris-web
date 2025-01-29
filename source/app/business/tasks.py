@@ -18,6 +18,7 @@
 
 from datetime import datetime
 
+from flask_sqlalchemy.pagination import Pagination
 from flask_login import current_user
 
 from app import db
@@ -25,10 +26,12 @@ from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import get_task
+from app.datamgmt.case.case_tasks_db import get_filtered_tasks
 from app.datamgmt.states import update_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import CaseTasks
+from app.models.pagination_parameters import PaginationParameters
 from app.schema.marshables import CaseTaskSchema
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
@@ -82,6 +85,10 @@ def tasks_get(identifier) -> CaseTasks:
     if not task:
         raise ObjectNotFoundError()
     return task
+
+
+def tasks_filter(case_identifier, pagination_parameters: PaginationParameters) -> Pagination:
+    return get_filtered_tasks(case_identifier, pagination_parameters)
 
 
 def tasks_update(task: CaseTasks, request_json):

@@ -34,8 +34,7 @@ from app.business.tasks import tasks_create
 from app.business.tasks import tasks_get
 from app.business.tasks import tasks_update
 from app.business.tasks import tasks_delete
-# TODO should rather go to the business layer here, rather than directly down into the persistence layer
-from app.datamgmt.case.case_tasks_db import get_filtered_tasks
+from app.business.tasks import tasks_filter
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 
@@ -72,8 +71,7 @@ def case_get_tasks(case_identifier):
 
     pagination_parameters = parse_pagination_parameters(request)
 
-    # TODO should call method from the business layer here
-    tasks = get_filtered_tasks(case_identifier, pagination_parameters)
+    tasks = tasks_filter(case_identifier, pagination_parameters)
 
     result = {
         'total': tasks.total,
