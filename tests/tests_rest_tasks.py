@@ -181,3 +181,13 @@ class TestsRestTasks(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', { 'page': 2, 'per_page': 2 }).json()
         self.assertEqual(2, response['current_page'])
+
+    def test_get_tasks_should_return_correct_task_uuid(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.get(f'/api/v2/tasks/{identifier}').json()
+        expected_uuid = response['task_uuid']
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
+        self.assertEqual(expected_uuid, response['data'][0]['task_uuid'])

@@ -73,9 +73,10 @@ def case_get_tasks(case_identifier):
 
     tasks = tasks_filter(case_identifier, pagination_parameters)
 
+    task_schema = CaseTaskSchema()
     result = {
         'total': tasks.total,
-        'data': tasks.items,
+        'data': task_schema.dump(tasks.items, many=True),
         'last_page': tasks.pages,
         'current_page': tasks.page,
         'next_page': tasks.next_num if tasks.has_next else None
