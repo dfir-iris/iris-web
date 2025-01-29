@@ -80,12 +80,36 @@ jobs:
           name: iriswebapp_nginx
           path: ${{ runner.temp }}/iriswebapp_nginx.tar
 
+  build-docker-app:
+    name: Build docker app
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/webApp/Dockerfile
+          tags: iriswebapp_app:develop
+          outputs: type=docker,dest=${{ runner.temp }}/iriswebapp_app.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iriswebapp_app
+          path: ${{ runner.temp }}/iriswebapp_app.tar
+
   tests:
     name: API tests
     runs-on: ubuntu-22.04
     needs:
       - build-docker-db
       - build-docker-nginx
+      - build-docker-app
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -97,6 +121,7 @@ jobs:
         run: |
           docker load --input ${{ runner.temp }}/iriswebapp_db.tar
           docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_app.tar
           docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
@@ -109,7 +134,6 @@ jobs:
           #      or maybe the docker building phase should also be part of the tests 
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
-          docker compose --file docker-compose.dev.yml build
           docker image ls -a
       - uses: actions/setup-node@v4
         with:
