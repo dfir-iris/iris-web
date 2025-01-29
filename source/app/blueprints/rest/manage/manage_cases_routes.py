@@ -55,6 +55,7 @@ from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
+from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.business.cases import cases_delete
 from app.business.cases import cases_update
 from app.business.cases import cases_create
@@ -81,11 +82,9 @@ def get_case_api(cur_id):
 @ac_api_requires()
 def manage_case_filter() -> Response:
 
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    pagination_parameters = parse_pagination_parameters(request)
+
     case_ids_str = request.args.get('case_ids', None, type=str)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
 
     if case_ids_str:
         try:
@@ -125,11 +124,11 @@ def manage_case_filter() -> Response:
         start_open_date=start_open_date,
         end_open_date=end_open_date,
         search_value=search_value,
-        page=page,
-        per_page=per_page,
         current_user_id=current_user.id,
-        sort_by=order_by,
-        sort_dir=sort_dir
+        page=pagination_parameters.get_page(),
+        per_page=pagination_parameters.get_per_page(),
+        sort_by=pagination_parameters.get_order_by(),
+        sort_dir=pagination_parameters.get_direction()
     )
     if filtered_cases is None:
         return response_error('Filtering error')
