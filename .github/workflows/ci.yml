@@ -122,7 +122,6 @@ jobs:
           docker load --input ${{ runner.temp }}/iriswebapp_db.tar
           docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
           docker load --input ${{ runner.temp }}/iriswebapp_app.tar
-          docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
       - name: Create .env file
@@ -164,7 +163,6 @@ jobs:
           docker load --input ${{ runner.temp }}/iriswebapp_db.tar
           docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
           docker load --input ${{ runner.temp }}/iriswebapp_app.tar
-          docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
       - name: Create .env file
@@ -200,7 +198,6 @@ jobs:
           docker load --input ${{ runner.temp }}/iriswebapp_db.tar
           docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
           docker load --input ${{ runner.temp }}/iriswebapp_app.tar
-          docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
       - name: Create .env file
