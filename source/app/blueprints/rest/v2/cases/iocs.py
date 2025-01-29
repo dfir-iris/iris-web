@@ -61,17 +61,14 @@ def get_case_iocs(case_identifier):
     ioc_tags = request.args.get('ioc_tags', None, type=str)
 
     filtered_iocs = get_filtered_iocs(
+        pagination_parameters,
         caseid=case_identifier,
         ioc_type_id=ioc_type_id,
         ioc_type=ioc_type,
         ioc_tlp_id=ioc_tlp_id,
         ioc_value=ioc_value,
         ioc_description=ioc_description,
-        ioc_tags=ioc_tags,
-        page=pagination_parameters.get_page(),
-        per_page=pagination_parameters.get_per_page(),
-        sort_by=pagination_parameters.get_order_by(),
-        sort_dir=pagination_parameters.get_direction()
+        ioc_tags=ioc_tags
     )
 
     if filtered_iocs is None:

@@ -35,6 +35,7 @@ from app.models.models import Tlp
 from app.models.authorization import User
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import CaseAccessLevel
+from app.models.pagination_parameters import PaginationParameters
 
 
 def get_iocs(case_identifier) -> list[Ioc]:
@@ -343,24 +344,22 @@ def _build_filter_ioc_query(
 
 
 def get_filtered_iocs(
+        pagination_parameters: PaginationParameters,
         caseid: int = None,
         ioc_type_id: int = None,
         ioc_type: str = None,
         ioc_tlp_id: int = None,
         ioc_value: str = None,
         ioc_description: str = None,
-        ioc_tags: str = None,
-        per_page: int = None,
-        page: int = None,
-        sort_by=None,
-        sort_dir='asc'
+        ioc_tags: str = None
         ):
 
     query = _build_filter_ioc_query(caseid=caseid, ioc_type_id=ioc_type_id, ioc_type=ioc_type, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
-                                   ioc_description=ioc_description, ioc_tags=ioc_tags, sort_by=sort_by, sort_dir=sort_dir)
+                                   ioc_description=ioc_description, ioc_tags=ioc_tags,
+                                    sort_by=pagination_parameters.get_order_by(), sort_dir=pagination_parameters.get_direction())
 
     try:
-        filtered_iocs = query.paginate(page=page, per_page=per_page, error_out=False)
+        filtered_iocs = query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
 
     except Exception as e:
         app.logger.exception(f"Error getting cases: {str(e)}")
