@@ -103,6 +103,44 @@ jobs:
           name: iriswebapp_app
           path: ${{ runner.temp }}/iriswebapp_app.tar
 
+  build-graphql-documentation:
+    name: Generate graphQL documentation
+    runs-on: ubuntu-22.04
+    needs:
+      - build-docker-db
+      - build-docker-nginx
+      - build-docker-app
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: iriswebapp_*
+          path: ${{ runner.temp }}
+          merge-multiple: true
+      - name: Load docker images
+        run: |
+          docker load --input ${{ runner.temp }}/iriswebapp_db.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_app.tar
+          docker image ls -a
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Start development server
+        run: |
+          # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
+          docker compose --file docker-compose.dev.yml --env-file tests/data/basic.env up --detach
+      - name: Generate GraphQL documentation
+        run: |
+          npx spectaql@^3.0.2 source/spectaql/config.yml
+      - name: Stop development server
+        run: |
+          docker compose down
+      - uses: actions/upload-artifact@v4
+        with:
+            name: GraphQL DFIR-IRIS documentation
+            path: public
+            if-no-files-found: error
+
   test-api:
     name: Test API
     runs-on: ubuntu-22.04
@@ -135,8 +173,8 @@ jobs:
           PYTHONUNBUFFERED=true python -m unittest --verbose
           docker compose down
 
-  tests:
-    name: API tests
+  test-e2e:
+    name: End to end tests
     runs-on: ubuntu-22.04
     needs:
       - build-docker-db
@@ -166,7 +204,6 @@ jobs:
           #      or maybe the docker building phase should also be part of the tests 
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
-          docker image ls -a
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -191,9 +228,6 @@ jobs:
       - name: Run end to end tests
         working-directory: e2e
         run: npx playwright test
-      - name: Generate GraphQL documentation
-        run: |
-          npx spectaql@^3.0.2 source/spectaql/config.yml
       - name: Stop development server
         run: |
           docker compose down
@@ -202,8 +236,4 @@ jobs:
         with:
           name: playwright-report
           path: e2e/playwright-report/
-      - uses: actions/upload-artifact@v4
-        with:
-            name: GraphQL DFIR-IRIS documentation
-            path: public
-            if-no-files-found: error
+
