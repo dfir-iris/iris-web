@@ -55,19 +55,48 @@ jobs:
           name: iriswebapp_db
           path: ${{ runner.temp }}/iriswebapp_db.tar
 
+  build-docker-nginx:
+    name: Build docker nginx
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/nginx
+          tags: iriswebapp_nginx:develop
+          build-args: |
+            NGINX_CONF_GID=1234
+            NGINX_CONF_FILE=nginx.conf
+          outputs: type=docker,dest=${{ runner.temp }}/iriswebapp_nginx.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iriswebapp_nginx
+          path: ${{ runner.temp }}/iriswebapp_nginx.tar
+
   tests:
     name: API tests
     runs-on: ubuntu-22.04
-    needs: build-docker-db
+    needs:
+      - build-docker-db
+      - build-docker-nginx
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: iriswebapp_db
+          pattern: iriswebapp_*
           path: ${{ runner.temp }}
-      - name: Load image
+          merge-multiple: true
+      - name: Load docker images
         run: |
           docker load --input ${{ runner.temp }}/iriswebapp_db.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
           docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
@@ -81,6 +110,7 @@ jobs:
           #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
           cp tests/data/basic.env .env
           docker compose --file docker-compose.dev.yml build
+          docker image ls -a
       - uses: actions/setup-node@v4
         with:
           node-version: 20
