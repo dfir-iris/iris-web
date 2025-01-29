@@ -111,6 +111,8 @@ def manage_case_filter() -> Response:
         draw = 1
 
     filtered_cases = get_filtered_cases(
+        current_user.id,
+        pagination_parameters,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,
         case_name=case_name,
@@ -123,12 +125,7 @@ def manage_case_filter() -> Response:
         case_soc_id=case_soc_id,
         start_open_date=start_open_date,
         end_open_date=end_open_date,
-        search_value=search_value,
-        current_user_id=current_user.id,
-        page=pagination_parameters.get_page(),
-        per_page=pagination_parameters.get_per_page(),
-        sort_by=pagination_parameters.get_order_by(),
-        sort_dir=pagination_parameters.get_direction()
+        search_value=search_value
     )
     if filtered_cases is None:
         return response_error('Filtering error')

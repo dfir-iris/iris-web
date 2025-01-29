@@ -67,6 +67,7 @@ from app.models.models import Ioc
 from app.models.cases import CaseProtagonist
 from app.models.cases import CaseTags
 from app.models.cases import CaseState
+from app.models.pagination_parameters import PaginationParameters
 
 
 def list_cases_id():
@@ -507,6 +508,7 @@ def build_filter_case_query(current_user_id,
 
 
 def get_filtered_cases(current_user_id,
+                       pagination_parameters: PaginationParameters,
                        start_open_date: str = None,
                        end_open_date: str = None,
                        case_customer_id: int = None,
@@ -520,23 +522,19 @@ def get_filtered_cases(current_user_id,
                        case_state_id: int = None,
                        case_soc_id: str = None,
                        case_open_since: int = None,
-                       per_page: int = None,
-                       page: int = None,
                        search_value=None,
-                       sort_by=None,
-                       sort_dir='asc',
                        is_open: bool = None
                        ):
     data = build_filter_case_query(case_classification_id=case_classification_id, case_customer_id=case_customer_id, case_description=case_description,
                                    case_ids=case_ids, case_name=case_name, case_opening_user_id=case_opening_user_id, case_owner_id=case_owner_id,
                                    case_severity_id=case_severity_id, case_soc_id=case_soc_id, case_open_since=case_open_since,
                                    case_state_id=case_state_id, current_user_id=current_user_id, end_open_date=end_open_date,
-                                   search_value=search_value, sort_by=sort_by, sort_dir=sort_dir, start_open_date=start_open_date,
-                                   is_open=is_open)
+                                   search_value=search_value, start_open_date=start_open_date, is_open=is_open,
+                                   sort_by=pagination_parameters.get_order_by(), sort_dir=pagination_parameters.get_direction())
 
     try:
 
-        filtered_cases = data.paginate(page=page, per_page=per_page, error_out=False)
+        filtered_cases = data.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
 
     except Exception as e:
         app.logger.exception(f'Error getting cases: {str(e)}')

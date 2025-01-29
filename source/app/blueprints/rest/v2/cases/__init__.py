@@ -97,6 +97,8 @@ def get_cases() -> Response:
     is_open = request.args.get('is_open', None, type=parse_boolean)
 
     filtered_cases = get_filtered_cases(
+        current_user.id,
+        pagination_parameters,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,
         case_name=case_name,
@@ -110,11 +112,6 @@ def get_cases() -> Response:
         start_open_date=start_open_date,
         end_open_date=end_open_date,
         search_value='',
-        page=pagination_parameters.get_page(),
-        per_page=pagination_parameters.get_per_page(),
-        current_user_id=current_user.id,
-        sort_by=pagination_parameters.get_order_by(),
-        sort_dir=pagination_parameters.get_direction(),
         is_open=is_open
     )
     if filtered_cases is None:
