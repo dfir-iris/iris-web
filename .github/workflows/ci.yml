@@ -125,6 +125,10 @@ jobs:
           docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
+      - name: Create .env file
+        run: |
+          # TODO I don't think this should be necessary, since --env-file option is specified :(
+          cp tests/data/basic.env .env
       - name: Start development server
         run: |
           # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
@@ -163,6 +167,10 @@ jobs:
           docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
+      - name: Create .env file
+        run: |
+          # TODO I don't think this should be necessary, since --env-file option is specified :(
+          cp tests/data/basic.env .env
       - name: Run tests
         working-directory: tests
         run: |
@@ -195,7 +203,7 @@ jobs:
           docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
-      - name: Build dockers
+      - name: Create .env file
         run: |
           # TODO using the environment file from tests to build here. 
           #      I am a bit uneasy with this choice.
