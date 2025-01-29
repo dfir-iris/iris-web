@@ -18,11 +18,11 @@
 
 from datetime import datetime
 from flask_login import current_user
-from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.conversions import convert_sort_direction
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
@@ -52,8 +52,7 @@ def get_filtered_tasks(case_identifier, pagination_parameters: PaginationParamet
 
     sort_by = pagination_parameters.get_order_by()
     if sort_by is not None:
-        # TODO factor this line everywhere in the code
-        order_func = desc if pagination_parameters.get_direction() == 'desc' else asc
+        order_func = convert_sort_direction(pagination_parameters.get_direction())
 
         if hasattr(CaseTasks, sort_by):
             query = query.order_by(order_func(getattr(CaseTasks, sort_by)))

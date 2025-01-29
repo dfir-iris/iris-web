@@ -21,8 +21,6 @@ from datetime import timedelta
 from pathlib import Path
 
 from sqlalchemy import and_
-from sqlalchemy import desc
-from sqlalchemy import asc
 from sqlalchemy.orm import aliased
 from functools import reduce
 
@@ -31,6 +29,7 @@ from app import app
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
+from app.datamgmt.conversions import convert_sort_direction
 from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
 from app.models.models import CaseAssets
@@ -488,7 +487,7 @@ def build_filter_case_query(current_user_id,
         return query.join(Tags, Tags.tag_title.ilike(f'%{case_tags}%')).filter(CaseTags.case_id == Cases.case_id)
 
     if sort_by is not None:
-        order_func = desc if sort_dir == 'desc' else asc
+        order_func = convert_sort_direction(sort_dir)
 
         if sort_by == 'owner':
             query = query.join(User, Cases.owner_id == User.id).order_by(order_func(User.name))
