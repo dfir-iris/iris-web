@@ -33,10 +33,41 @@ jobs:
           args: check --output-format=github
           src: ./source
 
+  build-docker-db:
+    name: Build docker db
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/db
+          outputs: type=docker,dest=${{ runner.temp }}/iriswebapp_db.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iriswebapp_db
+          path: ${{ runner.temp }}/iriswebapp_db.tar
+
   tests:
     name: API tests
     runs-on: ubuntu-22.04
+    needs: build-docker-db
     steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: iriswebapp_db
+          path: ${{ runner.temp }}
+      - name: Load image
+        run: |
+          docker load --input ${{ runner.temp }}/iriswebapp_db.tar
+          docker image ls -a
       - name: Check out iris
         uses: actions/checkout@v4
       - name: Build dockers
