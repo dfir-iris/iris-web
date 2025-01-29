@@ -21,11 +21,18 @@ from flask import Blueprint
 from flask import request
 
 from app.blueprints.access_controls import ac_api_requires
-from app.blueprints.rest.endpoints import response_api_created, response_api_deleted, response_api_not_found
+from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.endpoints import response_api_deleted
+from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
-from app.business.errors import BusinessProcessingError, ObjectNotFoundError
-from app.business.iocs import iocs_create, iocs_get, iocs_delete, iocs_update
+from app.blueprints.rest.parsing import parse_pagination_parameters
+from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
+from app.business.iocs import iocs_create
+from app.business.iocs import iocs_get
+from app.business.iocs import iocs_delete
+from app.business.iocs import iocs_update
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
@@ -44,10 +51,7 @@ def get_case_iocs(case_identifier):
     if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=case_identifier)
 
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
+    pagination_parameters = parse_pagination_parameters(request)
 
     ioc_type_id = request.args.get('ioc_type_id', None, type=int)
     ioc_type = request.args.get('ioc_type', None, type=str)
@@ -64,10 +68,10 @@ def get_case_iocs(case_identifier):
         ioc_value=ioc_value,
         ioc_description=ioc_description,
         ioc_tags=ioc_tags,
-        page=page,
-        per_page=per_page,
-        sort_by=order_by,
-        sort_dir=sort_dir
+        page=pagination_parameters.get_page(),
+        per_page=pagination_parameters.get_per_page(),
+        sort_by=pagination_parameters.get_order_by(),
+        sort_dir=pagination_parameters.get_direction()
     )
 
     if filtered_iocs is None:
