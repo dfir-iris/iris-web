@@ -24,6 +24,7 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.access_controls import ac_api_requires
 from app.schema.marshables import CaseTaskSchema
@@ -69,7 +70,10 @@ def case_get_tasks(case_identifier):
     if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=case_identifier)
 
-    tasks = get_filtered_tasks(case_identifier)
+    pagination_parameters = parse_pagination_parameters(request.args)
+
+    # TODO should call method from the business layer here
+    tasks = get_filtered_tasks(case_identifier, pagination_parameters)
 
     result = {
         'total': tasks.total,

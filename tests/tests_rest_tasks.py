@@ -159,3 +159,14 @@ class TestsRestTasks(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
         self.assertEqual(1, response['total'])
+
+    def test_get_tasks_should_honour_per_page_pagination_parameter(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task1'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task2'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task3'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', { 'per_page': 2 }).json()
+        self.assertEqual(2, len(response['data']))

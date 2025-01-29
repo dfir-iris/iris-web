@@ -18,6 +18,7 @@
 
 from datetime import datetime
 from flask_login import current_user
+from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy import and_
 
@@ -32,20 +33,32 @@ from app.models.models import Comments
 from app.models.models import TaskComments
 from app.models.models import TaskStatus
 from app.models.authorization import User
+from app.models.pagination_parameters import PaginationParameters
 
 
 def get_tasks_status():
     return TaskStatus.query.all()
 
 
-def get_filtered_tasks(caseid, page=1, per_page=100):
-    return CaseTasks.query.filter(
-        CaseTasks.task_case_id == caseid
+def get_filtered_tasks(case_identifier, pagination_parameters: PaginationParameters):
+
+    query = CaseTasks.query.filter(
+        CaseTasks.task_case_id == case_identifier
     ).join(
         CaseTasks.status
     ).order_by(
         desc(TaskStatus.status_name)
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    )
+
+    sort_by = pagination_parameters.get_order_by()
+    if sort_by is not None:
+        # TODO factor this line everywhere in the code
+        order_func = desc if pagination_parameters.get_direction() == 'desc' else asc
+
+        if hasattr(CaseTasks, sort_by):
+            query = query.order_by(order_func(getattr(CaseTasks, sort_by)))
+
+    return query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
 
 
 def get_tasks_with_assignees(caseid):
