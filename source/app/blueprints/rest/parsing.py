@@ -31,7 +31,8 @@ def parse_boolean(parameter: str):
     raise ValueError(f'Expected true or false, got {parameter}')
 
 
-def parse_pagination_parameters(arguments) -> PaginationParameters:
+def parse_pagination_parameters(request) -> PaginationParameters:
+    arguments = request.args
     page = arguments.get('page', 1, type=int)
     per_page = arguments.get('per_page', 10, type=int)
     order_by = arguments.get('order_by', type=str)

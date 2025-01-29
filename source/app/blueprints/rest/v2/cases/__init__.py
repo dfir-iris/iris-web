@@ -28,6 +28,7 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.rest.v2.cases.assets import case_assets_blueprint
 from app.blueprints.rest.v2.cases.iocs import case_iocs_blueprint
 from app.blueprints.rest.v2.cases.tasks import case_tasks_blueprint
@@ -76,10 +77,7 @@ def get_cases() -> Response:
     Handles getting cases, with optional filtering & pagination
     """
 
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
+    pagination_parameters = parse_pagination_parameters(request)
 
     case_ids_str = request.args.get('case_ids', None, type=parse_comma_separated_identifiers)
 
@@ -112,11 +110,11 @@ def get_cases() -> Response:
         start_open_date=start_open_date,
         end_open_date=end_open_date,
         search_value='',
-        page=page,
-        per_page=per_page,
+        page=pagination_parameters.get_page(),
+        per_page=pagination_parameters.get_per_page(),
         current_user_id=current_user.id,
-        sort_by=order_by,
-        sort_dir=sort_dir,
+        sort_by=pagination_parameters.get_order_by(),
+        sort_dir=pagination_parameters.get_direction(),
         is_open=is_open
     )
     if filtered_cases is None:
