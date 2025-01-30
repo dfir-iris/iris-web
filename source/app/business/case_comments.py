@@ -18,6 +18,8 @@
 
 from datetime import datetime
 
+from flask_login import current_user
+
 from app import db
 from app.datamgmt.case.case_comments import get_case_comment
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -29,6 +31,10 @@ def case_comments_update(comment_text, comment_id, object_type, caseid):
     comment = get_case_comment(comment_id, caseid=caseid)
     if not comment:
         raise BusinessProcessingError('Invalid comment ID')
+
+    if hasattr(current_user, 'id') and current_user.id is not None:
+        if comment.comment_user_id != current_user.id:
+            raise BusinessProcessingError('Permission denied')
 
     comment.comment_text = comment_text
     comment.comment_update_date = datetime.utcnow()
