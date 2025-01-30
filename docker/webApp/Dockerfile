@@ -48,7 +48,7 @@ RUN pip3 install -r requirements.txt
 ###############
 # BUILD IMAGE #
 ###############
-FROM python:3.12 as iriswebapp
+FROM python:3.12 AS iriswebapp
 ENV PYTHONUNBUFFERED=1 DOCKERIZED=1
 
 COPY --from=compile-image /opt/venv /opt/venv
