@@ -33,6 +33,7 @@ from app.models.models import DataStorePath
 from app.models.models import Ioc
 from app.models.models import IocType
 from app.models.models import Tlp
+from app.schema.marshables import DSFileSchema
 
 
 def datastore_get_root(cid):
@@ -516,7 +517,7 @@ def datastore_filter_tree(filter_d, caseid):
     files_nodes = {}
 
     for dfile in dsf:
-        dfnode = dfile.__dict__
+        dfnode = DSFileSchema(exclude=["file_local_name"]).dump(dfile)
         dfnode.pop('_sa_instance_state')
         dfnode['type'] = "file"
         dnode_id = f"f-{dfile.file_id}"

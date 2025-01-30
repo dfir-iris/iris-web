@@ -322,7 +322,7 @@ function api_error(propagate_api_error) {
     }
 }
 
-function sendBefore(beforeSend_fn, settings) {
+function sendBefore(beforeSend_fn, settings, jqXHR) {
     if (beforeSend_fn !== undefined) {
         beforeSend_fn(jqXHR, settings);
     }
@@ -335,7 +335,7 @@ function get_request_data_api(uri, data, propagate_api_error, beforeSend_fn) {
         data: data,
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
-            sendBefore(beforeSend_fn, settings);
+            sendBefore(beforeSend_fn, settings, jqXHR);
         },
         error: function(jqXHR) {
             api_error(propagate_api_error);
@@ -350,7 +350,7 @@ function delete_request_api(uri, data, propagate_api_error, beforeSend_fn) {
         data: data,
         dataType: "json",
         beforeSend: function(jqXHR, settings) {
-             sendBefore(beforeSend_fn, settings);
+             sendBefore(beforeSend_fn, settings, jqXHR);
         },
         error: function(jqXHR) {
             api_error(propagate_api_error);
@@ -426,7 +426,7 @@ function post_request_data_api(uri, data, beforeSend_fn) {
         contentType: false,
         processData: false,
         beforeSend: function(jqXHR, settings) {
-             sendBefore(beforeSend_fn, settings);
+             sendBefore(beforeSend_fn, settings, jqXHR);
         },
         error: function(jqXHR) {
             api_error(true);
