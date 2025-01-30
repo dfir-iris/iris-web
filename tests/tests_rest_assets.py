@@ -20,6 +20,7 @@ from unittest import TestCase
 from iris import Iris
 
 _IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
+_CASE_ACCESS_LEVEL_FULL_ACCESS = 4
 
 
 class TestsRestAssets(TestCase):
@@ -100,7 +101,7 @@ class TestsRestAssets(TestCase):
         response = self._subject.get('/case/assets/state', {'cid': case_identifier}).json()
         self.assertEqual(state + 1, response['data']['object_state'])
 
-    def test_delele_asset_should_not_fail_when_it_is_linked_to_an_ioc(self):
+    def test_delete_asset_should_not_fail_when_it_is_linked_to_an_ioc(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
@@ -130,4 +131,32 @@ class TestsRestAssets(TestCase):
         self._subject.delete(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
         response = self._subject.create(f'/case/assets/{case_identifier}/comments/{comment_identifier}/edit', {'comment_text': 'new comment text'})
         # TODO should ideally rather be 404 here
+        self.assertEqual(400, response.status_code)
+
+    def test_user_should_not_change_comment_of_others(self):
+        user1 = self._subject.create_dummy_user()
+        user2 = self._subject.create_dummy_user()
+
+        # Create a case
+        case_identifier = self._subject.create_dummy_case()
+
+        # Give access to users
+        body = {
+            'cases_list': [case_identifier],
+            'access_level': _CASE_ACCESS_LEVEL_FULL_ACCESS
+        }
+        self._subject.create(f'/manage/users/{user2.get_identifier()}/cases-access/update', body)
+        self._subject.create(f'/manage/users/{user1.get_identifier()}/cases-access/update', body)
+
+        # Create a new asset
+        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        response = user1.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+
+        # Create a comment in the new asset
+        response = user1.create(f'/case/assets/{asset_identifier}/comments/add?cid={case_identifier}', {'comment_text': 'comment text'}).json()
+        comment_identifier = response['data']['comment_id']
+
+        # Try to update the comment from user 2
+        response = user2.create(f'/case/assets/{asset_identifier}/comments/{comment_identifier}/update?cid={case_identifier}', {'comment_text': 'updated comment'}).json()
         self.assertEqual(400, response.status_code)

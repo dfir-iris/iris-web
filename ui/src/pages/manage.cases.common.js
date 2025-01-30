@@ -199,7 +199,7 @@ function remove_case_access_from_user(user_id, case_id, on_finish) {
             data_sent['csrf_token'] = $('#csrf_token').val();
 
 
-            post_request_api(`/manage/users/${user_id}/case-access/delete`, JSON.stringify(data_sent))
+            post_request_api(`/manage/users/${user_id}/cases-access/delete`, JSON.stringify(data_sent))
             .done((data) => {
                 if(notify_auto_api(data)) {
 
