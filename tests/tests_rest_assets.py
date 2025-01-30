@@ -158,5 +158,5 @@ class TestsRestAssets(TestCase):
         comment_identifier = response['data']['comment_id']
 
         # Try to update the comment from user 2
-        response = user2.create(f'/case/assets/{asset_identifier}/comments/{comment_identifier}/update?cid={case_identifier}', {'comment_text': 'updated comment'}).json()
+        response = user2.create(f'/case/assets/{asset_identifier}/comments/{comment_identifier}/edit?cid={case_identifier}', {'comment_text': 'updated comment'})
         self.assertEqual(400, response.status_code)
