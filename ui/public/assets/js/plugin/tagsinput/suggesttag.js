@@ -280,9 +280,9 @@ var AmsifySuggestags;
 						return false;
 					}
 				});
-				return tag;
+				return sanitizeHTML(tag);
 			}
-			return value;
+			return sanitizeHTML(value);
 		},
 
 		getValue : function(tag) {
@@ -511,7 +511,7 @@ var AmsifySuggestags;
 					value = item;
 					tag   = item;
 				}
-				listHTML += '<li class="'+_self.classes.listItem.substring(1)+'" data-val="'+value+'">'+tag+'</li>';
+				listHTML += '<li class="'+_self.classes.listItem.substring(1)+'" data-val="'+sanitizeHTML(value)+'">'+sanitizeHTML(tag)+'</li>';
 			});
 			if(_self.settings.noSuggestionMsg) {
 				listHTML += '<li class="'+_self.classes.noSuggestion.substring(1)+'">'+_self.settings.noSuggestionMsg+'</li>';
@@ -539,7 +539,10 @@ var AmsifySuggestags;
 				value = value.replace(/\s+/g, '-');
 			}
 
-			var html = '<span class="'+this.classes.tagItem.substring(1)+'" data-val="'+value+'">'+this.getTag(value)+' '+this.setIcon()+'</span>';
+			var sanitizedValue = sanitizeHTML(value);
+  			var sanitizedDisplay = sanitizeHTML(this.getTag(value))
+
+			var html = '<span class="'+this.classes.tagItem.substring(1)+'" data-val="'+sanitizedValue+'">'+sanitizedDisplay+' '+this.setIcon()+'</span>';
 			$item    = $(html).insertBefore($(this.selectors.sTagsInput));
 			if(this.settings.defaultTagClass) {
 				$item.addClass(this.settings.defaultTagClass);

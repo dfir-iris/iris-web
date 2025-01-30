@@ -1436,7 +1436,8 @@ function set_suggest_tags(anchor_id) {
             delay: 100,
             type: 'GET',
             dataType: null
-        }
+        },
+        printValues: false
     });
 }
 
