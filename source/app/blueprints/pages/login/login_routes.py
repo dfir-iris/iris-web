@@ -186,19 +186,19 @@ if is_authentication_oidc():
         user = get_user(user_login, 'user')
 
         if not user:
-            log.warning(f"OIDC user {user_login} not found in database")
-            if app.config.get("AUTHENTICATION_CREATE_USER_IF_NOT_EXIST") is False:
-                log.warning(f"Authentication is set to not create user if not exists")
+            log.warning(f'OIDC user {user_login} not found in database')
+            if app.config.get('AUTHENTICATION_CREATE_USER_IF_NOT_EXIST') is False:
+                log.warning('Authentication is set to not create user if not exists')
                 track_activity(
-                    f"OIDC user {user_login} not found in database",
+                    f'OIDC user {user_login} not found in database',
                     ctx_less=True,
                     display_in_ui=False,
                 )
-                return response_error("User not found in IRIS", 404)
+                return response_error('User not found in IRIS', 404)
 
-            log.info(f"Creating OIDC user {user_login} in database")
+            log.info(f'Creating OIDC user {user_login} in database')
             track_activity(
-                f"Creating OIDC user {user_login} in database",
+                f'Creating OIDC user {user_login} in database',
                 ctx_less=True,
                 display_in_ui=False,
             )
