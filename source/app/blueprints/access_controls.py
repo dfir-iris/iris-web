@@ -251,6 +251,10 @@ def get_case_access_from_api(request_data, access_level):
     redir, caseid, has_access = _get_caseid_from_request_data(request_data, False)
     redir = False
 
+    if not hasattr(current_user, 'id'):
+        # Anonymous request, deny access
+        return False, 1, False
+
     eaccess_level = ac_fast_check_user_has_case_access(current_user.id, caseid, access_level)
     if eaccess_level is None and access_level:
         return redir, caseid, False
@@ -371,11 +375,12 @@ def ac_socket_requires(*access_level):
 
 
 def ac_api_return_access_denied(caseid: int = None):
+    user_id = current_user.id if hasattr(current_user, 'id') else 'Anonymous'
     error_uuid = uuid.uuid4()
-    log.warning(f"EID {error_uuid} - Access denied with case #{caseid} for user ID {current_user.id} "
+    log.warning(f"EID {error_uuid} - Access denied with case #{caseid} for user ID {user_id} "
                 f"accessing URI {request.full_path}")
     data = {
-        'user_id': current_user.id,
+        'user_id': user_id,
         'case_id': caseid,
         'error_uuid': error_uuid
     }
