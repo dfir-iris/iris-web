@@ -103,24 +103,6 @@ jobs:
           name: iriswebapp_app
           path: ${{ runner.temp }}/iriswebapp_app.tar
 
-  build-ui:
-    name: Build user interface
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Check out iris
-        uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: |
-            ui/package-lock.json
-      - name: Build ui to be mounted in development docker
-        working-directory: ui
-        run: |
-          npm ci
-          npm run build
-
   build-graphql-documentation:
     name: Generate graphQL documentation
     runs-on: ubuntu-22.04
@@ -224,7 +206,13 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: |
+            ui/package-lock.json
             e2e/package-lock.json
+      - name: Build ui to be mounted in development docker
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
       - name: Install e2e dependencies
         working-directory: e2e
         run: npm ci
