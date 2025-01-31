@@ -26,6 +26,7 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
@@ -74,17 +75,8 @@ def get_case_iocs(case_identifier):
     if filtered_iocs is None:
         return response_api_error('Filtering error')
 
-    iocs = IocSchemaForAPIV2().dump(filtered_iocs.items, many=True)
-
-    iocs = {
-        'total': filtered_iocs.total,
-        'data': iocs,
-        'last_page': filtered_iocs.pages,
-        'current_page': filtered_iocs.page,
-        'next_page': filtered_iocs.next_num if filtered_iocs.has_next else None,
-    }
-
-    return response_api_success(iocs)
+    iocs_schema = IocSchemaForAPIV2()
+    return response_api_paginated(iocs_schema, filtered_iocs)
 
 
 @case_iocs_blueprint.post('')

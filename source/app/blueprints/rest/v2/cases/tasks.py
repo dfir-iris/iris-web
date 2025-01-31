@@ -23,6 +23,7 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.access_controls import ac_api_return_access_denied
@@ -74,15 +75,7 @@ def case_get_tasks(case_identifier):
     tasks = tasks_filter(case_identifier, pagination_parameters)
 
     task_schema = CaseTaskSchema()
-    result = {
-        'total': tasks.total,
-        'data': task_schema.dump(tasks.items, many=True),
-        'last_page': tasks.pages,
-        'current_page': tasks.page,
-        'next_page': tasks.next_num if tasks.has_next else None
-    }
-
-    return response_api_success(result)
+    return response_api_paginated(task_schema, tasks)
 
 
 @case_tasks_blueprint.get('/<int:identifier>')

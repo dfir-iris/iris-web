@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from functools import wraps
+from flask_sqlalchemy.pagination import Pagination
 
 from app import app
 from app.blueprints.responses import response_error, response
@@ -27,6 +28,28 @@ logger = app.logger
 def response_api_success(data):
     return response(200, data=data)
 
+
+def _get_next_page(paginated_elements: Pagination):
+    if paginated_elements.has_next:
+        next_page = paginated_elements.has_next
+    else:
+        next_page = None
+    return next_page
+
+
+def response_api_paginated(schema, paginated_elements: Pagination):
+    data = schema.dump(paginated_elements.items, many=True)
+    next_page = _get_next_page(paginated_elements)
+
+    result = {
+        'total': paginated_elements.total,
+        'data': data,
+        'last_page': paginated_elements.pages,
+        'current_page': paginated_elements.page,
+        'next_page': next_page
+    }
+
+    return response_api_success(result)
 
 def response_api_deleted():
     return response(204)

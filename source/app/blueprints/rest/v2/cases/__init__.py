@@ -28,6 +28,7 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.rest.v2.cases.assets import case_assets_blueprint
 from app.blueprints.rest.v2.cases.iocs import case_iocs_blueprint
@@ -117,15 +118,8 @@ def get_cases() -> Response:
     if filtered_cases is None:
         return response_api_error('Filtering error')
 
-    cases = {
-        'total': filtered_cases.total,
-        'data': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
-        'last_page': filtered_cases.pages,
-        'current_page': filtered_cases.page,
-        'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
-    }
-
-    return response_api_success(data=cases)
+    case_schema = CaseSchemaForAPIV2()
+    return response_api_paginated(case_schema, filtered_cases)
 
 
 @cases_blueprint.get('/<int:identifier>')
