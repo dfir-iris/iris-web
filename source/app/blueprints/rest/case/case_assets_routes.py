@@ -159,7 +159,7 @@ def case_assets_state(caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/add', methods=['POST'])
-@endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/assets')
+@endpoint_deprecated('POST', '/api/v2/cases/<int:case_identifier>/assets')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_add_asset(caseid):
@@ -283,6 +283,7 @@ def deprecated_asset_view(cur_id, caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/cases/<int:case_identifier>/assets/<int:identifier>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def asset_update(cur_id, caseid):
@@ -301,7 +302,7 @@ def asset_update(cur_id, caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
-@endpoint_deprecated('DELETE', '/api/v2/cases/<case_identifier>/assets/<int:cur_id>')
+@endpoint_deprecated('DELETE', '/api/v2/cases/<int:case_identifier>/assets/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def deprecated_asset_delete(cur_id, caseid):
