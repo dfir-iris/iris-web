@@ -112,9 +112,9 @@ def update_asset(case_identifier, identifier):
 
         asset = assets_update(asset, request.get_json())
 
-        #asset_schema = CaseAssetsSchema()
-        #result = asset_schema.dump(asset)
-        return response_api_success(asset)
+        asset_schema = CaseAssetsSchema()
+        result = asset_schema.dump(asset)
+        return response_api_success(result)
 
     except ObjectNotFoundError:
         return response_api_not_found()

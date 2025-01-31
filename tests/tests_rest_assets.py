@@ -86,6 +86,16 @@ class TestsRestAssets(TestCase):
                                         {'asset_type_id': 1, 'asset_name': 'new_asset_name'})
         self.assertEqual(200, response.status_code)
 
+    def test_update_asset_should_return_correct_asset_uuid(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        identifier = response['asset_id']
+        asset_uuid = response['asset_uuid']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/assets/{identifier}',
+                                        {'asset_type_id': 1, 'asset_name': 'new_asset_name'}).json()
+        self.assertEqual(asset_uuid, response['asset_uuid'])
+
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
