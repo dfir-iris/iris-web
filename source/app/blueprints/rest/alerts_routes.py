@@ -412,11 +412,12 @@ def alerts_update_route(alert_id) -> Response:
             updated_alert = call_modules_hook('on_postload_alert_status_update', data=updated_alert)
 
         if activity_data:
-            track_activity(f"updated alert #{alert_id}: {','.join(activity_data)}", ctx_less=True)
-            add_obj_history_entry(updated_alert, f"updated alert: {','.join(activity_data)}")
+            activity_data_as_string = ','.join(activity_data)
+            track_activity(f'updated alert #{alert_id}: {activity_data_as_string}', ctx_less=True)
+            add_obj_history_entry(updated_alert, f'updated alert: {activity_data_as_string}')
         else:
-            track_activity(f"updated alert #{alert_id}", ctx_less=True)
-            add_obj_history_entry(updated_alert, f"updated alert")
+            track_activity(f'updated alert #{alert_id}', ctx_less=True)
+            add_obj_history_entry(updated_alert, 'updated alert')
 
         db.session.commit()
 
