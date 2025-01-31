@@ -30,8 +30,9 @@ from app.business.assets import assets_delete
 from app.business.assets import assets_create
 from app.business.assets import assets_get_detailed
 from app.business.assets import assets_get
+from app.business.assets import assets_update
 from app.business.errors import BusinessProcessingError
-from app.datamgmt.case.case_assets_db import case_assets_db_exists, get_raw_assets
+from app.datamgmt.case.case_assets_db import get_raw_assets
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import delete_asset_comment
@@ -42,12 +43,10 @@ from app.datamgmt.case.case_assets_db import get_assets_ioc_links
 from app.datamgmt.case.case_assets_db import get_case_asset_comment
 from app.datamgmt.case.case_assets_db import get_case_asset_comments
 from app.datamgmt.case.case_assets_db import get_similar_assets
-from app.datamgmt.case.case_assets_db import set_ioc_links
 from app.datamgmt.case.case_db import get_case_client_id
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
-from app.datamgmt.states import update_assets_state
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -292,37 +291,13 @@ def asset_update(cur_id, caseid):
         if not asset:
             return response_error("Invalid asset ID for this case")
 
-        # validate before saving
-        add_asset_schema = CaseAssetsSchema()
+        result = assets_update(asset, request.get_json())
 
-        request_data = call_modules_hook('on_preload_asset_update', data=request.get_json(), caseid=caseid)
+        schema = CaseAssetsSchema()
+        return response_success(f'Updated asset {result.asset_name}', schema.dump(result))
 
-        request_data['asset_id'] = cur_id
-
-        asset_schema = add_asset_schema.load(request_data, instance=asset)
-        asset_schema.case_id = caseid
-        if case_assets_db_exists(asset_schema):
-            return response_error('Data error', data='Asset with same value and type already exists')
-
-        update_assets_state(caseid=caseid)
-        db.session.commit()
-
-        if hasattr(asset_schema, 'ioc_links'):
-            errors, _ = set_ioc_links(asset_schema.ioc_links, asset.asset_id)
-            if errors:
-                return response_error('Encountered errors while linking IOC. Asset has still been updated.')
-
-        asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
-
-        if asset_schema:
-            track_activity(f"updated asset \"{asset_schema.asset_name}\"", caseid=caseid)
-            return response_success("Updated asset {}".format(asset_schema.asset_name),
-                                    add_asset_schema.dump(asset_schema))
-
-        return response_error("Unable to update asset for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg='Data error', data=e.messages)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_assets_rest_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])

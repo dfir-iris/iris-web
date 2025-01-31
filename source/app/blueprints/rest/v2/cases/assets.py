@@ -25,7 +25,11 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.business.cases import cases_exists
-from app.business.assets import assets_create, get_assets_case, assets_get, assets_delete
+from app.business.assets import assets_create
+from app.business.assets import get_assets_case
+from app.business.assets import assets_get
+from app.business.assets import assets_update
+from app.business.assets import assets_delete
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
@@ -116,6 +120,27 @@ def get_asset(case_id, identifier):
         return response_api_not_found()
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
+
+
+@case_assets_blueprint.put('/<int:identifier>')
+@ac_api_requires()
+def update_asset(case_id, identifier):
+    try:
+        asset = assets_get(identifier)
+        if not ac_fast_check_current_user_has_case_access(asset.case_id,[CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=asset.case_id)
+
+        asset = assets_update(asset, request.get_json())
+
+        #asset_schema = CaseAssetsSchema()
+        #result = asset_schema.dump(asset)
+        return response_api_success(asset)
+
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
 
 
 @case_assets_blueprint.delete('/<int:identifier>')
