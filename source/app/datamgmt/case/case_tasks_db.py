@@ -22,6 +22,7 @@ from sqlalchemy import desc
 from sqlalchemy import and_
 
 from app import db
+from app.datamgmt.conversions import convert_sort_direction
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.datamgmt.states import update_tasks_state
@@ -32,15 +33,36 @@ from app.models.models import Comments
 from app.models.models import TaskComments
 from app.models.models import TaskStatus
 from app.models.authorization import User
+from app.models.pagination_parameters import PaginationParameters
 
 
 def get_tasks_status():
     return TaskStatus.query.all()
 
 
-def get_tasks(caseid):
-    return CaseTasks.query.with_entities(
-        CaseTasks.id.label("task_id"),
+def get_filtered_tasks(case_identifier, pagination_parameters: PaginationParameters):
+
+    query = CaseTasks.query.filter(
+        CaseTasks.task_case_id == case_identifier
+    ).join(
+        CaseTasks.status
+    ).order_by(
+        desc(TaskStatus.status_name)
+    )
+
+    sort_by = pagination_parameters.get_order_by()
+    if sort_by is not None:
+        order_func = convert_sort_direction(pagination_parameters.get_direction())
+
+        if hasattr(CaseTasks, sort_by):
+            query = query.order_by(order_func(getattr(CaseTasks, sort_by)))
+
+    return query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
+
+
+def get_tasks_with_assignees(caseid):
+    tasks = CaseTasks.query.with_entities(
+        CaseTasks.id.label('task_id'),
         CaseTasks.task_uuid,
         CaseTasks.task_title,
         CaseTasks.task_description,
@@ -56,10 +78,6 @@ def get_tasks(caseid):
     ).order_by(
         desc(TaskStatus.status_name)
     ).all()
-
-
-def get_tasks_with_assignees(caseid):
-    tasks = get_tasks(caseid)
     if not tasks:
         return None
 

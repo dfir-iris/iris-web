@@ -16,26 +16,22 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from app.models.pagination_parameters import PaginationParameters
+class PaginationParameters:
 
+    def __init__(self, page, per_page, order_by, direction):
+        self._page = page
+        self._per_page = per_page
+        self._order_by = order_by
+        self._direction = direction
 
-def parse_comma_separated_identifiers(identifiers: str):
-    return [int(identifier) for identifier in identifiers.split(',')]
+    def get_page(self):
+        return self._page
 
+    def get_per_page(self):
+        return self._per_page
 
-def parse_boolean(parameter: str):
-    if parameter == 'true':
-        return True
-    if parameter == 'false':
-        return False
-    raise ValueError(f'Expected true or false, got {parameter}')
+    def get_order_by(self):
+        return self._order_by
 
-
-def parse_pagination_parameters(request) -> PaginationParameters:
-    arguments = request.args
-    page = arguments.get('page', 1, type=int)
-    per_page = arguments.get('per_page', 10, type=int)
-    order_by = arguments.get('order_by', type=str)
-    sort_dir = arguments.get('sort_dir', 'asc', type=str)
-
-    return PaginationParameters(page, per_page, order_by, sort_dir)
+    def get_direction(self):
+        return self._direction

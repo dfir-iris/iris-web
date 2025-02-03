@@ -23,7 +23,9 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.access_controls import ac_api_requires
 from app.schema.marshables import CaseTaskSchema
@@ -33,6 +35,7 @@ from app.business.tasks import tasks_create
 from app.business.tasks import tasks_get
 from app.business.tasks import tasks_update
 from app.business.tasks import tasks_delete
+from app.business.tasks import tasks_filter
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 
@@ -58,6 +61,21 @@ def add_case_task(case_identifier):
         return response_api_created(task_schema.dump(case))
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
+
+
+@case_tasks_blueprint.get('')
+@ac_api_requires()
+def case_get_tasks(case_identifier):
+
+    if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_identifier)
+
+    pagination_parameters = parse_pagination_parameters(request)
+
+    tasks = tasks_filter(case_identifier, pagination_parameters)
+
+    task_schema = CaseTaskSchema()
+    return response_api_paginated(task_schema, tasks)
 
 
 @case_tasks_blueprint.get('/<int:identifier>')

@@ -28,6 +28,8 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.endpoints import response_api_paginated
+from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.rest.v2.cases.assets import case_assets_blueprint
 from app.blueprints.rest.v2.cases.iocs import case_iocs_blueprint
 from app.blueprints.rest.v2.cases.tasks import case_tasks_blueprint
@@ -76,12 +78,9 @@ def get_cases() -> Response:
     Handles getting cases, with optional filtering & pagination
     """
 
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
-    case_ids_str = request.args.get(
-        'case_ids', None, type=parse_comma_separated_identifiers)
-    order_by = request.args.get('order_by', type=str)
-    sort_dir = request.args.get('sort_dir', 'asc', type=str)
+    pagination_parameters = parse_pagination_parameters(request)
+
+    case_ids_str = request.args.get('case_ids', None, type=parse_comma_separated_identifiers)
 
     case_customer_id = request.args.get('case_customer_id', None, type=str)
     case_name = request.args.get('case_name', None, type=str)
@@ -99,6 +98,8 @@ def get_cases() -> Response:
     is_open = request.args.get('is_open', None, type=parse_boolean)
 
     filtered_cases = get_filtered_cases(
+        current_user.id,
+        pagination_parameters,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,
         case_name=case_name,
@@ -112,25 +113,13 @@ def get_cases() -> Response:
         start_open_date=start_open_date,
         end_open_date=end_open_date,
         search_value='',
-        page=page,
-        per_page=per_page,
-        current_user_id=current_user.id,
-        sort_by=order_by,
-        sort_dir=sort_dir,
         is_open=is_open
     )
     if filtered_cases is None:
         return response_api_error('Filtering error')
 
-    cases = {
-        'total': filtered_cases.total,
-        'data': CaseSchemaForAPIV2().dump(filtered_cases.items, many=True),
-        'last_page': filtered_cases.pages,
-        'current_page': filtered_cases.page,
-        'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
-    }
-
-    return response_api_success(data=cases)
+    case_schema = CaseSchemaForAPIV2()
+    return response_api_paginated(case_schema, filtered_cases)
 
 
 @cases_blueprint.get('/<int:identifier>')

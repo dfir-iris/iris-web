@@ -33,22 +33,174 @@ jobs:
           args: check --output-format=github
           src: ./source
 
-  tests:
-    name: API tests
+  build-docker-db:
+    name: Build docker db
     runs-on: ubuntu-22.04
     steps:
       - name: Check out iris
         uses: actions/checkout@v4
-      - name: Build dockers
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/db
+          tags: iriswebapp_db:develop
+          outputs: type=docker,dest=${{ runner.temp }}/iriswebapp_db.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iriswebapp_db
+          path: ${{ runner.temp }}/iriswebapp_db.tar
+
+  build-docker-nginx:
+    name: Build docker nginx
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        with:
+          context: docker/nginx
+          tags: iriswebapp_nginx:develop
+          build-args: |
+            NGINX_CONF_GID=1234
+            NGINX_CONF_FILE=nginx.conf
+          outputs: type=docker,dest=${{ runner.temp }}/iriswebapp_nginx.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iriswebapp_nginx
+          path: ${{ runner.temp }}/iriswebapp_nginx.tar
+
+  build-docker-app:
+    name: Build docker app
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and export
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/webApp/Dockerfile
+          tags: iriswebapp_app:develop
+          outputs: type=docker,dest=${{ runner.temp }}/iriswebapp_app.tar
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iriswebapp_app
+          path: ${{ runner.temp }}/iriswebapp_app.tar
+
+  build-graphql-documentation:
+    name: Generate graphQL documentation
+    runs-on: ubuntu-22.04
+    needs:
+      - build-docker-db
+      - build-docker-nginx
+      - build-docker-app
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: iriswebapp_*
+          path: ${{ runner.temp }}
+          merge-multiple: true
+      - name: Load docker images
         run: |
-          # TODO using the environment file from tests to build here. 
-          #      I am a bit uneasy with this choice.
-          #      For now this works, but if we come to have different .env files for different tests, it won't anymore.
-          #      Maybe the .env should be split to differentiate the variables used during the build from the variables used at runtime, 
-          #      or maybe the docker building phase should also be part of the tests 
-          #      and we should build different dockers according to the scenarios? This sounds like an issue to me...
+          docker load --input ${{ runner.temp }}/iriswebapp_db.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_app.tar
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Start development server
+        run: |
+          # Even though, we use --env-file option when running docker compose, this is still necessary, because the compose has a env_file attribute :(
+          # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
           cp tests/data/basic.env .env
-          docker compose --file docker-compose.dev.yml build
+          docker compose --file docker-compose.dev.yml --env-file tests/data/basic.env up --detach
+      - name: Generate GraphQL documentation
+        run: |
+          npx spectaql@^3.0.2 source/spectaql/config.yml
+      - name: Stop development server
+        run: |
+          docker compose down
+      - uses: actions/upload-artifact@v4
+        with:
+            name: GraphQL DFIR-IRIS documentation
+            path: public
+            if-no-files-found: error
+
+  test-api:
+    name: Test API
+    runs-on: ubuntu-22.04
+    needs:
+      - build-docker-db
+      - build-docker-nginx
+      - build-docker-app
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: iriswebapp_*
+          path: ${{ runner.temp }}
+          merge-multiple: true
+      - name: Load docker images
+        run: |
+          docker load --input ${{ runner.temp }}/iriswebapp_db.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_app.tar
+      - name: Check out iris
+        uses: actions/checkout@v4
+      - name: Start development server
+        run: |
+          # Even though, we use --env-file option when running docker compose, this is still necessary, because the compose has a env_file attribute :(
+          # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
+          cp tests/data/basic.env .env
+          docker compose --file docker-compose.dev.yml up --detach
+      - name: Run tests
+        working-directory: tests
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+          PYTHONUNBUFFERED=true python -m unittest --verbose
+      - name: Stop development server
+        run: |
+          docker compose down
+
+  test-e2e:
+    name: End to end tests
+    runs-on: ubuntu-22.04
+    needs:
+      - build-docker-db
+      - build-docker-nginx
+      - build-docker-app
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: iriswebapp_*
+          path: ${{ runner.temp }}
+          merge-multiple: true
+      - name: Load docker images
+        run: |
+          docker load --input ${{ runner.temp }}/iriswebapp_db.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_nginx.tar
+          docker load --input ${{ runner.temp }}/iriswebapp_app.tar
+      - name: Check out iris
+        uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -61,30 +213,20 @@ jobs:
         run: |
           npm ci
           npm run build
-      - name: Run tests
-        working-directory: tests
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install -r requirements.txt
-          docker compose --file ../docker-compose.dev.yml --env-file data/basic.env up --detach --wait
-          PYTHONUNBUFFERED=true python -m unittest --verbose
-          docker compose down
-      - name: Start development server
-        run: |
-          docker compose --file docker-compose.dev.yml up --detach
       - name: Install e2e dependencies
         working-directory: e2e
         run: npm ci
       - name: Install playwright dependencies
         working-directory: e2e
         run: npx playwright install chromium firefox
+      - name: Start development server
+        run: |
+          # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
+          cp tests/data/basic.env .env
+          docker compose --file docker-compose.dev.yml up --detach
       - name: Run end to end tests
         working-directory: e2e
         run: npx playwright test
-      - name: Generate GraphQL documentation
-        run: |
-          npx spectaql@^3.0.2 source/spectaql/config.yml
       - name: Stop development server
         run: |
           docker compose down
@@ -93,8 +235,4 @@ jobs:
         with:
           name: playwright-report
           path: e2e/playwright-report/
-      - uses: actions/upload-artifact@v4
-        with:
-            name: GraphQL DFIR-IRIS documentation
-            path: public
-            if-no-files-found: error
+

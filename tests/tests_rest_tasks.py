@@ -142,3 +142,52 @@ class TestsRestTasks(TestCase):
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
                                         {'task_title': 'new title', 'task_status_id': 1, 'task_assignees_id': []}).json()
         self.assertEqual('new title', response['task_title'])
+
+    def test_get_tasks_should_return_200(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks')
+        self.assertEqual(200, response.status_code)
+
+    def test_get_tasks_should_return_empty_list_for_field_data_when_there_are_no_tasks(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
+        self.assertEqual([], response['data'])
+
+    def test_get_tasks_should_return_total(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
+        self.assertEqual(1, response['total'])
+
+    def test_get_tasks_should_honour_per_page_pagination_parameter(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task1'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task2'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task3'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', { 'per_page': 2 }).json()
+        self.assertEqual(2, len(response['data']))
+
+    def test_get_tasks_should_return_current_page(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task1'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task2'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task3'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', { 'page': 2, 'per_page': 2 }).json()
+        self.assertEqual(2, response['current_page'])
+
+    def test_get_tasks_should_return_correct_task_uuid(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.get(f'/api/v2/tasks/{identifier}').json()
+        expected_uuid = response['task_uuid']
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
+        self.assertEqual(expected_uuid, response['data'][0]['task_uuid'])

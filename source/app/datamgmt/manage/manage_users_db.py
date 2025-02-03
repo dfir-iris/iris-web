@@ -15,17 +15,20 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from typing import List
 
 from functools import reduce
 from flask_login import current_user
-from sqlalchemy import and_, desc, asc
+from sqlalchemy import and_
 
 import app
 from app import bc
 from app import db
 from app.datamgmt.case.case_db import get_case
-from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list, ac_ldp_group_removal
+from app.datamgmt.conversions import convert_sort_direction
+from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list
+from app.iris_engine.access_control.utils import ac_ldp_group_removal
 from app.iris_engine.access_control.utils import ac_access_level_to_list
 from app.iris_engine.access_control.utils import ac_auto_update_user_effective_access
 from app.iris_engine.access_control.utils import ac_get_detailed_effective_permissions_from_groups
@@ -750,7 +753,7 @@ def get_filtered_users(user_ids: str = None,
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
 
-    order_func = desc if sort == 'desc' else asc
+    order_func = convert_sort_direction(sort)
 
     try:
 
