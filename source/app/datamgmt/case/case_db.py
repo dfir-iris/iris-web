@@ -19,6 +19,9 @@
 import binascii
 from sqlalchemy import and_
 
+from sqlalchemy import exists
+from sqlalchemy import select
+
 from app import db
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.models.authorization import User
@@ -52,7 +55,8 @@ def get_case(caseid) -> Cases:
 
 
 def case_db_exists(identifier):
-    return Cases.query.filter(Cases.case_id == identifier).count()
+    stmt = select(exists().where(Cases.case_id == identifier))
+    return db.session.scalar(stmt)
 
 
 def get_case_client_id(caseid):
