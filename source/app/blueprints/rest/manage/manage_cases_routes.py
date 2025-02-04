@@ -64,18 +64,18 @@ from app.business.errors import BusinessProcessingError
 manage_cases_rest_blueprint = Blueprint('manage_case_rest', __name__)
 
 
-@manage_cases_rest_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
+@manage_cases_rest_blueprint.route('/manage/cases/<int:identifier>', methods=['GET'])
 @endpoint_deprecated('GET', '/api/v2/cases/<int:identifier>')
 @ac_api_requires()
-def get_case_api(cur_id):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
+def get_case_api(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
 
-    res = get_case_details_rt(cur_id)
+    res = get_case_details_rt(identifier)
     if res:
         return response_success(data=res)
 
-    return response_error(f'Case ID {cur_id} not found')
+    return response_error(f'Case ID {identifier} not found')
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/filter', methods=['GET'])
@@ -142,7 +142,7 @@ def manage_case_filter() -> Response:
     return response_success(data=cases)
 
 
-@manage_cases_rest_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
+@manage_cases_rest_blueprint.route('/manage/cases/delete/<int:identifier>', methods=['POST'])
 @endpoint_deprecated('DELETE', '/api/v2/cases/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
 def api_delete_case(identifier):
@@ -156,20 +156,20 @@ def api_delete_case(identifier):
         return response_error(e.get_message())
 
 
-@manage_cases_rest_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
+@manage_cases_rest_blueprint.route('/manage/cases/reopen/<int:identifier>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
-def api_reopen_case(cur_id):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
+def api_reopen_case(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
 
-    if not cur_id:
+    if not identifier:
         return response_error("No case ID provided")
 
-    case = get_case(cur_id)
+    case = get_case(identifier)
     if not case:
         return response_error("Tried to reopen an non-existing case")
 
-    res = reopen_case(cur_id)
+    res = reopen_case(identifier)
     if not res:
         return response_error("Tried to reopen an non-existing case")
 
@@ -179,34 +179,34 @@ def api_reopen_case(cur_id):
         for alert in case.alerts:
             if alert.alert_status_id != merged_status.status_id:
                 alert.alert_status_id = merged_status.status_id
-                track_activity(f"alert ID {alert.alert_id} status updated to merged due to case #{cur_id} being reopen",
-                               caseid=cur_id, ctx_less=False)
+                track_activity(f"alert ID {alert.alert_id} status updated to merged due to case #{identifier} being reopen",
+                               caseid=identifier, ctx_less=False)
 
                 db.session.add(alert)
 
-    case = call_modules_hook('on_postload_case_update', data=case, caseid=cur_id)
+    case = call_modules_hook('on_postload_case_update', data=case, caseid=identifier)
 
     add_obj_history_entry(case, 'case reopen')
-    track_activity("reopen case ID {}".format(cur_id), caseid=cur_id)
+    track_activity("reopen case ID {}".format(identifier), caseid=identifier)
     case_schema = CaseSchema()
 
     return response_success("Case reopen successfully", data=case_schema.dump(res))
 
 
-@manage_cases_rest_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])
+@manage_cases_rest_blueprint.route('/manage/cases/close/<int:identifier>', methods=['POST'])
 @ac_api_requires(Permissions.standard_user)
-def api_case_close(cur_id):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
+def api_case_close(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
 
-    if not cur_id:
+    if not identifier:
         return response_error("No case ID provided")
 
-    case = get_case(cur_id)
+    case = get_case(identifier)
     if not case:
         return response_error("Tried to close an non-existing case")
 
-    res = close_case(cur_id)
+    res = close_case(identifier)
     if not res:
         return response_error("Tried to close an non-existing case")
 
@@ -218,21 +218,21 @@ def api_case_close(cur_id):
         for alert in case.alerts:
             if alert.alert_status_id != close_status.status_id:
                 alert.alert_status_id = close_status.status_id
-                alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=cur_id)
+                alert = call_modules_hook('on_postload_alert_update', data=alert, caseid=identifier)
 
             if alert.alert_resolution_status_id != case_status_id_mapped:
                 alert.alert_resolution_status_id = case_status_id_mapped
-                alert = call_modules_hook('on_postload_alert_resolution_update', data=alert, caseid=cur_id)
+                alert = call_modules_hook('on_postload_alert_resolution_update', data=alert, caseid=identifier)
 
-                track_activity(f"closing alert ID {alert.alert_id} due to case #{cur_id} being closed",
-                               caseid=cur_id, ctx_less=False)
+                track_activity(f"closing alert ID {alert.alert_id} due to case #{identifier} being closed",
+                               caseid=identifier, ctx_less=False)
 
                 db.session.add(alert)
 
-    case = call_modules_hook('on_postload_case_update', data=case, caseid=cur_id)
+    case = call_modules_hook('on_postload_case_update', data=case, caseid=identifier)
 
     add_obj_history_entry(case, 'case closed')
-    track_activity("closed case ID {}".format(cur_id), caseid=cur_id, ctx_less=False)
+    track_activity("closed case ID {}".format(identifier), caseid=identifier, ctx_less=False)
     case_schema = CaseSchema()
 
     return response_success("Case closed successfully", data=case_schema.dump(res))
@@ -259,16 +259,16 @@ def api_list_case():
     return response_success("", data=data)
 
 
-@manage_cases_rest_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
+@manage_cases_rest_blueprint.route('/manage/cases/update/<int:identifier>', methods=['POST'])
 @endpoint_deprecated('PUT', '/api/v2/cases/<int:identifier>')
 @ac_api_requires(Permissions.standard_user)
-def update_case_info(cur_id):
-    if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
-        return ac_api_return_access_denied(caseid=cur_id)
+def update_case_info(identifier):
+    if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=identifier)
 
     case_schema = CaseSchema()
     try:
-        case, msg = cases_update(cur_id, request.get_json())
+        case, msg = cases_update(identifier, request.get_json())
         return response_success(msg, data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
