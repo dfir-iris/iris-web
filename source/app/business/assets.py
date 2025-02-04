@@ -28,8 +28,10 @@ from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
 from app.datamgmt.states import update_assets_state
 from app.models.models import CaseAssets
+from app.models.pagination_parameters import PaginationParameters
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import get_assets
+from app.datamgmt.case.case_assets_db import filter_assets
 from app.datamgmt.case.case_assets_db import get_assets_ioc_links
 from app.datamgmt.case.case_assets_db import get_similar_assets
 from app.datamgmt.case.case_assets_db import case_assets_db_exists
@@ -100,9 +102,6 @@ def assets_get_detailed(identifier):
 
 
 def get_assets_case(case_identifier):
-    if not cases_exists(case_identifier):
-        raise ObjectNotFoundError()
-
     assets = get_assets(case_identifier)
     customer_id = get_case_client_id(case_identifier)
 
@@ -136,6 +135,12 @@ def get_assets_case(case_identifier):
 
     ret['state'] = get_assets_state(case_identifier)
     return ret
+
+
+def assets_filter(case_identifier, pagination_parameters: PaginationParameters):
+    if not cases_exists(case_identifier):
+        raise ObjectNotFoundError()
+    return filter_assets(case_identifier, pagination_parameters)
 
 
 def assets_update(asset: CaseAssets, request_json):

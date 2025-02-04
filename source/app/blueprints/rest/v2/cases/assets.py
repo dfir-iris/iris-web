@@ -23,10 +23,11 @@ from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_created, response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.business.cases import cases_exists
 from app.business.assets import assets_create
-from app.business.assets import get_assets_case
+from app.business.assets import assets_filter
 from app.business.assets import assets_get
 from app.business.assets import assets_update
 from app.business.assets import assets_delete
@@ -34,6 +35,7 @@ from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
+from app.models.pagination_parameters import PaginationParameters
 from app.schema.marshables import CaseAssetsSchema
 from app.blueprints.access_controls import ac_api_return_access_denied
 
@@ -42,7 +44,6 @@ case_assets_blueprint = Blueprint('case_assets',
                                   url_prefix='/<int:case_identifier>/assets')
 
 
-# TODO put this endpoint back once it adheres to the conventions (return value for paginated data: field assets should be field data, spurious field state, missing total, last_page, current_page and next_page)
 @case_assets_blueprint.get('')
 @ac_api_requires()
 def case_list_assets(case_identifier):
@@ -52,9 +53,10 @@ def case_list_assets(case_identifier):
         if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=case_identifier)
 
-        assets = get_assets_case(case_identifier=case_identifier)
+        assets = assets_filter(case_identifier, PaginationParameters(1, 10, None, 'asc'))
 
-        return response_api_success(data=assets)
+        asset_schema = CaseAssetsSchema()
+        return response_api_paginated(asset_schema, assets)
 
     except ObjectNotFoundError:
         return response_api_not_found()

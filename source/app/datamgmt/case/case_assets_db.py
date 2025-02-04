@@ -37,6 +37,7 @@ from app.models.models import Ioc
 from app.models.models import IocAssetLink
 from app.models.models import IocType
 from app.models.authorization import User
+from app.models.pagination_parameters import PaginationParameters
 
 
 log = app.logger
@@ -68,7 +69,7 @@ def case_assets_db_exists(asset: CaseAssets):
     return assets.first() is not None
 
 
-def get_assets(caseid):
+def get_assets(case_identifier):
     assets = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
         CaseAssets.asset_uuid,
@@ -85,12 +86,39 @@ def get_assets(caseid):
         CaseAssets.analysis_status_id,
         CaseAssets.asset_tags
     ).filter(
-        CaseAssets.case_id == caseid,
+        CaseAssets.case_id == case_identifier,
     ).join(
         CaseAssets.asset_type
     ).join(
         CaseAssets.analysis_status
     ).all()
+
+    return assets
+
+
+def filter_assets(case_identifier, pagination_parameters: PaginationParameters):
+    assets = CaseAssets.query.with_entities(
+        CaseAssets.asset_id,
+        CaseAssets.asset_uuid,
+        CaseAssets.asset_name,
+        AssetsType.asset_name.label('asset_type'),
+        AssetsType.asset_icon_compromised,
+        AssetsType.asset_icon_not_compromised,
+        CaseAssets.asset_description,
+        CaseAssets.asset_domain,
+        CaseAssets.asset_compromise_status_id,
+        CaseAssets.asset_ip,
+        CaseAssets.asset_type_id,
+        AnalysisStatus.name.label('analysis_status'),
+        CaseAssets.analysis_status_id,
+        CaseAssets.asset_tags
+    ).filter(
+        CaseAssets.case_id == case_identifier,
+    ).join(
+        CaseAssets.asset_type
+    ).join(
+        CaseAssets.analysis_status
+    ).paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
 
     return assets
 
@@ -392,6 +420,7 @@ def delete_asset_comment(asset_id, comment_id, case_id):
     db.session.commit()
 
     return True, "Comment deleted"
+
 
 def get_asset_by_name(asset_name, caseid):
     asset = CaseAssets.query.filter(
