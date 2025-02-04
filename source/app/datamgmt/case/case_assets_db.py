@@ -232,6 +232,7 @@ def get_assets_ioc_links(caseid):
 
     return ioc_links_req
 
+
 def get_similar_assets(asset_name, asset_type_id, caseid, customer_id, cases_limitation):
 
     linked_assets = CaseAssets.query.with_entities(

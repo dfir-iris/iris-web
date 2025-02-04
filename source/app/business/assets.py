@@ -22,6 +22,7 @@ from marshmallow.exceptions import ValidationError
 from app import db
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
+from app.business.cases import cases_exists
 from app.datamgmt.case.case_db import get_case_client_id
 from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
@@ -99,6 +100,9 @@ def assets_get_detailed(identifier):
 
 
 def get_assets_case(case_identifier):
+    if not cases_exists(case_identifier):
+        raise ObjectNotFoundError()
+
     assets = get_assets(case_identifier)
     customer_id = get_case_client_id(case_identifier)
 

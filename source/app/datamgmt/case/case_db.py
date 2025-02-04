@@ -51,8 +51,8 @@ def get_case(caseid) -> Cases:
     return Cases.query.filter(Cases.case_id == caseid).first()
 
 
-def case_db_exists(caseid):
-    return Cases.query.filter(Cases.case_id == caseid).count()
+def case_db_exists(identifier):
+    return Cases.query.filter(Cases.case_id == identifier).count()
 
 
 def get_case_client_id(caseid):

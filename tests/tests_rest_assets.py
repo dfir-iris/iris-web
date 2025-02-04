@@ -199,3 +199,7 @@ class TestsRestAssets(TestCase):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets')
         self.assertEqual(200, response.status_code)
+
+    def test_get_assets_should_return_404_when_case_does_not_exist(self):
+        response = self._subject.get(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/assets')
+        self.assertEqual(404, response.status_code)
