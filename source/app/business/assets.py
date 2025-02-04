@@ -130,7 +130,7 @@ def get_assets_case(case_identifier):
 
         ret['assets'].append(asset)
 
-    ret['state'] = get_assets_state(caseid=case_identifier)
+    ret['state'] = get_assets_state(case_identifier)
     return ret
 
 
