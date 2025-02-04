@@ -56,13 +56,13 @@ def case_db_exists(caseid):
 
 
 def get_case_client_id(caseid):
-    client_id = Cases.query.with_entities(
+    customer = Cases.query.with_entities(
         Client.client_id
     ).filter(
         Cases.case_id == caseid
     ).join(Cases.client).first()
 
-    return client_id.client_id
+    return customer.client_id
 
 
 def case_get_desc(caseid):
