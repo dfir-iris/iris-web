@@ -355,7 +355,7 @@ def get_filtered_iocs(
         ):
 
     query = _build_filter_ioc_query(caseid=caseid, ioc_type_id=ioc_type_id, ioc_type=ioc_type, ioc_tlp_id=ioc_tlp_id, ioc_value=ioc_value,
-                                   ioc_description=ioc_description, ioc_tags=ioc_tags,
+                                    ioc_description=ioc_description, ioc_tags=ioc_tags,
                                     sort_by=pagination_parameters.get_order_by(), sort_dir=pagination_parameters.get_direction())
 
     try:
