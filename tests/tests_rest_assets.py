@@ -111,7 +111,6 @@ class TestsRestAssets(TestCase):
                                         {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'analysis_status_id': 2}).json()
         self.assertEqual(2, response['analysis_status_id'])
 
-
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
@@ -195,3 +194,8 @@ class TestsRestAssets(TestCase):
         # Try to update the comment from user 2
         response = user2.create(f'/case/assets/{asset_identifier}/comments/{comment_identifier}/edit?cid={case_identifier}', {'comment_text': 'updated comment'})
         self.assertEqual(400, response.status_code)
+
+    def test_get_assets_should_not_fail(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets')
+        self.assertEqual(200, response.status_code)

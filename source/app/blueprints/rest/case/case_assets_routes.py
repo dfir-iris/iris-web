@@ -104,6 +104,7 @@ def case_filter_assets(caseid):
 
     return response_success("", data=ret)
 
+
 @case_assets_rest_blueprint.route('/case/assets/list', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
