@@ -97,6 +97,7 @@ def assets_get_detailed(identifier):
     data['linked_ioc'] = [row._asdict() for row in asset_iocs]
     return data
 
+
 def get_assets_case(case_identifier):
     assets = get_assets(case_identifier)
     customer_id = get_case_client_id(case_identifier)
