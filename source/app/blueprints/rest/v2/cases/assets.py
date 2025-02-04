@@ -85,7 +85,7 @@ def add_asset(case_id):
         _, asset = assets_create(case_id, request.get_json())
         return response_api_created(asset_schema.dump(asset))
     except BusinessProcessingError as e:
-        return response_api_error(e.get_message())
+        return response_api_error(e.get_message(), e.get_data())
 
 
 @case_assets_blueprint.get('/<int:identifier>')

@@ -166,10 +166,10 @@ def case_assets_state(caseid):
 def deprecated_add_asset(caseid):
     asset_schema = CaseAssetsSchema()
     try:
-        asset, msg = assets_create(caseid, request.get_json())
+        msg, asset = assets_create(caseid, request.get_json())
         return response_success(msg, asset_schema.dump(asset))
     except BusinessProcessingError as e:
-        return response_error(e.get_message())
+        return response_error(e.get_message(), e.get_data())
 
 
 @case_assets_rest_blueprint.route('/case/assets/upload', methods=['POST'])

@@ -60,7 +60,7 @@ def assets_create(case_identifier, request_json):
     if request_data.get('ioc_links'):
         errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
         if errors:
-            raise BusinessProcessingError('Encountered errors while linking IOC. Asset has still been updated.')
+            raise BusinessProcessingError('Encountered errors while linking IOC. Asset has still been created.')
     asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=case_identifier)
     if asset:
         track_activity(f'added asset "{asset.asset_name}"', caseid=case_identifier)
