@@ -19,11 +19,13 @@
 from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
+from app import db
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_db import get_case_client_id
 from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
+from app.datamgmt.states import update_assets_state
 from app.models.models import CaseAssets
 from app.datamgmt.case.case_assets_db import get_asset
 from app.datamgmt.case.case_assets_db import get_assets
@@ -39,19 +41,18 @@ from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseAssetsSchema
 
 
-def _load(case_identifier, request_data):
+def _load(request_data, **kwargs):
     try:
         add_assets_schema = CaseAssetsSchema()
-        asset = add_assets_schema.load(request_data)
-        asset.case_id = case_identifier
-        return asset
+        return add_assets_schema.load(request_data, **kwargs)
     except ValidationError as e:
-        raise BusinessProcessingError('Data error', e.messages)
+        raise BusinessProcessingError('Data error', data=e.messages)
 
 
 def assets_create(case_identifier, request_json):
     request_data = call_modules_hook('on_preload_asset_create', data=request_json, caseid=case_identifier)
-    asset = _load(case_identifier, request_data)
+    asset = _load(request_data)
+    asset.case_id = case_identifier
 
     if case_assets_db_exists(asset):
         raise BusinessProcessingError('Asset with same value and type already exists')
@@ -130,3 +131,31 @@ def get_assets_case(case_identifier):
 
     ret['state'] = get_assets_state(caseid=case_identifier)
     return ret
+
+
+def assets_update(asset: CaseAssets, request_json):
+    caseid = asset.case_id
+    request_data = call_modules_hook('on_preload_asset_update', data=request_json, caseid=caseid)
+
+    request_data['asset_id'] = asset.asset_id
+
+    asset_schema = _load(request_data, instance=asset)
+
+    if case_assets_db_exists(asset_schema):
+        raise BusinessProcessingError('Data error', data='Asset with same value and type already exists')
+
+    update_assets_state(caseid=caseid)
+    db.session.commit()
+
+    if hasattr(asset_schema, 'ioc_links'):
+        errors, _ = set_ioc_links(asset_schema.ioc_links, asset.asset_id)
+        if errors:
+            raise BusinessProcessingError('Encountered errors while linking IOC. Asset has still been updated.')
+
+    asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
+
+    if asset_schema:
+        track_activity(f'updated asset "{asset_schema.asset_name}"', caseid=caseid)
+        return asset_schema
+
+    raise BusinessProcessingError('Unable to update asset for internal reasons')

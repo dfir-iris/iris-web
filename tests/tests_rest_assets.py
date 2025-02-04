@@ -31,9 +31,90 @@ class TestsRestAssets(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
+    def test_create_asset_should_work(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        self.assertEqual(201, response.status_code)
+
+    def test_get_asset_with_missing_asset_identifier_should_return_404(self):
+        response = self._subject.get(f'/api/v2/asset/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        self.assertEqual(404, response.status_code)
+
+    def test_create_asset_with_missing_case_identifier_should_return_404(self):
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/assets', body)
+        self.assertEqual(404, response.status_code)
+
+    def test_create_asset_in_old_api_with_same_type_and_name_should_return_400(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        self._subject.create('/case/assets/add', body, {'cid': case_identifier})
+        response = self._subject.create('/case/assets/add', body, {'cid': case_identifier})
+        self.assertEqual(400, response.status_code)
+
+    def test_create_asset_with_same_type_and_name_should_return_400(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
+        self.assertEqual(400, response.status_code)
+
+    def test_get_asset_should_return_200(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
+        self.assertEqual(200, response.status_code)
+
+    def test_get_asset_should_return_404_after_it_was_deleted(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        asset_identifier = response['asset_id']
+        self._subject.delete(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
+        self.assertEqual(404, response.status_code)
+
+    def test_update_asset_should_not_fail(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        identifier = response['asset_id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/assets/{identifier}',
+                                        {'asset_type_id': 1, 'asset_name': 'new_asset_name'})
+        self.assertEqual(200, response.status_code)
+
+    def test_update_asset_should_return_correct_asset_uuid(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        identifier = response['asset_id']
+        asset_uuid = response['asset_uuid']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/assets/{identifier}',
+                                        {'asset_type_id': 1, 'asset_name': 'new_asset_name'}).json()
+        self.assertEqual(asset_uuid, response['asset_uuid'])
+
+    def test_update_asset_should_return_404_when_asset_not_found(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/assets/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}',
+                                        {'asset_type_id': 1, 'asset_name': 'new_asset_name'})
+        self.assertEqual(404, response.status_code)
+
+    def test_update_asset_should_allow_to_update_analysis_status(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        identifier = response['asset_id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/assets/{identifier}',
+                                        {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'analysis_status_id': 2}).json()
+        self.assertEqual(2, response['analysis_status_id'])
+
+
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
         response = self._subject.delete(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
@@ -44,55 +125,9 @@ class TestsRestAssets(TestCase):
         response = self._subject.delete(f'/api/v2/cases/{case_identifier}/assets/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
-    def test_create_asset_should_work(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
-        self.assertEqual(201, response.status_code)
-
-    def test_get_asset_with_missing_asset_identifier_should_return_404(self):
-        response = self._subject.get(f'/api/v2/asset/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
-        self.assertEqual(404, response.status_code)
-
-    def test_create_asset_with_missing_case_identifier_should_return_404(self):
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/assets', body)
-        self.assertEqual(404, response.status_code)
-
-    def test_create_asset_in_old_api_with_same_type_and_name_should_return_400(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        self._subject.create('/case/assets/add', body, {'cid': case_identifier})
-        response = self._subject.create('/case/assets/add', body, {'cid': case_identifier})
-        self.assertEqual(400, response.status_code)
-
-    def test_create_asset_with_same_type_and_name_should_return_400(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
-        self.assertEqual(400, response.status_code)
-
-    def test_get_asset_should_return_200(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
-        asset_identifier = response['asset_id']
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
-        self.assertEqual(200, response.status_code)
-
-    def test_get_asset_should_return_404_after_it_was_deleted(self):
-        case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
-        asset_identifier = response['asset_id']
-        self._subject.delete(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
-        self.assertEqual(404, response.status_code)
-
     def test_delete_asset_should_increment_asset_state(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
         response = self._subject.get('/case/assets/state', {'cid': case_identifier}).json()
@@ -106,7 +141,7 @@ class TestsRestAssets(TestCase):
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
         ioc_identifier = response['ioc_id']
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test', 'ioc_links': [ioc_identifier]}
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'ioc_links': [ioc_identifier]}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
         response = self._subject.delete(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
@@ -114,7 +149,7 @@ class TestsRestAssets(TestCase):
 
     def test_delete_asset_should_not_fail_when_it_has_associated_comments(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
         self._subject.create(f'/case/assets/{asset_identifier}/comments/add', {'comment_text': 'comment text'})
@@ -123,7 +158,7 @@ class TestsRestAssets(TestCase):
 
     def test_delete_asset_should_delete_associated_comments(self):
         case_identifier = self._subject.create_dummy_case()
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
         response = self._subject.create(f'/case/assets/{asset_identifier}/comments/add', {'comment_text': 'comment text'}).json()
@@ -149,7 +184,7 @@ class TestsRestAssets(TestCase):
         self._subject.create(f'/manage/users/{user1.get_identifier()}/cases-access/update', body)
 
         # Create a new asset
-        body = {'asset_type_id': '1', 'asset_name': 'admin_laptop_test'}
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = user1.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         asset_identifier = response['asset_id']
 
