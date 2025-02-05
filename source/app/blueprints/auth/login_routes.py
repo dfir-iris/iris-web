@@ -36,12 +36,16 @@ from app import app
 from app import bc
 from app import db
 from app import oidc_client
-from app.blueprints.access_controls import is_authentication_oidc, is_authentication_ldap
+from app.blueprints.access_controls import is_authentication_oidc
+from app.blueprints.access_controls import is_authentication_ldap
 from app.blueprints.responses import response_error
-from app.business.auth import validate_ldap_login, _retrieve_user_by_username, wrap_login_user
+from app.business.auth import validate_ldap_login
+from app.business.auth import retrieve_user_by_username
+from app.business.auth import wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
-from app.forms import LoginForm, MFASetupForm
+from app.forms import LoginForm
+from app.forms import MFASetupForm
 from app.iris_engine.utils.tracker import track_activity
 
 login_blueprint = Blueprint(
@@ -68,7 +72,7 @@ def _render_template_login(form, msg):
 
 
 def _validate_local_login(username, password):
-    user = _retrieve_user_by_username(username)
+    user = retrieve_user_by_username(username)
     if not user:
         return None
 
@@ -93,7 +97,7 @@ def _authenticate_ldap(form, username, password, local_fallback=True):
 
 
 def _authenticate_password(form, username, password):
-    user = _retrieve_user_by_username(username)
+    user = retrieve_user_by_username(username)
     if not user or user.is_service_account:
         return _render_template_login(form, 'Wrong credentials. Please try again.')
 
@@ -106,7 +110,7 @@ def _authenticate_password(form, username, password):
 
 
 # Authenticate user
-if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap", "oidc"]:
+if app.config.get('AUTHENTICATION_TYPE') in ['local', 'ldap', 'oidc']:
     @login_blueprint.route('/login', methods=['GET', 'POST'])
     def login():
         if current_user.is_authenticated:
@@ -223,7 +227,7 @@ if is_authentication_oidc():
 
 @app.route('/auth/mfa-setup', methods=['GET', 'POST'])
 def mfa_setup():
-    user = _retrieve_user_by_username(username=session['username'])
+    user = retrieve_user_by_username(username=session['username'])
     form = MFASetupForm()
 
     if form.submit() and form.validate():
@@ -275,7 +279,7 @@ def mfa_verify():
 
         return redirect(url_for('login.login'))
 
-    user = _retrieve_user_by_username(username=session['username'])
+    user = retrieve_user_by_username(username=session['username'])
 
     # Redirect user to MFA setup if MFA is not fully set up
     if not user.mfa_secrets or not user.mfa_setup_complete:
