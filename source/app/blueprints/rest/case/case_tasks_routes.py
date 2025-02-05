@@ -159,7 +159,7 @@ def deprecated_case_delete_task(cur_id, caseid):
         tasks_delete(task)
         return response_success('Task deleted')
     except BusinessProcessingError as e:
-        return response_error(e.get_message())
+        return response_error(msg=e.get_message(), data=e.get_data())
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])

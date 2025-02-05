@@ -139,7 +139,10 @@ function delete_task(id) {
                  if (textStatus === 'nocontent') {
                     get_tasks();
                     $('#modal_add_task').modal('hide');
-                }
+                    notify_success('Task deleted');
+                } else {
+                     notify_error('Error deleting task')
+                 }
             });
         }
     });
