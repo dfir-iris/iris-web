@@ -57,7 +57,7 @@ case_tasks_rest_blueprint = Blueprint('case_tasks_rest', __name__)
 @endpoint_deprecated('GET', '/api/v2/cases/<int:case_identifier>/tasks')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_get_tasks(caseid):
+def case_get_tasks(caseid: int):
     ct = get_tasks_with_assignees(caseid)
 
     if not ct:
@@ -77,7 +77,7 @@ def case_get_tasks(caseid):
 @case_tasks_rest_blueprint.route('/case/tasks/state', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_get_tasks_state(caseid):
+def case_get_tasks_state(caseid: int):
     os = get_tasks_state(caseid=caseid)
     if os:
         return response_success(data=os)
@@ -87,7 +87,7 @@ def case_get_tasks_state(caseid):
 @case_tasks_rest_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_task_status_update(cur_id, caseid):
+def case_task_status_update(cur_id: int, caseid: int):
     task = get_task(task_id=cur_id)
     if not task:
         return response_error("Invalid task ID for this case")
@@ -107,10 +107,11 @@ def case_task_status_update(cur_id, caseid):
 @endpoint_deprecated('POST', '/api/v2/cases/<int:caseid>/tasks')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def deprecated_case_add_task(caseid):
+def deprecated_case_add_task(caseid: int):
     task_schema = CaseTaskSchema()
     try:
-        msg, task = tasks_create(caseid, request.get_json())
+        msg, task = tasks_create(case_identifier=caseid,
+                                 request_json=request.get_json())
         return response_success(msg, data=task_schema.dump(task))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
@@ -120,7 +121,7 @@ def deprecated_case_add_task(caseid):
 @endpoint_deprecated('GET', '/api/v2/cases/<int:case_identifier>/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def deprecated_case_task_view(cur_id, caseid):
+def deprecated_case_task_view(cur_id: int, caseid: int):
     task = get_task(task_id=cur_id)
     if not task:
         return response_error('Invalid task ID for this case')
@@ -134,9 +135,9 @@ def deprecated_case_task_view(cur_id, caseid):
 @endpoint_deprecated('PUT', '/api/v2/cases/<int:case_identifier>/tasks/<int:identifier>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def deprecated_case_edit_task(cur_id, caseid):
+def deprecated_case_edit_task(cur_id: int, caseid: int):
     try:
-        task = get_task(cur_id)
+        task = get_task(task_id=cur_id)
         if not task:
             return response_error(msg='Invalid task ID for this case')
 
@@ -153,9 +154,9 @@ def deprecated_case_edit_task(cur_id, caseid):
 @endpoint_deprecated('DELETE', '/api/v2/cases/<int:case_identifier>/tasks/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def deprecated_case_delete_task(cur_id, caseid):
+def deprecated_case_delete_task(cur_id: int, caseid: int):
     try:
-        task = tasks_get(cur_id)
+        task = tasks_get(identifier=cur_id)
         tasks_delete(task)
         return response_success('Task deleted')
     except BusinessProcessingError as e:
@@ -165,9 +166,9 @@ def deprecated_case_delete_task(cur_id, caseid):
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_comment_task_list(cur_id, caseid):
+def case_comment_task_list(cur_id: int, caseid: int):
 
-    task_comments = get_case_task_comments(cur_id)
+    task_comments = get_case_task_comments(task_id=cur_id)
     if task_comments is None:
         return response_error('Invalid task ID')
 
@@ -177,10 +178,10 @@ def case_comment_task_list(cur_id, caseid):
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/add', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_comment_task_add(cur_id, caseid):
+def case_comment_task_add(cur_id: int, caseid: int):
 
     try:
-        task = get_task(cur_id)
+        task = get_task(task_id=cur_id)
         if not task:
             return response_error('Invalid task ID')
 
@@ -214,9 +215,10 @@ def case_comment_task_add(cur_id, caseid):
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_comment_task_get(cur_id, com_id, caseid):
+def case_comment_task_get(cur_id: int, com_id: int, caseid: int):
 
-    comment = get_case_task_comment(cur_id, com_id)
+    comment = get_case_task_comment(task_id=cur_id,
+                                    comment_id=com_id)
     if not comment:
         return response_error("Invalid comment ID")
 
@@ -226,17 +228,17 @@ def case_comment_task_get(cur_id, com_id, caseid):
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_comment_task_edit(cur_id, com_id, caseid):
+def case_comment_task_edit(cur_id: int, com_id: int, caseid: int):
 
-    return case_comment_update(com_id, 'tasks', caseid)
+    return case_comment_update(comment_id=com_id, object_type='tasks', caseid=caseid)
 
 
 @case_tasks_rest_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def case_comment_task_delete(cur_id, com_id, caseid):
+def case_comment_task_delete(cur_id: int, com_id: int, caseid: int):
 
-    success, msg = delete_task_comment(cur_id, com_id)
+    success, msg = delete_task_comment(task_id=cur_id, comment_id=com_id)
     if not success:
         return response_error(msg)
 

@@ -118,7 +118,7 @@ def get_tasks_with_assignees(caseid):
     return task_with_assignees
 
 
-def get_task(task_id) -> CaseTasks:
+def get_task(task_id: int) -> CaseTasks:
     return CaseTasks.query.filter(CaseTasks.id == task_id).first()
 
 
