@@ -23,6 +23,10 @@
 
 target=${1-:app}
 
+if [[ -z $LOG_LEVEL ]]; then
+  LOG_LEVEL='info'
+fi
+
 printf "Running ${target} ...\n"
 
 if [[ "${target}" == iris-worker ]] ; then
