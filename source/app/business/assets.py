@@ -18,6 +18,7 @@
 
 from flask_login import current_user
 from marshmallow.exceptions import ValidationError
+from flask_sqlalchemy.pagination import Pagination
 
 from app import db
 from app.business.errors import BusinessProcessingError
@@ -137,7 +138,7 @@ def get_assets_case(case_identifier):
     return ret
 
 
-def assets_filter(case_identifier, pagination_parameters: PaginationParameters):
+def assets_filter(case_identifier, pagination_parameters: PaginationParameters) -> Pagination:
     if not cases_exists(case_identifier):
         raise ObjectNotFoundError()
     return filter_assets(case_identifier, pagination_parameters)

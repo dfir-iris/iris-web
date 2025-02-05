@@ -208,3 +208,19 @@ class TestsRestAssets(TestCase):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets').json()
         self.assertEqual(1, response['current_page'])
+
+    def test_get_assets_should_return_existing_assets(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'asset'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets').json()
+        self.assertEqual(1, len(response['data']))
+
+    def test_get_assets_should_accept_per_page_query_parameter(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'asset1'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        body = {'asset_type_id': 1, 'asset_name': 'asset2'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets', { 'per_page': 1 }).json()
+        self.assertEqual(1, len(response['data']))

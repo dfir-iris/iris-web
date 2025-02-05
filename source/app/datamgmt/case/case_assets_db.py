@@ -21,6 +21,7 @@ import datetime
 from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
+from flask_sqlalchemy.pagination import Pagination
 
 from app import db, app
 from app.datamgmt.states import update_assets_state
@@ -92,32 +93,14 @@ def get_assets(case_identifier):
     ).join(
         CaseAssets.analysis_status
     ).all()
-
+    log.error(f'case_identifier: {case_identifier}')
+    log.error(f'assets: {assets}')
     return assets
 
 
-def filter_assets(case_identifier, pagination_parameters: PaginationParameters):
-    assets = CaseAssets.query.with_entities(
-        CaseAssets.asset_id,
-        CaseAssets.asset_uuid,
-        CaseAssets.asset_name,
-        AssetsType.asset_name.label('asset_type'),
-        AssetsType.asset_icon_compromised,
-        AssetsType.asset_icon_not_compromised,
-        CaseAssets.asset_description,
-        CaseAssets.asset_domain,
-        CaseAssets.asset_compromise_status_id,
-        CaseAssets.asset_ip,
-        CaseAssets.asset_type_id,
-        AnalysisStatus.name.label('analysis_status'),
-        CaseAssets.analysis_status_id,
-        CaseAssets.asset_tags
-    ).filter(
-        CaseAssets.case_id == case_identifier,
-    ).join(
-        CaseAssets.asset_type
-    ).join(
-        CaseAssets.analysis_status
+def filter_assets(case_identifier, pagination_parameters: PaginationParameters) -> Pagination:
+    assets = CaseAssets.query.filter(
+        CaseAssets.case_id == case_identifier
     ).paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
 
     return assets
