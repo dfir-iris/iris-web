@@ -24,6 +24,7 @@ from sqlalchemy import asc
 from app import db
 from app import app
 from app.datamgmt.states import update_ioc_state
+from app.datamgmt.conversions import convert_sort_direction
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.models.cases import Cases
 from app.models.models import Client
@@ -332,7 +333,7 @@ def _build_filter_ioc_query(
     query = Ioc.query.filter(*conditions)
 
     if sort_by is not None:
-        order_func = desc if sort_dir == "desc" else asc
+        order_func = convert_sort_direction(sort_dir)
 
         if sort_by == 'opened_by':
             query = query.join(User, Ioc.user_id == User.id).order_by(order_func(User.name))
