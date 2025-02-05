@@ -737,11 +737,8 @@ function escalateOrMergeAlert(alert_id, merge = false, batch = false) {
 }
 
 async function fetchAlerts(page, per_page, filters_string = {}, sort_order= 'desc') {
-
-    const response = get_raw_request_api(`/alerts/filter?cid=${get_caseid()}&page=${page}&per_page=${per_page}
+    return get_raw_request_api(`/api/v2/alerts?page=${page}&per_page=${per_page}
   &sort=${sort_order}&${filters_string}`);
-
-  return await response;
 
 }
 
@@ -1005,7 +1002,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                         <div class="col-md-9 copy-value">${
                             alert.alert_source_link && alert.alert_source_link.startsWith('http') 
                             ? `<a href="${alert.alert_source_link}" target="_blank" rel="noopener noreferrer">${alert.alert_source_link}</a>
-                                <button class="copy-btn ml-2" data-value="${escapeHtml(alert.alert_source_link)}">
+                                <button class="copy-btn ml-2" data-value="${filterXSS(alert.alert_source_link)}">
                                     <i class="fa fa-copy text-dark"></i>
                                 </button>`
                             : 'No valid link provided'
@@ -1015,7 +1012,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                         <div class="col-md-3"><b>Source Reference:</b></div>
                         <div class="col-md-9 copy-value">
                             ${alert.alert_source_ref}
-                            <button class="copy-btn ml-2" data-value="${escapeHtml(alert.alert_source_ref)}">
+                            <button class="copy-btn ml-2" data-value="${filterXSS(alert.alert_source_ref)}">
                                     <i class="fa fa-copy text-dark"></i>
                             </button>
                         </div>
@@ -1367,10 +1364,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
         console.error(error);
     });
 
-  if (api_request_failed(data)) {
-      return;
-  }
-  const alerts = data.data.alerts;
+  const alerts = data.data;
 
   if (modulesOptionsAlertReq === null) {
     modulesOptionsAlertReq = await fetchModulesOptionsAlert();
@@ -1416,7 +1410,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   // Update the pagination links
   const currentPage = page;
-  const totalPages = Math.ceil(data.data.total / per_page);
+  const totalPages = Math.ceil(data.total / per_page);
   createPagination(currentPage, totalPages, per_page, 'updateAlerts', '.pagination-container');
 
   // Update the URL with the filter parameters
@@ -1444,7 +1438,7 @@ async function updateAlerts(page, per_page, filters = {}, paging=false){
 
   history.replaceState(null, null, `?${queryParams.toString()}`);
 
-  $('#alertsInfoFilter').text(`${data.data.total} Alert${ data.data.total > 1 ? 's' : ''} ${ filterString ? `(filtered)` : '' }`);
+  $('#alertsInfoFilter').text(`${data.total} Alert${ data.total > 1 ? 's' : ''} ${ filterString ? `(filtered)` : '' }`);
 
   if (filter_tags_info) {
     $('#alertsInfoFilterTags').html(filter_tags_info.join(' + '));

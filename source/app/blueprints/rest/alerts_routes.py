@@ -27,6 +27,7 @@ from werkzeug import Response
 
 import app
 from app import db
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.case_comments import case_comment_update
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
@@ -66,6 +67,7 @@ alerts_rest_blueprint = Blueprint('alerts_rest', __name__)
 
 
 @alerts_rest_blueprint.route('/alerts/filter', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/alerts')
 @ac_api_requires(Permissions.alerts_read)
 def alerts_list_route() -> Response:
     """
