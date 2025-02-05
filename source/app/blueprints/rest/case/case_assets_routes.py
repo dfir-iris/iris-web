@@ -276,8 +276,10 @@ def case_upload_ioc(caseid):
 @ac_api_requires()
 def deprecated_asset_view(cur_id, caseid):
     try:
+
         asset = assets_get_detailed(cur_id)
-        return response_success(asset)
+        return response_success(msg='Asset added', data=asset)
+
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
