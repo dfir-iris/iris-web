@@ -117,6 +117,15 @@ class TestsRestAssets(TestCase):
                                         {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'analysis_status_id': 2}).json()
         self.assertEqual(2, response['analysis_status_id'])
 
+    def test_update_asset_should_allow_to_update_asset_compromise_status_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'asset_compromise_status_id': 1}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        identifier = response['asset_id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/assets/{identifier}',
+                                        {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'asset_compromise_status_id': 2}).json()
+        self.assertEqual(2, response['asset_compromise_status_id'])
+
     def test_delete_asset_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
