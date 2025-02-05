@@ -17,20 +17,16 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint, session
-from flask import redirect, url_for
-from flask import request
+from flask import redirect
 from flask_login import current_user, logout_user
 from oic.oauth2.exception import GrantError
 
-from app import app
 from app import db
 from app import oidc_client
-from app.blueprints.access_controls import is_authentication_ldap
 from app.blueprints.access_controls import is_authentication_oidc
 from app.blueprints.access_controls import not_authenticated_redirection_url
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
-from app.business.auth import validate_ldap_login, validate_local_login
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 
