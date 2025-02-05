@@ -60,6 +60,12 @@ class TestsRestAssets(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
         self.assertEqual(400, response.status_code)
 
+    def test_create_asset_with_asset_compromise_status_id_should_not_fail(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'asset_compromise_status_id': 1}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        self.assertEqual(1, response['asset_compromise_status_id'])
+
     def test_get_asset_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
