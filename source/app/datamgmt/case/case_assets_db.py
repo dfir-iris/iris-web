@@ -25,6 +25,7 @@ from flask_sqlalchemy.pagination import Pagination
 
 from app import db, app
 from app.datamgmt.states import update_assets_state
+from app.datamgmt.conversions import convert_sort_direction
 from app.models.models import AnalysisStatus
 from app.models.models import CaseStatus
 from app.models.models import AssetComments
@@ -99,9 +100,17 @@ def get_assets(case_identifier):
 
 
 def filter_assets(case_identifier, pagination_parameters: PaginationParameters) -> Pagination:
-    assets = CaseAssets.query.filter(
+    query = CaseAssets.query.filter(
         CaseAssets.case_id == case_identifier
-    ).paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
+    )
+    order_by = pagination_parameters.get_order_by()
+    if order_by is not None:
+        order_func = convert_sort_direction(pagination_parameters.get_direction())
+
+        if hasattr(CaseAssets, order_by):
+            query = query.order_by(order_func(getattr(CaseAssets, order_by)))
+    assets = query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
+
 
     return assets
 

@@ -224,3 +224,12 @@ class TestsRestAssets(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets', { 'per_page': 1 }).json()
         self.assertEqual(1, len(response['data']))
+
+    def test_get_assets_should_accept_order_by_query_parameter(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'asset2'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        body = {'asset_type_id': 1, 'asset_name': 'asset1'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets', { 'order_by': 'asset_name' }).json()
+        self.assertEqual('asset1', response['data'][0]['asset_name'])
