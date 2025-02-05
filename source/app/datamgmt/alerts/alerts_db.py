@@ -626,6 +626,18 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         for alert_ioc in alert.iocs:
             if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
+                # Make sure we don't have an existing IOC already
+                tmp_ioc = Ioc.query.filter(
+                    Ioc.case_id == case.case_id,
+                    Ioc.ioc_value == alert_ioc.ioc_value,
+                    Ioc.ioc_type_id == alert_ioc.ioc_type_id
+                ).first()
+
+                if tmp_ioc:
+                    # Skip as we already have it in the case
+                    ioc_links.append(tmp_ioc.ioc_id)
+                    continue
+
                 if alert_ioc.case_id is not None:
                     # Make a deep copy of the ioc
                     # prevent the ioc to conflict with the existing ioc
@@ -650,6 +662,18 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         for alert_asset in alert.assets:
             if str(alert_asset.asset_uuid) == asset_uuid:
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
+
+                # Make sure we don't have an existing asset already
+                tmp_asset = CaseAssets.query.filter(and_(
+                    CaseAssets.asset_name == alert_asset.asset_name,
+                    CaseAssets.asset_type_id == alert_asset.asset_type_id,
+                    CaseAssets.case_id == case.case_id
+                )).first()
+
+                if tmp_asset:
+                    # Skip as it's already in the case
+                    asset_links.append(tmp_asset.asset_id)
+                    continue
 
                 if alert_asset.case_id is not None:
                     # Make a deep copy of the asset
