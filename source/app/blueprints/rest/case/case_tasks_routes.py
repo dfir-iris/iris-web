@@ -142,8 +142,9 @@ def deprecated_case_edit_task(cur_id, caseid):
 
         task = tasks_update(task, request.get_json())
         task_schema = CaseTaskSchema()
-        result = 'Task "{}" updated'.format(task.task_title), task_schema.dump(task)
-        return response_success(result)
+
+        return response_success(msg='Task updated', data=task_schema.dump(task))
+
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg='Data error', data=e.messages)
 
