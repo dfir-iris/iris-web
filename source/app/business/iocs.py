@@ -79,7 +79,7 @@ def iocs_create(request_json, case_identifier):
     raise BusinessProcessingError('Unable to create IOC for internal reasons')
 
 
-def iocs_update(ioc: Ioc, request_json: dict):
+def iocs_update(ioc: Ioc, request_json: dict) -> (Ioc, str):
     """
     Identifier: the IOC identifier
     Request JSON: the Request
