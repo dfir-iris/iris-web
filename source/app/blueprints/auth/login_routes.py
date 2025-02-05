@@ -40,6 +40,7 @@ from app.blueprints.access_controls import is_authentication_oidc
 from app.blueprints.access_controls import is_authentication_ldap
 from app.blueprints.responses import response_error
 from app.business.auth import validate_ldap_login
+from app.business.auth import validate_local_login
 from app.business.auth import retrieve_user_by_username
 from app.business.auth import wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user
@@ -47,6 +48,8 @@ from app.datamgmt.manage.manage_users_db import get_user
 from app.forms import LoginForm
 from app.forms import MFASetupForm
 from app.iris_engine.utils.tracker import track_activity
+from app.blueprints.responses import response_forbidden
+from app.blueprints.rest.endpoints import response_api_success
 
 login_blueprint = Blueprint(
     'login',
@@ -134,6 +137,35 @@ if app.config.get('AUTHENTICATION_TYPE') in ['local', 'ldap', 'oidc']:
             return _authenticate_ldap(form, username, password, app.config.get('AUTHENTICATION_LOCAL_FALLBACK'))
 
         return _authenticate_password(form, username, password)
+
+
+@login_blueprint.post('/auth/login')
+def auth_login():
+    """
+    Login endpoint. Handles taking user/pass combo and authenticating a local session or returning an error.
+    """
+
+    if current_user.is_authenticated:
+        return response_api_success('User already authenticated')
+
+    if is_authentication_oidc() and app.config.get('AUTHENTICATION_LOCAL_FALLBACK') is False:
+        return redirect(url_for('login.oidc_login'))
+
+    username = request.json.get('username')
+    password = request.json.get('password')
+
+    if is_authentication_ldap() is True:
+        authed_user = validate_ldap_login(
+            username, password, app.config.get('AUTHENTICATION_LOCAL_FALLBACK'))
+
+    else:
+        authed_user = validate_local_login(username, password)
+
+    if authed_user is None:
+        return response_forbidden()
+
+    return response_api_success('Login successful')
+
 
 if is_authentication_oidc():
     @login_blueprint.route('/oidc-login')

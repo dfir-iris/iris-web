@@ -45,6 +45,10 @@ def response(status, data=None):
     return app.response_class(response=data, status=status, mimetype='application/json')
 
 
+def response_forbidden():
+    return response(403)
+
+
 def response_error(msg, data=None, status=400):
     content = {
         'status': 'error',

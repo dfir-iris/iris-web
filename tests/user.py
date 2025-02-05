@@ -21,13 +21,17 @@ from rest_api import RestApi
 
 class User:
 
-    def __init__(self, iris_url, api_key, identifier):
+    def __init__(self, iris_url, login, api_key, identifier):
         self._graphql_api = GraphQLApi(iris_url + '/graphql', api_key)
+        self._login = login
         self._api = RestApi(iris_url, api_key)
         self._identifier = identifier
 
     def get_identifier(self):
         return self._identifier
+
+    def get_login(self):
+        return self._login
 
     def execute_graphql_query(self, payload):
         response = self._graphql_api.execute(payload)

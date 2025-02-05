@@ -39,35 +39,6 @@ auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 # TODO put this endpoint back after thinking about it (doesn't feel REST)
-#@auth_blueprint.post('/login')
-def login():
-    """
-    Login endpoint. Handles taking user/pass combo and authenticating a local session or returning an error.
-    """
-
-    if current_user.is_authenticated:
-        return response_api_success('User already authenticated')
-
-    if is_authentication_oidc() and app.config.get('AUTHENTICATION_LOCAL_FALLBACK') is False:
-        return redirect(url_for('login.oidc_login'))
-
-    username = request.json.get('username')
-    password = request.json.get('password')
-
-    if is_authentication_ldap() is True:
-        authed_user = validate_ldap_login(
-            username, password, app.config.get('AUTHENTICATION_LOCAL_FALLBACK'))
-
-    else:
-        authed_user = validate_local_login(username, password)
-
-    if authed_user is None:
-        return response_api_error('Invalid credentials')
-
-    return response_api_success(data=authed_user)
-
-
-# TODO put this endpoint back after thinking about it (doesn't feel REST)
 #@auth_blueprint.get('/logout')
 def logout():
     """

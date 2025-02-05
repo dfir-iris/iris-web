@@ -37,7 +37,7 @@ class Iris:
         self._docker_compose = DockerCompose(_IRIS_PATH, 'docker-compose.dev.yml')
         # TODO remove this field and use _administrator instead
         self._api = RestApi(API_URL, _API_KEY)
-        self._administrator = User(API_URL, _API_KEY, _ADMINISTRATOR_USER_IDENTIFIER)
+        self._administrator = User(API_URL, 'administrator', _API_KEY, _ADMINISTRATOR_USER_IDENTIFIER)
 
     def create(self, path, body, query_parameters=None):
         return self._api.post(path, body, query_parameters)
@@ -51,18 +51,18 @@ class Iris:
     def delete(self, path):
         return self._api.delete(path)
 
-    def _create_user(self, user_name):
+    def _create_user(self, user_name, password):
         body = {
             'user_name': user_name,
             'user_login': user_name,
             'user_email': f'{user_name}@aa.eu',
-            'user_password': 'aA.1234567890'
+            'user_password': password
         }
         user = self._api.post('/manage/users/add', body).json()
-        return User(API_URL, user['data']['user_api_key'], user['data']['id'])
+        return User(API_URL, user_name, user['data']['user_api_key'], user['data']['id'])
 
-    def create_dummy_user(self):
-        return self._create_user(f'user{uuid4()}')
+    def create_dummy_user(self, password='aA.1234567890'):
+        return self._create_user(f'user{uuid4()}', password)
 
     def create_dummy_case(self):
         body = {
