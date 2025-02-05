@@ -763,20 +763,32 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         for alert_ioc in alert.iocs:
             if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
+                tmp_ioc = Ioc.query.filter(
+                    Ioc.case_id == case.case_id,
+                    Ioc.ioc_value == alert_ioc.ioc_value,
+                    Ioc.ioc_type_id == alert_ioc.ioc_type_id
+                ).first()
+
+                if tmp_ioc:
+                    alert_ioc = tmp_ioc
+
                 add_ioc(alert_ioc, current_user.id, case.case_id)
                 ioc_links.append(alert_ioc.ioc_id)
 
     # Add the assets to the case
     for asset_uuid in assets_list:
         for alert_asset in alert.assets:
+            # Filter selected assets by the user
             if str(alert_asset.asset_uuid) == asset_uuid:
 
                 alert_asset.analysis_status_id = get_unspecified_analysis_status_id()
 
-                tmp_asset = CaseAssets.query.filter(
-                    CaseAssets.asset_uuid == alert_asset.asset_uuid,
+                # Check if the asset exists already in the case
+                tmp_asset = CaseAssets.query.filter(and_(
+                    CaseAssets.asset_name == alert_asset.asset_name,
+                    CaseAssets.asset_type_id == alert_asset.asset_type_id,
                     CaseAssets.case_id == case.case_id
-                ).first()
+                )).first()
 
                 if tmp_asset:
                     asset = tmp_asset

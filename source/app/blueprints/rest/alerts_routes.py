@@ -673,7 +673,7 @@ def alerts_escalate_route(alert_id) -> Response:
 @ac_api_requires(Permissions.alerts_write)
 def alerts_merge_route(alert_id) -> Response:
     """
-    Merge an alert into a case
+    Merge an alert into an existing case
 
     args:
         caseid (str): The case id
