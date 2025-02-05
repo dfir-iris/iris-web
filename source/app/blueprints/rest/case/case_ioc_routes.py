@@ -201,17 +201,18 @@ def case_upload_ioc(caseid):
 @endpoint_deprecated('DELETE', '/api/v2/cases/<int:case_identifier>/iocs/<int:cur_id>')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
-def deprecated_case_delete_ioc(cur_id, caseid):
+def deprecated_case_delete_ioc(cur_id: int, caseid: int):
     try:
         ioc = iocs_get(cur_id)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
 
-        msg = iocs_delete(cur_id)
+        msg = iocs_delete(ioc)
         return response_success(msg=msg)
 
     except ObjectNotFoundError:
-        raise BusinessProcessingError('Not a valid IOC for this case')
+        return response_error('Not a valid IOC for this case')
+
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
