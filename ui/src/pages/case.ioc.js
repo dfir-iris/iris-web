@@ -254,9 +254,6 @@ function update_ioc(ioc_id) {
         if (textStatus == 'success') {
             reload_iocs();
 
-            //$('#submit_new_ioc').text("Saved").addClass('btn-outline-success').removeClass('btn-outline-danger').removeClass('btn-outline-warning');
-            //$('#last_saved').removeClass('btn-danger').addClass('btn-success');
-            //$('#last_saved > i').attr('class', 'fa-solid fa-file-circle-check');
             $('#modal_add_ioc').modal('hide');
 
             notify_success('IOC updated');
@@ -264,7 +261,6 @@ function update_ioc(ioc_id) {
         } else {
             $('#submit_new_ioc').text('Save again');
             notify_error(data.message);
-            //swal('Oh no !', data.message, 'error')
         }
     })
 
