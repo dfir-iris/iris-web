@@ -55,7 +55,7 @@ def tasks_delete(task: CaseTasks):
     track_activity(f'deleted task "{task.task_title}"')
 
 
-def tasks_create(case_identifier, request_json):
+def tasks_create(case_identifier: int, request_json: dict) -> (str, CaseTasks):
 
     request_data = call_modules_hook('on_preload_task_create', data=request_json, caseid=case_identifier)
 

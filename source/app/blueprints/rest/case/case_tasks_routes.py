@@ -110,8 +110,8 @@ def case_task_status_update(cur_id, caseid):
 def deprecated_case_add_task(caseid):
     task_schema = CaseTaskSchema()
     try:
-        case, msg = tasks_create(caseid, request.get_json())
-        return response_success(msg, data=task_schema.dump(case))
+        msg, task = tasks_create(caseid, request.get_json())
+        return response_success(msg, data=task_schema.dump(task))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
 
