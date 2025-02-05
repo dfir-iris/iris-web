@@ -413,9 +413,13 @@ $(document).ready(function(){
             "data": "tlp",
             "render": function(data, type, row, meta) {
                if (type === 'display') {
-                  bscolor = data.tlp_bscolor;
-                  data = sanitizeHTML(data.tlp_name);
-                  data = '<span class="badge badge-'+ bscolor +' ml-2">tlp:' + data + '</span>';
+                  if (data) {
+                      bscolor = data.tlp_bscolor;
+                      data = sanitizeHTML(data.tlp_name);
+                      data = '<span class="badge badge-' + bscolor + ' ml-2">tlp:' + data + '</span>';
+                  } else {
+                      data = '<span class="badge badge-light ml-2">Unspecified</span>';
+                  }
               }
               return data;
             }
