@@ -26,10 +26,11 @@ from flask_login import current_user
 
 from app import db
 from app import app
-from app import oidc_client
 
 from app.blueprints.rest.endpoints import endpoint_deprecated
-from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews
+from app.datamgmt.dashboard.dashboard_db import get_global_task
+from app.datamgmt.dashboard.dashboard_db import list_user_cases
+from app.datamgmt.dashboard.dashboard_db import list_user_reviews
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
 from app.datamgmt.dashboard.dashboard_db import list_user_tasks
