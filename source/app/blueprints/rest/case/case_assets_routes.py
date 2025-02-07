@@ -106,6 +106,7 @@ def case_filter_assets(caseid):
 
 
 @case_assets_rest_blueprint.route('/case/assets/list', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/cases/{case_identifier}/assets')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
     """
