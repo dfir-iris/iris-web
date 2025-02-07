@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from unittest import TestCase
+from unittest import skip
 import requests
 from urllib import parse
 
@@ -38,3 +39,30 @@ class TestsAuth(TestCase):
         url = parse.urljoin(API_URL, '/auth/login')
         response = requests.post(url, json={'username': user.get_login(), 'password': password})
         self.assertIn('Set-Cookie', response.headers)
+
+    def test_login_should_return_authentication_cookie_which_allows_get_requests(self):
+        password = 'aA.1234567890'
+        user = self._subject.create_dummy_user(password=password)
+        url = parse.urljoin(API_URL, '/auth/login')
+        response = requests.post(url, json={'username': user.get_login(), 'password': password})
+        url = parse.urljoin(API_URL, '/api/v2/cases')
+        name, value = response.headers['Set-Cookie'].split('=', 1)
+        cookies = {
+            name: value
+        }
+        response = requests.get(url, cookies=cookies)
+        self.assertEqual(200, response.status_code)
+
+    @skip
+    def test_logout_should_forbid_later_requests_from_the_same_user(self):
+        password = 'aA.1234567890'
+        user = self._subject.create_dummy_user(password=password)
+        url = parse.urljoin(API_URL, '/auth/login')
+        response = requests.post(url, json={'username': user.get_login(), 'password': password})
+        name, value = response.headers['Set-Cookie'].split('=', 1)
+        cookies = {name: value}
+        url = parse.urljoin(API_URL, '/auth/logout')
+        requests.get(url, cookies=cookies)
+        url = parse.urljoin(API_URL, '/api/v2/cases')
+        response = requests.get(url, cookies=cookies)
+        self.assertEqual(401, response.status_code)

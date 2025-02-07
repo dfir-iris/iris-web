@@ -29,8 +29,10 @@ from flask import request
 from flask import session
 from flask import url_for
 from flask_login import current_user
+from flask_login import logout_user
 from oic import rndstr
 from oic.oic.message import AuthorizationResponse
+from oic.oauth2.exception import GrantError
 
 from app import app
 from app import bc
@@ -38,6 +40,7 @@ from app import db
 from app import oidc_client
 from app.blueprints.access_controls import is_authentication_oidc
 from app.blueprints.access_controls import is_authentication_ldap
+from app.blueprints.access_controls import not_authenticated_redirection_url
 from app.blueprints.responses import response_error
 from app.business.auth import validate_ldap_login
 from app.business.auth import validate_local_login
@@ -48,7 +51,7 @@ from app.datamgmt.manage.manage_users_db import get_user
 from app.forms import LoginForm
 from app.forms import MFASetupForm
 from app.iris_engine.utils.tracker import track_activity
-from app.blueprints.responses import response_forbidden
+from app.blueprints.responses import response_invalid_authentication
 from app.blueprints.rest.endpoints import response_api_success
 
 login_blueprint = Blueprint(
@@ -58,10 +61,6 @@ login_blueprint = Blueprint(
 )
 
 log = app.logger
-
-
-# filter User out of database through username
-
 
 
 def _render_template_login(form, msg):
@@ -162,9 +161,53 @@ def auth_login():
         authed_user = validate_local_login(username, password)
 
     if authed_user is None:
-        return response_forbidden()
+        return response_invalid_authentication()
 
     return response_api_success('Login successful')
+
+
+def _logout():
+    if session['current_case']:
+        current_user.ctx_case = session['current_case']['case_id']
+        current_user.ctx_human_case = session['current_case']['case_name']
+        db.session.commit()
+
+    if is_authentication_oidc():
+        if oidc_client.provider_info.get("end_session_endpoint"):
+            try:
+                logout_request = oidc_client.construct_EndSessionRequest(
+                    state=session["oidc_state"])
+                logout_url = logout_request.request(
+                    oidc_client.provider_info["end_session_endpoint"])
+                track_activity("user '{}' has been logged-out".format(
+                    current_user.user), ctx_less=True, display_in_ui=False)
+                logout_user()
+                session.clear()
+                return redirect(logout_url)
+            except GrantError:
+                track_activity(
+                    f"no oidc session found for user '{current_user.user}', skipping oidc provider logout and continuing to logout local user",
+                    ctx_less=True,
+                    display_in_ui=False
+                )
+
+    track_activity(f"user '{current_user.user}' has been logged-out",
+                   ctx_less=True, display_in_ui=False)
+
+    logout_user()
+    session.clear()
+
+    return redirect(not_authenticated_redirection_url('/'))
+
+
+@login_blueprint.route('/logout')
+def logout():
+    return _logout()
+
+
+@login_blueprint.get('/auth/logout')
+def auth_logout():
+    return _logout()
 
 
 if is_authentication_oidc():

@@ -16,62 +16,15 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import Blueprint, session
-from flask import redirect
-from flask_login import current_user, logout_user
-from oic.oauth2.exception import GrantError
+from flask import Blueprint
+from flask_login import current_user
 
-from app import db
-from app import oidc_client
-from app.blueprints.access_controls import is_authentication_oidc
-from app.blueprints.access_controls import not_authenticated_redirection_url
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
-from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 
 
 auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
-
-
-# TODO put this endpoint back after thinking about it (doesn't feel REST)
-#@auth_blueprint.get('/logout')
-def logout():
-    """
-    Logout function. Erase its session and redirect to index i.e login
-    :return: Page
-    """
-
-    if session['current_case']:
-        current_user.ctx_case = session['current_case']['case_id']
-        current_user.ctx_human_case = session['current_case']['case_name']
-        db.session.commit()
-
-    if is_authentication_oidc():
-        if oidc_client.provider_info.get("end_session_endpoint"):
-            try:
-                logout_request = oidc_client.construct_EndSessionRequest(
-                    state=session["oidc_state"])
-                logout_url = logout_request.request(
-                    oidc_client.provider_info["end_session_endpoint"])
-                track_activity("user '{}' has been logged-out".format(
-                    current_user.user), ctx_less=True, display_in_ui=False)
-                logout_user()
-                session.clear()
-                return redirect(logout_url)
-            except GrantError:
-                track_activity(
-                    f"no oidc session found for user '{current_user.user}', skipping oidc provider logout and continuing to logout local user",
-                    ctx_less=True,
-                    display_in_ui=False
-                )
-
-    track_activity("user '{}' has been logged-out".format(current_user.user),
-                   ctx_less=True, display_in_ui=False)
-    logout_user()
-    session.clear()
-
-    return redirect(not_authenticated_redirection_url('/'))
 
 
 # TODO shouldn't we rather have /api/v2/users/{identifier}?
