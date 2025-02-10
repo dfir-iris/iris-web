@@ -21,9 +21,11 @@ import datetime
 from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
+from flask_sqlalchemy.pagination import Pagination
 
 from app import db, app
 from app.datamgmt.states import update_assets_state
+from app.datamgmt.conversions import convert_sort_direction
 from app.models.models import AnalysisStatus
 from app.models.models import CaseStatus
 from app.models.models import AssetComments
@@ -37,6 +39,7 @@ from app.models.models import Ioc
 from app.models.models import IocAssetLink
 from app.models.models import IocType
 from app.models.authorization import User
+from app.models.pagination_parameters import PaginationParameters
 
 
 log = app.logger
@@ -68,7 +71,7 @@ def case_assets_db_exists(asset: CaseAssets):
     return assets.first() is not None
 
 
-def get_assets(caseid):
+def get_assets(case_identifier):
     assets = CaseAssets.query.with_entities(
         CaseAssets.asset_id,
         CaseAssets.asset_uuid,
@@ -85,12 +88,29 @@ def get_assets(caseid):
         CaseAssets.analysis_status_id,
         CaseAssets.asset_tags
     ).filter(
-        CaseAssets.case_id == caseid,
+        CaseAssets.case_id == case_identifier,
     ).join(
         CaseAssets.asset_type
     ).join(
         CaseAssets.analysis_status
     ).all()
+    log.error(f'case_identifier: {case_identifier}')
+    log.error(f'assets: {assets}')
+    return assets
+
+
+def filter_assets(case_identifier, pagination_parameters: PaginationParameters) -> Pagination:
+    query = CaseAssets.query.filter(
+        CaseAssets.case_id == case_identifier
+    )
+    order_by = pagination_parameters.get_order_by()
+    if order_by is not None:
+        order_func = convert_sort_direction(pagination_parameters.get_direction())
+
+        if hasattr(CaseAssets, order_by):
+            query = query.order_by(order_func(getattr(CaseAssets, order_by)))
+    assets = query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
+
 
     return assets
 
@@ -231,6 +251,7 @@ def get_assets_ioc_links(caseid):
     ).all()
 
     return ioc_links_req
+
 
 def get_similar_assets(asset_name, asset_type_id, caseid, customer_id, cases_limitation):
 
@@ -391,6 +412,7 @@ def delete_asset_comment(asset_id, comment_id, case_id):
     db.session.commit()
 
     return True, "Comment deleted"
+
 
 def get_asset_by_name(asset_name, caseid):
     asset = CaseAssets.query.filter(

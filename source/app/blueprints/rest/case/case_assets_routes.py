@@ -100,11 +100,13 @@ def case_filter_assets(caseid):
 
     ret['assets'] = assets
 
-    ret['state'] = get_assets_state(caseid=caseid)
+    ret['state'] = get_assets_state(caseid)
 
     return response_success("", data=ret)
 
+
 @case_assets_rest_blueprint.route('/case/assets/list', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/cases/{case_identifier}/assets')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
     """
@@ -143,7 +145,7 @@ def case_list_assets(caseid):
 
         ret['assets'].append(asset)
 
-    ret['state'] = get_assets_state(caseid=caseid)
+    ret['state'] = get_assets_state(caseid)
 
     return response_success("", data=ret)
 
@@ -152,7 +154,7 @@ def case_list_assets(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_assets_state(caseid):
-    os = get_assets_state(caseid=caseid)
+    os = get_assets_state(caseid)
     if os:
         return response_success(data=os)
     return response_error('No assets state for this case.')

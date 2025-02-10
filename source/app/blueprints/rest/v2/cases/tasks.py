@@ -43,6 +43,7 @@ case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
                                  url_prefix='/<int:case_identifier>/tasks')
 
+
 @case_tasks_blueprint.post('')
 @ac_api_requires()
 def add_case_task(case_identifier):
