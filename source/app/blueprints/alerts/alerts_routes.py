@@ -210,7 +210,7 @@ def alerts_add_route() -> Response:
                             iocs=iocs_list, alert_id=new_alert.alert_id,
                             creation_date=new_alert.alert_source_event_time)
 
-        register_related_alerts(new_alert, assets_list=assets, iocs_list=iocs)
+        #register_related_alerts(new_alert, assets_list=assets, iocs_list=iocs)
         
         new_alert = call_modules_hook('on_postload_alert_create', data=new_alert)
 
