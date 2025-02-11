@@ -20,11 +20,13 @@ from flask import Blueprint
 from flask import request
 
 from app.blueprints.access_controls import ac_api_requires
-from app.blueprints.rest.endpoints import response_api_created, response_api_deleted
+from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_not_found
+from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.business.cases import cases_exists
 from app.business.assets import assets_create
@@ -37,7 +39,6 @@ from app.business.errors import ObjectNotFoundError
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
-from app.blueprints.access_controls import ac_api_return_access_denied
 
 case_assets_blueprint = Blueprint('case_assets',
                                   __name__,
@@ -80,7 +81,7 @@ def add_asset(case_identifier):
         _, asset = assets_create(case_identifier, request.get_json())
         return response_api_created(asset_schema.dump(asset))
     except BusinessProcessingError as e:
-        return response_api_error(e.get_message(), e.get_data())
+        return response_api_error(e.get_message(), data=e.get_data())
 
 
 @case_assets_blueprint.get('/<int:identifier>')

@@ -31,10 +31,9 @@ from app.schema.marshables import CaseNoteSchema
 from app.util import add_obj_history_entry
 
 
-def _load(request_data, note_schema=None):
+def _load(request_data):
     try:
-        if note_schema is None:
-            note_schema = CaseNoteSchema()
+        note_schema = CaseNoteSchema()
         return note_schema.load(request_data)
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
