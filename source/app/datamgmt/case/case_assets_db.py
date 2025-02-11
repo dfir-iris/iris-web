@@ -94,8 +94,6 @@ def get_assets(case_identifier):
     ).join(
         CaseAssets.analysis_status
     ).all()
-    log.error(f'case_identifier: {case_identifier}')
-    log.error(f'assets: {assets}')
     return assets
 
 
