@@ -94,3 +94,13 @@ class TestsRestNotes(TestCase):
         body = {'directory_id': directory_identifier}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body)
         self.assertEqual(400, response.status_code)
+
+    def test_create_note_should_return_object_with_field_modification_history(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/case/notes/directories/add',
+                                        {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
+        directory_identifier = response['data']['id']
+        body = {'directory_id': directory_identifier}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
+        first_modification_history = next(iter(response['modification_history'].values()))
+        self.assertEqual({'user': 'administrator', 'user_id': 1, 'action': 'created note'}, first_modification_history)
