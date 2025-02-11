@@ -31,7 +31,7 @@ class TestsRestAssets(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
-    def test_create_asset_should_work(self):
+    def test_create_asset_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
