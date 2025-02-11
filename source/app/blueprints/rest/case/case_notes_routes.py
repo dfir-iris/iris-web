@@ -27,6 +27,7 @@ from sqlalchemy import and_
 from app import db
 from app import app
 from app.blueprints.rest.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.business.errors import BusinessProcessingError
 from app.business.notes import notes_create
 from app.business.notes import notes_list_revisions
@@ -200,6 +201,7 @@ def case_note_revision_delete(cur_id, revision_id, caseid):
 
 
 @case_notes_rest_blueprint.route('/case/notes/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/<int:identifier>/notes')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_add(caseid):
