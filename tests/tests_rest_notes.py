@@ -36,3 +36,21 @@ class TestsRestNotes(TestCase):
         body = {'directory_id': directory_identifier}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body)
         self.assertEqual(201, response.status_code)
+
+    def test_create_note_should_accept_field_note_title_with_empty_value(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/case/notes/directories/add',
+                                        {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
+        directory_identifier = response['data']['id']
+        body = {'directory_id': directory_identifier, 'note_title': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
+        self.assertEqual('', response['note_title'])
+
+    def test_create_note_should_accept_field_note_content_with_empty_value(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/case/notes/directories/add',
+                                        {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
+        directory_identifier = response['data']['id']
+        body = {'directory_id': directory_identifier, 'note_content': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
+        self.assertEqual('', response['note_content'])
