@@ -19,6 +19,8 @@
 from unittest import TestCase
 from iris import Iris
 
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
+
 
 class TestsRestNotes(TestCase):
 
@@ -68,3 +70,11 @@ class TestsRestNotes(TestCase):
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
         self.assertEqual(parent_directory_identifier, response['directory']['parent_id'])
 
+    def test_create_note_with_missing_case_identifier_should_return_404(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/case/notes/directories/add',
+                                        {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
+        directory_identifier = response['data']['id']
+        body = {'directory_id': directory_identifier}
+        response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/notes', body)
+        self.assertEqual(404, response.status_code)
