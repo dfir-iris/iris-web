@@ -54,3 +54,17 @@ class TestsRestNotes(TestCase):
         body = {'directory_id': directory_identifier, 'note_content': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
         self.assertEqual('', response['note_content'])
+
+    def test_create_note_in_sub_directory_should_return_directory_parent_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/case/notes/directories/add',
+                                        {'name': 'parent_directory_name'}, query_parameters={'cid': case_identifier}).json()
+        parent_directory_identifier = response['data']['id']
+        response = self._subject.create(f'/case/notes/directories/add',
+                                        {'name': 'directory_name', 'parent_id': parent_directory_identifier},
+                                        query_parameters={'cid': case_identifier}).json()
+        directory_identifier = response['data']['id']
+        body = {'directory_id': directory_identifier, 'note_content': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
+        self.assertEqual(parent_directory_identifier, response['directory']['parent_id'])
+
