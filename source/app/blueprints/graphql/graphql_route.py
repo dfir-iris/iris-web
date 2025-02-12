@@ -55,13 +55,7 @@ from app.blueprints.graphql.permissions import permissions_check_current_user_ha
 import warnings
 
 # Ignore all UserWarnings
-warnings.filterwarnings("ignore", category=UserWarning)
-
-import warnings
-
-# Ignore all UserWarnings
-warnings.filterwarnings("ignore", category=UserWarning)
-
+warnings.filterwarnings('ignore', category=UserWarning)
 
 
 class Query(ObjectType):

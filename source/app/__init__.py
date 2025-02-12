@@ -34,7 +34,9 @@ from functools import partial
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
+from app.configuration import Config
 from app.iris_engine.tasker.celery import make_celery
+from app.iris_engine.tasker.celery import set_celery_flask_context
 from app.iris_engine.access_control.oidc_handler import get_oidc_client
 
 
@@ -63,6 +65,9 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
+bc = Bcrypt()  # flask-bcrypt
+ma = Marshmallow()
+celery = make_celery(__name__)
 app = Flask(__name__, static_folder='../static')
 
 # CORS(app,
@@ -99,7 +104,7 @@ app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_pe
 app.jinja_options["autoescape"] = lambda _: True
 app.jinja_env.autoescape = True
 
-app.config.from_object('app.configuration.Config')
+app.config.from_object(Config)
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
@@ -115,16 +120,17 @@ SQLALCHEMY_ENGINE_OPTIONS = {
 
 db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
 
-bc = Bcrypt(app)  # flask-bcrypt
+from app.post_init import run_post_init
+bc.init_app(app)
 
 lm = LoginManager()  # flask-loginmanager
 lm.init_app(app)  # init the login manager
 
-ma = Marshmallow(app) # Init marshmallow
+ma.init_app(app)
 
 dropzone = Dropzone(app)
 
-celery = make_celery(app)
+set_celery_flask_context(celery, app)
 
 # store = HttpExposedFileSystemStore(
 #     path='images',
@@ -140,8 +146,11 @@ alerts_namespace = AlertsNamespace('/alerts')
 socket_io.on_namespace(alerts_namespace)
 
 oidc_client = None
-if app.config.get('AUTHENTICATION_TYPE') == "oidc":
-    oidc_client = get_oidc_client(app)
+if app.config.get('AUTHENTICATION_TYPE') == 'oidc':
+    oidc_client = get_oidc_client(app.config, app.logger)
+from app.views import register_blueprints
+from app.views import load_user
+from app.views import load_user_from_request
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -157,13 +166,7 @@ def after_request(response):
     return response
 
 
-from app.views import register_blusprints
-from app.views import load_user
-from app.views import load_user_from_request
-
-register_blusprints(app)
-
-from app.post_init import run_post_init
+register_blueprints(app)
 
 try:
 

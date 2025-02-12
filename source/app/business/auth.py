@@ -4,8 +4,8 @@ from flask import session, redirect, url_for, request
 from flask_login import login_user
 
 from app import bc, app, db
+from app.business.users import retrieve_user_by_username
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
-from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
@@ -14,18 +14,6 @@ from app.schema.marshables import UserSchema
 
 log = app.logger
 
-def _retrieve_user_by_username(username:str):
-    """
-    Retrieve the user object by username.
-
-    :param username: Username
-    :return: User object if found, None
-    """
-    user = get_active_user_by_login(username)
-    if not user:
-        track_activity(f'someone tried to log in with user \'{username}\', which does not exist',
-                       ctx_less=True, display_in_ui=False)
-    return user
 
 def validate_ldap_login(username: str, password:str, local_fallback: bool = True):
     """
@@ -45,7 +33,7 @@ def validate_ldap_login(username: str, password:str, local_fallback: bool = True
             track_activity(f'wrong login password for user \'{username}\' using LDAP auth', ctx_less=True, display_in_ui=False)
             return None
 
-        user = _retrieve_user_by_username(username)
+        user = retrieve_user_by_username(username)
         if not user:
             return None
 
@@ -64,7 +52,7 @@ def validate_local_login(username: str, password: str):
 
     :return: User object if successful, None otherwise
     """
-    user = _retrieve_user_by_username(username)
+    user = retrieve_user_by_username(username)
     if not user:
         return None
 

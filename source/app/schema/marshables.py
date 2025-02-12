@@ -458,7 +458,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
         """
         assert_type_mml(input_var=data.get('directory_id'),
-                        field_name="directory_id",
+                        field_name='directory_id',
                         type=int)
 
         directory = NoteDirectory.query.filter(
