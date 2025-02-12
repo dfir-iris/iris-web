@@ -63,6 +63,7 @@ case_notes_rest_blueprint = Blueprint('case_notes_rest', __name__)
 
 
 @case_notes_rest_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/cases/{case_identifier}/notes/{identifier}')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_detail(cur_id, caseid):
@@ -197,7 +198,7 @@ def case_note_revision_delete(cur_id, revision_id, caseid):
 
 
 @case_notes_rest_blueprint.route('/case/notes/add', methods=['POST'])
-@endpoint_deprecated('POST', '/api/v2/cases/<int:identifier>/notes')
+@endpoint_deprecated('POST', '/api/v2/cases/{case_identifier}/notes')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_add(caseid):
