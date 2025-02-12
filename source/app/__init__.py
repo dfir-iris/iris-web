@@ -125,6 +125,7 @@ ma = Marshmallow(app) # Init marshmallow
 dropzone = Dropzone(app)
 
 celery = make_celery(app)
+from app.post_init import run_post_init
 
 # store = HttpExposedFileSystemStore(
 #     path='images',
@@ -143,6 +144,8 @@ oidc_client = None
 if app.config.get('AUTHENTICATION_TYPE') == "oidc":
     oidc_client = get_oidc_client(app.config, app.logger)
 from app.views import register_blueprints
+from app.views import load_user
+from app.views import load_user_from_request
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -158,12 +161,7 @@ def after_request(response):
     return response
 
 
-from app.views import load_user
-from app.views import load_user_from_request
-
 register_blueprints(app)
-
-from app.post_init import run_post_init
 
 try:
 
