@@ -36,9 +36,12 @@ from app import app
 from app import bc
 from app import db
 from app import oidc_client
-from app.blueprints.access_controls import is_authentication_oidc, is_authentication_ldap
+from app.blueprints.access_controls import is_authentication_oidc
+from app.blueprints.access_controls import is_authentication_ldap
 from app.blueprints.responses import response_error
-from app.business.auth import validate_ldap_login, _retrieve_user_by_username, wrap_login_user
+from app.business.auth import validate_ldap_login
+from app.business.auth import _retrieve_user_by_username
+from app.business.auth import wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
 from app.forms import LoginForm, MFASetupForm
