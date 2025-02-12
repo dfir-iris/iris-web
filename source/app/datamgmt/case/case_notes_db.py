@@ -31,7 +31,7 @@ from app.models.models import NotesGroupLink
 from app.models.authorization import User
 
 
-def get_note(note_id, caseid=None):
+def get_note(note_id):
     note = Notes.query.filter(and_(
         Notes.note_id == note_id
     )).first()
