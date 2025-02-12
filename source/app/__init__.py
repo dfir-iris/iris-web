@@ -65,6 +65,7 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
+ma = Marshmallow()
 celery = make_celery(__name__)
 app = Flask(__name__, static_folder='../static')
 
@@ -123,11 +124,11 @@ bc = Bcrypt(app)  # flask-bcrypt
 lm = LoginManager()  # flask-loginmanager
 lm.init_app(app)  # init the login manager
 
-ma = Marshmallow(app) # Init marshmallow
+from app.post_init import run_post_init
+ma.init_app(app)
 
 dropzone = Dropzone(app)
 
-from app.post_init import run_post_init
 set_celery_flask_context(celery, app)
 
 # store = HttpExposedFileSystemStore(
