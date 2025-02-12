@@ -157,11 +157,11 @@ def after_request(response):
     return response
 
 
-from app.views import register_blusprints
+from app.views import register_blueprints
 from app.views import load_user
 from app.views import load_user_from_request
 
-register_blusprints(app)
+register_blueprints(app)
 
 from app.post_init import run_post_init
 
