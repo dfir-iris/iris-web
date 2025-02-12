@@ -33,8 +33,7 @@ from app.models.authorization import User
 
 def get_note(note_id, caseid=None):
     note = Notes.query.filter(and_(
-        Notes.note_id == note_id,
-        Notes.note_case_id == caseid
+        Notes.note_id == note_id
     )).first()
 
     return note

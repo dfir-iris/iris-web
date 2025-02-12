@@ -15,17 +15,21 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from datetime import datetime
 from flask_login import current_user
 from marshmallow import ValidationError
 
 from app import db
 from app import app
-from app.business.errors import BusinessProcessingError, UnhandledBusinessError
+from app.business.errors import BusinessProcessingError
+from app.business.errors import UnhandledBusinessError
+from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_notes_db import get_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import NoteRevisions
+from app.models.models import Notes
 from app.models.authorization import User
 from app.schema.marshables import CaseNoteSchema
 from app.util import add_obj_history_entry
@@ -83,6 +87,14 @@ def notes_create(request_json, case_identifier):
 
     except Exception as e:
         raise BusinessProcessingError('Unexpected error server-side', e)
+
+
+def notes_get(identifier) -> Notes:
+    note = get_note(identifier)
+    if not note:
+        raise ObjectNotFoundError()
+
+    return note
 
 
 def notes_update(identifier: int = None, request_json: dict = None, case_identifier: int = None):
