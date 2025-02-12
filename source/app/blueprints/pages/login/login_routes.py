@@ -40,7 +40,7 @@ from app.blueprints.access_controls import is_authentication_oidc
 from app.blueprints.access_controls import is_authentication_ldap
 from app.blueprints.responses import response_error
 from app.business.auth import validate_ldap_login
-from app.business.auth import retrieve_user_by_username
+from app.business.users import retrieve_user_by_username
 from app.business.auth import wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
