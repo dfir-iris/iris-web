@@ -14,7 +14,7 @@ from app.schema.marshables import UserSchema
 
 log = app.logger
 
-def _retrieve_user_by_username(username:str):
+def retrieve_user_by_username(username:str):
     """
     Retrieve the user object by username.
 
@@ -45,7 +45,7 @@ def validate_ldap_login(username: str, password:str, local_fallback: bool = True
             track_activity(f'wrong login password for user \'{username}\' using LDAP auth', ctx_less=True, display_in_ui=False)
             return None
 
-        user = _retrieve_user_by_username(username)
+        user = retrieve_user_by_username(username)
         if not user:
             return None
 
@@ -64,7 +64,7 @@ def validate_local_login(username: str, password: str):
 
     :return: User object if successful, None otherwise
     """
-    user = _retrieve_user_by_username(username)
+    user = retrieve_user_by_username(username)
     if not user:
         return None
 
