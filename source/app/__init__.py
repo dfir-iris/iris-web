@@ -65,6 +65,7 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
+bc = Bcrypt()  # flask-bcrypt
 ma = Marshmallow()
 celery = make_celery(__name__)
 app = Flask(__name__, static_folder='../static')
@@ -119,12 +120,12 @@ SQLALCHEMY_ENGINE_OPTIONS = {
 
 db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
 
-bc = Bcrypt(app)  # flask-bcrypt
+from app.post_init import run_post_init
+bc.init_app(app)
 
 lm = LoginManager()  # flask-loginmanager
 lm.init_app(app)  # init the login manager
 
-from app.post_init import run_post_init
 ma.init_app(app)
 
 dropzone = Dropzone(app)
@@ -145,7 +146,7 @@ alerts_namespace = AlertsNamespace('/alerts')
 socket_io.on_namespace(alerts_namespace)
 
 oidc_client = None
-if app.config.get('AUTHENTICATION_TYPE') == "oidc":
+if app.config.get('AUTHENTICATION_TYPE') == 'oidc':
     oidc_client = get_oidc_client(app.config, app.logger)
 from app.views import register_blueprints
 from app.views import load_user
