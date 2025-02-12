@@ -141,7 +141,8 @@ socket_io.on_namespace(alerts_namespace)
 
 oidc_client = None
 if app.config.get('AUTHENTICATION_TYPE') == "oidc":
-    oidc_client = get_oidc_client(app)
+    oidc_client = get_oidc_client(app.config, app.logger)
+from app.views import register_blueprints
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -157,7 +158,6 @@ def after_request(response):
     return response
 
 
-from app.views import register_blueprints
 from app.views import load_user
 from app.views import load_user_from_request
 
