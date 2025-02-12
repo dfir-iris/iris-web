@@ -34,7 +34,9 @@ from functools import partial
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.flask_dropzone import Dropzone
+from app.configuration import Config
 from app.iris_engine.tasker.celery import make_celery
+from app.iris_engine.tasker.celery import set_celery_flask_context
 from app.iris_engine.access_control.oidc_handler import get_oidc_client
 
 
@@ -63,6 +65,7 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
+celery = make_celery(__name__)
 app = Flask(__name__, static_folder='../static')
 
 # CORS(app,
@@ -99,7 +102,7 @@ app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_pe
 app.jinja_options["autoescape"] = lambda _: True
 app.jinja_env.autoescape = True
 
-app.config.from_object('app.configuration.Config')
+app.config.from_object(Config)
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
@@ -124,8 +127,8 @@ ma = Marshmallow(app) # Init marshmallow
 
 dropzone = Dropzone(app)
 
-celery = make_celery(app)
 from app.post_init import run_post_init
+set_celery_flask_context(celery, app)
 
 # store = HttpExposedFileSystemStore(
 #     path='images',
