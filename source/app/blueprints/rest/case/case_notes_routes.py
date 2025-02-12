@@ -93,7 +93,7 @@ def case_note_detail(cur_id, caseid):
             description: Data error
     """
     try:
-        note = get_note(cur_id, caseid=caseid)
+        note = get_note(cur_id)
         if not note:
             return response_error(msg="Invalid note ID")
 
@@ -117,7 +117,7 @@ def case_note_detail(cur_id, caseid):
 def case_note_delete(cur_id, caseid):
     call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
 
-    note = get_note(cur_id, caseid)
+    note = get_note(cur_id)
     if not note:
         return response_error("Invalid note ID for this case")
 
@@ -142,7 +142,7 @@ def case_note_save(cur_id, caseid):
 
     try:
 
-        note = notes_update(identifier=cur_id, request_json=request.get_json(), case_identifier=caseid)
+        note = notes_update(cur_id, request.get_json())
 
         return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
 
@@ -158,7 +158,7 @@ def case_note_list_history(cur_id, caseid):
 
     try:
 
-        note_version = notes_list_revisions(identifier=cur_id, case_identifier=caseid)
+        note_version = notes_list_revisions(cur_id)
 
         return response_success("ok", data=note_version_sc.dump(note_version))
 
@@ -174,9 +174,7 @@ def case_note_revision(cur_id, revision_id, caseid):
 
     try:
 
-        note_version = notes_get_revision(identifier=cur_id,
-                                          revision_number=revision_id,
-                                          case_identifier=caseid)
+        note_version = notes_get_revision(cur_id, revision_id)
 
         return response_success("ok", data=note_version_sc.dump(note_version))
 
@@ -190,9 +188,7 @@ def case_note_revision(cur_id, revision_id, caseid):
 def case_note_revision_delete(cur_id, revision_id, caseid):
     try:
 
-        notes_delete_revision(identifier=cur_id,
-                              revision_number=revision_id,
-                              case_identifier=caseid)
+        notes_delete_revision(cur_id, revision_id)
 
         return response_success(f"Revision {revision_id} of note {cur_id} deleted")
 
@@ -396,7 +392,7 @@ def case_comment_note_list(cur_id, caseid):
 @ac_api_requires()
 def case_comment_note_add(cur_id, caseid):
     try:
-        note = get_note(cur_id, caseid=caseid)
+        note = get_note(cur_id)
         if not note:
             return response_error('Invalid note ID')
 

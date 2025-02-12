@@ -97,21 +97,15 @@ def notes_get(identifier) -> Notes:
     return note
 
 
-def notes_update(identifier: int = None, request_json: dict = None, case_identifier: int = None):
-    """
-    Update a note by its identifier.
-
-    :param identifier: The note identifier.
-    :param request_json: The request data.
-    :param case_identifier: The case identifier.
-    """
+def notes_update(identifier: int, request_json: dict):
     try:
         addnote_schema = CaseNoteSchema()
 
-        note = get_note(identifier, caseid=case_identifier)
+        note = get_note(identifier)
         if not note:
             raise BusinessProcessingError("Invalid note ID for this case")
 
+        case_identifier = note.note_case_id
         request_data = call_modules_hook('on_preload_note_update', data=request_json, caseid=case_identifier)
 
         latest_version = db.session.query(
@@ -160,17 +154,9 @@ def notes_update(identifier: int = None, request_json: dict = None, case_identif
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def notes_list_revisions(identifier: int = None, case_identifier: int = None):
-    """
-    List the revisions of a note by its identifier.
-
-    :param identifier: The note identifier.
-    :param case_identifier: The case identifier.
-
-    :return: The note history.
-    """
+def notes_list_revisions(identifier: int):
     try:
-        note = get_note(identifier, caseid=case_identifier)
+        note = get_note(identifier)
         if not note:
             raise BusinessProcessingError("Invalid note ID for this case")
 
@@ -195,18 +181,9 @@ def notes_list_revisions(identifier: int = None, case_identifier: int = None):
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def notes_get_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
-    """
-    Get a note revision by its identifier and revision number.
-
-    :param identifier: The note identifier.
-    :param revision_number: The revision number.
-    :param case_identifier: The case identifier.
-
-    :return: The note revision.
-    """
+def notes_get_revision(identifier: int, revision_number: int):
     try:
-        note = get_note(identifier, caseid=case_identifier)
+        note = get_note(identifier)
         if not note:
             raise BusinessProcessingError("Invalid note ID for this case")
 
@@ -224,16 +201,9 @@ def notes_get_revision(identifier: int = None, revision_number: int = None, case
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
-def notes_delete_revision(identifier: int = None, revision_number: int = None, case_identifier: int = None):
-    """
-    Delete a note revision by its identifier and revision number.
-
-    :param identifier: The note identifier.
-    :param revision_number: The revision number.
-    :param case_identifier: The case identifier.
-    """
+def notes_delete_revision(identifier: int, revision_number: int):
     try:
-        note = get_note(identifier, caseid=case_identifier)
+        note = get_note(identifier)
         if not note:
             raise BusinessProcessingError("Invalid note ID for this case")
 
@@ -248,7 +218,7 @@ def notes_delete_revision(identifier: int = None, revision_number: int = None, c
         db.session.delete(note_revision)
         db.session.commit()
 
-        track_activity(f"deleted note revision {revision_number} of note \"{note.note_title}\"", caseid=case_identifier)
+        track_activity(f"deleted note revision {revision_number} of note \"{note.note_title}\"", caseid=note.note_case_id)
 
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
