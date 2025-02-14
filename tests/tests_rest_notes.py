@@ -32,7 +32,7 @@ class TestsRestNotes(TestCase):
 
     def test_create_note_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
@@ -41,7 +41,7 @@ class TestsRestNotes(TestCase):
 
     def test_create_note_should_accept_field_note_title_with_empty_value(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier, 'note_title': ''}
@@ -50,7 +50,7 @@ class TestsRestNotes(TestCase):
 
     def test_create_note_should_accept_field_note_content_with_empty_value(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier, 'note_content': ''}
@@ -59,10 +59,10 @@ class TestsRestNotes(TestCase):
 
     def test_create_note_in_sub_directory_should_return_directory_parent_id(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'parent_directory_name'}, query_parameters={'cid': case_identifier}).json()
         parent_directory_identifier = response['data']['id']
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name', 'parent_id': parent_directory_identifier},
                                         query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
@@ -72,7 +72,7 @@ class TestsRestNotes(TestCase):
 
     def test_create_note_with_missing_case_identifier_should_return_404(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
@@ -88,7 +88,7 @@ class TestsRestNotes(TestCase):
     def test_create_note_with_directory_from_another_case_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
         case_identifier2 = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier2}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
@@ -97,7 +97,7 @@ class TestsRestNotes(TestCase):
 
     def test_create_note_should_return_object_with_field_modification_history(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
@@ -107,7 +107,7 @@ class TestsRestNotes(TestCase):
 
     def test_get_note_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
@@ -123,7 +123,7 @@ class TestsRestNotes(TestCase):
 
     def test_get_note_should_return_404_when_case_does_not_exist(self):
         case_identifier = self._subject.create_dummy_case()
-        response = self._subject.create(f'/case/notes/directories/add',
+        response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
