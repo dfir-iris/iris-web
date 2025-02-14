@@ -1507,16 +1507,17 @@ class PostInit:
             is_ready, logs = check_module_health(class_)
 
             if not is_ready:
-                self._logger.info("Attempted to initiate {mod}. Got {err}".format(mod=module_name, err=",".join(logs)))
+                errors = ','.join(logs)
+                self._logger.info(f'Attempted to initiate {module_name}. Got {errors}')
                 return False
 
             module, logs = register_module(module_name)
             if module is None:
-                self._logger.info("Attempted to add {mod}. Got {err}".format(mod=module_name, err=logs))
+                self._logger.info(f'Attempted to add {module_name}. Got {logs}')
 
             else:
                 iris_module_disable_by_id(module.id)
-                self._logger.info('Successfully registered {mod}'.format(mod=module_name))
+                self._logger.info(f'Successfully registered {module_name}')
 
     def _custom_assets_symlinks(self):
         try:
