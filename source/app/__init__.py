@@ -111,11 +111,6 @@ app.jinja_options["autoescape"] = lambda _: True
 app.jinja_env.autoescape = True
 
 app.config.from_object(Config)
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax'
-)
 
 cache = Cache(app)
 from app.post_init import run_post_init
@@ -126,7 +121,6 @@ bc.init_app(app)
 
 lm = LoginManager()  # flask-loginmanager
 lm.init_app(app)  # init the login manager
-
 ma.init_app(app)
 
 dropzone = Dropzone(app)
