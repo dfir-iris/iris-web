@@ -1,3 +1,5 @@
 [tool.ruff.lint]
-ignore = ["E231", "E402", "E711", "E712", "E721", "E722", "F821", "F841"]
+preview = true
+select = ["E231", "E4", "E7", "E9", "F"]
+ignore = ["E402", "E711", "E712", "E721", "E722", "F821", "F841"]
 
