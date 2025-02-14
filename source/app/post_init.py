@@ -28,7 +28,10 @@ import socket
 import time
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, exc, or_, text
+from sqlalchemy import create_engine
+from sqlalchemy import exc
+from sqlalchemy import or_
+from sqlalchemy import text
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
@@ -49,14 +52,21 @@ from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
 from app.models.models import create_safe_limited
-from app.models.alerts import Severity, AlertStatus, AlertResolutionStatus
+from app.models.alerts import Severity
+from app.models.alerts import AlertStatus
+from app.models.alerts import AlertResolutionStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import Cases, CaseState
+from app.models.cases import Cases
+from app.models.cases import CaseState
 from app.models.cases import Client
-from app.models.models import AnalysisStatus, CaseClassification, ReviewStatus, ReviewStatusList, EvidenceTypes
+from app.models.models import AnalysisStatus
+from app.models.models import CaseClassification
+from app.models.models import ReviewStatus
+from app.models.models import ReviewStatusList
+from app.models.models import EvidenceTypes
 from app.models.models import AssetsType
 from app.models.models import EventCategory
 from app.models.models import IocType
