@@ -308,7 +308,7 @@ def iris_update_hooks(module_name, module_id):
         return False, ["Module has no names"]
 
     try:
-        mod_inst,_ = instantiate_module_from_name(module_name=module_name)
+        mod_inst, _ = instantiate_module_from_name(module_name=module_name)
         if not mod_inst:
             log.error("Module could not be instantiated")
             return False, ["Module could not be instantiated"]
