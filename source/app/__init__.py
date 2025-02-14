@@ -112,7 +112,7 @@ app.jinja_env.autoescape = True
 
 app.config.from_object(Config)
 app.config['timezone'] = 'Europe/Paris'
-from app.post_init import run_post_init
+from app.post_init import PostInit
 
 cache = Cache(app)
 
@@ -165,8 +165,8 @@ def after_request(response):
 register_blueprints(app)
 
 try:
-
-    run_post_init(app.config)
+    post_init = PostInit(app)
+    post_init.run()
 
 except Exception as e:
     app.logger.exception('Post init failed. IRIS not started')
