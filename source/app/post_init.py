@@ -1713,4 +1713,4 @@ class PostInit:
                 # If an administrative user was created, log their credentials
                 if pwd is not None:
                     self._logger.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
-                             f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
+                                      f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
