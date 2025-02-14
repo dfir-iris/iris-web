@@ -83,4 +83,4 @@ def _get_icons(asset_name):
     if assets.get(asset_name):
         return assets.get(asset_name)[1], assets.get(asset_name)[2]
     else:
-        return "question-mark.png","ioc_question-mark.png"
+        return "question-mark.png", "ioc_question-mark.png"
