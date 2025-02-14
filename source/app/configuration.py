@@ -477,7 +477,7 @@ class Config:
 
     """ Caching 
     """
-    CACHE_TYPE = "SimpleCache"
+    CACHE_TYPE = 'SimpleCache'
     CACHE_DEFAULT_TIMEOUT = 300
 
     log.info(f'IRIS Server {IRIS_VERSION}')
