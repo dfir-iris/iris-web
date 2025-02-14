@@ -100,6 +100,7 @@ def ac_current_user_has_manage_perms():
         return True
     return False
 
+
 register_jinja_filters(app.jinja_env)
 
 app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
