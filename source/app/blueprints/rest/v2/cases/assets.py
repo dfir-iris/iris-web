@@ -111,7 +111,7 @@ def update_asset(case_identifier, identifier):
         asset = assets_get(identifier)
         _check_asset_and_case_identifier_match(asset, case_identifier)
 
-        if not ac_fast_check_current_user_has_case_access(asset.case_id,[CaseAccessLevel.full_access]):
+        if not ac_fast_check_current_user_has_case_access(asset.case_id, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=asset.case_id)
 
         asset = assets_update(asset, request.get_json())
