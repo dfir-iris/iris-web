@@ -19,7 +19,6 @@ import collections
 import json
 import logging as logger
 import os
-import urllib.parse
 from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
@@ -38,6 +37,7 @@ from app.configuration import Config
 from app.iris_engine.tasker.celery import make_celery
 from app.iris_engine.tasker.celery import set_celery_flask_context
 from app.iris_engine.access_control.oidc_handler import get_oidc_client
+from app.jinja_filters import register_jinja_filters
 
 
 class ReverseProxied(object):
@@ -100,11 +100,8 @@ def ac_current_user_has_manage_perms():
         return True
     return False
 
+register_jinja_filters(app.jinja_env)
 
-app.jinja_env.filters['unquote'] = lambda u: urllib.parse.unquote(u)
-app.jinja_env.filters['tojsonsafe'] = lambda u: json.dumps(u, indent=4, ensure_ascii=False)
-app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
-app.jinja_env.filters['escape_dots'] = lambda u: u.replace('.', '[.]')
 app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
 app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_perms)
 app.jinja_options['autoescape'] = lambda _: True
