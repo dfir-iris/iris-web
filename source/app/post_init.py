@@ -109,12 +109,7 @@ def connect_to_database(host: str, port: int) -> bool:
         return False
 
 
-def run_post_init(development=False):
-    """Runs post-initiation steps for the IRIS application.
-
-    Args:
-        development: A boolean value indicating whether the application is running in development mode.
-    """
+def run_post_init():
     # Log the IRIS version and post-initiation steps
     log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
