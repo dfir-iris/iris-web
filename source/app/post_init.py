@@ -15,10 +15,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import json
-
 from pathlib import Path
-
 import glob
 import os
 import random
@@ -26,6 +25,7 @@ import secrets
 import string
 import socket
 import time
+
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine
@@ -39,18 +39,14 @@ from app import app
 from app import bc
 from app import celery
 from app import db
-from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
-from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
-from app.datamgmt.manage.manage_users_db import add_user_to_group
-from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
-from app.datamgmt.manage.manage_groups_db import get_group_by_name
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
+from app.iris_engine.demo_builder import create_demo_users
 from app.models.models import create_safe_limited
 from app.models.alerts import Severity
 from app.models.alerts import AlertStatus
@@ -82,7 +78,11 @@ from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
 from app.models.models import get_or_create
-from app.iris_engine.demo_builder import create_demo_users
+from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
+from app.datamgmt.manage.manage_users_db import add_user_to_group
+from app.datamgmt.manage.manage_users_db import add_user_to_organisation
+from app.datamgmt.manage.manage_groups_db import get_group_by_name
 
 log = app.logger
 
