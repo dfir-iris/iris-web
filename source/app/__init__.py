@@ -111,9 +111,9 @@ app.jinja_options["autoescape"] = lambda _: True
 app.jinja_env.autoescape = True
 
 app.config.from_object(Config)
+from app.post_init import run_post_init
 
 cache = Cache(app)
-from app.post_init import run_post_init
 
 db.init_app(app)
 
