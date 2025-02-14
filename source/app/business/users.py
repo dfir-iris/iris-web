@@ -36,7 +36,7 @@ def users_reset_mfa(user_id: int = None):
     db.session.commit()
 
 
-def retrieve_user_by_username(username:str):
+def retrieve_user_by_username(username: str):
     """
     Retrieve the user object by username.
 
