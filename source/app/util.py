@@ -117,11 +117,6 @@ def stream_sha256sum(stream):
     return hashlib.sha256(stream).hexdigest().upper()
 
 
-@app.template_filter()
-def format_datetime(value, frmt):
-    return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)
-
-
 def hmac_sign(data):
     key = bytes(app.config.get("SECRET_KEY"), "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
@@ -161,26 +156,26 @@ def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bo
                     max_len: int = None, max_val: int = None, min_val: int = None):
     if input_var is None:
         if allow_none is False:
-            raise marshmallow.ValidationError("Invalid data - non null expected",
-                                            field_name=field_name if field_name else "type")
+            raise marshmallow.ValidationError('Invalid data - non null expected',
+                                              field_name=field_name if field_name else 'type')
         else:
             return True
     
     if isinstance(input_var, type):
         if max_len:
             if len(input_var) > max_len:
-                raise marshmallow.ValidationError("Invalid data - max length exceeded",
-                                                field_name=field_name if field_name else "type")
+                raise marshmallow.ValidationError('Invalid data - max length exceeded',
+                                                  field_name=field_name if field_name else 'type')
 
         if max_val:
             if input_var > max_val:
-                raise marshmallow.ValidationError("Invalid data - max value exceeded",
-                                                field_name=field_name if field_name else "type")
+                raise marshmallow.ValidationError('Invalid data - max value exceeded',
+                                                  field_name=field_name if field_name else 'type')
 
         if min_val:
             if input_var < min_val:
-                raise marshmallow.ValidationError("Invalid data - min value exceeded",
-                                                field_name=field_name if field_name else "type")
+                raise marshmallow.ValidationError('Invalid data - min value exceeded',
+                                                  field_name=field_name if field_name else 'type')
 
         return True
     
@@ -193,5 +188,5 @@ def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bo
         log.error(e)
         print(e)
         
-    raise marshmallow.ValidationError("Invalid data type",
-                                      field_name=field_name if field_name else "type")
+    raise marshmallow.ValidationError('Invalid data type',
+                                      field_name=field_name if field_name else 'type')

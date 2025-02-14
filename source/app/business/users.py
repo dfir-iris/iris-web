@@ -18,6 +18,8 @@
 from app import db
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.manage.manage_users_db import get_active_user
+from app.datamgmt.manage.manage_users_db import get_active_user_by_login
+from app.iris_engine.utils.tracker import track_activity
 
 
 def users_reset_mfa(user_id: int = None):
@@ -33,3 +35,16 @@ def users_reset_mfa(user_id: int = None):
 
     db.session.commit()
 
+
+def retrieve_user_by_username(username: str):
+    """
+    Retrieve the user object by username.
+
+    :param username: Username
+    :return: User object if found, None
+    """
+    user = get_active_user_by_login(username)
+    if not user:
+        track_activity(f'someone tried to log in with user \'{username}\', which does not exist',
+                       ctx_less=True, display_in_ui=False)
+    return user

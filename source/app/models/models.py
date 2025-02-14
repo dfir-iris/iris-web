@@ -16,11 +16,12 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import datetime
-# IMPORTS ------------------------------------------------
 import enum
 import uuid
 
-from sqlalchemy import BigInteger, UniqueConstraint, Table
+from sqlalchemy import BigInteger
+from sqlalchemy import UniqueConstraint
+from sqlalchemy import Table
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -33,7 +34,8 @@ from sqlalchemy import TIMESTAMP
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import text
-from sqlalchemy.dialects.postgresql import JSON, JSONB
+from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship

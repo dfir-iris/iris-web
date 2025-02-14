@@ -109,7 +109,6 @@ def filter_assets(case_identifier, pagination_parameters: PaginationParameters) 
             query = query.order_by(order_func(getattr(CaseAssets, order_by)))
     assets = query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
 
-
     return assets
 
 

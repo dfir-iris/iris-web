@@ -15,10 +15,9 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 import json
-
 from pathlib import Path
-
 import glob
 import os
 import random
@@ -26,37 +25,42 @@ import secrets
 import string
 import socket
 import time
+
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import create_engine, exc, or_, text
+from sqlalchemy import create_engine
+from sqlalchemy import exc
+from sqlalchemy import or_
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
-from app import app
 from app import bc
 from app import celery
 from app import db
-from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
-from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
-from app.datamgmt.manage.manage_users_db import add_user_to_group
-from app.datamgmt.manage.manage_users_db import add_user_to_organisation
 from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst
-from app.datamgmt.manage.manage_groups_db import get_group_by_name
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
 from app.iris_engine.module_handler.module_handler import register_module
+from app.iris_engine.demo_builder import create_demo_users
 from app.models.models import create_safe_limited
-from app.models.alerts import Severity, AlertStatus, AlertResolutionStatus
+from app.models.alerts import Severity
+from app.models.alerts import AlertStatus
+from app.models.alerts import AlertResolutionStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
-from app.models.cases import Cases, CaseState
+from app.models.cases import Cases
+from app.models.cases import CaseState
 from app.models.cases import Client
-from app.models.models import AnalysisStatus, CaseClassification, ReviewStatus, ReviewStatusList, EvidenceTypes
+from app.models.models import AnalysisStatus
+from app.models.models import CaseClassification
+from app.models.models import ReviewStatus
+from app.models.models import ReviewStatusList
+from app.models.models import EvidenceTypes
 from app.models.models import AssetsType
 from app.models.models import EventCategory
 from app.models.models import IocType
@@ -72,17 +76,11 @@ from app.models.models import create_safe
 from app.models.models import create_safe_attr
 from app.models.models import get_by_value_or_create
 from app.models.models import get_or_create
-from app.iris_engine.demo_builder import create_demo_users
-
-log = app.logger
-
-# Get the database host and port from environment variables
-db_host = app.config.get('PG_SERVER')
-db_port = int(app.config.get('PG_PORT'))
-
-# Get the retry parameters from environment variables
-retry_count = int(app.config.get('DB_RETRY_COUNT'))
-retry_delay = int(app.config.get('DB_RETRY_DELAY'))
+from app.datamgmt.iris_engine.modules_db import iris_module_disable_by_id
+from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
+from app.datamgmt.manage.manage_users_db import add_user_to_group
+from app.datamgmt.manage.manage_users_db import add_user_to_organisation
+from app.datamgmt.manage.manage_groups_db import get_group_by_name
 
 
 def connect_to_database(host: str, port: int) -> bool:
@@ -109,184 +107,9 @@ def connect_to_database(host: str, port: int) -> bool:
         return False
 
 
-def run_post_init(development=False):
-    """Runs post-initiation steps for the IRIS application.
-
-    Args:
-        development: A boolean value indicating whether the application is running in development mode.
-    """
-    # Log the IRIS version and post-initiation steps
-    log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
-    log.info("Running post initiation steps")
-
-    if os.getenv("IRIS_WORKER") is None:
-        create_directories()
-
-        # Attempt to connect to the database with retries
-        log.info("Attempting to connect to the database...")
-        for i in range(retry_count):
-            log.info("Connecting to database, attempt " + str(i+1) + "/" + str(retry_count))
-            conn = connect_to_database(db_host, db_port)
-            if conn:
-                break
-            log.info("Retrying in " + str(retry_delay) + "seconds...")
-            time.sleep(retry_delay)
-        # If the connection is still not established, exit the script
-        if not conn:
-            log.info("Failed to connect to database after " + str(retry_count) + " attempts.")
-            exit(1)
-
-        # Setup database before everything
-        #log.info("Adding pgcrypto extension")
-        #pg_add_pgcrypto_ext()
-
-        # Setup database before everything
-        with app.app_context():
-            log.info("Creating all Iris tables")
-            db.create_all(bind_key=None)
-            db.session.commit()
-
-            log.info("Creating Celery metatasks tables")
-            create_safe_db(db_name="iris_tasks")
-            db.create_all(bind_key="iris_tasks")
-            db.session.commit()
-
-            log.info("Running DB migration")
-
-            alembic_cfg = Config(file_='app/alembic.ini')
-            alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
-            command.upgrade(alembic_cfg, 'head')
-
-            # Create base server settings if they don't exist
-            srv_settings = ServerSettings.query.first()
-            if srv_settings is None:
-                log.info("Creating base server settings")
-                create_safe_server_settings()
-                srv_settings = ServerSettings.query.first()
-
-            prevent_objects = srv_settings.prevent_post_objects_repush
-
-            # Create base languages, OS types, IOC types, attributes, report types, TLP, event categories, assets,
-            # analysis status, case classification, task status, severities, alert status, case states, and hooks
-            log.info("Creating base languages")
-            create_safe_languages()
-
-            log.info("Creating base os types")
-            create_safe_os_types()
-
-            if not prevent_objects:
-                log.info("Creating base IOC types")
-                create_safe_ioctypes()
-
-            log.info("Creating base attributes")
-            create_safe_attributes()
-
-            log.info("Creating base report types")
-            create_safe_report_types()
-
-            log.info("Creating base TLP")
-            create_safe_tlp()
-
-            log.info("Creating base events categories")
-            create_safe_events_cats()
-
-            if not prevent_objects:
-                log.info("Creating base assets")
-                create_safe_assets()
-
-            log.info("Creating base analysis status")
-            create_safe_analysis_status()
-
-            if not prevent_objects:
-                log.info("Creating base case classification")
-                create_safe_classifications()
-
-            log.info("Creating base tasks status")
-            create_safe_task_status()
-
-            log.info("Creating base severities")
-            create_safe_severities()
-
-            log.info("Creating base alert status")
-            create_safe_alert_status()
-
-            log.info("Creating base evidence types")
-            create_safe_evidence_types()
-
-            log.info("Creating base alert resolution status")
-            create_safe_alert_resolution_status()
-
-            if not prevent_objects:
-                log.info("Creating base case states")
-                create_safe_case_states()
-
-            log.info("Creating base review status")
-            create_safe_review_status()
-
-            log.info("Creating base hooks")
-            create_safe_hooks()
-
-            # Create initial authorization model, administrative user, and customer
-            log.info("Creating initial authorisation model")
-            def_org, gadm, ganalysts = create_safe_auth_model()
-
-            log.info("Creating first administrative user")
-            admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
-
-            if not srv_settings.prevent_post_mod_repush:
-                log.info("Registering default modules")
-                register_default_modules()
-
-            log.info("Creating initial customer")
-            client = create_safe_client()
-
-            log.info("Creating initial case")
-            create_safe_case(
-                user=admin,
-                client=client,
-                groups=[gadm, ganalysts]
-            )
-
-            # Setup symlinks for custom_assets
-            log.info("Creating symlinks for custom asset icons")
-            custom_assets_symlinks()
-
-            # If demo mode is enabled, create demo users and cases
-            if app.config.get('DEMO_MODE_ENABLED') == 'True':
-                log.warning("============================")
-                log.warning("|  THIS IS DEMO INSTANCE   |")
-                log.warning("| DO NOT USE IN PRODUCTION |")
-                log.warning("============================")
-                users_data = create_demo_users(def_org, gadm, ganalysts,
-                                               int(app.config.get('DEMO_USERS_COUNT', 10)),
-                                               app.config.get('DEMO_USERS_SEED'),
-                                               int(app.config.get('DEMO_ADM_COUNT', 4)),
-                                               app.config.get('DEMO_ADM_SEED'))
-
-                create_demo_cases(users_data=users_data,
-                                  cases_count=int(app.config.get('DEMO_CASES_COUNT', 20)),
-                                  clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
-
-            # Log completion message
-            log.info("Post-init steps completed")
-            log.warning("===============================")
-            log.warning(f"| IRIS IS READY on port  {os.getenv('INTERFACE_HTTPS_PORT')} |")
-            log.warning("===============================")
-
-            # If an administrative user was created, log their credentials
-            if pwd is not None:
-                log.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
-                         f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
-
-
-def create_safe_db(db_name):
-    """Creates a new database with the specified name if it does not already exist.
-
-    Args:
-        db_name: A string representing the name of the database to create.
-    """
+def create_safe_db(url):
     # Create a new engine object for the specified database
-    engine = create_engine(app.config["SQALCHEMY_PIGGER_URI"] + db_name)
+    engine = create_engine(url)
 
     # Check if the database already exists
     if not database_exists(engine.url):
@@ -540,24 +363,6 @@ def create_safe_hooks():
                 hook_description='Triggered on alert comment deletion, after commit in DB')
 
 
-def pg_add_pgcrypto_ext():
-    """Adds the pgcrypto extension to the PostgreSQL database.
-
-    This extension provides cryptographic functions for PostgreSQL.
-
-    """
-
-    # Set the application context
-    with app.app_context():
-
-        # Open a connection to the iris_db database
-        with db.engine.connect() as con:
-            # Execute a SQL command to create the pgcrypto extension if it does not already exist
-            con.execute(text('CREATE EXTENSION IF NOT EXISTS pgcrypto CASCADE;'))
-            db.session.commit()
-            log.info("pgcrypto extension added")
-
-
 def create_safe_languages():
     """Creates new Language objects if they do not already exist.
 
@@ -633,31 +438,6 @@ def create_safe_events_cats():
     create_safe(db.session, EventCategory, name="Command and Control")
     create_safe(db.session, EventCategory, name="Exfiltration")
     create_safe(db.session, EventCategory, name="Impact")
-
-
-def create_safe_classifications():
-    """Creates new CaseClassification objects if they do not already exist.
-
-    This function reads the MISP classification taxonomy from a JSON file and creates
-    new CaseClassification objects with the specified name, name_expanded, and description
-    if they do not already exist in the database.
-
-    """
-    # Read the MISP classification taxonomy from a JSON file
-    log.info("Reading MISP classification taxonomy from resources/misp.classification.taxonomy.json")
-    with open(Path(__file__).parent / 'resources' / 'misp.classification.taxonomy.json') as data_file:
-        data = json.load(data_file)
-        # Iterate over each classification in the taxonomy
-        for c in data.get('values'):
-            predicate = c.get('predicate')
-            entries = c.get('entry')
-            # Iterate over each entry in the classification
-            for entry in entries:
-                # Create a new CaseClassification object with the specified name, name_expanded, and description
-                create_safe(db.session, CaseClassification,
-                            name=f"{predicate}:{entry.get('value')}",
-                            name_expanded=f"{predicate.title()}: {entry.get('expanded')}",
-                            description=entry['description'])
 
 
 def create_safe_analysis_status():
@@ -944,144 +724,6 @@ def create_safe_client():
                            name="IrisInitialClient")
 
     return client
-
-
-def create_safe_auth_model():
-    """Creates new Organisation, Group, and User objects if they do not already exist.
-
-    This function creates a new Organisation object with the specified name and description,
-    and creates new Group objects with the specified name, description, auto-follow status,
-    auto-follow access level, and permissions if they do not already exist in the database.
-    It also updates the attributes of the existing Group objects if they have changed.
-
-    """
-    # Create new Organisation object
-    def_org = get_or_create(db.session, Organisation, org_name="Default Org",
-                            org_description="Default Organisation")
-
-    # Create new Administrator Group object
-    try:
-        gadm = get_or_create(db.session, Group, group_name='Administrators', group_description='Administrators',
-                             group_auto_follow=True, group_auto_follow_access_level=CaseAccessLevel.full_access.value,
-                             group_permissions=ac_get_mask_full_permissions())
-
-    except exc.IntegrityError:
-        db.session.rollback()
-        log.warning('Administrator group integrity error. Group permissions were probably changed. Updating.')
-        gadm = Group.query.filter(
-            Group.group_name == 'Administrators'
-        ).first()
-
-    # Update Administrator Group object attributes
-    if gadm.group_permissions != ac_get_mask_full_permissions():
-        gadm.group_permissions = ac_get_mask_full_permissions()
-
-    if gadm.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
-        gadm.group_auto_follow_access_level = CaseAccessLevel.full_access.value
-
-    if gadm.group_auto_follow is not True:
-        gadm.group_auto_follow = True
-
-    db.session.commit()
-
-    # Create new Analysts Group object
-    try:
-        ganalysts = get_or_create(db.session, Group, group_name='Analysts', group_description='Standard Analysts',
-                                  group_auto_follow=False,
-                                  group_auto_follow_access_level=CaseAccessLevel.full_access.value,
-                                  group_permissions=ac_get_mask_analyst())
-
-    except exc.IntegrityError:
-        db.session.rollback()
-        log.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
-        ganalysts = get_group_by_name('Analysts')
-
-    # Update Analysts Group object attributes
-    if ganalysts.group_permissions != ac_get_mask_analyst():
-        ganalysts.group_permissions = ac_get_mask_analyst()
-
-    if ganalysts.group_auto_follow is not False:
-        ganalysts.group_auto_follow = False
-
-    if ganalysts.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
-        ganalysts.group_auto_follow_access_level = CaseAccessLevel.full_access.value
-
-    db.session.commit()
-
-    return def_org, gadm, ganalysts
-
-
-def create_safe_admin(def_org, gadm):
-    """Creates a new admin user if one does not already exist.
-
-    This function creates a new admin user with the specified username, email, and password
-    if one does not already exist in the database. If an admin user already exists, it updates
-    the email address of the existing user if it has changed.
-
-    """
-    # Get admin username and email from app config
-    admin_username = app.config.get('IRIS_ADM_USERNAME')
-    if admin_username is None:
-        admin_username = 'administrator'
-
-    admin_email = app.config.get('IRIS_ADM_EMAIL')
-    if admin_email is None:
-        admin_email = 'administrator@localhost'
-
-    # Check if admin user already exists
-    user = User.query.filter(or_(
-        User.user == admin_username,
-        User.email == admin_email
-    )).first()
-    password = None
-
-    if not user:
-        # Generate a new password if one was not provided in the app config
-        password = app.config.get('IRIS_ADM_PASSWORD')
-        if password is None:
-            password = ''.join(random.choices(string.printable[:-6], k=16))
-
-        log.info(f'Creating first admin user with username "{admin_username}"')
-
-        # Create new User object for admin user
-        user = User(
-            user=admin_username,
-            name=admin_username,
-            email=admin_email,
-            password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
-            active=True
-        )
-
-        # Generate a new API key if one was not provided in the app config
-        api_key = app.config.get('IRIS_ADM_API_KEY')
-        if api_key is None:
-            api_key = secrets.token_urlsafe(nbytes=64)
-
-        user.api_key = api_key
-        db.session.add(user)
-
-        db.session.commit()
-
-        # Add admin user to admin group and default organisation
-        add_user_to_group(user_id=user.id, group_id=gadm.group_id)
-        add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
-
-        log.warning(f">>> Administrator password: {password}")
-
-        db.session.commit()
-
-    else:
-        if not os.environ.get('IRIS_ADM_PASSWORD'):
-            # Prevent leak of user set password in logs
-            log.warning(">>> Administrator already exists")
-
-        if user.email != admin_email:
-            # Update email address of existing admin user if it has changed
-            log.warning(f'Email of administrator will be updated via config to {admin_email}')
-            user.email = admin_email
-            db.session.commit()
-
-    return user, password
 
 
 def create_safe_case(user, client, groups):
@@ -1655,88 +1297,420 @@ def create_safe_tlp():
     create_safe(db.session, Tlp, tlp_name="amber+strict", tlp_bscolor="warning")
 
 
-def create_safe_server_settings():
+def create_safe_server_settings(is_mfa_enabled):
     if not ServerSettings.query.count():
         create_safe(db.session, ServerSettings,
                     http_proxy="", https_proxy="", prevent_post_mod_repush=False,
                     prevent_post_objects_repush=False,
                     password_policy_min_length="12", password_policy_upper_case=True,
                     password_policy_lower_case=True, password_policy_digit=True,
-                    password_policy_special_chars="", enforce_mfa=app.config.get("MFA_ENABLED", False))
+                    password_policy_special_chars="", enforce_mfa=is_mfa_enabled)
 
 
-def register_modules_pipelines():
-    modules = IrisModule.query.with_entities(
-        IrisModule.module_name,
-        IrisModule.module_config
-    ).filter(
-        IrisModule.has_pipeline == True
-    ).all()
+class PostInit:
 
-    for module in modules:
-        module = module[0]
-        inst, _ = instantiate_module_from_name(module)
-        if not inst:
-            continue
+    def __init__(self, app):
+        self._app = app
+        self._configuration = app.config
+        self._logger = app.logger
 
-        inst.internal_configure(celery_decorator=celery.task,
-                                evidence_storage=None,
-                                mod_web_config=module[1])
-        status = inst.get_tasks_for_registration()
-        if status.is_failure():
-            log.warning("Failed getting tasks for module {}".format(module))
-            continue
+    def _create_safe_classifications(self):
+        """Creates new CaseClassification objects if they do not already exist.
 
-        tasks = status.get_data()
-        for task in tasks:
-            celery.register_task(task)
+        This function reads the MISP classification taxonomy from a JSON file and creates
+        new CaseClassification objects with the specified name, name_expanded, and description
+        if they do not already exist in the database.
 
+        """
+        # Read the MISP classification taxonomy from a JSON file
+        self._logger.info("Reading MISP classification taxonomy from resources/misp.classification.taxonomy.json")
+        with open(Path(__file__).parent / 'resources' / 'misp.classification.taxonomy.json') as data_file:
+            data = json.load(data_file)
+            # Iterate over each classification in the taxonomy
+            for c in data.get('values'):
+                predicate = c.get('predicate')
+                entries = c.get('entry')
+                # Iterate over each entry in the classification
+                for entry in entries:
+                    # Create a new CaseClassification object with the specified name, name_expanded, and description
+                    create_safe(db.session, CaseClassification,
+                                name=f"{predicate}:{entry.get('value')}",
+                                name_expanded=f"{predicate.title()}: {entry.get('expanded')}",
+                                description=entry['description'])
 
-def register_default_modules():
-    modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module',
-               'iris_webhooks_module', 'iris_intelowl_module']
+    def _create_safe_auth_model(self):
+        """Creates new Organisation, Group, and User objects if they do not already exist.
 
-    for module_name in modules:
-        class_, _ = instantiate_module_from_name(module_name)
-        is_ready, logs = check_module_health(class_)
+        This function creates a new Organisation object with the specified name and description,
+        and creates new Group objects with the specified name, description, auto-follow status,
+        auto-follow access level, and permissions if they do not already exist in the database.
+        It also updates the attributes of the existing Group objects if they have changed.
 
-        if not is_ready:
-            log.info("Attempted to initiate {mod}. Got {err}".format(mod=module_name, err=",".join(logs)))
-            return False
+        """
+        # Create new Organisation object
+        def_org = get_or_create(db.session, Organisation, org_name="Default Org",
+                                org_description="Default Organisation")
 
-        module, logs = register_module(module_name)
-        if module is None:
-            log.info("Attempted to add {mod}. Got {err}".format(mod=module_name, err=logs))
+        # Create new Administrator Group object
+        try:
+            gadm = get_or_create(db.session, Group, group_name='Administrators', group_description='Administrators',
+                                 group_auto_follow=True,
+                                 group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                                 group_permissions=ac_get_mask_full_permissions())
+
+        except exc.IntegrityError:
+            db.session.rollback()
+            self._logger.warning('Administrator group integrity error. Group permissions were probably changed. Updating.')
+            gadm = Group.query.filter(
+                Group.group_name == 'Administrators'
+            ).first()
+
+        # Update Administrator Group object attributes
+        if gadm.group_permissions != ac_get_mask_full_permissions():
+            gadm.group_permissions = ac_get_mask_full_permissions()
+
+        if gadm.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
+            gadm.group_auto_follow_access_level = CaseAccessLevel.full_access.value
+
+        if gadm.group_auto_follow is not True:
+            gadm.group_auto_follow = True
+
+        db.session.commit()
+
+        # Create new Analysts Group object
+        try:
+            ganalysts = get_or_create(db.session, Group, group_name='Analysts', group_description='Standard Analysts',
+                                      group_auto_follow=False,
+                                      group_auto_follow_access_level=CaseAccessLevel.full_access.value,
+                                      group_permissions=ac_get_mask_analyst())
+
+        except exc.IntegrityError:
+            db.session.rollback()
+            self._logger.warning('Analysts group integrity error. Group permissions were probably changed. Updating.')
+            ganalysts = get_group_by_name('Analysts')
+
+        # Update Analysts Group object attributes
+        if ganalysts.group_permissions != ac_get_mask_analyst():
+            ganalysts.group_permissions = ac_get_mask_analyst()
+
+        if ganalysts.group_auto_follow is not False:
+            ganalysts.group_auto_follow = False
+
+        if ganalysts.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
+            ganalysts.group_auto_follow_access_level = CaseAccessLevel.full_access.value
+
+        db.session.commit()
+
+        return def_org, gadm, ganalysts
+
+    def _create_safe_admin(self, def_org, gadm, admin_username, admin_email, admin_password, api_key):
+        """Creates a new admin user if one does not already exist.
+
+        This function creates a new admin user with the specified username, email, and password
+        if one does not already exist in the database. If an admin user already exists, it updates
+        the email address of the existing user if it has changed.
+
+        """
+        # Get admin username and email from app config
+        if admin_username is None:
+            admin_username = 'administrator'
+
+        if admin_email is None:
+            admin_email = 'administrator@localhost'
+
+        # Check if admin user already exists
+        user = User.query.filter(or_(
+            User.user == admin_username,
+            User.email == admin_email
+        )).first()
+        password = None
+
+        if not user:
+            # Generate a new password if one was not provided in the app config
+            password = admin_password
+            if password is None:
+                password = ''.join(random.choices(string.printable[:-6], k=16))
+
+            self._logger.info(f'Creating first admin user with username "{admin_username}"')
+
+            # Create new User object for admin user
+            user = User(
+                user=admin_username,
+                name=admin_username,
+                email=admin_email,
+                password=bc.generate_password_hash(password.encode('utf8')).decode('utf8'),
+                active=True
+            )
+
+            # Generate a new API key if one was not provided in the app config
+            if api_key is None:
+                api_key = secrets.token_urlsafe(nbytes=64)
+
+            user.api_key = api_key
+            db.session.add(user)
+
+            db.session.commit()
+
+            # Add admin user to admin group and default organisation
+            add_user_to_group(user_id=user.id, group_id=gadm.group_id)
+            add_user_to_organisation(user_id=user.id, org_id=def_org.org_id)
+
+            self._logger.warning(f">>> Administrator password: {password}")
+
+            db.session.commit()
 
         else:
-            iris_module_disable_by_id(module.id)
-            log.info('Successfully registered {mod}'.format(mod=module_name))
+            if not os.environ.get('IRIS_ADM_PASSWORD'):
+                # Prevent leak of user set password in logs
+                self._logger.warning(">>> Administrator already exists")
 
+            if user.email != admin_email:
+                # Update email address of existing admin user if it has changed
+                self._logger.warning(f'Email of administrator will be updated via config to {admin_email}')
+                user.email = admin_email
+                db.session.commit()
 
-def custom_assets_symlinks():
-    try:
+        return user, password
 
-        source_paths = glob.glob(os.path.join(app.config['ASSET_STORE_PATH'], "*"))
+    def _register_modules_pipelines(self):
+        modules = IrisModule.query.with_entities(
+            IrisModule.module_name,
+            IrisModule.module_config
+        ).filter(
+            IrisModule.has_pipeline == True
+        ).all()
 
-        for store_fullpath in source_paths:
+        for module in modules:
+            module = module[0]
+            inst, _ = instantiate_module_from_name(module)
+            if not inst:
+                continue
 
-            filename = store_fullpath.split(os.path.sep)[-1]
-            show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
-                                         app.config['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
-            if not os.path.islink(show_fullpath):
-                os.symlink(store_fullpath, show_fullpath)
-                log.info(f"Created assets img symlink {store_fullpath} -> {show_fullpath}")
+            inst.internal_configure(celery_decorator=celery.task,
+                                    evidence_storage=None,
+                                    mod_web_config=module[1])
+            status = inst.get_tasks_for_registration()
+            if status.is_failure():
+                self._logger.warning(f'Failed getting tasks for module {module}')
+                continue
 
-    except Exception as e:
-        log.error(f"Error: {e}")
+            tasks = status.get_data()
+            for task in tasks:
+                celery.register_task(task)
 
+    def _register_default_modules(self):
+        modules = ['iris_vt_module', 'iris_misp_module', 'iris_check_module',
+                   'iris_webhooks_module', 'iris_intelowl_module']
 
-def create_directories():
-    log.info("Attempting to create data directories")
+        for module_name in modules:
+            class_, _ = instantiate_module_from_name(module_name)
+            is_ready, logs = check_module_health(class_)
 
-    for d in ['UPLOADED_PATH', 'TEMPLATES_PATH', 'BACKUP_PATH', 'ASSET_STORE_PATH', 'DATASTORE_PATH']:
+            if not is_ready:
+                errors = ','.join(logs)
+                self._logger.info(f'Attempted to initiate {module_name}. Got {errors}')
+                return
+
+            module, logs = register_module(module_name)
+            if module is None:
+                self._logger.info(f'Attempted to add {module_name}. Got {logs}')
+
+            else:
+                iris_module_disable_by_id(module.id)
+                self._logger.info(f'Successfully registered {module_name}')
+
+    def _custom_assets_symlinks(self):
         try:
-            log.info(f'Creating directory {d}')
-            os.makedirs(app.config.get(d), exist_ok=True)
-        except OSError as e:
-            log.error(f"Failed to create directory {app.config.get(d)}: {e}")
+
+            source_paths = glob.glob(os.path.join(self._configuration['ASSET_STORE_PATH'], "*"))
+
+            for store_fullpath in source_paths:
+
+                filename = store_fullpath.split(os.path.sep)[-1]
+                show_fullpath = os.path.join(self._configuration['APP_PATH'], 'app',
+                                             self._configuration['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
+                if not os.path.islink(show_fullpath):
+                    os.symlink(store_fullpath, show_fullpath)
+                    self._logger.info(f"Created assets img symlink {store_fullpath} -> {show_fullpath}")
+
+        except Exception as e:
+            self._logger.error(f"Error: {e}")
+
+    def _create_directories(self):
+        self._logger.info('Attempting to create data directories')
+
+        for d in ['UPLOADED_PATH', 'TEMPLATES_PATH', 'BACKUP_PATH', 'ASSET_STORE_PATH', 'DATASTORE_PATH']:
+            try:
+                self._logger.info(f'Creating directory {d}')
+                os.makedirs(self._configuration.get(d), exist_ok=True)
+            except OSError as e:
+                self._logger.error(f'Failed to create directory {self._configuration.get(d)}: {e}')
+
+    def run(self):
+        # Log the IRIS version and post-initiation steps
+        self._logger.info(f'IRIS {self._configuration.get("IRIS_VERSION")}')
+        self._logger.info("Running post initiation steps")
+
+        if os.getenv("IRIS_WORKER") is None:
+            self._create_directories()
+
+            # Attempt to connect to the database with retries
+            self._logger.info("Attempting to connect to the database...")
+            db_host = self._configuration.get('PG_SERVER')
+            db_port = int(self._configuration.get('PG_PORT'))
+            retry_count = int(self._configuration.get('DB_RETRY_COUNT'))
+            retry_delay = int(self._configuration.get('DB_RETRY_DELAY'))
+            for i in range(retry_count):
+                self._logger.info("Connecting to database, attempt " + str(i + 1) + "/" + str(retry_count))
+                conn = connect_to_database(db_host, db_port)
+                if conn:
+                    break
+                self._logger.info("Retrying in " + str(retry_delay) + "seconds...")
+                time.sleep(retry_delay)
+            # If the connection is still not established, exit the script
+            if not conn:
+                self._logger.info("Failed to connect to database after " + str(retry_count) + " attempts.")
+                exit(1)
+
+            # Setup database before everything
+            with self._app.app_context():
+                self._logger.info('Creating all Iris tables')
+                db.create_all(bind_key=None)
+                db.session.commit()
+
+                self._logger.info("Creating Celery metatasks tables")
+                create_safe_db(self._configuration['SQALCHEMY_PIGGER_URI'] + 'iris_tasks')
+                db.create_all(bind_key="iris_tasks")
+                db.session.commit()
+
+                self._logger.info("Running DB migration")
+
+                alembic_cfg = Config(file_='app/alembic.ini')
+                alembic_cfg.set_main_option('sqlalchemy.url', self._configuration['SQLALCHEMY_DATABASE_URI'])
+                command.upgrade(alembic_cfg, 'head')
+
+                # Create base server settings if they don't exist
+                srv_settings = ServerSettings.query.first()
+                if srv_settings is None:
+                    self._logger.info('Creating base server settings')
+                    create_safe_server_settings(self._configuration.get('MFA_ENABLED', False))
+                    srv_settings = ServerSettings.query.first()
+
+                prevent_objects = srv_settings.prevent_post_objects_repush
+
+                # Create base languages, OS types, IOC types, attributes, report types, TLP, event categories, assets,
+                # analysis status, case classification, task status, severities, alert status, case states, and hooks
+                self._logger.info("Creating base languages")
+                create_safe_languages()
+
+                self._logger.info("Creating base os types")
+                create_safe_os_types()
+
+                if not prevent_objects:
+                    self._logger.info("Creating base IOC types")
+                    create_safe_ioctypes()
+
+                self._logger.info("Creating base attributes")
+                create_safe_attributes()
+
+                self._logger.info("Creating base report types")
+                create_safe_report_types()
+
+                self._logger.info("Creating base TLP")
+                create_safe_tlp()
+
+                self._logger.info("Creating base events categories")
+                create_safe_events_cats()
+
+                if not prevent_objects:
+                    self._logger.info("Creating base assets")
+                    create_safe_assets()
+
+                self._logger.info("Creating base analysis status")
+                create_safe_analysis_status()
+
+                if not prevent_objects:
+                    self._logger.info("Creating base case classification")
+                    self._create_safe_classifications()
+
+                self._logger.info("Creating base tasks status")
+                create_safe_task_status()
+
+                self._logger.info("Creating base severities")
+                create_safe_severities()
+
+                self._logger.info("Creating base alert status")
+                create_safe_alert_status()
+
+                self._logger.info("Creating base evidence types")
+                create_safe_evidence_types()
+
+                self._logger.info("Creating base alert resolution status")
+                create_safe_alert_resolution_status()
+
+                if not prevent_objects:
+                    self._logger.info("Creating base case states")
+                    create_safe_case_states()
+
+                self._logger.info("Creating base review status")
+                create_safe_review_status()
+
+                self._logger.info("Creating base hooks")
+                create_safe_hooks()
+
+                # Create initial authorization model, administrative user, and customer
+                self._logger.info("Creating initial authorisation model")
+                def_org, gadm, ganalysts = self._create_safe_auth_model()
+
+                self._logger.info("Creating first administrative user")
+                admin_username = self._configuration.get('IRIS_ADM_USERNAME')
+                admin_email = self._configuration.get('IRIS_ADM_EMAIL')
+                admin_password = self._configuration.get('IRIS_ADM_PASSWORD')
+                admin_api_key = self._configuration.get('IRIS_ADM_API_KEY')
+                admin, pwd = self._create_safe_admin(def_org, gadm, admin_username, admin_email, admin_password,
+                                                     admin_api_key)
+
+                if not srv_settings.prevent_post_mod_repush:
+                    self._logger.info("Registering default modules")
+                    self._register_default_modules()
+
+                self._logger.info("Creating initial customer")
+                client = create_safe_client()
+
+                self._logger.info("Creating initial case")
+                create_safe_case(
+                    user=admin,
+                    client=client,
+                    groups=[gadm, ganalysts]
+                )
+
+                # Setup symlinks for custom_assets
+                self._logger.info('Creating symlinks for custom asset icons')
+                self._custom_assets_symlinks()
+
+                # If demo mode is enabled, create demo users and cases
+                if self._configuration.get('DEMO_MODE_ENABLED') == 'True':
+                    self._logger.warning("============================")
+                    self._logger.warning("|  THIS IS DEMO INSTANCE   |")
+                    self._logger.warning("| DO NOT USE IN PRODUCTION |")
+                    self._logger.warning("============================")
+                    users_data = create_demo_users(def_org, gadm, ganalysts,
+                                                   int(self._configuration.get('DEMO_USERS_COUNT', 10)),
+                                                   self._configuration.get('DEMO_USERS_SEED'),
+                                                   int(self._configuration.get('DEMO_ADM_COUNT', 4)),
+                                                   self._configuration.get('DEMO_ADM_SEED'))
+
+                    create_demo_cases(users_data=users_data,
+                                      cases_count=int(self._configuration.get('DEMO_CASES_COUNT', 20)),
+                                      clients_count=int(self._configuration.get('DEMO_CLIENTS_COUNT', 4)))
+
+                # Log completion message
+                self._logger.info("Post-init steps completed")
+                self._logger.warning("===============================")
+                self._logger.warning(f"| IRIS IS READY on port  {os.getenv('INTERFACE_HTTPS_PORT')} |")
+                self._logger.warning("===============================")
+
+                # If an administrative user was created, log their credentials
+                if pwd is not None:
+                    self._logger.info(f'You can now login with user {admin.user} and password >>> {pwd} <<< '
+                                      f'on {os.getenv("INTERFACE_HTTPS_PORT")}')

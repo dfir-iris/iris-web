@@ -167,7 +167,7 @@ def get_ioc_types_list():
     return l_types
 
 
-def add_ioc_type(name:str, description:str, taxonomy:str):
+def add_ioc_type(name: str, description: str, taxonomy: str):
     ioct = IocType(type_name=name,
                    type_description=description,
                    type_taxonomy=taxonomy

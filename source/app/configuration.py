@@ -293,6 +293,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=int(config.load('IRIS', 'SESSION_TIMEOUT', fallback=1440)))
     SESSION_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
     MFA_ENABLED = config.load('IRIS', 'MFA_ENABLED', fallback=False) == 'True'
 
     PG_ACCOUNT = PG_ACCOUNT_
@@ -476,7 +477,7 @@ class Config:
 
     """ Caching 
     """
-    CACHE_TYPE = "SimpleCache"
+    CACHE_TYPE = 'SimpleCache'
     CACHE_DEFAULT_TIMEOUT = 300
 
     log.info(f'IRIS Server {IRIS_VERSION}')

@@ -80,7 +80,6 @@ def _get_icons(asset_name):
         "Windows Account - AD - krbtgt": ("Windows Account - AD - krbtgt", "user.png", "ioc_user.png"),
         "Windows Account - AD - Service": ("Windows Account - AD - krbtgt", "user.png", "ioc_user.png")
     }
-    if assets.get(asset_name):
-        return assets.get(asset_name)[1], assets.get(asset_name)[2]
-    else:
-        return "question-mark.png","ioc_question-mark.png"
+    if not assets.get(asset_name):
+        return "question-mark.png", "ioc_question-mark.png"
+    return assets.get(asset_name)[1], assets.get(asset_name)[2]
