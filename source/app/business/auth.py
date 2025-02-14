@@ -15,7 +15,7 @@ from app.schema.marshables import UserSchema
 log = app.logger
 
 
-def validate_ldap_login(username: str, password:str, local_fallback: bool = True):
+def validate_ldap_login(username: str, password: str, local_fallback: bool = True):
     """
     Validate the user login using LDAP authentication.
 
