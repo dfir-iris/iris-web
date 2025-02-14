@@ -65,6 +65,12 @@ LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
+SQLALCHEMY_ENGINE_OPTIONS = {
+    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict),
+    "pool_pre_ping": True
+}
+
+db = SQLAlchemy(engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
 bc = Bcrypt()  # flask-bcrypt
 ma = Marshmallow()
 celery = make_celery(__name__)
@@ -112,15 +118,10 @@ app.config.update(
 )
 
 cache = Cache(app)
-
-SQLALCHEMY_ENGINE_OPTIONS = {
-    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict),
-    "pool_pre_ping": True
-}
-
-db = SQLAlchemy(app, engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
-
 from app.post_init import run_post_init
+
+db.init_app(app)
+
 bc.init_app(app)
 
 lm = LoginManager()  # flask-loginmanager
