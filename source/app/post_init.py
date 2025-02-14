@@ -107,7 +107,7 @@ def run_post_init(configuration):
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:
-        create_directories()
+        create_directories(configuration)
 
         # Attempt to connect to the database with retries
         log.info("Attempting to connect to the database...")
@@ -138,7 +138,7 @@ def run_post_init(configuration):
             db.session.commit()
 
             log.info("Creating Celery metatasks tables")
-            create_safe_db(db_name="iris_tasks")
+            create_safe_db(configuration['SQALCHEMY_PIGGER_URI'] + 'iris_tasks')
             db.create_all(bind_key="iris_tasks")
             db.session.commit()
 
@@ -222,7 +222,7 @@ def run_post_init(configuration):
             def_org, gadm, ganalysts = create_safe_auth_model()
 
             log.info("Creating first administrative user")
-            admin, pwd = create_safe_admin(def_org=def_org, gadm=gadm)
+            admin, pwd = create_safe_admin(def_org, gadm)
 
             if not srv_settings.prevent_post_mod_repush:
                 log.info("Registering default modules")
@@ -270,14 +270,9 @@ def run_post_init(configuration):
                          f'on {os.getenv("INTERFACE_HTTPS_PORT")}')
 
 
-def create_safe_db(db_name):
-    """Creates a new database with the specified name if it does not already exist.
-
-    Args:
-        db_name: A string representing the name of the database to create.
-    """
+def create_safe_db(url):
     # Create a new engine object for the specified database
-    engine = create_engine(app.config['SQALCHEMY_PIGGER_URI'] + db_name)
+    engine = create_engine(url)
 
     # Check if the database already exists
     if not database_exists(engine.url):
@@ -1722,12 +1717,12 @@ def custom_assets_symlinks():
         log.error(f"Error: {e}")
 
 
-def create_directories():
+def create_directories(configuration):
     log.info("Attempting to create data directories")
 
     for d in ['UPLOADED_PATH', 'TEMPLATES_PATH', 'BACKUP_PATH', 'ASSET_STORE_PATH', 'DATASTORE_PATH']:
         try:
             log.info(f'Creating directory {d}')
-            os.makedirs(app.config.get(d), exist_ok=True)
+            os.makedirs(configuration.get(d), exist_ok=True)
         except OSError as e:
-            log.error(f"Failed to create directory {app.config.get(d)}: {e}")
+            log.error(f"Failed to create directory {configuration.get(d)}: {e}")
