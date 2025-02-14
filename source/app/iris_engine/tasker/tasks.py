@@ -16,13 +16,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# IMPORTS ------------------------------------------------
 import os
 import urllib.parse
 from celery.signals import task_prerun
 from flask_login import current_user
 
-from app import app
 from app import db
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.module_handler.module_handler import pipeline_dispatcher
@@ -31,10 +29,7 @@ from app.iris_engine.utils.tracker import track_activity
 from iris_interface import IrisInterfaceStatus as IStatus
 from iris_interface.IrisModuleInterface import IrisPipelineTypes
 
-app.config['timezone'] = 'Europe/Paris'
 
-
-# CONTENT ------------------------------------------------
 @task_prerun.connect
 def on_task_init(*args, **kwargs):
     db.engine.dispose()

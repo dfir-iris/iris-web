@@ -107,10 +107,11 @@ app.jinja_env.filters['tojsonindent'] = lambda u: json.dumps(u, indent=4)
 app.jinja_env.filters['escape_dots'] = lambda u: u.replace('.', '[.]')
 app.jinja_env.globals.update(user_has_perm=ac_current_user_has_permission)
 app.jinja_env.globals.update(user_has_manage_perms=ac_current_user_has_manage_perms)
-app.jinja_options["autoescape"] = lambda _: True
+app.jinja_options['autoescape'] = lambda _: True
 app.jinja_env.autoescape = True
 
 app.config.from_object(Config)
+app.config['timezone'] = 'Europe/Paris'
 from app.post_init import run_post_init
 
 cache = Cache(app)
