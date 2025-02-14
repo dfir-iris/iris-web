@@ -133,7 +133,7 @@ def run_post_init(configuration):
 
         # Setup database before everything
         with app.app_context():
-            log.info("Creating all Iris tables")
+            log.info('Creating all Iris tables')
             db.create_all(bind_key=None)
             db.session.commit()
 
@@ -151,8 +151,8 @@ def run_post_init(configuration):
             # Create base server settings if they don't exist
             srv_settings = ServerSettings.query.first()
             if srv_settings is None:
-                log.info("Creating base server settings")
-                create_safe_server_settings()
+                log.info('Creating base server settings')
+                create_safe_server_settings(configuration.get('MFA_ENABLED', False))
                 srv_settings = ServerSettings.query.first()
 
             prevent_objects = srv_settings.prevent_post_objects_repush
@@ -222,7 +222,11 @@ def run_post_init(configuration):
             def_org, gadm, ganalysts = create_safe_auth_model()
 
             log.info("Creating first administrative user")
-            admin, pwd = create_safe_admin(def_org, gadm)
+            admin_username = configuration.get('IRIS_ADM_USERNAME')
+            admin_email = configuration.get('IRIS_ADM_EMAIL')
+            admin_password = configuration.get('IRIS_ADM_PASSWORD')
+            admin_api_key = configuration.get('IRIS_ADM_API_KEY')
+            admin, pwd = create_safe_admin(def_org, gadm, admin_username, admin_email, admin_password, admin_api_key)
 
             if not srv_settings.prevent_post_mod_repush:
                 log.info("Registering default modules")
@@ -239,8 +243,8 @@ def run_post_init(configuration):
             )
 
             # Setup symlinks for custom_assets
-            log.info("Creating symlinks for custom asset icons")
-            custom_assets_symlinks()
+            log.info('Creating symlinks for custom asset icons')
+            custom_assets_symlinks(configuration)
 
             # If demo mode is enabled, create demo users and cases
             if configuration.get('DEMO_MODE_ENABLED') == 'True':
@@ -997,7 +1001,7 @@ def create_safe_auth_model():
     return def_org, gadm, ganalysts
 
 
-def create_safe_admin(def_org, gadm):
+def create_safe_admin(def_org, gadm, admin_username, admin_email, admin_password, api_key):
     """Creates a new admin user if one does not already exist.
 
     This function creates a new admin user with the specified username, email, and password
@@ -1006,11 +1010,9 @@ def create_safe_admin(def_org, gadm):
 
     """
     # Get admin username and email from app config
-    admin_username = app.config.get('IRIS_ADM_USERNAME')
     if admin_username is None:
         admin_username = 'administrator'
 
-    admin_email = app.config.get('IRIS_ADM_EMAIL')
     if admin_email is None:
         admin_email = 'administrator@localhost'
 
@@ -1023,7 +1025,7 @@ def create_safe_admin(def_org, gadm):
 
     if not user:
         # Generate a new password if one was not provided in the app config
-        password = app.config.get('IRIS_ADM_PASSWORD')
+        password = admin_password
         if password is None:
             password = ''.join(random.choices(string.printable[:-6], k=16))
 
@@ -1039,7 +1041,6 @@ def create_safe_admin(def_org, gadm):
         )
 
         # Generate a new API key if one was not provided in the app config
-        api_key = app.config.get('IRIS_ADM_API_KEY')
         if api_key is None:
             api_key = secrets.token_urlsafe(nbytes=64)
 
@@ -1641,14 +1642,14 @@ def create_safe_tlp():
     create_safe(db.session, Tlp, tlp_name="amber+strict", tlp_bscolor="warning")
 
 
-def create_safe_server_settings():
+def create_safe_server_settings(is_mfa_enabled):
     if not ServerSettings.query.count():
         create_safe(db.session, ServerSettings,
                     http_proxy="", https_proxy="", prevent_post_mod_repush=False,
                     prevent_post_objects_repush=False,
                     password_policy_min_length="12", password_policy_upper_case=True,
                     password_policy_lower_case=True, password_policy_digit=True,
-                    password_policy_special_chars="", enforce_mfa=app.config.get("MFA_ENABLED", False))
+                    password_policy_special_chars="", enforce_mfa=is_mfa_enabled)
 
 
 def register_modules_pipelines():
@@ -1699,16 +1700,16 @@ def register_default_modules():
             log.info('Successfully registered {mod}'.format(mod=module_name))
 
 
-def custom_assets_symlinks():
+def custom_assets_symlinks(configuration):
     try:
 
-        source_paths = glob.glob(os.path.join(app.config['ASSET_STORE_PATH'], "*"))
+        source_paths = glob.glob(os.path.join(configuration['ASSET_STORE_PATH'], "*"))
 
         for store_fullpath in source_paths:
 
             filename = store_fullpath.split(os.path.sep)[-1]
-            show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
-                                         app.config['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
+            show_fullpath = os.path.join(configuration['APP_PATH'], 'app',
+                                         configuration['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
             if not os.path.islink(show_fullpath):
                 os.symlink(store_fullpath, show_fullpath)
                 log.info(f"Created assets img symlink {store_fullpath} -> {show_fullpath}")
