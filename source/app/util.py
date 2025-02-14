@@ -117,11 +117,6 @@ def stream_sha256sum(stream):
     return hashlib.sha256(stream).hexdigest().upper()
 
 
-@app.template_filter()
-def format_datetime(value, frmt):
-    return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)
-
-
 def hmac_sign(data):
     key = bytes(app.config.get("SECRET_KEY"), "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
