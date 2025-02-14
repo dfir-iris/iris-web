@@ -51,11 +51,3 @@ class TestHelper(TestCase):
             result2 = test_app.get(url_for(path), follow_redirects=True)
 
             self.assertEqual(200, result2.status_code)
-
-    @staticmethod
-    def create_client(client_name: str = None) -> Client:
-        client_name = client_name if client_name is not None else f"client_name_{randrange(1,10000)}"
-
-        new_client = create_client(client_name)
-
-        return new_client
