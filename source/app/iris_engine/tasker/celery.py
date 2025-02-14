@@ -17,13 +17,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from celery import Celery
-from app.configuration import Config
+from app.configuration import CeleryConfig
 
 
 def make_celery(name):
     return Celery(
         name,
-        config_source=Config.CELERY
+        config_source=CeleryConfig
     )
 
 
