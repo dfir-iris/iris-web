@@ -76,14 +76,6 @@ from app.iris_engine.demo_builder import create_demo_users
 
 log = app.logger
 
-# Get the database host and port from environment variables
-db_host = app.config.get('PG_SERVER')
-db_port = int(app.config.get('PG_PORT'))
-
-# Get the retry parameters from environment variables
-retry_count = int(app.config.get('DB_RETRY_COUNT'))
-retry_delay = int(app.config.get('DB_RETRY_DELAY'))
-
 
 def connect_to_database(host: str, port: int) -> bool:
     """Attempts to connect to a database at the specified host and port.
@@ -109,9 +101,9 @@ def connect_to_database(host: str, port: int) -> bool:
         return False
 
 
-def run_post_init():
+def run_post_init(configuration):
     # Log the IRIS version and post-initiation steps
-    log.info(f'IRIS {app.config.get("IRIS_VERSION")}')
+    log.info(f'IRIS {configuration.get("IRIS_VERSION")}')
     log.info("Running post initiation steps")
 
     if os.getenv("IRIS_WORKER") is None:
@@ -119,6 +111,10 @@ def run_post_init():
 
         # Attempt to connect to the database with retries
         log.info("Attempting to connect to the database...")
+        db_host = configuration.get('PG_SERVER')
+        db_port = int(configuration.get('PG_PORT'))
+        retry_count = int(configuration.get('DB_RETRY_COUNT'))
+        retry_delay = int(configuration.get('DB_RETRY_DELAY'))
         for i in range(retry_count):
             log.info("Connecting to database, attempt " + str(i+1) + "/" + str(retry_count))
             conn = connect_to_database(db_host, db_port)
@@ -149,7 +145,7 @@ def run_post_init():
             log.info("Running DB migration")
 
             alembic_cfg = Config(file_='app/alembic.ini')
-            alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
+            alembic_cfg.set_main_option('sqlalchemy.url', configuration['SQLALCHEMY_DATABASE_URI'])
             command.upgrade(alembic_cfg, 'head')
 
             # Create base server settings if they don't exist
@@ -247,20 +243,20 @@ def run_post_init():
             custom_assets_symlinks()
 
             # If demo mode is enabled, create demo users and cases
-            if app.config.get('DEMO_MODE_ENABLED') == 'True':
+            if configuration.get('DEMO_MODE_ENABLED') == 'True':
                 log.warning("============================")
                 log.warning("|  THIS IS DEMO INSTANCE   |")
                 log.warning("| DO NOT USE IN PRODUCTION |")
                 log.warning("============================")
                 users_data = create_demo_users(def_org, gadm, ganalysts,
-                                               int(app.config.get('DEMO_USERS_COUNT', 10)),
-                                               app.config.get('DEMO_USERS_SEED'),
-                                               int(app.config.get('DEMO_ADM_COUNT', 4)),
-                                               app.config.get('DEMO_ADM_SEED'))
+                                               int(configuration.get('DEMO_USERS_COUNT', 10)),
+                                               configuration.get('DEMO_USERS_SEED'),
+                                               int(configuration.get('DEMO_ADM_COUNT', 4)),
+                                               configuration.get('DEMO_ADM_SEED'))
 
                 create_demo_cases(users_data=users_data,
-                                  cases_count=int(app.config.get('DEMO_CASES_COUNT', 20)),
-                                  clients_count=int(app.config.get('DEMO_CLIENTS_COUNT', 4)))
+                                  cases_count=int(configuration.get('DEMO_CASES_COUNT', 20)),
+                                  clients_count=int(configuration.get('DEMO_CLIENTS_COUNT', 4)))
 
             # Log completion message
             log.info("Post-init steps completed")
@@ -281,7 +277,7 @@ def create_safe_db(db_name):
         db_name: A string representing the name of the database to create.
     """
     # Create a new engine object for the specified database
-    engine = create_engine(app.config["SQALCHEMY_PIGGER_URI"] + db_name)
+    engine = create_engine(app.config['SQALCHEMY_PIGGER_URI'] + db_name)
 
     # Check if the database already exists
     if not database_exists(engine.url):

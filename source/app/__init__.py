@@ -165,7 +165,7 @@ register_blueprints(app)
 
 try:
 
-    run_post_init()
+    run_post_init(app.config)
 
 except Exception as e:
     app.logger.exception('Post init failed. IRIS not started')
