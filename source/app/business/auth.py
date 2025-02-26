@@ -1,9 +1,14 @@
 from urllib.parse import urlparse, urljoin
 
-from flask import session, redirect, url_for, request
+from flask import session
+from flask import redirect
+from flask import url_for
+from flask import request
 from flask_login import login_user
 
-from app import bc, app, db
+from app import bc
+from app import app
+from app import db
 from app.business.users import retrieve_user_by_username
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
