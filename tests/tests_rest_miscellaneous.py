@@ -47,7 +47,7 @@ class TestsRest(TestCase):
         # TODO should really be 201 here
         self.assertEqual(200, response.status_code)
 
-    def test_update_settings_should_not_fail(self):
+    def test_update_settings_should_return_200(self):
         body = {}
         response = self._subject.create('/manage/settings/update', body)
         self.assertEqual(200, response.status_code)

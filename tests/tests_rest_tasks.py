@@ -105,7 +105,7 @@ class TestsRestTasks(TestCase):
         response = user.get('/user/tasks/list').json()
         self.assertEqual(f'#{case_identifier} - case name', response['data']['tasks'][0]['task_case'])
 
-    def test_update_task_should_not_fail(self):
+    def test_update_task_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
