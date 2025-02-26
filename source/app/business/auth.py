@@ -118,5 +118,4 @@ def wrap_login_user(user, is_oidc=False):
     track_activity(f'user \'{user.user}\' successfully logged-in', ctx_less=True, display_in_ui=False)
 
     next_url = _filter_next_url(request.args.get('next'), user.ctx_case)
-
     return redirect(next_url)
