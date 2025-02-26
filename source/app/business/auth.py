@@ -64,7 +64,7 @@ def validate_local_login(username: str, password: str):
     return None
 
 
-def is_safe_url(target):
+def _is_safe_url(target):
     """
     Check whether the target URL is safe for redirection by ensuring that it is either a relative URL or
     has the same host as the current request.
@@ -82,7 +82,7 @@ def _filter_next_url(next_url, context_case):
         return url_for('index.index', cid=context_case)
     # Remove backslashes to mitigate obfuscation
     next_url = next_url.replace('\\', '')
-    if is_safe_url(next_url):
+    if _is_safe_url(next_url):
         return next_url
     return url_for('index.index', cid=context_case)
 
