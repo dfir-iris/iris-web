@@ -139,8 +139,17 @@ class TestsRestNotes(TestCase):
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
-        print(response)
         identifier = response['note_id']
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/notes/{identifier}', {})
-        print(response.json())
         self.assertEqual(200, response.status_code)
+
+    def test_update_note_should_modify_note_title(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create('/case/notes/directories/add',
+                                        {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
+        directory_identifier = response['data']['id']
+        body = {'directory_id': directory_identifier}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
+        identifier = response['note_id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/notes/{identifier}', {'note_title': 'title'}).json()
+        self.assertEqual('title', response['note_title'])

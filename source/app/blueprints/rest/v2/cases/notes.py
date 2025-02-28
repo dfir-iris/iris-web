@@ -31,6 +31,7 @@ from app.models.models import Notes
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.business.notes import notes_create
 from app.business.notes import notes_get
+from app.business.notes import notes_update
 from app.business.cases import cases_exists
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
@@ -87,7 +88,7 @@ def update_note(case_identifier, identifier):
         note = notes_get(identifier)
         _check_note_and_case_identifier_match(note, case_identifier)
 
-        #note = notes_update(identifier, request.get_json())
+        note = notes_update(identifier, request.get_json())
 
         schema = CaseNoteSchema()
         result = schema.dump(note)
