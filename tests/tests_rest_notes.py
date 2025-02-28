@@ -164,3 +164,14 @@ class TestsRestNotes(TestCase):
         identifier = response['note_id']
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/notes/{identifier}', {'note_title': 1})
         self.assertEqual(400, response.status_code)
+
+    def test_update_note_should_return_400_when_requested_with_nonexistent_directory_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create('/case/notes/directories/add',
+                                        {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
+        directory_identifier = response['data']['id']
+        body = {'directory_id': directory_identifier}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
+        identifier = response['note_id']
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/notes/{identifier}', {'directory_id': _IDENTIFIER_FOR_NONEXISTENT_OBJECT})
+        self.assertEqual(400, response.status_code)
