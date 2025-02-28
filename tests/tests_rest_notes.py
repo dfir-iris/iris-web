@@ -176,7 +176,7 @@ class TestsRestNotes(TestCase):
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/notes/{identifier}', {'directory_id': _IDENTIFIER_FOR_NONEXISTENT_OBJECT})
         self.assertEqual(400, response.status_code)
 
-    def test_update_note_should_return_404_when_case_identifier_does_not_exist(self):
+    def test_update_note_should_return_404_when_case_identifier_does_not_correspond_to_existing_case(self):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
@@ -187,7 +187,7 @@ class TestsRestNotes(TestCase):
         response = self._subject.update(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/notes/{identifier}', {})
         self.assertEqual(404, response.status_code)
 
-    def test_update_note_should_return_404_when_identifier_does_not_exist(self):
+    def test_update_note_should_return_404_when_identifier_does_not_correspond_to_existing_note(self):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/notes/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}', {})
         self.assertEqual(404, response.status_code)

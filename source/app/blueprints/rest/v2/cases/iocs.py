@@ -39,6 +39,7 @@ from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_api_return_access_denied
+from app.models.models import Ioc
 
 case_iocs_blueprint = Blueprint('case_ioc_rest_v2',
                                 __name__,
@@ -104,8 +105,7 @@ def delete_case_ioc(case_identifier, identifier):
         ioc = iocs_get(identifier)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
-        if ioc.case_id != case_identifier:
-            raise ObjectNotFoundError()
+        _check_ioc_and_case_identifier_match(ioc, case_identifier)
 
         iocs_delete(ioc)
         return response_api_deleted()
@@ -125,8 +125,7 @@ def get_case_ioc(case_identifier, identifier):
         ioc = iocs_get(identifier)
         if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
-        if ioc.case_id != case_identifier:
-            raise ObjectNotFoundError()
+        _check_ioc_and_case_identifier_match(ioc, case_identifier)
 
         return response_api_success(ioc_schema.dump(ioc))
     except ObjectNotFoundError:
@@ -140,9 +139,9 @@ def update_ioc(case_identifier, identifier):
     ioc_schema = IocSchemaForAPIV2()
     try:
         ioc = iocs_get(identifier)
-        if not ac_fast_check_current_user_has_case_access(ioc.case_id,
-                                                          [CaseAccessLevel.full_access]):
+        if not ac_fast_check_current_user_has_case_access(ioc.case_id, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=ioc.case_id)
+        _check_ioc_and_case_identifier_match(ioc, case_identifier)
 
         ioc, _ = iocs_update(ioc, request.get_json())
         return response_api_success(ioc_schema.dump(ioc))
@@ -152,3 +151,7 @@ def update_ioc(case_identifier, identifier):
 
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), data=e.get_data())
+
+def _check_ioc_and_case_identifier_match(ioc: Ioc, case_identifier):
+    if ioc.case_id != case_identifier:
+        raise ObjectNotFoundError
