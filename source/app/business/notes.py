@@ -103,7 +103,7 @@ def notes_update(identifier: int, request_json: dict):
 
         note = get_note(identifier)
         if not note:
-            raise BusinessProcessingError("Invalid note ID for this case")
+            raise BusinessProcessingError('Invalid note ID for this case')
 
         case_identifier = note.note_case_id
         request_data = call_modules_hook('on_preload_note_update', data=request_json, caseid=case_identifier)
@@ -121,7 +121,7 @@ def notes_update(identifier: int, request_json: dict):
         if revision_number > 1:
             if latest_version.note_title == request_data.get('note_title') and latest_version.note_content == request_data.get('note_content'):
                 no_changes = True
-                app.logger.debug(f"Note {identifier} has not changed, skipping versioning")
+                app.logger.debug(f'Note {identifier} has not changed, skipping versioning')
 
         if not no_changes:
             note_version = NoteRevisions(
@@ -143,7 +143,7 @@ def notes_update(identifier: int, request_json: dict):
         add_obj_history_entry(note, 'updated note', commit=True)
         note = call_modules_hook('on_postload_note_update', data=note, caseid=case_identifier)
 
-        track_activity(f"updated note \"{note.note_title}\"", caseid=case_identifier)
+        track_activity(f'updated note "{note.note_title}"', caseid=case_identifier)
 
         return note
 
