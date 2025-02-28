@@ -121,19 +121,19 @@ def case_note_delete(cur_id, caseid):
 
     note = get_note(cur_id)
     if not note:
-        return response_error("Invalid note ID for this case")
+        return response_error('Invalid note ID for this case')
 
     try:
 
         delete_note(cur_id, caseid)
 
     except Exception as e:
-        return response_error("Unable to remove note", data=e.__traceback__)
+        return response_error('Unable to remove note', data=e.__traceback__)
 
     call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
 
-    track_activity(f"deleted note \"{note.note_title}\"", caseid=caseid)
-    return response_success(f"Note deleted {cur_id}")
+    track_activity(f'deleted note "{note.note_title}"', caseid=caseid)
+    return response_success(f'Note deleted {cur_id}')
 
 
 @case_notes_rest_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
