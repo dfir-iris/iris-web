@@ -239,3 +239,8 @@ class TestsRestCases(TestCase):
         response = self._subject.update(f'/api/v2/cases/{identifier}', {'severity_id': 'invalid_integer'})
         self.assertEqual(400, response.status_code)
         self.assertEqual(['Not a valid integer.'], response.json()['data']['severity_id'])
+
+    def test_close_case_should_set_closing_date(self):
+        identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/manage/cases/close/{identifier}', {}).json()
+        self.assertIsNotNone(response['data']['close_date'])
