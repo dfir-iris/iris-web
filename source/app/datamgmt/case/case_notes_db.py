@@ -76,29 +76,29 @@ def get_note_raw(note_id, caseid):
     return note
 
 
-def delete_note(note_id, caseid):
+def delete_note(note_identifier, case_identifier):
     with db.session.begin_nested():
         NotesGroupLink.query.filter(and_(
-            NotesGroupLink.note_id == note_id,
-            NotesGroupLink.case_id == caseid
+            NotesGroupLink.note_id == note_identifier,
+            NotesGroupLink.case_id == case_identifier
         )).delete()
 
         com_ids = NotesComments.query.with_entities(
             NotesComments.comment_id
         ).filter(
-            NotesComments.comment_note_id == note_id
+            NotesComments.comment_note_id == note_identifier
         ).all()
 
         com_ids = [c.comment_id for c in com_ids]
         NotesComments.query.filter(NotesComments.comment_id.in_(com_ids)).delete()
 
-        NoteRevisions.query.filter(NoteRevisions.note_id == note_id).delete()
+        NoteRevisions.query.filter(NoteRevisions.note_id == note_identifier).delete()
 
         Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
 
-        Notes.query.filter(Notes.note_id == note_id).delete()
+        Notes.query.filter(Notes.note_id == note_identifier).delete()
 
-        update_notes_state(caseid=caseid)
+        update_notes_state(caseid=case_identifier)
 
 
 def update_note(note_content, note_title, update_date, user_id, note_id, caseid):
