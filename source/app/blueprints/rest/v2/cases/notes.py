@@ -51,11 +51,11 @@ def create_note(case_identifier):
     if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=case_identifier)
 
-    note_schema = CaseNoteSchema()
     try:
         note = notes_create(request_json=request.get_json(), case_identifier=case_identifier)
 
-        return response_api_created(note_schema.dump(note))
+        schema = CaseNoteSchema()
+        return response_api_created(schema.dump(note))
 
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), data=e.get_data())
@@ -65,8 +65,6 @@ def create_note(case_identifier):
 @ac_api_requires()
 def get_note(case_identifier, identifier):
 
-    note_schema = CaseNoteSchema()
-
     try:
         note = notes_get(identifier)
         _check_note_and_case_identifier_match(note, case_identifier)
@@ -74,7 +72,8 @@ def get_note(case_identifier, identifier):
         if not ac_fast_check_current_user_has_case_access(note.note_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=note.note_case_id)
 
-        return response_api_success(note_schema.dump(note))
+        schema = CaseNoteSchema()
+        return response_api_success(schema.dump(note))
     except ObjectNotFoundError:
         return response_api_not_found()
     except BusinessProcessingError as e:
