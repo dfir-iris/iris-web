@@ -1073,6 +1073,7 @@ def delete_related_alert_cache(alert_id):
     ).delete()
     db.session.commit()
 
+
 def delete_similar_alerts_cache(alert_ids: List[int]):
     """
     Delete the similar alerts cache

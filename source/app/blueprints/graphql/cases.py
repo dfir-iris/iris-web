@@ -67,6 +67,7 @@ class CaseObject(SQLAlchemyObjectType):
         permissions_check_current_user_has_some_case_access(case_id, [CaseAccessLevel.full_access])
         return Cases.query.get(case_id)
 
+
 class CaseConnection(Connection):
     class Meta:
         node = CaseObject

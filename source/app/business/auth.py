@@ -78,6 +78,7 @@ def _is_safe_url(target):
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
+
 def _filter_next_url(next_url, context_case):
     """
     Ensures that the URL to which the user is redirected is safe. If the provided URL is not safe or is missing,

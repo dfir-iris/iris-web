@@ -146,9 +146,11 @@ from app.views import register_blueprints
 from app.views import load_user
 from app.views import load_user_from_request
 
+
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db.session.remove()
+
 
 @app.after_request
 def after_request(response):

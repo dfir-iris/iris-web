@@ -152,6 +152,7 @@ def update_ioc(case_identifier, identifier):
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), data=e.get_data())
 
+
 def _check_ioc_and_case_identifier_match(ioc: Ioc, case_identifier):
     if ioc.case_id != case_identifier:
         raise ObjectNotFoundError
