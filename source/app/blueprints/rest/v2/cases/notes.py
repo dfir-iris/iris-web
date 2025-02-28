@@ -33,6 +33,7 @@ from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_
 from app.business.notes import notes_create
 from app.business.notes import notes_get
 from app.business.notes import notes_update
+from app.business.notes import notes_delete
 from app.business.cases import cases_exists
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
@@ -112,7 +113,9 @@ def delete_note(case_identifier, identifier):
             return ac_api_return_access_denied(caseid=note.note_case_id)
         _check_note_and_case_identifier_match(note, case_identifier)
 
+        notes_delete(note)
         return response_api_deleted()
+
     except ObjectNotFoundError:
         return response_api_not_found()
 
