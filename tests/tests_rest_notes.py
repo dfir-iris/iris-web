@@ -231,11 +231,16 @@ class TestsRestNotes(TestCase):
 
     def test_delete_note_should_return_404_when_identifier_does_not_correspond_to_existing_note(self):
         case_identifier = self._subject.create_dummy_case()
+        response = self._subject.delete(f'/api/v2/cases/{case_identifier}/notes/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        self.assertEqual(404, response.status_code)
+
+    def test_delete_note_should_return_404_when_case_identifier_does_not_correspond_to_existing_note(self):
+        case_identifier = self._subject.create_dummy_case()
         response = self._subject.create('/case/notes/directories/add',
                                         {'name': 'directory_name'}, query_parameters={'cid': case_identifier}).json()
         directory_identifier = response['data']['id']
         body = {'directory_id': directory_identifier}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes', body).json()
         identifier = response['note_id']
-        response = self._subject.delete(f'/api/v2/cases/{case_identifier}/notes/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        response = self._subject.delete(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/notes/{identifier}')
         self.assertEqual(404, response.status_code)
