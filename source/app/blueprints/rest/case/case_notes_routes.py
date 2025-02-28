@@ -35,12 +35,12 @@ from app.business.notes import notes_get_revision
 from app.business.notes import notes_delete_revision
 from app.business.notes import notes_update
 from app.business.notes import notes_get
+from app.business.notes import notes_delete
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import add_comment_to_note
 from app.datamgmt.case.case_notes_db import get_directories_with_note_count
 from app.datamgmt.case.case_notes_db import get_directory
 from app.datamgmt.case.case_notes_db import delete_directory
-from app.datamgmt.case.case_notes_db import delete_note
 from app.datamgmt.case.case_notes_db import delete_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comments
@@ -117,23 +117,18 @@ def case_note_detail(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_delete(cur_id, caseid):
-    call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
-
     note = get_note(cur_id)
     if not note:
         return response_error('Invalid note ID for this case')
 
     try:
 
-        delete_note(cur_id, caseid)
+        notes_delete(note)
+        return response_success(f'Note deleted {cur_id}')
 
     except Exception as e:
         return response_error('Unable to remove note', data=e.__traceback__)
 
-    call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f'deleted note "{note.note_title}"', caseid=caseid)
-    return response_success(f'Note deleted {cur_id}')
 
 
 @case_notes_rest_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])

@@ -26,6 +26,7 @@ from app.business.errors import BusinessProcessingError
 from app.business.errors import UnhandledBusinessError
 from app.business.errors import ObjectNotFoundError
 from app.datamgmt.case.case_notes_db import get_note
+from app.datamgmt.case.case_notes_db import delete_note
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import NoteRevisions
@@ -149,6 +150,14 @@ def notes_update(note: Notes, request_json: dict):
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
 
 
+def notes_delete(note: Notes):
+    call_modules_hook('on_preload_note_delete', data=note.note_id, caseid=note.note_case_id)
+    delete_note(note.note_id, note.note_case_id)
+    call_modules_hook('on_postload_note_delete', data=note.note_id, caseid=note.note_case_id)
+
+    track_activity(f'deleted note "{note.note_title}"', caseid=note.note_case_id)
+
+
 def notes_list_revisions(identifier: int):
     try:
         note = get_note(identifier)
@@ -200,7 +209,7 @@ def notes_delete_revision(identifier: int, revision_number: int):
     try:
         note = get_note(identifier)
         if not note:
-            raise BusinessProcessingError("Invalid note ID for this case")
+            raise BusinessProcessingError('Invalid note ID for this case')
 
         note_revision = NoteRevisions.query.filter(
             NoteRevisions.note_id == identifier,
@@ -208,12 +217,12 @@ def notes_delete_revision(identifier: int, revision_number: int):
         ).first()
 
         if not note_revision:
-            raise BusinessProcessingError("Invalid note revision number")
+            raise BusinessProcessingError('Invalid note revision number')
 
         db.session.delete(note_revision)
         db.session.commit()
 
-        track_activity(f"deleted note revision {revision_number} of note \"{note.note_title}\"", caseid=note.note_case_id)
+        track_activity(f'deleted note revision {revision_number} of note "{note.note_title}"', caseid=note.note_case_id)
 
     except ValidationError as e:
         raise BusinessProcessingError('Data error', e.messages)
