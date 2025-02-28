@@ -97,21 +97,16 @@ def notes_get(identifier) -> Notes:
     return note
 
 
-def notes_update(identifier: int, request_json: dict):
+def notes_update(note: Notes, request_json: dict):
     try:
         addnote_schema = CaseNoteSchema()
 
-        note = get_note(identifier)
-        if not note:
-            raise BusinessProcessingError('Invalid note ID for this case')
-
-        case_identifier = note.note_case_id
-        request_data = call_modules_hook('on_preload_note_update', data=request_json, caseid=case_identifier)
+        request_data = call_modules_hook('on_preload_note_update', data=request_json, caseid=note.note_case_id)
 
         latest_version = db.session.query(
             NoteRevisions
         ).filter_by(
-            note_id=identifier
+            note_id=note.note_id
         ).order_by(
             NoteRevisions.revision_number.desc()
         ).first()
@@ -121,7 +116,7 @@ def notes_update(identifier: int, request_json: dict):
         if revision_number > 1:
             if latest_version.note_title == request_data.get('note_title') and latest_version.note_content == request_data.get('note_content'):
                 no_changes = True
-                app.logger.debug(f'Note {identifier} has not changed, skipping versioning')
+                app.logger.debug(f'Note {note.note_id} has not changed, skipping versioning')
 
         if not no_changes:
             note_version = NoteRevisions(
@@ -135,15 +130,15 @@ def notes_update(identifier: int, request_json: dict):
             db.session.add(note_version)
             db.session.commit()
 
-        request_data['note_id'] = identifier
+        request_data['note_id'] = note.note_id
         addnote_schema.load(request_data, partial=True, instance=note)
         note.update_date = datetime.utcnow()
         note.user_id = current_user.id
 
         add_obj_history_entry(note, 'updated note', commit=True)
-        note = call_modules_hook('on_postload_note_update', data=note, caseid=case_identifier)
+        note = call_modules_hook('on_postload_note_update', data=note, caseid=note.note_case_id)
 
-        track_activity(f'updated note "{note.note_title}"', caseid=case_identifier)
+        track_activity(f'updated note "{note.note_title}"', caseid=note.note_case_id)
 
         return note
 

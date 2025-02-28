@@ -144,7 +144,7 @@ def assets_filter(case_identifier, pagination_parameters: PaginationParameters) 
     return filter_assets(case_identifier, pagination_parameters)
 
 
-def assets_update(asset: CaseAssets, request_json):
+def assets_update(asset: CaseAssets, request_json: dict):
     caseid = asset.case_id
     request_data = call_modules_hook('on_preload_asset_update', data=request_json, caseid=caseid)
 

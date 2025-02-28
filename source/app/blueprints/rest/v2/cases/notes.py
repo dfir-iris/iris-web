@@ -88,7 +88,7 @@ def update_note(case_identifier, identifier):
         note = notes_get(identifier)
         _check_note_and_case_identifier_match(note, case_identifier)
 
-        note = notes_update(identifier, request.get_json())
+        note = notes_update(note, request.get_json())
 
         schema = CaseNoteSchema()
         result = schema.dump(note)
