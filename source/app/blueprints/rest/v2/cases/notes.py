@@ -93,9 +93,12 @@ def update_note(case_identifier, identifier):
         schema = CaseNoteSchema()
         result = schema.dump(note)
         return response_api_success(result)
+
     except ObjectNotFoundError:
         return response_api_not_found()
-    # TODO
+
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
 
 def _check_note_and_case_identifier_match(note: Notes, case_identifier):
     if note.note_case_id != case_identifier:
