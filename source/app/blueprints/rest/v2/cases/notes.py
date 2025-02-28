@@ -80,6 +80,22 @@ def get_note(case_identifier, identifier):
         return response_api_error(e.get_message())
 
 
+@case_notes_blueprint.put('<int:identifier>')
+@ac_api_requires()
+def update_note(case_identifier, identifier):
+    try:
+        note = notes_get(identifier)
+        _check_note_and_case_identifier_match(note, case_identifier)
+
+        #note = notes_update(identifier, request.get_json())
+
+        schema = CaseNoteSchema()
+        result = schema.dump(note)
+        return response_api_success(result)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    # TODO
+
 def _check_note_and_case_identifier_match(note: Notes, case_identifier):
     if note.note_case_id != case_identifier:
         raise ObjectNotFoundError
