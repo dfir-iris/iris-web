@@ -185,7 +185,6 @@ def register_blueprints(app):
     app.register_blueprint(rest_v2_blueprint)
 
 
-
 # provide login manager with load_user callback
 def load_user(user_id):
     return User.query.get(int(user_id))

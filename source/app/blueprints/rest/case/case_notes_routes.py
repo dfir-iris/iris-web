@@ -131,7 +131,6 @@ def case_note_delete(cur_id, caseid):
         return response_error('Unable to remove note', data=e.__traceback__)
 
 
-
 @case_notes_rest_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
 @endpoint_deprecated('PUT', '/api/v2/cases/{case_identifier}/notes/{identifier}')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)

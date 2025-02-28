@@ -62,7 +62,6 @@ log = app.logger
 # filter User out of database through username
 
 
-
 def _render_template_login(form, msg):
     organisation_name = app.config.get('ORGANISATION_NAME')
     login_banner = app.config.get('LOGIN_BANNER_TEXT')

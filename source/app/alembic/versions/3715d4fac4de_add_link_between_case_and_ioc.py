@@ -36,7 +36,6 @@ def upgrade():
         op.alter_column('ioc', 'case_id', nullable=True)
         return
 
-
     # Fetch all ioc_link rows
     ioc_links = conn.execute(text("SELECT ioc_id, case_id FROM ioc_link")).fetchall()
     if not ioc_links:
@@ -146,7 +145,6 @@ def upgrade():
         case_id = row.case_id
         events_by_ioc_and_case.setdefault((ioc_id, case_id), []).append(row.event_id)
 
-
     # We'll keep track of which (ioc_id, case_id) pairs we've already handled
     # so we don't do duplicate work if multiple ioc_link rows refer to the same pair.
     already_handled = set()
@@ -230,7 +228,6 @@ def upgrade():
 
             # Update our global in-memory map so future checks won't create a second duplicate
             existing_map[key] = new_ioc_id
-
 
             # Move ioc_comments to the new ioc
             if ioc_id in comments_by_ioc:

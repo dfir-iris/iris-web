@@ -945,7 +945,6 @@ def alerts_batch_escalate_route() -> Response:
         return response_error(str(e))
 
 
-
 @alerts_rest_blueprint.route('/alerts/<int:alert_id>/comments/list', methods=['GET'])
 @ac_api_requires(Permissions.alerts_read)
 def alert_comments_get(alert_id):

@@ -212,7 +212,6 @@ def create_demo_cases(users_data: dict = None, cases_count: int = 0, clients_cou
                                         cases_list=cases_list,
                                         access_level=CaseAccessLevel.deny_all.value)
 
-
     add_case_access_to_group(group=users_data['gadm'],
                              cases_list=cases_list,
                              access_level=CaseAccessLevel.full_access.value)

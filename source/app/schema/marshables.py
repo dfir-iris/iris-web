@@ -512,7 +512,6 @@ class CaseAddNoteSchema(ma.Schema):
     note_content: str = fields.String(required=False)
     custom_attributes: Dict[str, Any] = fields.Dict(required=False)
 
-
     def verify_directory_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
         """Verifies that the directory ID is valid.
 

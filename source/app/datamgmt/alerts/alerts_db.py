@@ -363,7 +363,6 @@ def get_filtered_alerts(
         return None
 
 
-
 def add_alert(
         title,
         description,
@@ -994,7 +993,6 @@ def register_related_alerts(new_alert=None, assets_list=None, iocs_list=None):
     """
     Register related alerts
     """
-
 
     # Step 1: Identify similar alerts based on title, assets, and IOCs
     similar_alerts = db.session.query(Alert).filter(
