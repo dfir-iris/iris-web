@@ -39,7 +39,7 @@ auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
 
 
 # TODO put this endpoint back after thinking about it (doesn't feel REST)
-#@auth_blueprint.post('/login')
+@auth_blueprint.post('/login')
 def login():
     """
     Login endpoint. Handles taking user/pass combo and authenticating a local session or returning an error.
@@ -108,7 +108,7 @@ def logout():
 
 
 # TODO shouldn't we rather have /api/v2/users/{identifier}?
-#@auth_blueprint.route('/whoami', methods=['GET'])
+@auth_blueprint.route('/whoami', methods=['GET'])
 def whoami():
     """
     Returns information about the currently authenticated user.

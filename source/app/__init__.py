@@ -23,6 +23,7 @@ from flask import Flask
 from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
+from flask_cors import CORS
 
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
@@ -76,10 +77,6 @@ ma = Marshmallow()
 celery = make_celery(__name__)
 app = Flask(__name__, static_folder='../static')
 
-# CORS(app,
-#      supports_credentials=True,
-#      resources={r"/api/*": {"origins": ["http://127.0.0.1:5137", "http://localhost:5173"]}})
-
 
 def ac_current_user_has_permission(*permissions):
     """
@@ -126,10 +123,11 @@ dropzone = Dropzone(app)
 
 set_celery_flask_context(celery, app)
 
-# store = HttpExposedFileSystemStore(
-#     path='images',
-#     prefix='/static/assets/images/'
-# )
+if app.config.get('DEVELOPMENT_ENABLED'):
+    CORS(app,
+         supports_credentials=True,
+         resources={r"/api/*": {"origins": ["http://127.0.0.1:5137", "http://localhost:5173"]}})
+
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 #app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
@@ -146,6 +144,11 @@ from app.views import register_blueprints
 from app.views import load_user
 from app.views import load_user_from_request
 
+if app.config.get('DEVELOPMENT_ENABLED'):
+    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+    app.config['SESSION_COOKIE_SECURE'] = False  # in dev, or True in production with HTTPS
+    app.config['SESSION_COOKIE_NAME'] = 'session'
+
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -158,6 +161,11 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+
+    if app.config['DEVELOPMENT_ENABLED']:
+        response.headers['Access-Control-Allow-Origin'] = app.config['IRIS_ALLOW_ORIGIN']
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
 
     return response
 

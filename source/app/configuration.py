@@ -314,6 +314,12 @@ class Config:
         DEMO_ADM_SEED = config.load('IRIS_DEMO', 'ADM_SEED', fallback=0)
         MAX_CONTENT_LENGTH = 200000
 
+    DEVELOPMENT_ENABLED = config.load('DEVELOPMENT', 'ENABLED', fallback=False)
+    if DEVELOPMENT_ENABLED == 'True':
+        DEVELOPMENT_ENABLED = True
+
+    IRIS_ALLOW_ORIGIN = config.load('IRIS', 'ALLOW_ORIGIN', fallback='https://localhost')
+
     WTF_CSRF_TIME_LIMIT = None
 
     """ SqlAlchemy configuration
