@@ -126,7 +126,12 @@ set_celery_flask_context(celery, app)
 if app.config.get('DEVELOPMENT_ENABLED'):
     CORS(app,
          supports_credentials=True,
-         resources={r"/api/*": {"origins": ["http://127.0.0.1:5137", "http://localhost:5173"]}})
+         resources={r"/api/*": {"origins": [
+             "https://127.0.0.1:5137",
+             "https://localhost:5173",
+             "https://localhost",
+             "https://127.0.0.1"
+         ]}})
 
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
@@ -144,11 +149,6 @@ from app.views import register_blueprints
 from app.views import load_user
 from app.views import load_user_from_request
 
-if app.config.get('DEVELOPMENT_ENABLED'):
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None'
-    app.config['SESSION_COOKIE_SECURE'] = False  # in dev, or True in production with HTTPS
-    app.config['SESSION_COOKIE_NAME'] = 'session'
-
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):
@@ -157,15 +157,10 @@ def shutdown_session(exception=None):
 
 @app.after_request
 def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Origin', app.config['IRIS_ALLOW_ORIGIN'])
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-
-    if app.config['DEVELOPMENT_ENABLED']:
-        response.headers['Access-Control-Allow-Origin'] = app.config['IRIS_ALLOW_ORIGIN']
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
-        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
 
     return response
 

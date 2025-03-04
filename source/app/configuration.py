@@ -318,7 +318,7 @@ class Config:
     if DEVELOPMENT_ENABLED == 'True':
         DEVELOPMENT_ENABLED = True
 
-    IRIS_ALLOW_ORIGIN = config.load('IRIS', 'ALLOW_ORIGIN', fallback='https://localhost')
+    IRIS_ALLOW_ORIGIN = config.load('IRIS', 'ALLOW_ORIGIN', fallback='*')
 
     WTF_CSRF_TIME_LIMIT = None
 
