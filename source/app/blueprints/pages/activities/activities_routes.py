@@ -23,7 +23,6 @@ from flask import render_template
 from flask import url_for
 from flask_wtf import FlaskForm
 
-import app
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_requires
 
@@ -32,8 +31,6 @@ activities_blueprint = Blueprint(
     __name__,
     template_folder='templates'
 )
-
-basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 
 @activities_blueprint.route('/activities', methods=['GET'])
