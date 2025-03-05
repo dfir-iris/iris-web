@@ -62,14 +62,14 @@ class TestsAuth(TestCase):
         user_name = f'user{uuid4()}'
         password = 'aA.1234567890'
         self._subject.create_user(user_name, password)
-        url = parse.urljoin(API_URL, '/auth/login')
+        url = parse.urljoin(API_URL, '/api/v2//auth/login')
         response = requests.post(url, json={'username': user_name, 'password': password})
         self.assertIn('Set-Cookie', response.headers)
 
     def test_login_should_return_authentication_cookie_which_allows_get_requests(self):
         user_name = f'user{uuid4()}'
         password = 'aA.1234567890'
-        self._subject.create_user(f'user{uuid4()}', password)
+        self._subject.create_user(user_name, password)
         url = parse.urljoin(API_URL, '/api/v2/auth/login')
         response = requests.post(url, json={'username': user_name, 'password': password})
         url = parse.urljoin(API_URL, '/api/v2/cases')

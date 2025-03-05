@@ -2482,7 +2482,7 @@ class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     state = ma.Nested(CaseStateSchema)
-    case_customer = ma.Nested(CustomerSchema)
+    case_customer = ma.Nested(CustomerSchema, attribute='client')
     review_status = ma.Nested(ReviewStatusSchema)
 
     class Meta:
