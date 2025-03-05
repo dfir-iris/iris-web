@@ -17,7 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import collections
 import json
-import logging as logger
+import logging
 import os
 from flask import Flask
 from flask import session
@@ -64,7 +64,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
 LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-logger.basicConfig(level=logger.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
 
 SQLALCHEMY_ENGINE_OPTIONS = {
     "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict),
