@@ -39,6 +39,7 @@ auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
 
 log = app.logger
 
+
 @auth_blueprint.post('/login')
 def login():
     """
