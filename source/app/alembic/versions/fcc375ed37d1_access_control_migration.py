@@ -43,7 +43,7 @@ def upgrade():
             'user',
             sa.MetaData(),
             sa.Column('id', sa.BigInteger(), primary_key=True),
-            sa.Column('uuid',  UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
+            sa.Column('uuid', UUID(as_uuid=True), default=uuid.uuid4, nullable=False)
         )
 
         res = conn.execute(text("select id from \"user\";"))

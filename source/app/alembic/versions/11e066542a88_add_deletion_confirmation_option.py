@@ -23,7 +23,7 @@ depends_on = None
 def upgrade():
     if not _table_has_column('user', 'has_deletion_confirmation'):
         op.add_column('user',
-                      sa.Column('has_deletion_confirmation',  Boolean(), nullable=False, server_default='false')
+                      sa.Column('has_deletion_confirmation', Boolean(), nullable=False, server_default='false')
                       )
     pass
 
