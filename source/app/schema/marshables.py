@@ -27,6 +27,7 @@ import shutil
 import string
 import tempfile
 from flask_login import current_user
+from flask import current_app
 from marshmallow import ValidationError
 from marshmallow import EXCLUDE
 from marshmallow import fields
@@ -102,8 +103,6 @@ from app.util import stream_sha256sum
 ALLOWED_EXTENSIONS = {'png', 'svg'}
 POSTGRES_INT_MAX = 2147483647
 POSTGRES_BIGINT_MAX = 9223372036854775807
-
-log = app.logger
 
 
 def allowed_file_icon(filename: str):
@@ -1459,7 +1458,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
                     os.unlink(fn.name)
 
                 except Exception as e:
-                    log.exception(e)
+                    current_app.logger.exception(e)
                     raise marshmallow.exceptions.ValidationError(
                         str(e),
                         field_name='file_password'
