@@ -185,6 +185,16 @@ class TestsRestCases(TestCase):
         response = self._subject.create('/api/v2/cases', body).json()
         self.assertIn('case_customer', response['data'])
 
+    def test_create_case_should_return_field_case_customer(self):
+        body = {
+            'case_name': 'case name',
+            'case_description': 'description',
+            'case_customer': 1,
+            'case_soc_id': ''
+        }
+        response = self._subject.create('/api/v2/cases', body).json()
+        self.assertEqual(1, response['case_customer']['customer_id'])
+
     def test_update_case_should_return_200(self):
         identifier = self._subject.create_dummy_case()
         response = self._subject.update(f'/api/v2/cases/{identifier}', { 'case_name': 'new name' })
