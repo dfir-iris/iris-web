@@ -70,7 +70,7 @@ class TestsAuth(TestCase):
         user_name = f'user{uuid4()}'
         password = 'aA.1234567890'
         self._subject.create_user(f'user{uuid4()}', password)
-        url = parse.urljoin(API_URL, '/auth/login')
+        url = parse.urljoin(API_URL, '/api/v2/auth/login')
         response = requests.post(url, json={'username': user_name, 'password': password})
         url = parse.urljoin(API_URL, '/api/v2/cases')
         name, value = response.headers['Set-Cookie'].split('=', 1)
@@ -84,11 +84,11 @@ class TestsAuth(TestCase):
     def test_logout_should_forbid_later_requests_from_the_same_user(self):
         password = 'aA.1234567890'
         user = self._subject.create_user(f'user{uuid4()}', password)
-        url = parse.urljoin(API_URL, '/auth/login')
+        url = parse.urljoin(API_URL, '/api/v2/auth/login')
         response = requests.post(url, json={'username': user.get_login(), 'password': password})
         name, value = response.headers['Set-Cookie'].split('=', 1)
         cookies = {name: value}
-        url = parse.urljoin(API_URL, '/auth/logout')
+        url = parse.urljoin(API_URL, '/api/v2/auth/logout')
         requests.get(url, cookies=cookies)
         url = parse.urljoin(API_URL, '/api/v2/cases')
         response = requests.get(url, cookies=cookies)
