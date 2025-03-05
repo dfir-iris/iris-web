@@ -183,13 +183,6 @@ SQLALCHEMY_BASE_URI = 'postgresql+psycopg2://{user}:{passwd}@{server}:{port}/'.f
     port=PG_PORT_
 )
 
-SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
-    user=PGA_ACCOUNT_,
-    passwd=PGA_PASSWD_,
-    server=PG_SERVER_,
-    port=PG_PORT_
-)
-
 SQLALCHEMY_BASE_ADMIN_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(user=PGA_ACCOUNT_,
                                                                                             passwd=PGA_PASSWD_,
                                                                                             server=PG_SERVER_,
