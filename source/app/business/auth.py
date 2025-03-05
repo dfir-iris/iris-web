@@ -11,6 +11,7 @@ from app import app
 from app import db
 from app.business.users import retrieve_user_by_username
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
+from app.datamgmt.manage.manage_users_db import get_active_user
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
@@ -18,6 +19,20 @@ from app.models.cases import Cases
 from app.schema.marshables import UserSchema
 
 log = app.logger
+
+
+def return_authed_user_info(user_id):
+    """
+    Return the user object by user id.
+
+    :param user_id: User ID
+    :return: User object if found, None otherwise
+    """
+    user = get_active_user(user_id=user_id)
+    if not user:
+        return None
+
+    return UserSchema(exclude=['user_password', 'mfa_secrets', 'webauthn_credentials']).dump(user)
 
 
 def validate_ldap_login(username: str, password: str, local_fallback: bool = True):

@@ -30,22 +30,26 @@ from app.blueprints.access_controls import is_authentication_oidc
 from app.blueprints.access_controls import not_authenticated_redirection_url
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
-from app.business.auth import validate_ldap_login, validate_local_login
+from app.business.auth import validate_ldap_login, validate_local_login, return_authed_user_info
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 
 
 auth_blueprint = Blueprint('auth', __name__, url_prefix='/auth')
 
+log = app.logger
 
 @auth_blueprint.post('/login')
 def login():
     """
     Login endpoint. Handles taking user/pass combo and authenticating a local session or returning an error.
     """
-
+    log.info('Authenticating user')
     if current_user.is_authenticated:
-        return response_api_success('User already authenticated')
+        log.info('User already authenticated - redirecting')
+        log.debug(f'User {current_user.user} already logged in')
+        user = return_authed_user_info(user_id=current_user.id)
+        return response_api_success(data=user)
 
     if is_authentication_oidc() and app.config.get('AUTHENTICATION_LOCAL_FALLBACK') is False:
         return redirect(url_for('login.oidc_login'))
@@ -61,8 +65,11 @@ def login():
         authed_user = validate_local_login(username, password)
 
     if authed_user is None:
+
+        track_activity(f'User {username} tried to login. Invalid credentials', ctx_less=True, display_in_ui=False)
         return response_api_error('Invalid credentials')
 
+    track_activity(f'User {username} logged in', ctx_less=True, display_in_ui=False)
     return response_api_success(data=authed_user)
 
 
@@ -105,7 +112,7 @@ def logout():
     return redirect(not_authenticated_redirection_url('/'))
 
 
-# TODO - We should have /api/v2/users/{identifier}. For now keeping it since the route doesn
+# TODO - We should have /api/v2/users/{identifier}. For now keeping it since the route doesn't exist elsewhere
 @auth_blueprint.route('/whoami', methods=['GET'])
 def whoami():
     """

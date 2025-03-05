@@ -29,7 +29,7 @@ dashboard_blueprint = Blueprint('dashboard',
 
 
 # TODO this endpoint does not adhere to the conventions (verb in URL).
-#      Prefer to use GET /api/v2/cases. Check it is possible. If not, evolve /api/v2/cases
+#      Prefer to use GET /api/v2/cases?case_owner_id=xx
 @dashboard_blueprint.route('/cases/list', methods=['GET'])
 @ac_api_requires()
 def list_own_cases():
