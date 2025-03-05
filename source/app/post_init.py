@@ -1583,7 +1583,7 @@ class PostInit:
                 db.create_all(bind_key="iris_tasks")
                 db.session.commit()
 
-                self._logger.info("Running DB migration")
+                self._logger.info('Running DB migration')
 
                 alembic_cfg = Config(file_='app/alembic.ini')
                 alembic_cfg.set_main_option('sqlalchemy.url', self._configuration['SQLALCHEMY_DATABASE_URI'])
