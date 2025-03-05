@@ -21,15 +21,11 @@ from app.logger import logger
 import logging
 import os
 import ssl
-# --------- Configuration ---------
-# read the private configuration file
 from datetime import timedelta
 from enum import Enum
 from pathlib import Path
 
 import requests
-# --------- Configuration ---------
-# read the private configuration file
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
