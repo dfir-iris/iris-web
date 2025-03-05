@@ -2480,7 +2480,12 @@ class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
     classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
+
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    severity = ma.Nested(SeveritySchema)
+    classification = ma.Nested(CaseClassificationSchema)
+    reviewer = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    tags = ma.Nested(TagsSchema, many=True, only=['tag_title', 'id'])
     state = ma.Nested(CaseStateSchema)
     case_customer = ma.Nested(CustomerSchema, attribute='client')
     review_status = ma.Nested(ReviewStatusSchema)
