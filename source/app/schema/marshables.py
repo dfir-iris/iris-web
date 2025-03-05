@@ -47,7 +47,6 @@ from typing import Union
 
 from werkzeug.datastructures import FileStorage
 
-from app import app
 from app import db
 from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
@@ -157,9 +156,9 @@ def store_icon(file):
     filename = get_random_string(18)
 
     try:
-        store_fullpath = os.path.join(app.config['ASSET_STORE_PATH'], filename)
-        show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
-                                     app.config['ASSET_SHOW_PATH'].strip(os.path.sep),
+        store_fullpath = os.path.join(current_app.config['ASSET_STORE_PATH'], filename)
+        show_fullpath = os.path.join(current_app.config['APP_PATH'], 'app',
+                                     current_app.config['ASSET_SHOW_PATH'].strip(os.path.sep),
                                      filename)
         file.save(store_fullpath)
         os.symlink(store_fullpath, show_fullpath)
