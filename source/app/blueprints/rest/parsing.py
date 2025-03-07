@@ -15,10 +15,20 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from sqlalchemy import String, Text, inspect
+from sqlalchemy import String, Text, inspect, or_, not_, and_
 
 from app.models.pagination_parameters import PaginationParameters
 
+RESTRICTED_USER_FIELDS = {
+    'password',
+    'mfa_secrets',
+    'webauthn_credentials',
+    'api_key',
+    'external_id',
+    'ctx_case',
+    'ctx_human_case',
+    'is_service_account'
+}
 
 def parse_comma_separated_identifiers(identifiers: str):
     return [int(identifier) for identifier in identifiers.split(',')]
@@ -30,6 +40,17 @@ def parse_boolean(parameter: str):
     if parameter == 'false':
         return False
     raise ValueError(f'Expected true or false, got {parameter}')
+
+
+def parse_fields_parameters(request):
+    fields_str = request.args.get('fields')
+    if fields_str:
+        # Split into a list
+        fields = [field.strip() for field in fields_str.split(',') if field.strip()]
+    else:
+        fields = None
+
+    return fields
 
 
 def parse_pagination_parameters(request) -> PaginationParameters:
@@ -64,3 +85,115 @@ def apply_filters(query, model, filter_params: dict):
     return query
 
 
+def build_condition(column, operator, value):
+    """
+    Build a SQLAlchemy condition based on a column, an operator, and a value.
+    Supports relationship attributes if needed.
+    """
+    if hasattr(column, 'property') and hasattr(column.property, 'local_columns'):
+        # It's a relationship attribute
+        fk_cols = list(column.property.local_columns)
+        if operator in ['in', 'not_in']:
+            if len(fk_cols) == 1:
+                fk_col = fk_cols[0]
+                if operator == 'in':
+                    return fk_col.in_(value)
+                else:
+                    return ~fk_col.in_(value)
+            else:
+                raise NotImplementedError(
+                    "in_() on a relationship with multiple FK columns not supported. Specify a direct column."
+                )
+        else:
+            raise ValueError(
+                "Non-in operators on relationships require specifying a related model column, e.g., owner.id or assets.asset_name."
+            )
+    if operator == 'not':
+        return column != value
+    elif operator == 'in':
+        return column.in_(value)
+    elif operator == 'not_in':
+        return ~column.in_(value)
+    elif operator == 'eq':
+        return column == value
+    elif operator == 'like':
+        return column.ilike(f"%{value}%")
+    else:
+        raise ValueError(f"Unsupported operator: {operator}")
+
+
+def combine_conditions(conditions, logical_operator):
+    """
+    Combine a list of conditions using the provided logical operator.
+    Supported operators: 'and' (default), 'or', 'not'
+    """
+    if len(conditions) > 1:
+        if logical_operator == 'or':
+            return or_(*conditions)
+        elif logical_operator == 'not':
+            return not_(and_(*conditions))
+        else:  # Default to 'and'
+            return and_(*conditions)
+    elif conditions:
+        return conditions[0]
+    else:
+        return None
+
+
+def apply_custom_conditions(query, model, custom_conditions, relationship_model_map=None):
+    """
+    Apply custom conditions to the query.
+
+    The custom_conditions parameter should be a list of dict objects with the following keys:
+      - 'field': a field name (or a relationship.field using dot notation)
+      - 'operator': the operator (e.g., 'eq', 'like', 'in', etc.)
+      - 'value': the value to compare against
+
+    An optional relationship_model_map can be provided to map relationship names to models.
+    """
+    conditions = []
+    if relationship_model_map is None:
+        relationship_model_map = {}
+
+    joined_relationships = set()
+
+    for cond in custom_conditions:
+        field_path = cond.get('field')
+        operator = cond.get('operator')
+        value = cond.get('value')
+        if '.' in field_path:
+            # Handle related fields via dot notation
+            relationship_name, related_field_name = field_path.split('.', 1)
+            if relationship_name not in relationship_model_map:
+                raise ValueError(f"Unknown relationship: {relationship_name}")
+            related_model = relationship_model_map[relationship_name]
+            # Join the relationship if not already joined
+            if relationship_name not in joined_relationships:
+                query = query.join(getattr(model, relationship_name))
+                joined_relationships.add(relationship_name)
+
+            related_field = get_field_from_model(related_model, related_field_name)
+
+            condition = build_condition(related_field, operator, value)
+            conditions.append(condition)
+        else:
+            field = get_field_from_model(model, field_path)
+
+            condition = build_condition(field, operator, value)
+            conditions.append(condition)
+
+    return conditions
+
+
+def get_field_from_model(model, field_path):
+    """
+    Return the field from the given model.
+    """
+    field = getattr(model, field_path, None)
+    if field is None:
+        raise ValueError(f"Field '{field_path}' not found in {model.__name__}")
+
+    if field in RESTRICTED_USER_FIELDS:
+        raise ValueError(f"Field '{field_path}' not found in {model.__name__}")
+
+    return field

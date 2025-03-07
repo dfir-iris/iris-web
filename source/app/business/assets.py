@@ -141,7 +141,13 @@ def get_assets_case(case_identifier):
 def assets_filter(case_identifier, pagination_parameters: PaginationParameters, request_parameters: dict) -> Pagination:
     if not cases_exists(case_identifier):
         raise ObjectNotFoundError()
-    return filter_assets(case_identifier, pagination_parameters, request_parameters)
+
+    try:
+        pagination = filter_assets(case_identifier, pagination_parameters, request_parameters)
+
+        return pagination
+    except Exception as e:
+        raise BusinessProcessingError(str(e))
 
 
 def assets_update(asset: CaseAssets, request_json: dict):

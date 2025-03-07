@@ -26,6 +26,7 @@ from typing import List, Tuple
 
 import app
 from app import db
+from app.blueprints.rest.parsing import combine_conditions, apply_custom_conditions
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import set_ioc_links
 from app.datamgmt.case.case_assets_db import get_unspecified_analysis_status_id
@@ -74,16 +75,7 @@ relationship_model_map = {
     'iocs': Ioc
 }
 
-RESTRICTED_USER_FIELDS = {
-    'password',
-    'mfa_secrets',
-    'webauthn_credentials',
-    'api_key',
-    'external_id',
-    'ctx_case',
-    'ctx_human_case',
-    'is_service_account'
-}
+
 
 
 def db_list_all_alerts():
@@ -91,54 +83,6 @@ def db_list_all_alerts():
     List all alerts in the database
     """
     return db.session.query(Alert).all()
-
-
-def build_condition(column, operator, value):
-    if hasattr(column, 'property') and hasattr(column.property, 'local_columns'):
-        # It's a relationship attribute
-        fk_cols = list(column.property.local_columns)
-        if operator in ['in', 'not_in']:
-            if len(fk_cols) == 1:
-                # Use the single FK column for the condition
-                fk_col = fk_cols[0]
-                if operator == 'in':
-                    return fk_col.in_(value)
-                else:
-                    return ~fk_col.in_(value)
-            else:
-                raise NotImplementedError(
-                    "in_() on a relationship with multiple FK columns not supported. Specify a direct column.")
-        else:
-            raise ValueError(
-                "Non-in operators on relationships require specifying a related model column, e.g., owner.id or assets.asset_name.")
-
-    # If we get here, 'column' should be an actual column, not a relationship.
-    if operator == 'not':
-        return column != value
-    elif operator == 'in':
-        return column.in_(value)
-    elif operator == 'not_in':
-        return ~column.in_(value)
-    elif operator == 'eq':
-        return column == value
-    elif operator == 'like':
-        return column.ilike(f"%{value}%")
-    else:
-        raise ValueError(f"Unsupported operator: {operator}")
-
-
-def combine_conditions(conditions, logical_operator):
-    if len(conditions) > 1:
-        if logical_operator == 'or':
-            return or_(*conditions)
-        elif logical_operator == 'not':
-            return not_(and_(*conditions))
-        else:  # Default to 'and'
-            return and_(*conditions)
-    elif conditions:
-        return conditions[0]
-    else:
-        return None
 
 
 def get_filtered_alerts(
@@ -296,50 +240,7 @@ def get_filtered_alerts(
                 app.app.logger.exception(f"Error parsing custom_conditions: {custom_conditions}")
                 return
 
-        # Keep track of which relationships we've already joined
-        joined_relationships = set()
-
-        for custom_condition in custom_conditions:
-            field_path = custom_condition['field']
-            operator = custom_condition['operator']
-            value = custom_condition['value']
-
-            # Check if we need to handle a related field
-            if '.' in field_path:
-                relationship_name, related_field_name = field_path.split('.', 1)
-
-                # Ensure the relationship name is known
-                if relationship_name not in relationship_model_map:
-                    raise ValueError(f"Unknown relationship: {relationship_name}")
-
-                if related_field_name in RESTRICTED_USER_FIELDS:
-                    app.logger.error(f"Access to the field '{related_field_name}' is restricted.")
-                    app.logger.error(f"Suspicious behavior detected for user {current_user.id} - {current_user.user}.")
-                    continue
-
-                related_model = relationship_model_map[relationship_name]
-
-                # Join the relationship if not already joined
-                if relationship_name not in joined_relationships:
-                    query = query.join(getattr(Alert, relationship_name))
-                    joined_relationships.add(relationship_name)
-
-                related_field = getattr(related_model, related_field_name, None)
-                if related_field is None:
-                    raise ValueError(
-                        f"Field '{related_field_name}' not found in related model '{related_model.__name__}'")
-
-                # Build the condition
-                condition = build_condition(related_field, operator, value)
-                conditions.append(condition)
-            else:
-                # Field belongs to Alert model
-                field = getattr(Alert, field_path, None)
-                if field is None:
-                    raise ValueError(f"Field '{field_path}' not found in Alert model")
-
-                condition = build_condition(field, operator, value)
-                conditions.append(condition)
+        conditions.extend(apply_custom_conditions(query, Alert, custom_conditions, relationship_model_map))
 
         # Combine conditions
     combined_conditions = combine_conditions(conditions, logical_operator)

@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
+import json
 
 from flask_login import current_user
 from sqlalchemy import and_
@@ -24,7 +25,7 @@ from sqlalchemy import func
 from flask_sqlalchemy.pagination import Pagination
 
 from app import db, app
-from app.blueprints.rest.parsing import apply_filters
+from app.blueprints.rest.parsing import apply_filters, apply_custom_conditions, combine_conditions
 from app.datamgmt.states import update_assets_state
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.models import AnalysisStatus
@@ -44,6 +45,16 @@ from app.models.pagination_parameters import PaginationParameters
 
 
 log = app.logger
+
+
+relationship_model_map = {
+    'case': Cases,
+    'user': User,
+    'asset_type': AssetsType,
+    'analysis_status': AnalysisStatus,
+    'iocs': Ioc
+}
+
 
 
 def create_asset(asset, caseid, user_id):
@@ -108,7 +119,21 @@ def filter_assets(case_identifier, pagination_parameters: PaginationParameters, 
         filter_params.pop(key, None)
 
     query = apply_filters(query, CaseAssets, filter_params)
-    print(str(query))
+
+    custom_conditions_param = filter_params.get('custom_conditions')
+    if custom_conditions_param:
+        try:
+            custom_conditions = json.loads(custom_conditions_param)
+            if not isinstance(custom_conditions, list):
+                raise ValueError("custom_conditions should be a list of condition objects")
+
+            conditions = apply_custom_conditions(query, CaseAssets, custom_conditions, relationship_model_map)
+
+            query = query.filter(combine_conditions(conditions, 'and'))
+
+        except Exception as e:
+            log.exception(e)
+            raise ValueError(f"Error parsing custom_conditions: {e}")
 
     order_by = pagination_parameters.get_order_by()
     if order_by is not None:
