@@ -56,7 +56,7 @@ def case_list_assets(case_identifier):
 
         pagination_parameters = parse_pagination_parameters(request)
 
-        assets = assets_filter(case_identifier, pagination_parameters)
+        assets = assets_filter(case_identifier, pagination_parameters, request.args.to_dict())
 
         asset_schema = CaseAssetsSchema()
         return response_api_paginated(asset_schema, assets)

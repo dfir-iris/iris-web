@@ -691,6 +691,7 @@ class CaseAssetsSchema(ma.SQLAlchemyAutoSchema):
     alerts = fields.Nested('AlertSchema', many=True, exclude=['assets'])
     analysis_status = fields.Nested('AnalysisStatusSchema', required=False)
 
+
     class Meta:
         model = CaseAssets
         include_fk = True

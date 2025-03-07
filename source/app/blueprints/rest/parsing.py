@@ -15,6 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+from sqlalchemy import String, Text, inspect
 
 from app.models.pagination_parameters import PaginationParameters
 
@@ -39,3 +40,27 @@ def parse_pagination_parameters(request) -> PaginationParameters:
     sort_dir = arguments.get('sort_dir', 'asc', type=str)
 
     return PaginationParameters(page, per_page, order_by, sort_dir)
+
+
+def apply_filters(query, model, filter_params: dict):
+    """
+    Apply filters to the query based on the given filter parameters.
+    For string fields (e.g., Text, String) a case-insensitive partial match is used,
+    while for other field types an exact match is applied.
+    """
+    # Create a mapping of column names to column objects.
+    mapper = inspect(model)
+    columns_dict = {column.key: column for column in mapper.columns}
+
+    for field, value in filter_params.items():
+        if field in columns_dict:
+            column = columns_dict[field]
+            model_field = getattr(model, field)
+            # Use ilike for string types for partial, case-insensitive matching.
+            if isinstance(column.type, String) or isinstance(column.type, Text):
+                query = query.filter(model_field.ilike(f"%{value}%"))
+            else:
+                query = query.filter(model_field == value)
+    return query
+
+
