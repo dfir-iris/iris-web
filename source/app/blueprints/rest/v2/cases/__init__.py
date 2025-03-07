@@ -34,6 +34,7 @@ from app.blueprints.rest.v2.cases.assets import case_assets_blueprint
 from app.blueprints.rest.v2.cases.iocs import case_iocs_blueprint
 from app.blueprints.rest.v2.cases.notes import case_notes_blueprint
 from app.blueprints.rest.v2.cases.tasks import case_tasks_blueprint
+from app.blueprints.rest.v2.cases.evidences import case_evidences_blueprint
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.datamgmt.case.case_db import get_case
@@ -56,6 +57,7 @@ cases_blueprint.register_blueprint(case_assets_blueprint)
 cases_blueprint.register_blueprint(case_iocs_blueprint)
 cases_blueprint.register_blueprint(case_notes_blueprint)
 cases_blueprint.register_blueprint(case_tasks_blueprint)
+cases_blueprint.register_blueprint(case_evidences_blueprint)
 
 
 # Routes
