@@ -19,6 +19,9 @@
 from unittest import TestCase
 from iris import Iris
 
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
+
+
 class TestsRestEvidences(TestCase):
 
     def setUp(self) -> None:
@@ -44,3 +47,8 @@ class TestsRestEvidences(TestCase):
         user = self._subject.create_dummy_user()
         response = user.create(f'/api/v2/cases/{case_identifier}/evidences', {'filename': 'filename'})
         self.assertEqual(403, response.status_code)
+
+    def test_create_evidence_should_return_404_when_case_is_missing(self):
+        body = {'filename': 'filename'}
+        response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/evidences', body)
+        self.assertEqual(404, response.status_code)

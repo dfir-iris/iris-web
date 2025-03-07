@@ -26,6 +26,8 @@ from app.business.errors import BusinessProcessingError
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.endpoints import response_api_not_found
+from app.business.cases import cases_exists
 from app.schema.marshables import CaseEvidenceSchema
 from app.business.evidences import evidences_create
 
@@ -37,6 +39,8 @@ case_evidences_blueprint = Blueprint('case_evidences_rest_v2', __name__, url_pre
 @ac_api_requires()
 def create_evidence(case_identifier):
 
+    if not cases_exists(case_identifier):
+        return response_api_not_found()
     if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=case_identifier)
 
