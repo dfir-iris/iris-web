@@ -44,6 +44,9 @@ from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
+from app.business.evidences import evidences_create
+from app.business.errors import BusinessProcessingError
+
 
 case_evidences_rest_blueprint = Blueprint('case_evidences_rest', __name__)
 
@@ -77,28 +80,12 @@ def case_rfiles_state(caseid):
 @ac_api_requires()
 def case_add_rfile(caseid):
     try:
-        # validate before saving
+        evidence = evidences_create(caseid, request.get_json())
         evidence_schema = CaseEvidenceSchema()
+        return response_success('Evidence added', data=evidence_schema.dump(evidence))
 
-        request_data = call_modules_hook('on_preload_evidence_create', data=request.get_json(), caseid=caseid)
-
-        evidence = evidence_schema.load(request_data)
-
-        crf = add_rfile(evidence=evidence,
-                        user_id=current_user.id,
-                        caseid=caseid
-                        )
-
-        crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=caseid)
-
-        if crf:
-            track_activity(f"added evidence \"{crf.filename}\"", caseid=caseid)
-            return response_success("Evidence added", data=evidence_schema.dump(crf))
-
-        return response_error("Unable to create task for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>', methods=['GET'])
