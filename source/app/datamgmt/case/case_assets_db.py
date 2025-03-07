@@ -56,7 +56,6 @@ relationship_model_map = {
 }
 
 
-
 def create_asset(asset, caseid, user_id):
 
     asset.date_added = datetime.datetime.utcnow()

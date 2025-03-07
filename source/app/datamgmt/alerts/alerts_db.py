@@ -76,8 +76,6 @@ relationship_model_map = {
 }
 
 
-
-
 def db_list_all_alerts():
     """
     List all alerts in the database

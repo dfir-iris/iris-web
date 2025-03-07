@@ -30,6 +30,7 @@ RESTRICTED_USER_FIELDS = {
     'is_service_account'
 }
 
+
 def parse_comma_separated_identifiers(identifiers: str):
     return [int(identifier) for identifier in identifiers.split(',')]
 
