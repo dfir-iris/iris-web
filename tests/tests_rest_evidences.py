@@ -71,3 +71,17 @@ class TestsRestEvidences(TestCase):
         body = {'filename': 'filename', 'file_size': 77108}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
         self.assertEqual(77108, response['file_size'])
+
+    def test_create_evidence_should_accept_field_start_date(self):
+        case_identifier = self._subject.create_dummy_case()
+        start_date = '2024-04-13T03:02:00'
+        body = {'filename': 'filename', 'start_date': start_date}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
+        self.assertEqual(start_date, response['start_date'])
+
+    def test_create_evidence_should_accept_field_file_description(self):
+        case_identifier = self._subject.create_dummy_case()
+        file_description = 'File description'
+        body = {'filename': 'filename', 'file_description': file_description}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
+        self.assertEqual(file_description, response['file_description'])
