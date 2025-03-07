@@ -52,3 +52,9 @@ class TestsRestEvidences(TestCase):
         body = {'filename': 'filename'}
         response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/evidences', body)
         self.assertEqual(404, response.status_code)
+
+    def test_create_evidence_should_accept_field_type_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'filename': 'filename', 'type_id': 2}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
+        self.assertEqual(2, response['type_id'])
