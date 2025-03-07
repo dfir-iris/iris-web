@@ -33,8 +33,8 @@ from flask_login import current_user
 from pathlib import Path
 from pyunpack import Archive
 from sqlalchemy.orm.attributes import flag_modified
+from flask import current_app
 
-from app import app
 from app import db
 
 
@@ -118,7 +118,7 @@ def stream_sha256sum(stream):
 
 
 def hmac_sign(data):
-    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
     signature = base64.b64encode(h.finalize())
@@ -128,7 +128,7 @@ def hmac_sign(data):
 
 def hmac_verify(signature_enc, data):
     signature = base64.b64decode(signature_enc)
-    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
 
