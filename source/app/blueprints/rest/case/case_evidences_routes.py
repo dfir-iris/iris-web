@@ -25,6 +25,7 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.case.case_rfiles_db import add_comment_to_evidence
 from app.datamgmt.case.case_rfiles_db import delete_evidence_comment
 from app.datamgmt.case.case_rfiles_db import delete_rfile
@@ -75,6 +76,7 @@ def case_rfiles_state(caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/{case_identifier}/evidences')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_rfile(caseid):
