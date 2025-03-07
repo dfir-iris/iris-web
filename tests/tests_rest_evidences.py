@@ -65,3 +65,9 @@ class TestsRestEvidences(TestCase):
         body = {'filename': 'filename', 'file_hash': file_hash}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
         self.assertEqual(file_hash, response['file_hash'])
+
+    def test_create_evidence_should_accept_field_file_size(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'filename': 'filename', 'file_size': 77108}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
+        self.assertEqual(77108, response['file_size'])
