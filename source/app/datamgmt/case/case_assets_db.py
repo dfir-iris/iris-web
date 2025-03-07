@@ -25,7 +25,7 @@ from sqlalchemy import func
 from flask_sqlalchemy.pagination import Pagination
 
 from app import db, app
-from app.blueprints.rest.parsing import apply_filters, apply_custom_conditions, combine_conditions
+from app.datamgmt.filtering import apply_filters, apply_custom_conditions, combine_conditions
 from app.datamgmt.states import update_assets_state
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.models import AnalysisStatus

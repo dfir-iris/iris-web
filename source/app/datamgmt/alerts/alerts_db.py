@@ -26,7 +26,7 @@ from typing import List, Tuple
 
 import app
 from app import db
-from app.blueprints.rest.parsing import combine_conditions, apply_custom_conditions
+from app.datamgmt.filtering import combine_conditions, apply_custom_conditions
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import set_ioc_links
 from app.datamgmt.case.case_assets_db import get_unspecified_analysis_status_id
