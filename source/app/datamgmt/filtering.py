@@ -28,6 +28,7 @@ RESTRICTED_USER_FIELDS = {
     'is_service_account'
 }
 
+
 def apply_filters(query, model, filter_params: dict):
     """
     Apply filters to the query based on the given filter parameters.

@@ -18,7 +18,6 @@
 from app.models.pagination_parameters import PaginationParameters
 
 
-
 def parse_comma_separated_identifiers(identifiers: str):
     return [int(identifier) for identifier in identifiers.split(',')]
 
