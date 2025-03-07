@@ -16,10 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import logging as log
 from flask import Blueprint
 from flask import request
 
+from app.logger import logger
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_deleted
@@ -93,7 +93,7 @@ def add_ioc_to_case(case_identifier):
         ioc, _ = iocs_create(request.get_json(), case_identifier)
         return response_api_created(ioc_schema.dump(ioc))
     except BusinessProcessingError as e:
-        log.error(e)
+        logger.error(e)
         return response_api_error(e.get_message())
 
 

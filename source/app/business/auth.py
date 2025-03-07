@@ -27,6 +27,7 @@ from flask_login import login_user
 from app import bc
 from app import app
 from app import db
+from app.logger import logger
 from app.business.users import retrieve_user_by_username
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.datamgmt.manage.manage_users_db import get_active_user
@@ -35,8 +36,6 @@ from app.iris_engine.access_control.utils import ac_get_effective_permissions_of
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.schema.marshables import UserSchema
-
-log = app.logger
 
 
 def return_authed_user_info(user_id):
@@ -77,7 +76,7 @@ def validate_ldap_login(username: str, password: str, local_fallback: bool = Tru
 
         return UserSchema(exclude=['user_password', 'mfa_secrets', 'webauthn_credentials']).dump(user)
     except Exception as e:
-        log.error(e.__str__())
+        logger.error(e.__str__())
         return None
 
 

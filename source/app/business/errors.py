@@ -16,7 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask import current_app
+from app.logger import logger
 
 
 class BusinessProcessingError(Exception):
@@ -43,5 +43,5 @@ class UnhandledBusinessError(BusinessProcessingError):
     def __init__(self, message, data=None):
         self._message = message
         self._data = data
-        current_app.logger.exception(message)
-        current_app.logger.exception(data)
+        logger.exception(message)
+        logger.exception(data)

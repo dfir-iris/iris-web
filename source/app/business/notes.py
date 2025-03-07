@@ -21,7 +21,7 @@ from flask_login import current_user
 from marshmallow import ValidationError
 
 from app import db
-from app import app
+from app.logger import logger
 from app.business.errors import BusinessProcessingError
 from app.business.errors import UnhandledBusinessError
 from app.business.errors import ObjectNotFoundError
@@ -117,7 +117,7 @@ def notes_update(note: Notes, request_json: dict):
         if revision_number > 1:
             if latest_version.note_title == request_data.get('note_title') and latest_version.note_content == request_data.get('note_content'):
                 no_changes = True
-                app.logger.debug(f'Note {note.note_id} has not changed, skipping versioning')
+                logger.debug(f'Note {note.note_id} has not changed, skipping versioning')
 
         if not no_changes:
             note_version = NoteRevisions(
