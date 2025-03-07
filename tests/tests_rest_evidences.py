@@ -58,3 +58,10 @@ class TestsRestEvidences(TestCase):
         body = {'filename': 'filename', 'type_id': 2}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
         self.assertEqual(2, response['type_id'])
+
+    def test_create_evidence_should_accept_field_file_hash(self):
+        case_identifier = self._subject.create_dummy_case()
+        file_hash = '88BC9EF6F07F0FAE922AB25EB226906542F8BA0DC1A221F3EA7273CBCB5DB0D4'
+        body = {'filename': 'filename', 'file_hash': file_hash}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', body).json()
+        self.assertEqual(file_hash, response['file_hash'])
