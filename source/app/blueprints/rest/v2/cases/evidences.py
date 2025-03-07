@@ -22,8 +22,10 @@ from flask import request
 from app.blueprints.access_controls import ac_api_requires
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
+from app.business.errors import BusinessProcessingError
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.endpoints import response_api_error
 from app.schema.marshables import CaseEvidenceSchema
 from app.business.evidences import evidences_create
 
@@ -38,7 +40,10 @@ def create_evidence(case_identifier):
     if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=case_identifier)
 
-    evidence = evidences_create(case_identifier, request.get_json())
+    try:
+        evidence = evidences_create(case_identifier, request.get_json())
 
-    evidence_schema = CaseEvidenceSchema()
-    return response_api_created(evidence_schema.dump(evidence))
+        evidence_schema = CaseEvidenceSchema()
+        return response_api_created(evidence_schema.dump(evidence))
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())

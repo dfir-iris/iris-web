@@ -31,3 +31,8 @@ class TestsRestEvidences(TestCase):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', {'filename': 'filename'})
         self.assertEqual(201, response.status_code)
+
+    def test_create_evidence_should_return_400_when_field_filename_is_missing(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/evidences', {})
+        self.assertEqual(400, response.status_code)
