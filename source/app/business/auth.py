@@ -1,33 +1,58 @@
+#  IRIS Source Code
+#  Copyright (C) 2024 - DFIR-IRIS
+#  contact@dfir-iris.org
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 3 of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  You should have received a copy of the GNU Lesser General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 from urllib.parse import urlparse, urljoin
 
-from flask import session, redirect, url_for, request
+from flask import session
+from flask import redirect
+from flask import url_for
+from flask import request
 from flask_login import login_user
 
-from app import bc, app, db
+from app import bc
+from app import app
+from app import db
+from app.logger import logger
+from app.business.users import retrieve_user_by_username
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
-from app.datamgmt.manage.manage_users_db import get_active_user_by_login
+from app.datamgmt.manage.manage_users_db import get_active_user
 from app.iris_engine.access_control.ldap_handler import ldap_authenticate
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import Cases
 from app.schema.marshables import UserSchema
 
-log = app.logger
 
-def _retrieve_user_by_username(username:str):
+def return_authed_user_info(user_id):
     """
-    Retrieve the user object by username.
+    Return the user object by user id.
 
-    :param username: Username
-    :return: User object if found, None
+    :param user_id: User ID
+    :return: User object if found, None otherwise
     """
-    user = get_active_user_by_login(username)
+    user = get_active_user(user_id=user_id)
     if not user:
-        track_activity(f'someone tried to log in with user \'{username}\', which does not exist',
-                       ctx_less=True, display_in_ui=False)
-    return user
+        return None
 
-def validate_ldap_login(username: str, password:str, local_fallback: bool = True):
+    return UserSchema(exclude=['user_password', 'mfa_secrets', 'webauthn_credentials']).dump(user)
+
+
+def validate_ldap_login(username: str, password: str, local_fallback: bool = True):
     """
     Validate the user login using LDAP authentication.
 
@@ -45,13 +70,13 @@ def validate_ldap_login(username: str, password:str, local_fallback: bool = True
             track_activity(f'wrong login password for user \'{username}\' using LDAP auth', ctx_less=True, display_in_ui=False)
             return None
 
-        user = _retrieve_user_by_username(username)
+        user = retrieve_user_by_username(username)
         if not user:
             return None
 
         return UserSchema(exclude=['user_password', 'mfa_secrets', 'webauthn_credentials']).dump(user)
     except Exception as e:
-        log.error(e.__str__())
+        logger.error(e.__str__())
         return None
 
 
@@ -64,7 +89,7 @@ def validate_local_login(username: str, password: str):
 
     :return: User object if successful, None otherwise
     """
-    user = _retrieve_user_by_username(username)
+    user = retrieve_user_by_username(username)
     if not user:
         return None
 
@@ -76,7 +101,7 @@ def validate_local_login(username: str, password: str):
     return None
 
 
-def is_safe_url(target):
+def _is_safe_url(target):
     """
     Check whether the target URL is safe for redirection by ensuring that it is either a relative URL or
     has the same host as the current request.
@@ -84,6 +109,7 @@ def is_safe_url(target):
     ref_url = urlparse(request.host_url)
     test_url = urlparse(urljoin(request.host_url, target))
     return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
+
 
 def _filter_next_url(next_url, context_case):
     """
@@ -94,7 +120,7 @@ def _filter_next_url(next_url, context_case):
         return url_for('index.index', cid=context_case)
     # Remove backslashes to mitigate obfuscation
     next_url = next_url.replace('\\', '')
-    if is_safe_url(next_url):
+    if _is_safe_url(next_url):
         return next_url
     return url_for('index.index', cid=context_case)
 
@@ -130,5 +156,4 @@ def wrap_login_user(user, is_oidc=False):
     track_activity(f'user \'{user.user}\' successfully logged-in', ctx_less=True, display_in_ui=False)
 
     next_url = _filter_next_url(request.args.get('next'), user.ctx_case)
-
     return redirect(next_url)

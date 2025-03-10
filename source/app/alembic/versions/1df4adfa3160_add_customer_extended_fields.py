@@ -41,7 +41,7 @@ def upgrade():
 
     if not _table_has_column('client', 'created_by'):
         op.add_column('client',
-                      sa.Column('created_by',  sa.BigInteger(), sa.ForeignKey('user.id'), nullable=True)
+                      sa.Column('created_by', sa.BigInteger(), sa.ForeignKey('user.id'), nullable=True)
                       )
 
     pass

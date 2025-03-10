@@ -51,6 +51,7 @@ def response_api_paginated(schema, paginated_elements: Pagination):
 
     return response_api_success(result)
 
+
 def response_api_deleted():
     return response(204)
 

@@ -16,14 +16,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import os
 from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import url_for
 from flask_wtf import FlaskForm
 
-import app
+from app import celery
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.blueprints.access_controls import ac_case_requires, ac_requires
@@ -35,8 +34,6 @@ dim_tasks_blueprint = Blueprint(
     __name__,
     template_folder='templates'
 )
-
-basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 
 @dim_tasks_blueprint.route('/dim/tasks', methods=['GET'])
@@ -56,7 +53,7 @@ def task_status(task_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")
 
-    task = app.celery.AsyncResult(task_id)
+    task = celery.AsyncResult(task_id)
 
     try:
         tinfo = task.info

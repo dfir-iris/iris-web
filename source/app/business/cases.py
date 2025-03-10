@@ -17,14 +17,13 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
-import logging as log
+from app.logger import logger
 import traceback
 
 from flask_login import current_user
 
 from marshmallow.exceptions import ValidationError
 
-from app import app
 from app import db
 
 from app.util import add_obj_history_entry
@@ -105,7 +104,7 @@ def cases_create(request_data):
                 raise BusinessProcessingError(f'Could not update new case with {case_template_id}', logs)
 
         except Exception as e:
-            log.error(e.__str__())
+            logger.error(e.__str__())
             raise BusinessProcessingError(f'Unexpected error when loading template {case_template_id} to new case.')
 
     ac_set_new_case_access(None, case.case_id, case.client_id)
@@ -135,7 +134,7 @@ def cases_delete(case_identifier):
         call_modules_hook('on_postload_case_delete', data=case_identifier, caseid=case_identifier)
         track_activity(f'case {case_identifier} deleted successfully', ctx_less=True)
     except Exception as e:
-        app.logger.exception(e)
+        logger.exception(e)
         raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
 
 
@@ -224,8 +223,8 @@ def cases_update(case_identifier, request_data):
         raise e
 
     except Exception as e:
-        log.error(e.__str__())
-        log.error(traceback.format_exc())
+        logger.error(e.__str__())
+        logger.error(traceback.format_exc())
         raise BusinessProcessingError('Data error', str(e))
 
 

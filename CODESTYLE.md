@@ -97,6 +97,7 @@ New files should be prefixed by the following license header, where `${current_y
   from app import app
   from app import db
   ```
+* as much as possible, `__init__.py` files should be kept empty
 
 ## Javascript coding rules
 

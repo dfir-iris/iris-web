@@ -129,7 +129,7 @@ def add_user():
         del udata['user_password']
 
         if cuser:
-            track_activity("created user {}".format(user.user),  ctx_less=True)
+            track_activity("created user {}".format(user.user), ctx_less=True)
             return response_success("user created", data=udata)
 
         return response_error("Unable to create user for internal reasons")

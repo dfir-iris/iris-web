@@ -58,7 +58,7 @@ def case_comment_note_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_note.case_note', cid=caseid, redirect=True))
 
-    note = get_note(cur_id, caseid=caseid)
+    note = get_note(cur_id)
     if not note:
         return response_error('Invalid note ID')
 

@@ -310,7 +310,6 @@ def list_own_cases():
     return response_success("", data=CaseDetailsSchema(many=True).dump(cases))
 
 
-
 @dashboard_rest_blueprint.route('/user/tasks/list', methods=['GET'])
 @ac_api_requires()
 def get_utasks():

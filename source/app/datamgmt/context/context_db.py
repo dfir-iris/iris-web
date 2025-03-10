@@ -103,7 +103,6 @@ def ctx_search_user_cases(search, user_id, max_results: int = 100):
         *conditions
     ).limit(max_results).all()
 
-
     results = []
     for ucea in uceas:
         if has_deny_all_access_level(ucea):

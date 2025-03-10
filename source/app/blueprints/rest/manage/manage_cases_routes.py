@@ -200,15 +200,15 @@ def api_case_close(identifier):
         return ac_api_return_access_denied(caseid=identifier)
 
     if not identifier:
-        return response_error("No case ID provided")
+        return response_error('No case ID provided')
 
     case = get_case(identifier)
     if not case:
-        return response_error("Tried to close an non-existing case")
+        return response_error('Tried to close an non-existing case')
 
     res = close_case(identifier)
     if not res:
-        return response_error("Tried to close an non-existing case")
+        return response_error('Tried to close an non-existing case')
 
     # Close the related alerts
     if case.alerts:
@@ -224,7 +224,7 @@ def api_case_close(identifier):
                 alert.alert_resolution_status_id = case_status_id_mapped
                 alert = call_modules_hook('on_postload_alert_resolution_update', data=alert, caseid=identifier)
 
-                track_activity(f"closing alert ID {alert.alert_id} due to case #{identifier} being closed",
+                track_activity(f'closing alert ID {alert.alert_id} due to case #{identifier} being closed',
                                caseid=identifier, ctx_less=False)
 
                 db.session.add(alert)
@@ -232,10 +232,10 @@ def api_case_close(identifier):
     case = call_modules_hook('on_postload_case_update', data=case, caseid=identifier)
 
     add_obj_history_entry(case, 'case closed')
-    track_activity("closed case ID {}".format(identifier), caseid=identifier, ctx_less=False)
+    track_activity(f'closed case ID {identifier}', caseid=identifier, ctx_less=False)
     case_schema = CaseSchema()
 
-    return response_success("Case closed successfully", data=case_schema.dump(res))
+    return response_success('Case closed successfully', data=case_schema.dump(res))
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/add', methods=['POST'])

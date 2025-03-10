@@ -31,11 +31,17 @@ class TestsRestAssets(TestCase):
     def tearDown(self):
         self._subject.clear_database()
 
-    def test_create_asset_should_work(self):
+    def test_create_asset_should_return_201(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body)
         self.assertEqual(201, response.status_code)
+
+    def test_create_asset_should_let_specify_analysis_status_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test', 'analysis_status_id': 3}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
+        self.assertEqual(3, response['analysis_status_id'])
 
     def test_get_asset_with_missing_asset_identifier_should_return_404(self):
         response = self._subject.get(f'/api/v2/asset/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
@@ -83,7 +89,7 @@ class TestsRestAssets(TestCase):
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets/{asset_identifier}')
         self.assertEqual(404, response.status_code)
 
-    def test_update_asset_should_not_fail(self):
+    def test_update_asset_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'asset_type_id': 1, 'asset_name': 'admin_laptop_test'}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()

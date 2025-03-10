@@ -134,6 +134,7 @@ def update_user_groups(user_id, groups):
 
     ac_auto_update_user_effective_access(user_id)
 
+
 def add_user_to_customer(user_id, customer_id):
     user_client = UserClient.query.filter(
         UserClient.user_id == user_id,

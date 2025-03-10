@@ -1,6 +1,6 @@
 #  IRIS Source Code
-#  Copyright (C) 2024 - DFIR-IRIS
-#  contact@dfir-iris.org
+#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
+#  ir@cyberactionlab.net
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -16,12 +16,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from sqlalchemy import asc
-from sqlalchemy import desc
+import logging
 
+LOG_FORMAT = '%(asctime)s :: %(levelname)s :: %(module)s :: %(funcName)s :: %(message)s'
+LOG_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
-def convert_sort_direction(sort_direction):
-    if sort_direction == 'desc':
-        return desc
-    else:
-        return asc
+logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=LOG_TIME_FORMAT)
+
+logger = logging

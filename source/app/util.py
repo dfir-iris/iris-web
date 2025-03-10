@@ -33,8 +33,8 @@ from flask_login import current_user
 from pathlib import Path
 from pyunpack import Archive
 from sqlalchemy.orm.attributes import flag_modified
+from flask import current_app
 
-from app import app
 from app import db
 
 
@@ -117,13 +117,8 @@ def stream_sha256sum(stream):
     return hashlib.sha256(stream).hexdigest().upper()
 
 
-@app.template_filter()
-def format_datetime(value, frmt):
-    return datetime.datetime.fromtimestamp(float(value)).strftime(frmt)
-
-
 def hmac_sign(data):
-    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
     signature = base64.b64encode(h.finalize())
@@ -133,7 +128,7 @@ def hmac_sign(data):
 
 def hmac_verify(signature_enc, data):
     signature = base64.b64decode(signature_enc)
-    key = bytes(app.config.get("SECRET_KEY"), "utf-8")
+    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
 
@@ -157,30 +152,30 @@ def str_to_bool(value):
     return value.lower() in ['true', '1', 'yes', 'y', 't']
 
 
-def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bool = False,
+def assert_type_mml(input_var: any, field_name: str, type: type, allow_none: bool = False,
                     max_len: int = None, max_val: int = None, min_val: int = None):
     if input_var is None:
         if allow_none is False:
-            raise marshmallow.ValidationError("Invalid data - non null expected",
-                                            field_name=field_name if field_name else "type")
+            raise marshmallow.ValidationError('Invalid data - non null expected',
+                                              field_name=field_name if field_name else 'type')
         else:
             return True
     
     if isinstance(input_var, type):
         if max_len:
             if len(input_var) > max_len:
-                raise marshmallow.ValidationError("Invalid data - max length exceeded",
-                                                field_name=field_name if field_name else "type")
+                raise marshmallow.ValidationError('Invalid data - max length exceeded',
+                                                  field_name=field_name if field_name else 'type')
 
         if max_val:
             if input_var > max_val:
-                raise marshmallow.ValidationError("Invalid data - max value exceeded",
-                                                field_name=field_name if field_name else "type")
+                raise marshmallow.ValidationError('Invalid data - max value exceeded',
+                                                  field_name=field_name if field_name else 'type')
 
         if min_val:
             if input_var < min_val:
-                raise marshmallow.ValidationError("Invalid data - min value exceeded",
-                                                field_name=field_name if field_name else "type")
+                raise marshmallow.ValidationError('Invalid data - min value exceeded',
+                                                  field_name=field_name if field_name else 'type')
 
         return True
     
@@ -193,5 +188,5 @@ def assert_type_mml(input_var: any, field_name: str,  type: type, allow_none: bo
         log.error(e)
         print(e)
         
-    raise marshmallow.ValidationError("Invalid data type",
-                                      field_name=field_name if field_name else "type")
+    raise marshmallow.ValidationError('Invalid data type',
+                                      field_name=field_name if field_name else 'type')

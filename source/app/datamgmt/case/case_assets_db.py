@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
+import json
 
 from flask_login import current_user
 from sqlalchemy import and_
@@ -24,6 +25,7 @@ from sqlalchemy import func
 from flask_sqlalchemy.pagination import Pagination
 
 from app import db, app
+from app.datamgmt.filtering import apply_filters, apply_custom_conditions, combine_conditions
 from app.datamgmt.states import update_assets_state
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.models import AnalysisStatus
@@ -43,6 +45,15 @@ from app.models.pagination_parameters import PaginationParameters
 
 
 log = app.logger
+
+
+relationship_model_map = {
+    'case': Cases,
+    'user': User,
+    'asset_type': AssetsType,
+    'analysis_status': AnalysisStatus,
+    'iocs': Ioc
+}
 
 
 def create_asset(asset, caseid, user_id):
@@ -97,19 +108,45 @@ def get_assets(case_identifier):
     return assets
 
 
-def filter_assets(case_identifier, pagination_parameters: PaginationParameters) -> Pagination:
+def filter_assets(case_identifier, pagination_parameters: PaginationParameters, request_parameters: dict) -> Pagination:
     query = CaseAssets.query.filter(
         CaseAssets.case_id == case_identifier
     )
+
+    filter_params = request_parameters
+    for key in ['page', 'per_page', 'order_by', 'direction']:
+        filter_params.pop(key, None)
+
+    query = apply_filters(query, CaseAssets, filter_params)
+
+    custom_conditions_param = filter_params.get('custom_conditions')
+    logical_operator = filter_params.get('logical_operator')
+    if custom_conditions_param:
+        try:
+            custom_conditions = json.loads(custom_conditions_param)
+            if not isinstance(custom_conditions, list):
+                raise ValueError("custom_conditions should be a list of condition objects")
+
+            conditions = apply_custom_conditions(query, CaseAssets, custom_conditions, relationship_model_map)
+
+            query = query.filter(combine_conditions(conditions, logical_operator))
+
+        except Exception as e:
+            log.exception(e)
+            raise ValueError(f"Error parsing custom_conditions: {e}")
+
     order_by = pagination_parameters.get_order_by()
     if order_by is not None:
         order_func = convert_sort_direction(pagination_parameters.get_direction())
-
         if hasattr(CaseAssets, order_by):
             query = query.order_by(order_func(getattr(CaseAssets, order_by)))
-    assets = query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
 
-
+    # Paginate the results.
+    assets = query.paginate(
+        page=pagination_parameters.get_page(),
+        per_page=pagination_parameters.get_per_page(),
+        error_out=False
+    )
     return assets
 
 

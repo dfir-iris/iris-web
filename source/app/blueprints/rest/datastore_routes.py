@@ -25,9 +25,9 @@ from flask import Blueprint
 from flask import request
 from flask import send_file
 from flask_login import current_user
+from flask import current_app
 from pathlib import Path
 
-import app
 from app import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_evidence
@@ -54,8 +54,6 @@ from app.blueprints.responses import response_success
 
 datastore_rest_blueprint = Blueprint('datastore_rest', __name__)
 
-logger = app.logger
-
 
 @datastore_rest_blueprint.route('/datastore/list/tree', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
@@ -77,14 +75,14 @@ def datastore_list_filter(caseid):
         filter_d = dict(json.loads(urllib.parse.unquote_plus(query_filter)))
 
     except Exception as e:
-        logger.error('Error parsing filter: {}'.format(query_filter))
-        logger.error(e)
+        current_app.logger.error('Error parsing filter: {}'.format(query_filter))
+        current_app.logger.error(e)
         return response_error('Invalid query')
 
     data, log = datastore_filter_tree(filter_d, caseid)
     if data is None:
-        logger.error('Error parsing filter: {}'.format(query_filter))
-        logger.error(log)
+        current_app.logger.error('Error parsing filter: {}'.format(query_filter))
+        current_app.logger.error(log)
         return response_error('Invalid query')
 
     return response_success("", data=data)

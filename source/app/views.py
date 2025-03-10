@@ -99,7 +99,8 @@ from app.blueprints.graphql.graphql_route import graphql_blueprint
 from app.blueprints.rest.v2 import rest_v2_blueprint
 from app.models.authorization import User
 
-def register_blusprints(app):
+
+def register_blueprints(app):
     app.register_blueprint(graphql_blueprint)
     app.register_blueprint(dashboard_blueprint)
     app.register_blueprint(dashboard_rest_blueprint)
@@ -182,7 +183,6 @@ def register_blusprints(app):
     app.register_blueprint(demo_blueprint)
 
     app.register_blueprint(rest_v2_blueprint)
-
 
 
 # provide login manager with load_user callback

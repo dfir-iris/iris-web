@@ -27,6 +27,7 @@ import shutil
 import string
 import tempfile
 from flask_login import current_user
+from flask import current_app
 from marshmallow import ValidationError
 from marshmallow import EXCLUDE
 from marshmallow import fields
@@ -46,7 +47,6 @@ from typing import Union
 
 from werkzeug.datastructures import FileStorage
 
-from app import app
 from app import db
 from app import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
@@ -103,8 +103,6 @@ ALLOWED_EXTENSIONS = {'png', 'svg'}
 POSTGRES_INT_MAX = 2147483647
 POSTGRES_BIGINT_MAX = 9223372036854775807
 
-log = app.logger
-
 
 def allowed_file_icon(filename: str):
     """
@@ -158,9 +156,9 @@ def store_icon(file):
     filename = get_random_string(18)
 
     try:
-        store_fullpath = os.path.join(app.config['ASSET_STORE_PATH'], filename)
-        show_fullpath = os.path.join(app.config['APP_PATH'], 'app',
-                                     app.config['ASSET_SHOW_PATH'].strip(os.path.sep),
+        store_fullpath = os.path.join(current_app.config['ASSET_STORE_PATH'], filename)
+        show_fullpath = os.path.join(current_app.config['APP_PATH'], 'app',
+                                     current_app.config['ASSET_SHOW_PATH'].strip(os.path.sep),
                                      filename)
         file.save(store_fullpath)
         os.symlink(store_fullpath, show_fullpath)
@@ -459,7 +457,7 @@ class CaseNoteSchema(ma.SQLAlchemyAutoSchema):
 
         """
         assert_type_mml(input_var=data.get('directory_id'),
-                        field_name="directory_id",
+                        field_name='directory_id',
                         type=int)
 
         directory = NoteDirectory.query.filter(
@@ -511,7 +509,6 @@ class CaseAddNoteSchema(ma.Schema):
     note_title: str = fields.String(required=True, validate=Length(min=1, max=154), allow_none=False)
     note_content: str = fields.String(required=False)
     custom_attributes: Dict[str, Any] = fields.Dict(required=False)
-
 
     def verify_directory_id(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
         """Verifies that the directory ID is valid.
@@ -1460,7 +1457,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
                     os.unlink(fn.name)
 
                 except Exception as e:
-                    log.exception(e)
+                    current_app.logger.exception(e)
                     raise marshmallow.exceptions.ValidationError(
                         str(e),
                         field_name='file_password'
@@ -2481,9 +2478,14 @@ class CaseSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     initial_date: Optional[datetime.datetime] = auto_field('initial_date', required=False)
     classification_id: Optional[int] = auto_field('classification_id', required=False, allow_none=True)
     reviewer_id: Optional[int] = auto_field('reviewer_id', required=False, allow_none=True)
+
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    severity = ma.Nested(SeveritySchema)
+    classification = ma.Nested(CaseClassificationSchema)
+    reviewer = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
+    tags = ma.Nested(TagsSchema, many=True, only=['tag_title', 'id'])
     state = ma.Nested(CaseStateSchema)
-    case_customer = ma.Nested(CustomerSchema)
+    case_customer = ma.Nested(CustomerSchema, attribute='client')
     review_status = ma.Nested(ReviewStatusSchema)
 
     class Meta:

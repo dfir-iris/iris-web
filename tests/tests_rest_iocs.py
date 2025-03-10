@@ -169,7 +169,7 @@ class TestsRestIocs(TestCase):
         response = self._subject.delete(f'/api/v2/cases/{case_identifier}')
         self.assertEqual(204, response.status_code)
         
-    def test_update_ioc_should_not_fail(self):
+    def test_update_ioc_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
@@ -194,7 +194,20 @@ class TestsRestIocs(TestCase):
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}', {'ioc_type_id': '123456789'})
         self.assertEqual(400, response.status_code)
 
-    def test_rest_case_should_return_error_ioc_when_permission_denied(self):
+    def test_update_ioc_should_return_404_when_case_identifier_does_not_correspond_to_existing_case(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/iocs', body).json()
+        ioc_identifier = response['ioc_id']
+        response = self._subject.update(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/iocs/{ioc_identifier}', {'ioc_type_id': '123456789'})
+        self.assertEqual(404, response.status_code)
+
+    def test_update_ioc_should_return_404_when_identifier_does_not_correspond_to_existing_ioc(self):
+        case_identifier = self._subject.create_dummy_case()
+        response = self._subject.update(f'/api/v2/cases/{case_identifier}/iocs/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}', {'ioc_type_id': '123456789'})
+        self.assertEqual(404, response.status_code)
+
+    def test_create_ioc_should_return_error_ioc_when_permission_denied(self):
         user = self._subject.create_dummy_user()
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 1, 'ioc_value': 'IOC value'}

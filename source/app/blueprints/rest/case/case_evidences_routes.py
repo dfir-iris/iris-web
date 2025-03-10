@@ -25,8 +25,8 @@ from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.case.case_rfiles_db import add_comment_to_evidence
-from app.datamgmt.case.case_rfiles_db import add_rfile
 from app.datamgmt.case.case_rfiles_db import delete_evidence_comment
 from app.datamgmt.case.case_rfiles_db import delete_rfile
 from app.datamgmt.case.case_rfiles_db import get_case_evidence_comment
@@ -44,6 +44,9 @@ from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
+from app.business.evidences import evidences_create
+from app.business.errors import BusinessProcessingError
+
 
 case_evidences_rest_blueprint = Blueprint('case_evidences_rest', __name__)
 
@@ -73,32 +76,17 @@ def case_rfiles_state(caseid):
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/{case_identifier}/evidences')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_add_rfile(caseid):
     try:
-        # validate before saving
+        evidence = evidences_create(caseid, request.get_json())
         evidence_schema = CaseEvidenceSchema()
+        return response_success('Evidence added', data=evidence_schema.dump(evidence))
 
-        request_data = call_modules_hook('on_preload_evidence_create', data=request.get_json(), caseid=caseid)
-
-        evidence = evidence_schema.load(request_data)
-
-        crf = add_rfile(evidence=evidence,
-                        user_id=current_user.id,
-                        caseid=caseid
-                        )
-
-        crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=caseid)
-
-        if crf:
-            track_activity(f"added evidence \"{crf.filename}\"", caseid=caseid)
-            return response_success("Evidence added", data=evidence_schema.dump(crf))
-
-        return response_error("Unable to create task for internal reasons")
-
-    except marshmallow.exceptions.ValidationError as e:
-        return response_error(msg="Data error", data=e.messages)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @case_evidences_rest_blueprint.route('/case/evidences/<int:cur_id>', methods=['GET'])

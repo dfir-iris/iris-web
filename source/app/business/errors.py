@@ -15,7 +15,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import app
+
+from app.logger import logger
 
 
 class BusinessProcessingError(Exception):
@@ -42,5 +43,5 @@ class UnhandledBusinessError(BusinessProcessingError):
     def __init__(self, message, data=None):
         self._message = message
         self._data = data
-        app.logger.exception(message)
-        app.logger.exception(data)
+        logger.exception(message)
+        logger.exception(data)

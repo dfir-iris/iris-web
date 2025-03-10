@@ -15,7 +15,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 from app.models.pagination_parameters import PaginationParameters
 
 
@@ -31,6 +30,17 @@ def parse_boolean(parameter: str):
     raise ValueError(f'Expected true or false, got {parameter}')
 
 
+def parse_fields_parameters(request):
+    fields_str = request.args.get('fields')
+    if fields_str:
+        # Split into a list
+        fields = [field.strip() for field in fields_str.split(',') if field.strip()]
+    else:
+        fields = None
+
+    return fields
+
+
 def parse_pagination_parameters(request) -> PaginationParameters:
     arguments = request.args
     page = arguments.get('page', 1, type=int)
@@ -39,3 +49,4 @@ def parse_pagination_parameters(request) -> PaginationParameters:
     sort_dir = arguments.get('sort_dir', 'asc', type=str)
 
     return PaginationParameters(page, per_page, order_by, sort_dir)
+

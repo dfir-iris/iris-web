@@ -71,7 +71,7 @@ services:
     image: iriswebapp_nginx:develop
 
   frontend:
-    image: node:22-alpine
+    image: node:23-alpine
     profiles: ["new-ui"]
     container_name: iris_sveltekit_frontend
     working_dir: /app
@@ -89,7 +89,7 @@ services:
       - /app/node_modules # Ensure `node_modules` is preserved inside the container
     ports:
       - "5173:5173"
-    command: sh -c "npm install && npm run dev -- --host"
+    command: sh -c "npm install && NODE_OPTIONS="--inspect" npm run dev -- --host"
     networks:
       - iris_backend
       - iris_frontend

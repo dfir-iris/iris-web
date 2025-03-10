@@ -27,18 +27,20 @@ from sqlalchemy import and_
 from app import db
 from app import app
 from app.blueprints.rest.case_comments import case_comment_update
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.business.errors import BusinessProcessingError
 from app.business.notes import notes_create
 from app.business.notes import notes_list_revisions
 from app.business.notes import notes_get_revision
 from app.business.notes import notes_delete_revision
 from app.business.notes import notes_update
+from app.business.notes import notes_get
+from app.business.notes import notes_delete
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_notes_db import add_comment_to_note
 from app.datamgmt.case.case_notes_db import get_directories_with_note_count
 from app.datamgmt.case.case_notes_db import get_directory
 from app.datamgmt.case.case_notes_db import delete_directory
-from app.datamgmt.case.case_notes_db import delete_note
 from app.datamgmt.case.case_notes_db import delete_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comment
 from app.datamgmt.case.case_notes_db import get_case_note_comments
@@ -62,6 +64,7 @@ case_notes_rest_blueprint = Blueprint('case_notes_rest', __name__)
 
 
 @case_notes_rest_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/cases/{case_identifier}/notes/{identifier}')
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_detail(cur_id, caseid):
@@ -92,7 +95,7 @@ def case_note_detail(cur_id, caseid):
             description: Data error
     """
     try:
-        note = get_note(cur_id, caseid=caseid)
+        note = get_note(cur_id)
         if not note:
             return response_error(msg="Invalid note ID")
 
@@ -111,37 +114,33 @@ def case_note_detail(cur_id, caseid):
 
 
 @case_notes_rest_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/cases/{case_identifier}/notes/{identifier}')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_delete(cur_id, caseid):
-    call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
-
-    note = get_note(cur_id, caseid)
+    note = get_note(cur_id)
     if not note:
-        return response_error("Invalid note ID for this case")
+        return response_error('Invalid note ID for this case')
 
     try:
 
-        delete_note(cur_id, caseid)
+        notes_delete(note)
+        return response_success(f'Note deleted {cur_id}')
 
     except Exception as e:
-        return response_error("Unable to remove note", data=e.__traceback__)
-
-    call_modules_hook('on_postload_note_delete', data=cur_id, caseid=caseid)
-
-    track_activity(f"deleted note \"{note.note_title}\"", caseid=caseid)
-    return response_success(f"Note deleted {cur_id}")
+        return response_error('Unable to remove note', data=e.__traceback__)
 
 
 @case_notes_rest_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/cases/{case_identifier}/notes/{identifier}')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_save(cur_id, caseid):
     addnote_schema = CaseNoteSchema()
 
     try:
-
-        note = notes_update(identifier=cur_id, request_json=request.get_json(), case_identifier=caseid)
+        note = notes_get(cur_id)
+        note = notes_update(note, request.get_json())
 
         return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
 
@@ -157,7 +156,7 @@ def case_note_list_history(cur_id, caseid):
 
     try:
 
-        note_version = notes_list_revisions(identifier=cur_id, case_identifier=caseid)
+        note_version = notes_list_revisions(cur_id)
 
         return response_success("ok", data=note_version_sc.dump(note_version))
 
@@ -173,9 +172,7 @@ def case_note_revision(cur_id, revision_id, caseid):
 
     try:
 
-        note_version = notes_get_revision(identifier=cur_id,
-                                          revision_number=revision_id,
-                                          case_identifier=caseid)
+        note_version = notes_get_revision(cur_id, revision_id)
 
         return response_success("ok", data=note_version_sc.dump(note_version))
 
@@ -189,9 +186,7 @@ def case_note_revision(cur_id, revision_id, caseid):
 def case_note_revision_delete(cur_id, revision_id, caseid):
     try:
 
-        notes_delete_revision(identifier=cur_id,
-                              revision_number=revision_id,
-                              case_identifier=caseid)
+        notes_delete_revision(cur_id, revision_id)
 
         return response_success(f"Revision {revision_id} of note {cur_id} deleted")
 
@@ -200,6 +195,7 @@ def case_note_revision_delete(cur_id, revision_id, caseid):
 
 
 @case_notes_rest_blueprint.route('/case/notes/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/cases/{case_identifier}/notes')
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_note_add(caseid):
@@ -394,7 +390,7 @@ def case_comment_note_list(cur_id, caseid):
 @ac_api_requires()
 def case_comment_note_add(cur_id, caseid):
     try:
-        note = get_note(cur_id, caseid=caseid)
+        note = get_note(cur_id)
         if not note:
             return response_error('Invalid note ID')
 

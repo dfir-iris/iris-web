@@ -36,6 +36,7 @@ assets_blueprint = Blueprint('assets_api_v2',
                              __name__,
                              url_prefix='/assets')
 
+
 @assets_blueprint.get('/<int:identifier>')
 @ac_api_requires()
 def get_asset(identifier):

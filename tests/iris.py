@@ -23,7 +23,7 @@ from user import User
 from uuid import uuid4
 
 API_URL = 'http://127.0.0.1:8000'
-# TODO SSOT: this could be directly read from the .env file
+# TODO SSOT: this should be directly read from the .env file
 _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
 _IRIS_PATH = Path('..')
 _TEST_DATA_PATH = Path('./data')
@@ -51,18 +51,18 @@ class Iris:
     def delete(self, path):
         return self._api.delete(path)
 
-    def _create_user(self, user_name):
+    def create_user(self, user_name, user_password):
         body = {
             'user_name': user_name,
             'user_login': user_name,
             'user_email': f'{user_name}@aa.eu',
-            'user_password': 'aA.1234567890'
+            'user_password': user_password
         }
         user = self._api.post('/manage/users/add', body).json()
         return User(API_URL, user['data']['user_api_key'], user['data']['id'])
 
     def create_dummy_user(self):
-        return self._create_user(f'user{uuid4()}')
+        return self.create_user(f'user{uuid4()}', 'aA.1234567890')
 
     def create_dummy_case(self):
         body = {

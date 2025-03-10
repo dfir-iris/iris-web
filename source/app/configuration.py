@@ -17,18 +17,15 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import configparser
-import logging as log
+from app.logger import logger
+import logging
 import os
 import ssl
-# --------- Configuration ---------
-# read the private configuration file
 from datetime import timedelta
 from enum import Enum
 from pathlib import Path
 
 import requests
-# --------- Configuration ---------
-# read the private configuration file
 from azure.core.exceptions import ResourceNotFoundError
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
@@ -50,7 +47,7 @@ class IrisConfig(configparser.ConfigParser):
             self.az_credential = DefaultAzureCredential()
             self.az_client = SecretClient(vault_url=f"https://{self.key_vault_name}.vault.azure.net/",
                                           credential=self.az_credential)
-            log.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(log.WARNING)
+            logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
 
     def validate_config(self):
         required_values = {
@@ -127,7 +124,7 @@ class IrisConfig(configparser.ConfigParser):
 
         value = os.environ.get(old_key)
         if value:
-            log.warning(f"Environment variable {old_key} used which is deprecated. Please use {new_key}.")
+            logger.warning(f"Environment variable {old_key} used which is deprecated. Please use {new_key}.")
 
         return value
 
@@ -152,7 +149,7 @@ class IrisConfig(configparser.ConfigParser):
 
         value = self.get(old_key[0], old_key[1], fallback=None)
         if value:
-            log.warning(
+            logger.warning(
                 f"Configuration {old_key[0]}.{old_key[1]} found in configuration file. "
                 f"This is a deprecated configuration. Please use {new_key[0]}.{new_key[1]}")
 
@@ -174,20 +171,10 @@ CELERY_BROKER_ = config.load('CELERY', 'BROKER',
                              fallback=f"amqp://{config.load('CELERY', 'HOST', fallback='rabbitmq')}")
 
 
-# Grabs the folder where the script runs.
-basedir = os.path.abspath(os.path.dirname(__file__))
-
 # Build of SQLAlchemy connectors. One is admin and the other is only for iris. Admin is needed to create new DB
-SQLALCHEMY_BASE_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
+SQLALCHEMY_BASE_URI = 'postgresql+psycopg2://{user}:{passwd}@{server}:{port}/'.format(
     user=PG_ACCOUNT_,
     passwd=PG_PASSWD_,
-    server=PG_SERVER_,
-    port=PG_PORT_
-)
-
-SQLALCHEMY_BASEA_URI = "postgresql+psycopg2://{user}:{passwd}@{server}:{port}/".format(
-    user=PGA_ACCOUNT_,
-    passwd=PGA_PASSWD_,
     server=PG_SERVER_,
     port=PG_PORT_
 )
@@ -245,11 +232,11 @@ if authentication_type == 'oidc_proxy':
         authentication_app_admin_role_name = config.load('OIDC', 'IRIS_ADMIN_ROLE_NAME', fallback="")
 
     except Exception as e:
-        log.error(f"OIDC ERROR - {e}")
+        logger.error(f"OIDC ERROR - {e}")
         exit(0)
         pass
     else:
-        log.info("OIDC configuration properly parsed")
+        logger.info("OIDC configuration properly parsed")
 
 
 # --------- CELERY ---------
@@ -262,7 +249,6 @@ class CeleryConfig:
     broker_connection_retry_on_startup =True
 
 
-# --------- APP ---------
 class Config:
     # Handled by bumpversion
     IRIS_VERSION = "v2.5.0-beta.1" # DO NOT EDIT THIS LINE MANUALLY
@@ -293,6 +279,7 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(minutes=int(config.load('IRIS', 'SESSION_TIMEOUT', fallback=1440)))
     SESSION_COOKIE_SAMESITE = 'Lax'
     SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
     MFA_ENABLED = config.load('IRIS', 'MFA_ENABLED', fallback=False) == 'True'
 
     PG_ACCOUNT = PG_ACCOUNT_
@@ -312,6 +299,12 @@ class Config:
         DEMO_USERS_SEED = config.load('IRIS_DEMO', 'USERS_SEED', fallback=0)
         DEMO_ADM_SEED = config.load('IRIS_DEMO', 'ADM_SEED', fallback=0)
         MAX_CONTENT_LENGTH = 200000
+
+    DEVELOPMENT_ENABLED = config.load('DEVELOPMENT', 'ENABLED', fallback=False)
+    if DEVELOPMENT_ENABLED == 'True':
+        DEVELOPMENT_ENABLED = True
+
+    IRIS_ALLOW_ORIGIN = config.load('IRIS', 'ALLOW_ORIGIN', fallback='*')
 
     WTF_CSRF_TIME_LIMIT = None
 
@@ -445,19 +438,19 @@ class Config:
         if LDAP_USE_SSL:
             LDAP_SERVER_CERTIFICATE = config.load('LDAP', 'SERVER_CERTIFICATE')
             if not Path(f'certificates/ldap/{LDAP_SERVER_CERTIFICATE}').is_file():
-                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
+                logger.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_SERVER_CERTIFICATE}')
 
             LDAP_PRIVATE_KEY = config.load('LDAP', 'PRIVATE_KEY')
             if LDAP_PRIVATE_KEY and not Path(f'certificates/ldap/{LDAP_PRIVATE_KEY}').is_file():
-                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
+                logger.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_PRIVATE_KEY}')
 
             PRIVATE_KEY_PASSWORD = config.load('LDAP', 'PRIVATE_KEY_PASSWORD', fallback=None)
 
             LDAP_CA_CERTIFICATE = config.load('LDAP', 'CA_CERTIFICATE')
             if LDAP_CA_CERTIFICATE and not Path(f'certificates/ldap/{LDAP_CA_CERTIFICATE}').is_file():
-                log.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
+                logger.error(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
                 raise Exception(f'Unable to read LDAP certificate file certificates/ldap/{LDAP_CA_CERTIFICATE}')
 
             LDAP_CUSTOM_TLS_CONFIG = config.load('LDAP', 'CUSTOM_TLS_CONFIG', fallback='True')
@@ -478,16 +471,16 @@ class Config:
 
     """ Caching 
     """
-    CACHE_TYPE = "SimpleCache"
+    CACHE_TYPE = 'SimpleCache'
     CACHE_DEFAULT_TIMEOUT = 300
 
-    log.info(f'IRIS Server {IRIS_VERSION}')
-    log.info(f'Min. API version supported: {API_MIN_VERSION}')
-    log.info(f'Max. API version supported: {API_MAX_VERSION}')
-    log.info(f'Min. module interface version supported: {MODULES_INTERFACE_MIN_VERSION}')
-    log.info(f'Max. module interface version supported: {MODULES_INTERFACE_MAX_VERSION}')
-    log.info(f'Session lifetime: {PERMANENT_SESSION_LIFETIME}')
-    log.info(f'Authentication mechanism configured: {AUTHENTICATION_TYPE}')
-    log.info(f'Authentication local fallback {"enabled" if AUTHENTICATION_LOCAL_FALLBACK else "disabled"}')
-    log.info(f'MFA {"enabled" if MFA_ENABLED else "disabled"}')
-    log.info(f'Create user during authentication: {"enabled" if AUTHENTICATION_CREATE_USER_IF_NOT_EXIST else "disabled"}')
+    logger.info(f'IRIS Server {IRIS_VERSION}')
+    logger.info(f'Min. API version supported: {API_MIN_VERSION}')
+    logger.info(f'Max. API version supported: {API_MAX_VERSION}')
+    logger.info(f'Min. module interface version supported: {MODULES_INTERFACE_MIN_VERSION}')
+    logger.info(f'Max. module interface version supported: {MODULES_INTERFACE_MAX_VERSION}')
+    logger.info(f'Session lifetime: {PERMANENT_SESSION_LIFETIME}')
+    logger.info(f'Authentication mechanism configured: {AUTHENTICATION_TYPE}')
+    logger.info(f'Authentication local fallback {"enabled" if AUTHENTICATION_LOCAL_FALLBACK else "disabled"}')
+    logger.info(f'MFA {"enabled" if MFA_ENABLED else "disabled"}')
+    logger.info(f'Create user during authentication: {"enabled" if AUTHENTICATION_CREATE_USER_IF_NOT_EXIST else "disabled"}')
