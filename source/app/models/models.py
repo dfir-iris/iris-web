@@ -42,8 +42,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
 
-from app.wsgi import app
-from app.wsgi import db
+from app.configuration import Config
+from app.db import db
 
 Base = declarative_base()
 metadata = Base.metadata
@@ -915,7 +915,7 @@ class IrisReport(db.Model):
         # Create an engine and a session because this method
         # will be called from Celery thread and might cause
         # error if it uses the session context of the app
-        engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'])
+        engine = create_engine(Config.SQLALCHEMY_DATABASE_URI)
         Session = sessionmaker(bind=engine)
         session = Session()
 

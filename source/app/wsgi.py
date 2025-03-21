@@ -16,8 +16,6 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import collections
-import json
 import os
 from flask import Flask
 from flask import session
@@ -28,8 +26,6 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
 from flask_socketio import SocketIO, Namespace
-from flask_sqlalchemy import SQLAlchemy
-from functools import partial
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -59,12 +55,7 @@ class AlertsNamespace(Namespace):
 APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(APP_PATH, 'templates/')
 
-SQLALCHEMY_ENGINE_OPTIONS = {
-    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict),
-    "pool_pre_ping": True
-}
-
-db = SQLAlchemy(engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
+from app.db import db
 bc = Bcrypt()  # flask-bcrypt
 ma = Marshmallow()
 celery = make_celery(__name__)

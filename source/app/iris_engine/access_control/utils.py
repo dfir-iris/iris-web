@@ -2,8 +2,8 @@ from flask import session
 from flask_login import current_user
 from sqlalchemy import and_
 
-from app.wsgi import app
-from app.wsgi import db
+from app.logger import logger
+from app.db import db
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.models.cases import Cases
 from app.models.models import Client
@@ -16,8 +16,6 @@ from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
-
-log = app.logger
 
 
 def ac_flag_match_mask(flag, mask):
@@ -537,7 +535,7 @@ def ac_remove_case_access_from_user(user_id, case_id):
     )).all()
 
     if len(uac) > 1:
-        log.error(f'Multiple access found for user {user_id} and case {case_id}')
+        logger.error(f'Multiple access found for user {user_id} and case {case_id}')
         for u in uac:
             db.session.delete(u)
         db.session.commit()
@@ -587,7 +585,7 @@ def ac_set_case_access_for_user(user_id, case_id, access_level, commit=True):
     )).all()
 
     if len(uac) > 1:
-        log.error(f'Multiple access found for user {user_id} and case {case_id}')
+        logger.error(f'Multiple access found for user {user_id} and case {case_id}')
         for u in uac:
             db.session.delete(u)
         db.session.commit()
