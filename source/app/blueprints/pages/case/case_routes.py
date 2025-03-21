@@ -22,7 +22,7 @@ from flask import render_template
 from flask import url_for
 from flask_wtf import FlaskForm
 
-from app import app
+from app.wsgi import app
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_activities_report_template
 from app.datamgmt.case.case_db import get_case

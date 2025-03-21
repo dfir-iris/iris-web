@@ -21,7 +21,7 @@ import traceback
 from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
-from app import db
+from app.wsgi import db
 from app.logger import logger
 from app.util import add_obj_history_entry
 from app.schema.marshables import CaseSchema

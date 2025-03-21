@@ -22,7 +22,7 @@ from flask import url_for
 from flask_wtf import FlaskForm
 from werkzeug.utils import redirect
 
-from app import app
+from app.wsgi import app
 from app.datamgmt.manage.manage_srv_settings_db import get_alembic_revision
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.iris_engine.updater.updater import is_updates_available

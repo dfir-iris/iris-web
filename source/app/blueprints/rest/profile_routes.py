@@ -23,7 +23,7 @@ from flask import request
 from flask import session
 from flask_login import current_user
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_user_primary_org
 from app.datamgmt.manage.manage_users_db import update_user

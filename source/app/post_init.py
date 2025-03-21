@@ -34,9 +34,9 @@ from sqlalchemy import or_
 from sqlalchemy_utils import create_database
 from sqlalchemy_utils import database_exists
 
-from app import bc
-from app import celery
-from app import db
+from app.wsgi import bc
+from app.wsgi import celery
+from app.wsgi import db
 from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.demo_builder import create_demo_cases
 from app.iris_engine.access_control.utils import ac_get_mask_analyst

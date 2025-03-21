@@ -24,8 +24,8 @@ from flask_login import current_user
 from sqlalchemy import or_
 from sqlalchemy import and_
 
-from app import db
-from app import app
+from app.wsgi import db
+from app.wsgi import app
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.business.errors import BusinessProcessingError

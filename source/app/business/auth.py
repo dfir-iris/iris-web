@@ -24,9 +24,9 @@ from flask import url_for
 from flask import request
 from flask_login import login_user
 
-from app import bc
-from app import app
-from app import db
+from app.wsgi import bc
+from app.wsgi import app
+from app.wsgi import db
 from app.logger import logger
 from app.business.users import retrieve_user_by_username
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict

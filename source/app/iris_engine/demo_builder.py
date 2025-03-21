@@ -20,9 +20,9 @@ import string
 
 from flask_login import current_user
 
-from app import app
-from app import bc
-from app import db
+from app.wsgi import app
+from app.wsgi import bc
+from app.wsgi import db
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation

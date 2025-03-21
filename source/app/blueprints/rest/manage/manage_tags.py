@@ -19,7 +19,7 @@ from flask import Blueprint
 from flask import request
 from werkzeug import Response
 
-from app import app
+from app.wsgi import app
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.manage.manage_tags_db import get_filtered_tags
 from app.schema.marshables import TagsSchema

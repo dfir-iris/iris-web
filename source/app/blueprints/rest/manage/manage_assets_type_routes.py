@@ -23,8 +23,8 @@ import os
 from flask import Blueprint
 from flask import request
 
-from app import app
-from app import db
+from app.wsgi import app
+from app.wsgi import db
 from app.datamgmt.manage.manage_case_objs import search_asset_type_by_name
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions

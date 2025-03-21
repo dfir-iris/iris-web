@@ -28,9 +28,9 @@ from flask import redirect
 from flask_login import current_user
 from flask_login import logout_user
 
-from app import db
-from app import app
-from app import oidc_client
+from app.wsgi import db
+from app.wsgi import app
+from app.wsgi import oidc_client
 
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews

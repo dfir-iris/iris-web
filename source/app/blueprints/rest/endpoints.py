@@ -19,7 +19,7 @@
 from functools import wraps
 from flask_sqlalchemy.pagination import Pagination
 
-from app import app
+from app.wsgi import app
 from app.blueprints.responses import response_error, response
 
 logger = app.logger

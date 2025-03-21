@@ -19,7 +19,7 @@ from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import desc
 
-from app import db
+from app.wsgi import db
 from app.models.models import CaseTasks
 from app.models.models import TaskAssignee
 from app.models.models import ReviewStatus

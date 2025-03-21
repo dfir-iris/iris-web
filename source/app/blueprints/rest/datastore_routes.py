@@ -28,7 +28,7 @@ from flask import send_file
 from flask_login import current_user
 from pathlib import Path
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_evidence
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_ioc

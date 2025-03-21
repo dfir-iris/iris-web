@@ -20,7 +20,7 @@ from datetime import datetime
 from flask_login import current_user
 from marshmallow import ValidationError
 
-from app import db
+from app.wsgi import db
 from app.logger import logger
 from app.business.errors import BusinessProcessingError
 from app.business.errors import UnhandledBusinessError

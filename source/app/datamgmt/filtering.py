@@ -19,7 +19,7 @@ import json
 
 from sqlalchemy import String, Text, inspect, or_, not_, and_
 
-from app import app
+from app.wsgi import app
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.pagination_parameters import PaginationParameters
 

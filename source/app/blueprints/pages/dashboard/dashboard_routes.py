@@ -23,7 +23,7 @@ from flask import url_for
 from flask_login import current_user
 from flask_wtf import FlaskForm
 
-from app import app
+from app.wsgi import app
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.forms import CaseGlobalTaskForm
 from app.iris_engine.access_control.utils import ac_get_user_case_counts

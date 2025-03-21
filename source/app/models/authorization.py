@@ -32,7 +32,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app import db
+from app.wsgi import db
 
 
 class CaseAccessLevel(enum.Enum):

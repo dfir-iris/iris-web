@@ -27,9 +27,9 @@ from pickle import dumps
 from pickle import loads
 from sqlalchemy import and_
 
-from app import app
-from app import celery
-from app import db
+from app.wsgi import app
+from app.wsgi import celery
+from app.wsgi import db
 from app.datamgmt.iris_engine.modules_db import get_module_config_from_hname
 from app.datamgmt.iris_engine.modules_db import iris_module_add
 from app.datamgmt.iris_engine.modules_db import iris_module_exists

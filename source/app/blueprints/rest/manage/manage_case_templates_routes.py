@@ -22,7 +22,7 @@ from flask import request
 from flask_login import current_user
 from marshmallow import ValidationError
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import validate_case_template

@@ -20,7 +20,7 @@ from functools import reduce
 
 from sqlalchemy import and_
 
-from app import db
+from app.wsgi import db
 from app.logger import logger
 from app.models.models import Tags
 from app.datamgmt.conversions import convert_sort_direction

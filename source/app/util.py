@@ -35,7 +35,7 @@ from pyunpack import Archive
 from sqlalchemy.orm.attributes import flag_modified
 from flask import current_app
 
-from app import db
+from app.wsgi import db
 
 
 class FileRemover(object):

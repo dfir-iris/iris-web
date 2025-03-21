@@ -21,9 +21,9 @@ from flask import redirect
 from flask import request
 from flask_login import current_user
 
-from app import app
-from app import cache
-from app import db
+from app.wsgi import app
+from app.wsgi import cache
+from app.wsgi import db
 from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.authorization import Permissions
 from app.models.cases import Cases

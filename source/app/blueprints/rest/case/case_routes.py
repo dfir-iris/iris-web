@@ -26,9 +26,9 @@ from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import desc
 
-from app import app
-from app import db
-from app import socket_io
+from app.wsgi import app
+from app.wsgi import db
+from app.wsgi import socket_io
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.business.cases import cases_exists
 from app.datamgmt.case.case_db import get_review_id_from_name

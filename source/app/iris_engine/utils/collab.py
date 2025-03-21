@@ -1,6 +1,6 @@
 import json
 
-from app import socket_io
+from app.wsgi import socket_io
 
 
 def collab_notify(case_id: int, object_type: str, action_type: str, object_id,

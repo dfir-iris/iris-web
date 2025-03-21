@@ -18,7 +18,7 @@
 from flask_login import current_user
 from sqlalchemy import and_
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.states import update_timeline_state
 from app.models.models import AssetsType
 from app.models.models import CaseAssets

@@ -20,11 +20,11 @@ from datetime import datetime
 from flask import request
 from flask_login import current_user
 
-import app
-from app import db
+from app.wsgi import app
+from app.wsgi import db
 from app.models.models import UserActivity
 
-log = app.app.logger
+log = app.logger
 
 
 def track_activity(message, caseid=None, ctx_less=False, user_input=False, display_in_ui=True):

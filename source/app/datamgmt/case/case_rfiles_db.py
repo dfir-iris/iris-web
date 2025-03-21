@@ -21,7 +21,7 @@ from flask_login import current_user
 from sqlalchemy import desc
 from flask_sqlalchemy.pagination import Pagination
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_evidences_state
 from app.models.models import CaseReceivedFile

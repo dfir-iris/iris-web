@@ -20,7 +20,7 @@ from flask import Blueprint, request
 from flask_login import current_user
 from werkzeug import Response
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.filters.filters_db import get_filter_by_id
 from app.datamgmt.filters.filters_db import list_filters_by_type
 from app.iris_engine.utils.tracker import track_activity

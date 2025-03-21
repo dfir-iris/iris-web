@@ -19,7 +19,7 @@
 from flask import Blueprint, request
 from flask_login import current_user
 
-from app import db, app
+from app.wsgi import db, app
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_success
 from app.datamgmt.context.context_db import ctx_search_user_cases

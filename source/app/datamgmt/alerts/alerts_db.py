@@ -24,8 +24,8 @@ from sqlalchemy import desc, asc, func, tuple_, or_, not_, and_
 from sqlalchemy.orm import aliased, make_transient, selectinload
 from typing import List, Tuple
 
-import app
-from app import db
+from app.wsgi import app
+from app.wsgi import db
 from app.datamgmt.filtering import combine_conditions, apply_custom_conditions
 from app.datamgmt.case.case_assets_db import create_asset
 from app.datamgmt.case.case_assets_db import set_ioc_links
@@ -235,7 +235,7 @@ def get_filtered_alerts(
             try:
                 custom_conditions = json.loads(custom_conditions)
             except:
-                app.app.logger.exception(f"Error parsing custom_conditions: {custom_conditions}")
+                app.logger.exception(f"Error parsing custom_conditions: {custom_conditions}")
                 return
 
         query, conditions_tmp = apply_custom_conditions(query, Alert, custom_conditions, relationship_model_map)
@@ -259,7 +259,7 @@ def get_filtered_alerts(
         return filtered_alerts
 
     except Exception as e:
-        app.app.logger.exception(f"Error getting alerts: {str(e)}")
+        app.logger.exception(f"Error getting alerts: {str(e)}")
         return None
 
 

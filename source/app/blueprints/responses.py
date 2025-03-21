@@ -25,8 +25,8 @@ from flask import render_template
 from flask import request
 from sqlalchemy.orm import DeclarativeMeta
 
-from app import TEMPLATE_PATH
-from app import app
+from app.wsgi import TEMPLATE_PATH
+from app.wsgi import app
 
 
 # Set basic 404

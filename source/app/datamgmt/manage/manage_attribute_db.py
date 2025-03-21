@@ -19,7 +19,7 @@ import json
 import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
-from app import db, app
+from app.wsgi import db, app
 from app.models.models import CaseAssets
 from app.models.models import CaseReceivedFile
 from app.models.models import CaseTasks

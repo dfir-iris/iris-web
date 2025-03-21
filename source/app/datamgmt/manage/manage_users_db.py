@@ -23,8 +23,8 @@ from flask_login import current_user, AnonymousUserMixin
 from sqlalchemy import and_
 
 from app.logger import logger
-from app import bc
-from app import db
+from app.wsgi import bc
+from app.wsgi import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.conversions import convert_sort_direction
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list

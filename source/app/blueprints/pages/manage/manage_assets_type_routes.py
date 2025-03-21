@@ -23,7 +23,7 @@ from flask import redirect
 from flask import render_template
 from flask import url_for
 
-from app import app
+from app.wsgi import app
 from app.forms import AddAssetForm
 from app.models.authorization import Permissions
 from app.models.models import AssetsType

@@ -23,8 +23,8 @@ from flask import Blueprint
 from flask import request
 from flask_login import current_user
 
-from app import db
-from app import app
+from app.wsgi import db
+from app.wsgi import app
 from app.datamgmt.manage.manage_groups_db import add_all_cases_access_to_group
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_groups_db import delete_group

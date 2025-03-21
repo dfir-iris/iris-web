@@ -19,7 +19,7 @@
 from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
-from app import db
+from app.wsgi import db
 from app.models.models import Ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import case_iocs_db_exists

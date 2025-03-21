@@ -26,7 +26,7 @@ from flask_login import current_user
 from werkzeug import Response
 from werkzeug.utils import secure_filename
 
-from app import db
+from app.wsgi import db
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name

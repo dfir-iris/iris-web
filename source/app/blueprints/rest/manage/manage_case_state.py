@@ -22,7 +22,7 @@ from flask import Blueprint
 from flask import Response
 from flask import request
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_id
 from app.datamgmt.manage.manage_case_state_db import get_cases_using_state

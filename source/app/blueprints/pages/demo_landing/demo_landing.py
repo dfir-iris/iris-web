@@ -19,7 +19,7 @@
 from flask import Blueprint
 from flask import render_template
 
-from app import app
+from app.wsgi import app
 from app.iris_engine.demo_builder import gen_demo_admins
 from app.iris_engine.demo_builder import gen_demo_users
 

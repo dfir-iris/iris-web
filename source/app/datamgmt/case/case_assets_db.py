@@ -23,7 +23,7 @@ from sqlalchemy import and_
 from sqlalchemy import func
 from flask_sqlalchemy.pagination import Pagination
 
-from app import db, app
+from app.wsgi import db, app
 from app.datamgmt.filtering import get_filtered_data
 from app.datamgmt.states import update_assets_state
 from app.models.models import AnalysisStatus

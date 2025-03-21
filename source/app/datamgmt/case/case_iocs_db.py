@@ -18,8 +18,8 @@
 from flask_login import current_user
 from sqlalchemy import and_
 
-from app import db
-from app import app
+from app.wsgi import db
+from app.wsgi import app
 from app.datamgmt.filtering import get_filtered_data
 from app.datamgmt.states import update_ioc_state
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access

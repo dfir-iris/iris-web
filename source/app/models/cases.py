@@ -37,7 +37,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import backref
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.states import update_assets_state
 from app.datamgmt.states import update_evidences_state
 from app.datamgmt.states import update_ioc_state

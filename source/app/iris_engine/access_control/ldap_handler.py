@@ -24,7 +24,7 @@ from ldap3 import Server
 from ldap3 import Tls
 from ldap3.utils import conv
 
-from app import app
+from app.wsgi import app
 from app.datamgmt.manage.manage_users_db import get_active_user_by_login
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import add_user_to_group

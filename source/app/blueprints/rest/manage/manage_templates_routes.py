@@ -28,8 +28,8 @@ from flask import send_file
 from flask_login import current_user
 from werkzeug.utils import secure_filename
 
-from app import app
-from app import db
+from app.wsgi import app
+from app.wsgi import db
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.models.authorization import User

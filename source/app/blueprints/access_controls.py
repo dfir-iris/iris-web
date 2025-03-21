@@ -37,10 +37,10 @@ from jwt import PyJWKClient
 from requests.auth import HTTPBasicAuth
 from werkzeug.utils import redirect
 
-from app import TEMPLATE_PATH
+from app.wsgi import TEMPLATE_PATH
 
-from app import app
-from app import db
+from app.wsgi import app
+from app.wsgi import db
 from app.blueprints.responses import response_error
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access

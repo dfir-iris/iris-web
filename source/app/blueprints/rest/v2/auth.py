@@ -22,16 +22,18 @@ from flask import request
 from flask_login import current_user, logout_user
 from oic.oauth2.exception import GrantError
 
-from app import app
-from app import db
-from app import oidc_client
+from app.wsgi import app
+from app.wsgi import db
+from app.wsgi import oidc_client
 from app.logger import logger
 from app.blueprints.access_controls import is_authentication_ldap
 from app.blueprints.access_controls import is_authentication_oidc
 from app.blueprints.access_controls import not_authenticated_redirection_url
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_success
-from app.business.auth import validate_ldap_login, validate_local_login, return_authed_user_info
+from app.business.auth import validate_ldap_login
+from app.business.auth import validate_local_login
+from app.business.auth import return_authed_user_info
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import UserSchema
 

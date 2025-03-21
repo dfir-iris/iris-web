@@ -26,7 +26,7 @@ from docx_generator.exceptions import rendering_error
 from flask_login import current_user
 from sqlalchemy import desc
 
-from app import app
+from app.wsgi import app
 from app.business.cases import cases_export_to_report_json
 from app.business.cases import cases_export_to_json
 

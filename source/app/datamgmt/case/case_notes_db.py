@@ -18,7 +18,7 @@
 from flask_login import current_user
 from sqlalchemy import and_
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
 from app.models.models import Comments

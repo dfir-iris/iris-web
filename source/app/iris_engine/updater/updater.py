@@ -29,11 +29,11 @@ from datetime import datetime
 from packaging import version
 from pathlib import Path
 
-from app import app
-from app import cache
-from app import celery
-from app import db
-from app import socket_io
+from app.wsgi import app
+from app.wsgi import cache
+from app.wsgi import celery
+from app.wsgi import db
+from app.wsgi import socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.iris_engine.backup.backup import backup_iris_db
 from app.models.models import ServerSettings

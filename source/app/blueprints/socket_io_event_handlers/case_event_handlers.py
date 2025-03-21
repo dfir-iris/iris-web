@@ -21,7 +21,7 @@ from flask_login import current_user
 from flask_socketio import emit
 from flask_socketio import join_room
 
-from app import socket_io
+from app.wsgi import socket_io
 from app.blueprints.access_controls import ac_socket_requires
 from app.models.authorization import CaseAccessLevel
 

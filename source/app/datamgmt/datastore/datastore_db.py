@@ -25,8 +25,8 @@ from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
 
-from app import app
-from app import db
+from app.wsgi import app
+from app.wsgi import db
 from app.models.models import CaseReceivedFile
 from app.models.models import DataStoreFile
 from app.models.models import DataStorePath

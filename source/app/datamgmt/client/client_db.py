@@ -19,7 +19,7 @@ import marshmallow
 from sqlalchemy import func, and_
 from typing import List
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
 from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.models.cases import Cases

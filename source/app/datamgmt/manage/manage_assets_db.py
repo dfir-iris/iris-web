@@ -2,7 +2,7 @@ from flask_login import current_user
 from sqlalchemy import and_
 from functools import reduce
 
-import app
+from app.wsgi import app
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.cases import Cases

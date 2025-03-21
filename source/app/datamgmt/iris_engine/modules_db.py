@@ -19,7 +19,7 @@ import base64
 import datetime
 from flask_login import current_user
 
-from app import db, app
+from app.wsgi import db, app
 from app.models.models import IrisHook
 from app.models.models import IrisModule
 from app.models.models import IrisModuleHook

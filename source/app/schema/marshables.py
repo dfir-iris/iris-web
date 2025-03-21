@@ -45,9 +45,9 @@ from typing import Tuple
 from typing import Union
 from werkzeug.datastructures import FileStorage
 
-from app import db
-from app import ma
 from app.logger import logger
+from app.wsgi import db
+from app.wsgi import ma
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag

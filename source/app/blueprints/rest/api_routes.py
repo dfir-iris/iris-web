@@ -18,7 +18,7 @@
 
 from flask import Blueprint
 
-from app import app
+from app.wsgi import app
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_success
 

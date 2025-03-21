@@ -20,9 +20,9 @@ import marshmallow
 from flask import Blueprint
 from flask import request
 
-from app import app
-from app import celery
-from app import db
+from app.wsgi import app
+from app.wsgi import celery
+from app.wsgi import db
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.iris_engine.backup.backup import backup_iris_db
 from app.iris_engine.updater.updater import remove_periodic_update_checks

@@ -23,7 +23,7 @@ from flask import request
 from flask_login import current_user
 from marshmallow import ValidationError
 
-from app import ac_current_user_has_permission
+from app.wsgi import ac_current_user_has_permission
 from app.blueprints.access_controls import ac_api_requires
 from app.datamgmt.client.client_db import create_client
 from app.datamgmt.client.client_db import create_contact

@@ -2,8 +2,8 @@ from flask import session
 from flask_login import current_user
 from sqlalchemy import and_
 
-import app
-from app import db
+from app.wsgi import app
+from app.wsgi import db
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.models.cases import Cases
 from app.models.models import Client
@@ -17,7 +17,7 @@ from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
 
-log = app.app.logger
+log = app.logger
 
 
 def ac_flag_match_mask(flag, mask):

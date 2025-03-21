@@ -17,7 +17,7 @@
 from flask_login import current_user
 from sqlalchemy import and_
 
-from app import db
+from app.wsgi import db
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.manage.manage_cases_db import list_cases_id
 from app.iris_engine.access_control.utils import ac_access_level_mask_from_val_list, ac_ldp_group_removal
