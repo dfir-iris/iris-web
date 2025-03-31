@@ -22,7 +22,7 @@ import marshmallow
 from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
-from app import db
+from app.wsgi import db
 from app.models.cases import CasesEvent
 from app.business.errors import ObjectNotFoundError
 from app.iris_engine.module_handler.module_handler import call_modules_hook
