@@ -3,9 +3,7 @@ import App from './SLAcontainer.svelte';
 export let app; // Declare at the top level
 
 document.addEventListener('alertRendered', (event) => {
-  console.log('alertRendered event received');
   const containers = document.querySelectorAll('.SLAcontainer');
-  console.log(containers);
   if (containers) {
     containers.forEach((container) => {
       // Check if the container already has the "mounted" class
@@ -30,3 +28,6 @@ document.addEventListener('alertRendered', (event) => {
     });
   }
 });
+
+
+

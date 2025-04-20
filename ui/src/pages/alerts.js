@@ -1349,8 +1349,6 @@ async function refreshAlert(alertId, alertData, expanded=false) {
             alertID: alertData.alert_id
         }
     }));
-
-
 }
 
 async function fetchSLAdata() {

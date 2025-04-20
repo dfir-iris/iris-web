@@ -68,6 +68,13 @@ def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
     return render_template('alerts.html', caseid=caseid, form=form)
 
 #later move this to source/app/blueprints/rest/alerts_routes.py
+@alerts_blueprint.route('/alerts/api/set_elapsed_sla_api/<int:alert_id>/<int:new_elapsed_sla>', methods=['GET'])
+@ac_api_requires(Permissions.alerts_write)
+def set_elapsed_sla_api(alert_id: int, new_elapsed_sla: int):
+    updated_alert = set_elapsed_sla(alert_id, new_elapsed_sla)
+    return response_success(data=updated_alert)
+
+
 @alerts_blueprint.route('/alerts/api/get_clients_sla_api', methods=['GET'])
 @ac_api_requires()
 def get_clients_sla_api():
@@ -90,12 +97,7 @@ def get_elapsed_sla_api(alert_id: int):
 
     return response_success(data=elapsed_sla)
 
-#later move this to source/app/blueprints/rest/alerts_routes.py
-@alerts_blueprint.route('/alerts/api/set_elapsed_sla_api/<int:alert_id>/<int:new_elapsed_sla>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_write)
-def set_elapsed_sla_api(alert_id: int, new_elapsed_sla: int):
-    updated_alert = set_elapsed_sla(alert_id, new_elapsed_sla)
-    return response_success(data=updated_alert)
+
 
 
 

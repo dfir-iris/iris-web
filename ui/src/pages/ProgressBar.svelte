@@ -30,9 +30,7 @@
   	export let startDateTime = "01/02/2025 14:30";
   	export let endDateTime = "01/02/2025 14:30";
   	let timecomputed = calculateDuration(); //calculate duration betwwen two timestamps in seconds
-  	//let elapsed = $state(0);
   	$: elapsed = 0;
-  	//let duration = $state(timecomputed);
   	$: duration = timecomputed;
   	let interval: number
   	let oldElapsedTime = 0;
@@ -42,19 +40,15 @@
 
 	function start() {
 	  interval = setInterval(() => {
-		  console.log("elapsed2 ", dbElapsedSla);
 		  if(currstate === MyState.RUNNING) {
 			  //calculate curr time
 			  currTimeEpoch = Math.floor((Date.now()) / (1000 * 60)) * 60;
-			  //startTimeEpoch = getSecondsSinceEpoch(startDateTime);
-				//console.log(currTimeEpoch);
-				//console.log(Math.floor((Date.now()) / (1000 * 60)) * 60);
-			  if(dbElapsedSla < 0){ //
+			  if(dbElapsedSla < 0){ //SLA not yet completed
 				  elapsed = currTimeEpoch - startTimeEpoch + oldElapsedTime;
 				  console.log("elapsed: "+elapsed);
 			  }
 			  else { //SLA is not -1 therefore was completed sometime before
-				  elapsed = dbElapsedSla; //
+				  elapsed = dbElapsedSla;
 				  clearInterval(interval)
 				  currstate = MyState.PAUSED;
 			  }
