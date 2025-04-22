@@ -148,3 +148,9 @@ def create_alert():
 
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), data=e.get_data())
+    
+
+@alerts_blueprint.get('/<int:identifier>')
+@ac_api_requires(Permissions.alerts_read)
+def get_alert(identifier):
+    return response_api_success(None)
