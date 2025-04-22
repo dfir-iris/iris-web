@@ -27,6 +27,8 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
+from app.datamgmt.alerts.alerts_db import get_related_alerts
+from app.datamgmt.alerts.alerts_db import get_alert_by_id
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema
 from app.business.alerts import alerts_create
@@ -153,4 +155,18 @@ def create_alert():
 @alerts_blueprint.get('/<int:identifier>')
 @ac_api_requires(Permissions.alerts_read)
 def get_alert(identifier):
-    return response_api_success(None)
+    
+    try:
+        alert_schema = AlertSchema()
+
+        alert = get_alert_by_id(identifier)
+
+        alert_dump = alert_schema.dump(alert)
+
+        similar_alerts = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
+        alert_dump['related_alerts'] = similar_alerts
+        
+        return response_api_success(data=alert_dump)
+    
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
