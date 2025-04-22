@@ -83,6 +83,7 @@ def alerts_create(request_data) -> Alert:
 
     return alert
 
+
 def alerts_get(identifier) -> Alert:
 
     alert_schema =  _load()
