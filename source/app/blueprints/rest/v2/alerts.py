@@ -156,7 +156,7 @@ def create_alert():
 def get_alert(identifier):
 
     try:
-        alert = alerts_get(request.get_json())
+        alert = alerts_get(identifier)
         alert_schema = AlertSchema()
         return response_api_created('Alert Founded', data=alert_schema.dump(alert))
 

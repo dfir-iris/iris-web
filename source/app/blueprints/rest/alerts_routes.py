@@ -203,7 +203,7 @@ def alerts_add_route() -> Response:
 @ac_api_requires(Permissions.alerts_read)
 def alerts_get_route(alert_id) -> Response:
     try:
-        alert = alerts_get(request.get_json())
+        alert = alerts_get(alert_id)
         alert_schema = AlertSchema()
         return response_success('Alert Founded', data=alert_schema.dump(alert))
 
