@@ -26,6 +26,8 @@ from app import socket_io
 from app.models.alerts import Alert
 from app.datamgmt.alerts.alerts_db import cache_similar_alert
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
+from app.datamgmt.alerts.alerts_db import get_related_alerts
+from app.datamgmt.alerts.alerts_db import get_alert_by_id
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.util import add_obj_history_entry
@@ -81,3 +83,15 @@ def alerts_create(request_data) -> Alert:
 
     return alert
 
+def alerts_get(identifier) -> Alert:
+
+    alert_schema =  _load()
+
+    alert = get_alert_by_id(identifier)
+
+    alert_dump = alert_schema.dump(alert)
+
+    similar_alerts = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
+    alert_dump['related_alerts'] = similar_alerts
+
+    return alert_dump

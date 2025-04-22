@@ -35,7 +35,6 @@ from app.datamgmt.alerts.alerts_db import create_case_from_alert
 from app.datamgmt.alerts.alerts_db import delete_related_alerts_cache
 from app.datamgmt.alerts.alerts_db import merge_alert_in_case
 from app.datamgmt.alerts.alerts_db import unmerge_alert_from_case
-from app.datamgmt.alerts.alerts_db import get_related_alerts
 from app.datamgmt.alerts.alerts_db import get_related_alerts_details
 from app.datamgmt.alerts.alerts_db import get_alert_comments
 from app.datamgmt.alerts.alerts_db import delete_alert_comment
@@ -60,6 +59,7 @@ from app.util import add_obj_history_entry
 from app.blueprints.responses import response_success
 from app.business.errors import BusinessProcessingError
 from app.business.alerts import alerts_create
+from app.business.alerts import alerts_get
 
 alerts_rest_blueprint = Blueprint('alerts_rest', __name__)
 
@@ -202,35 +202,13 @@ def alerts_add_route() -> Response:
 @endpoint_deprecated('GET', '/api/v2/alerts')
 @ac_api_requires(Permissions.alerts_read)
 def alerts_get_route(alert_id) -> Response:
-    """
-    Get an alert from the database
+    try:
+        alert = alerts_get(request.get_json())
+        alert_schema = AlertSchema()
+        return response_success('Alert Founded', data=alert_schema.dump(alert))
 
-    args:
-        caseid (str): The case id
-        alert_id (int): The alert id
-
-    returns:
-        Response: The response
-    """
-    alert_schema = AlertSchema()
-
-    # Get the alert from the database
-    alert = get_alert_by_id(alert_id)
-
-    # Return the alert as JSON
-    if alert is None:
-        return response_error('Alert not found')
-
-    if not user_has_client_access(current_user.id, alert.alert_customer_id):
-        return response_error('Alert not found')
-
-    alert_dump = alert_schema.dump(alert)
-
-    # Get similar alerts
-    similar_alerts = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
-    alert_dump['related_alerts'] = similar_alerts
-
-    return response_success(data=alert_dump)
+    except BusinessProcessingError as e:
+        return response_error(e.get_message(), data=e.get_data())
 
 
 @alerts_rest_blueprint.route('/alerts/similarities/<int:alert_id>', methods=['GET'])
