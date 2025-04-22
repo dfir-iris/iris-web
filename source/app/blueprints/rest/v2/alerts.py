@@ -25,6 +25,7 @@ from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.models.authorization import Permissions
@@ -32,6 +33,7 @@ from app.schema.marshables import AlertSchema
 from app.business.alerts import alerts_create
 from app.business.alerts import alerts_get
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 
 
 alerts_blueprint = Blueprint('alerts_rest_v2', __name__, url_prefix='/alerts')
@@ -157,8 +159,10 @@ def get_alert(identifier):
 
     try:
         alert = alerts_get(identifier)
-        alert_schema = AlertSchema()
-        return response_api_created('Alert Founded', data=alert_schema.dump(alert))
+        return response_api_success(alert)
+    
+    except ObjectNotFoundError:
+        return response_api_not_found()
 
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), data=e.get_data())

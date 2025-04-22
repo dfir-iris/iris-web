@@ -159,7 +159,7 @@ class TestsRestAlerts(TestCase):
             'alert_customer_id': 1
         }
         response = self._subject.create('/alerts/add', body).json()
-        identifier = 'false'
+        identifier = 153872457
         response = self._subject.get(f'/api/v2/alerts/{identifier}')
         self.assertEqual(404, response.status_code)
 
