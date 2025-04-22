@@ -155,7 +155,7 @@ def create_alert():
 @alerts_blueprint.get('/<int:identifier>')
 @ac_api_requires(Permissions.alerts_read)
 def get_alert(identifier):
-    
+
     try:
         alert_schema = AlertSchema()
 
@@ -165,8 +165,8 @@ def get_alert(identifier):
 
         similar_alerts = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
         alert_dump['related_alerts'] = similar_alerts
-        
+
         return response_api_success(data=alert_dump)
-    
+
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), data=e.get_data())
