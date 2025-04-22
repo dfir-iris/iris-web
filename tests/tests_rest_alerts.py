@@ -163,6 +163,19 @@ class TestsRestAlerts(TestCase):
         response = self._subject.get(f'/api/v2/alerts/{identifier}')
         self.assertEqual(404, response.status_code)
 
+    def test_create_alert_should_return_403_when_user_has_no_permission_to_alert(self):
+        user = self._subject.create_dummy_user()
+        body = {
+            'alert_title': 'title',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1,
+        }
+        response = self._subject.create('/alerts/add', body).json()
+        identifier = response['data']['alert_id']
+        response = user.get(f'/api/v2/alerts/{identifier}')
+        self.assertEqual(403, response.status_code)
+
     def test_merge_alert_into_a_case_should_not_fail(self):
         case_identifier = self._subject.create_dummy_case()
         body = {
