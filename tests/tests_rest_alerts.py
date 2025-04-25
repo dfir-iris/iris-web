@@ -20,6 +20,8 @@ from unittest import TestCase
 from iris import Iris
 from uuid import uuid4
 
+_IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
+
 
 class TestsRestAlerts(TestCase):
 
@@ -159,8 +161,7 @@ class TestsRestAlerts(TestCase):
             'alert_customer_id': 1
         }
         response = self._subject.create('/alerts/add', body).json()
-        identifier = '_IDENTIFIER_FOR_NONEXISTENT_OBJECT'
-        response = self._subject.get(f'/api/v2/alerts/{identifier}')
+        response = self._subject.get(f'/api/v2/alerts/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_create_alert_should_return_403_when_user_has_no_permission_to_alert(self):
