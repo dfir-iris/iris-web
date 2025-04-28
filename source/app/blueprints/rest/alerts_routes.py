@@ -207,7 +207,7 @@ def alerts_get_route(identifier) -> Response:
     try:
         alert = alerts_get(identifier)
         return response_success(alert)
-    
+
     except ObjectNotFoundError:
         return response_api_not_found()
 

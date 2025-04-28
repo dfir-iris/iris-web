@@ -160,7 +160,7 @@ def get_alert(identifier):
     try:
         alert = alerts_get(identifier)
         return response_api_success(alert)
-    
+
     except ObjectNotFoundError:
         return response_api_not_found()
 

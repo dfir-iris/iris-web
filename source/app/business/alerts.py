@@ -86,14 +86,14 @@ def alerts_create(request_data) -> Alert:
 
 
 def alerts_get(identifier) -> Alert:
-    
+
     alert_schema = AlertSchema()
     alert = get_alert_by_id(identifier)
     if not alert:
         raise ObjectNotFoundError
 
     if not user_has_client_access(iris_current_user.id, alert.alert_customer_id):
-        raise BusinessProcessingError('Alert not found') 
+        raise BusinessProcessingError('Alert not found')
     alert_dump = alert_schema.dump(alert)
 
     similar_alerts = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
