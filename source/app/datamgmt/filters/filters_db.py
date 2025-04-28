@@ -1,6 +1,6 @@
-from flask_login import current_user
 from sqlalchemy import and_
 
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.models import SavedFilter
 
 
@@ -16,7 +16,7 @@ def get_filter_by_id(filter_id):
     """
     saved_filter = SavedFilter.query.filter(SavedFilter.filter_id == filter_id).first()
     if saved_filter:
-        if saved_filter.filter_is_private and saved_filter.created_by != current_user.id:
+        if saved_filter.filter_is_private and saved_filter.created_by != iris_current_user.id:
             return None
 
     return saved_filter
@@ -40,7 +40,7 @@ def list_filters_by_type(filter_type):
     private_filters_for_user = SavedFilter.query.filter(
         and_(
             SavedFilter.filter_is_private == True,
-            SavedFilter.created_by == current_user.id,
+            SavedFilter.created_by == iris_current_user.id,
             SavedFilter.filter_type == filter_type
         )
     )

@@ -15,19 +15,19 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_login import current_user
 from flask_socketio import emit
 from flask_socketio import join_room
 
 from app import socket_io
 from app import app
+from app.iris_engine.access_control.iris_user import iris_current_user
 
 
 def get_message(data):
     room = data['channel']
     join_room(room=room)
 
-    emit('join', {'message': f"{current_user.user} just joined", 'is_error': False}, room=room,
+    emit('join', {'message': f"{iris_current_user.user} just joined", 'is_error': False}, room=room,
          namespace='/server-updates')
 
 

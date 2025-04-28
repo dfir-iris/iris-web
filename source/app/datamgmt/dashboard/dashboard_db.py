@@ -15,11 +15,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import desc
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.models import CaseTasks
 from app.models.models import TaskAssignee
 from app.models.models import ReviewStatus
@@ -92,7 +92,7 @@ def list_user_reviews():
     ).join(
         Cases.review_status
     ).filter(
-        Cases.reviewer_id == current_user.id,
+        Cases.reviewer_id == iris_current_user.id,
         ReviewStatus.status_name != 'Reviewed',
         ReviewStatus.status_name != 'Not reviewed'
     ).all()
@@ -123,7 +123,7 @@ def list_user_tasks():
         CaseTasks.status,
     ).filter(and_(
         TaskAssignee.task_id == CaseTasks.id,
-        TaskAssignee.user_id == current_user.id
+        TaskAssignee.user_id == iris_current_user.id
     )).all()
 
     return ct
@@ -175,11 +175,11 @@ def get_task_status(task_status_id):
 def list_user_cases(show_all=False):
     if show_all:
         return Cases.query.filter(
-            Cases.owner_id == current_user.id
+            Cases.owner_id == iris_current_user.id
         ).all()
 
     return Cases.query.filter(
-        Cases.owner_id == current_user.id,
+        Cases.owner_id == iris_current_user.id,
         Cases.close_date == None
     ).all()
 

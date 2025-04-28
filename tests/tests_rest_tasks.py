@@ -83,7 +83,7 @@ class TestsRestTasks(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         test = self._subject.delete(f'/api/v2/cases/{case_identifier}/tasks/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, test.status_code)
 
@@ -92,7 +92,7 @@ class TestsRestTasks(TestCase):
         user = self._subject.create_dummy_user()
         body = {'task_assignees_id': [user.get_identifier()], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         response = user.get('/user/tasks/list')
         self.assertEqual(200, response.status_code)
 
@@ -101,7 +101,7 @@ class TestsRestTasks(TestCase):
         user = self._subject.create_dummy_user()
         body = {'task_assignees_id': [user.get_identifier()], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title',
                 'custom_attributes': {}}
-        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body)
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
         response = user.get('/user/tasks/list').json()
         self.assertEqual(f'#{case_identifier} - case name', response['data']['tasks'][0]['task_case'])
 

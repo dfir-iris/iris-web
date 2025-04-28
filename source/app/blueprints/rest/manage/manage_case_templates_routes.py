@@ -19,10 +19,10 @@
 import json
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 from marshmallow import ValidationError
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import validate_case_template
@@ -78,7 +78,7 @@ def add_case_template(caseid):
         return response_error("Found errors in case template", data=str(e))
 
     try:
-        case_template_dict["created_by_user_id"] = current_user.id
+        case_template_dict["created_by_user_id"] = iris_current_user.id
         case_template_data = CaseTemplateSchema().load(case_template_dict)
         case_template = CaseTemplate(**case_template_data)
         db.session.add(case_template)

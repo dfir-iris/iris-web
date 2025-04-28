@@ -17,11 +17,11 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint, request
-from flask_login import current_user
 
 from app import db, app
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_success
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.cases import Cases
 from app.models.models import Client
@@ -37,7 +37,7 @@ def cases_context_search_v2():
     V2: Search for user cases based on a query parameter (e.g., investigations not closed).
     """
     search = request.args.get('q')
-    data = ctx_search_user_cases(search, current_user.id, max_results=100)
+    data = ctx_search_user_cases(search, iris_current_user.id, max_results=100)
     return response_api_success(data=data)
 
 
@@ -52,8 +52,8 @@ def set_ctx_v2():
     ctx = request.form.get('ctx')
     ctx_h = request.form.get('ctx_h')
 
-    current_user.ctx_case = ctx
-    current_user.ctx_human_case = ctx_h
+    iris_current_user.ctx_case = ctx
+    iris_current_user.ctx_human_case = ctx_h
 
     db.session.commit()
     _update_user_case_ctx()
@@ -74,13 +74,13 @@ def _update_user_case_ctx():
 
     data = [row for row in res]
 
-    if current_user and current_user.ctx_case:
-        is_found = any(row[2] == current_user.ctx_case for row in data)
+    if iris_current_user and iris_current_user.ctx_case:
+        is_found = any(row[2] == iris_current_user.ctx_case for row in data)
 
         if not is_found:
             # Remove invalid case from the user context
-            current_user.ctx_case = None
-            current_user.ctx_human_case = "Not set"
+            iris_current_user.ctx_case = None
+            iris_current_user.ctx_human_case = "Not set"
             db.session.commit()
 
     app.jinja_env.globals.update({'cases_context_selector': data})

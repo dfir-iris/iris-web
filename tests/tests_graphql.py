@@ -259,7 +259,7 @@ class TestsGraphQL(TestCase):
         description = 'Some description'
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, value: "{ioc_value}", 
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, value: "{ioc_value}",
                                        description: "{description}") {{
                                  ioc {{ iocDescription }}
                              }}
@@ -283,7 +283,7 @@ class TestsGraphQL(TestCase):
         tags = 'tag1,tag2'
         payload = {
             'query': f'''mutation {{
-                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, value: "{ioc_value}", 
+                             iocUpdate(iocId: {ioc_identifier}, typeId: 1, tlpId: 2, value: "{ioc_value}",
                                        tags: "{tags}") {{
                                  ioc {{ iocTags }}
                              }}
@@ -370,7 +370,7 @@ class TestsGraphQL(TestCase):
             'query': '''mutation {
                             caseCreate(name: "case2", description: "Some description", clientId: 1) {
                                 case { caseId }
-                            } 
+                            }
                         }'''
         }
         response = self._subject.execute_graphql_query(payload)
@@ -387,7 +387,7 @@ class TestsGraphQL(TestCase):
             'query': f'''mutation {{
                              caseUpdate(caseId: {case_identifier}, name: "test_delete_case") {{
                                   case {{ name }}
-                             }} 
+                             }}
                         }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -426,10 +426,10 @@ class TestsGraphQL(TestCase):
         id_client = 1
         payload = {
             'query': f''' mutation {{
-                             caseCreate(name: "case2", description: "Some description", clientId: {id_client}, 
+                             caseCreate(name: "case2", description: "Some description", clientId: {id_client},
                              socId: "1", classificationId : 1) {{
                                  case {{ clientId }}
-                             }} 
+                             }}
                         }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -454,7 +454,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': ''' mutation { caseCreate(name: "case2", description: "Some description", clientId: 1) {
                              case { caseId }
-                          } 
+                          }
                      }'''
         }
         response = self._subject.execute_graphql_query(payload)
@@ -495,7 +495,7 @@ class TestsGraphQL(TestCase):
                              caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1",
                              classificationId : 1) {
                                  case { caseId }
-                             } 
+                             }
                        }'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -516,8 +516,8 @@ class TestsGraphQL(TestCase):
             'query': ''' mutation {
                              caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1",
                              classificationId : 1) {
-                                 case { caseId } 
-                             } 
+                                 case { caseId }
+                             }
                         }'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -725,14 +725,14 @@ class TestsGraphQL(TestCase):
     def test_graphql_cases_classificationId_should_not_fail(self):
         classification_id = 1
         payload = {
-            'query': f'''mutation {{ caseCreate(name: "case1", description: "Some description", clientId: 1, socId: "1", 
+            'query': f'''mutation {{ caseCreate(name: "case1", description: "Some description", clientId: 1, socId: "1",
                                    classificationId : {classification_id}) {{ case {{ caseId }} }}}}'''}
         self._subject.execute_graphql_query(payload)
         payload = {
             'query': 'mutation { caseCreate(name: "case2", description: "Some description", clientId: 1, socId: "1", classificationId : 3) {case { caseId '
                      'classificationId}}}'}
         self._subject.execute_graphql_query(payload)
-        payload = {'query': f'''mutation {{ caseCreate(name: "case3", description: "Some description", clientId: 1, socId: "1", classificationId : 
+        payload = {'query': f'''mutation {{ caseCreate(name: "case3", description: "Some description", clientId: 1, socId: "1", classificationId :
                                         {classification_id}) {{ case {{ classificationId }} }} }}'''}
         self._subject.execute_graphql_query(payload)
         payload = {
@@ -763,7 +763,7 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         state_id = response['data']['caseCreate']['case']['stateId']
         payload = {
-            'query': f'''query {{ cases(stateId: {state_id}) 
+            'query': f'''query {{ cases(stateId: {state_id})
                     {{ edges {{ node {{ stateId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -777,7 +777,7 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         owner_id = response['data']['caseCreate']['case']['ownerId']
         payload = {
-            'query': f'''query {{ cases(ownerId: {owner_id}) 
+            'query': f'''query {{ cases(ownerId: {owner_id})
                     {{ edges {{ node {{ ownerId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -792,7 +792,7 @@ class TestsGraphQL(TestCase):
         open_date = response['data']['caseCreate']['case']['openDate']
         clientId = response['data']['caseCreate']['case']['clientId']
         payload = {
-            'query': f'''query {{ cases(openDate: "{open_date}") 
+            'query': f'''query {{ cases(openDate: "{open_date}")
                     {{ edges {{ node {{ openDate clientId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -806,7 +806,7 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         name = response['data']['caseCreate']['case']['name']
         payload = {
-            'query': f'''query {{ cases(name: "{name}") 
+            'query': f'''query {{ cases(name: "{name}")
                     {{ edges {{ node {{ name }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -820,7 +820,7 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         soc_id = response['data']['caseCreate']['case']['socId']
         payload = {
-            'query': f'''query {{ cases(socId: "{soc_id}") 
+            'query': f'''query {{ cases(socId: "{soc_id}")
                     {{ edges {{ node {{ socId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -834,7 +834,7 @@ class TestsGraphQL(TestCase):
         response = self._subject.execute_graphql_query(payload)
         severity_id = response['data']['caseCreate']['case']['severityId']
         payload = {
-            'query': f'''query {{ cases(severityId: {severity_id}) 
+            'query': f'''query {{ cases(severityId: {severity_id})
                     {{ edges {{ node {{ severityId }} }} }} }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -912,7 +912,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                case(caseId: {case_identifier}) {{
-                     iocs(iocValue: "{ioc_value}") {{ edges {{ node {{ iocValue iocId }} }} }} }} 
+                     iocs(iocValue: "{ioc_value}") {{ edges {{ node {{ iocValue iocId }} }} }} }}
                   }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -931,7 +931,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                case(caseId: {case_identifier}) {{
-                     iocs(first: 1) {{ edges {{ node {{ iocValue iocId }} }} }} }} 
+                     iocs(first: 1) {{ edges {{ node {{ iocValue iocId }} }} }} }}
                   }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -948,7 +948,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                        case(caseId: {case_identifier}) {{
-                           iocs(iocTypeId: {ioc_type_id}) {{ edges {{ node {{ iocTypeId }} }} }} }} 
+                           iocs(iocTypeId: {ioc_type_id}) {{ edges {{ node {{ iocTypeId }} }} }} }}
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -973,7 +973,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                        case(caseId: {case_identifier}) {{
-                           iocs(iocDescription: "{description}") {{ edges {{ node {{ iocDescription }} }} }} }} 
+                           iocs(iocDescription: "{description}") {{ edges {{ node {{ iocDescription }} }} }} }}
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -1014,7 +1014,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                        case(caseId: {case_identifier}) {{
-                           iocs(iocTags: "{tags}") {{ edges {{ node {{ iocTags }} }} }} }} 
+                           iocs(iocTags: "{tags}") {{ edges {{ node {{ iocTags }} }} }} }}
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -1030,7 +1030,7 @@ class TestsGraphQL(TestCase):
         payload = {
             'query': f'''{{
                        case(caseId: {case_identifier}) {{
-                           iocs(iocMisp: "{misp}") {{ edges {{ node {{ iocMisp }} }} }} }} 
+                           iocs(iocMisp: "{misp}") {{ edges {{ node {{ iocMisp }} }} }} }}
                          }}'''
         }
         body = self._subject.execute_graphql_query(payload)
@@ -1107,7 +1107,7 @@ class TestsGraphQL(TestCase):
             'query': f'''mutation {{
                              caseUpdate(caseId: {case_identifier}, tags: "test_case_number1") {{
                                   case {{ name }}
-                             }} 
+                             }}
                         }}'''
         }
         self._subject.execute_graphql_query(payload)

@@ -15,7 +15,6 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_login import current_user
 
 import json
 from datetime import datetime
@@ -23,6 +22,7 @@ from marshmallow.exceptions import ValidationError
 
 from app import db
 from app import socket_io
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.alerts import Alert
 from app.datamgmt.alerts.alerts_db import cache_similar_alert
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
@@ -57,7 +57,7 @@ def alerts_create(request_data) -> Alert:
 
     alert = _load(request_data)
 
-    if not user_has_client_access(current_user.id, alert.alert_customer_id):
+    if not user_has_client_access(iris_current_user.id, alert.alert_customer_id):
         raise BusinessProcessingError('User not entitled to create alerts for the client')
     alert.alert_creation_time = datetime.utcnow()
 

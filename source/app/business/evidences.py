@@ -16,10 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 from flask_sqlalchemy.pagination import Pagination
 
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from app.iris_engine.module_handler.module_handler import call_modules_hook
@@ -47,7 +47,7 @@ def evidences_create(case_identifier, request_json) -> CaseReceivedFile:
 
     evidence = _load(request_data)
 
-    crf = add_rfile(evidence=evidence, user_id=current_user.id, caseid=case_identifier)
+    crf = add_rfile(evidence=evidence, user_id=iris_current_user.id, caseid=case_identifier)
 
     crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=case_identifier)
     if not crf:
@@ -68,7 +68,7 @@ def evidences_update(evidence: CaseReceivedFile, request_json: dict) -> CaseRece
     request_data = call_modules_hook('on_preload_evidence_update', data=request_json, caseid=evidence.case_id)
     request_data['id'] = evidence.id
     evidence = _load(request_data, instance=evidence, partial=True)
-    evidence = update_rfile(evidence=evidence, user_id=current_user.id, caseid=evidence.case_id)
+    evidence = update_rfile(evidence=evidence, user_id=iris_current_user.id, caseid=evidence.case_id)
     evidence = call_modules_hook('on_postload_evidence_update', data=evidence, caseid=evidence.case_id)
     if not evidence:
         raise BusinessProcessingError('Unable to update task for internal reasons')

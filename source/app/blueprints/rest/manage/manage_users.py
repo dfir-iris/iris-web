@@ -21,11 +21,11 @@ import marshmallow
 import traceback
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 
 from app import app
 from app import db
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.manage.manage_users_db import add_case_access_to_user
 from app.datamgmt.manage.manage_users_db import update_user_customers
 from app.datamgmt.manage.manage_users_db import get_filtered_users
@@ -316,7 +316,7 @@ def deactivate_user_api(cur_id):
     if protect_demo_mode_user(user):
         return ac_api_return_access_denied()
 
-    if current_user.id == cur_id:
+    if iris_current_user.id == cur_id:
         return response_error('We do not recommend deactivating yourself for obvious reasons')
 
     user.active = False

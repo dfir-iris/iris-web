@@ -81,7 +81,7 @@ class IrisUpgrade200:
                 log.info('Would have added IRIS_AUTHENTICATION_METHOD to .env file')
             else:
                 log.info('Adding IRIS_AUTHENTICATION_METHOD to .env file')
-                content += f"\n\n#IRIS Authentication\nIRIS_AUTHENTICATION_METHOD=local"
+                content += "\n\n#IRIS Authentication\nIRIS_AUTHENTICATION_METHOD=local"
 
         log.warning('IRIS v2.0.0 changed the default listening port from 4433 to 443.')
         log.info('Do you want to change the port? (y/n)')
@@ -97,7 +97,7 @@ class IrisUpgrade200:
             organization_name = input()
             if "IRIS_ORGANIZATION_NAME=" in content:
                 log.info("IRIS_ORGANIZATION_NAME already set. Replacing it.")
-                content = content.replace(f"IRIS_ORGANIZATION_NAME=", "#IRIS_ORGANIZATION_NAME=")
+                content = content.replace("IRIS_ORGANIZATION_NAME=", "#IRIS_ORGANIZATION_NAME=")
 
             content += f"\n\n#IRIS Organization\nIRIS_ORGANIZATION_NAME={organization_name}"
 

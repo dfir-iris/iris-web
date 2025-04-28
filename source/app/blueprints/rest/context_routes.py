@@ -19,11 +19,11 @@
 from flask import Blueprint
 from flask import redirect
 from flask import request
-from flask_login import current_user
 
 from app import app
 from app import cache
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.authorization import Permissions
 from app.models.cases import Cases
@@ -40,7 +40,7 @@ def cases_context_search():
     search = request.args.get('q')
 
     # Get all investigations not closed
-    datao = ctx_search_user_cases(search, current_user.id, max_results=100)
+    datao = ctx_search_user_cases(search, iris_current_user.id, max_results=100)
 
     return response_success(data=datao)
 
@@ -52,14 +52,14 @@ def set_ctx():
     Set the context elements of a user i.e the current case
     :return: Page
     """
-    if not current_user.is_authenticated:
+    if not iris_current_user.is_authenticated:
         return redirect(not_authenticated_redirection_url(request.full_path))
 
     ctx = request.form.get('ctx')
     ctx_h = request.form.get('ctx_h')
 
-    current_user.ctx_case = ctx
-    current_user.ctx_human_case = ctx_h
+    iris_current_user.ctx_case = ctx
+    iris_current_user.ctx_human_case = ctx_h
 
     db.session.commit()
 
@@ -102,21 +102,21 @@ def _update_user_case_ctx():
 
     data = [row for row in res]
 
-    if current_user and current_user.ctx_case:
+    if iris_current_user and iris_current_user.ctx_case:
         # If the current user have a current case,
         # Look for it in the fresh list. If not
         # exists then remove from the user context
         is_found = False
         for row in data:
-            if row[2] == current_user.ctx_case:
+            if row[2] == iris_current_user.ctx_case:
                 is_found = True
                 break
 
         if not is_found:
             # The case does not exist,
             # Removes it from the context
-            current_user.ctx_case = None
-            current_user.ctx_human_case = "Not set"
+            iris_current_user.ctx_case = None
+            iris_current_user.ctx_human_case = "Not set"
             db.session.commit()
 
     app.jinja_env.globals.update({

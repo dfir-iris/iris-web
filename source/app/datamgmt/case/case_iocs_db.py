@@ -15,11 +15,11 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
 from app import app
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.filtering import get_filtered_data
 from app.datamgmt.states import update_ioc_state
 from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
@@ -124,7 +124,7 @@ def get_detailed_iocs(caseid):
 def get_ioc_links(ioc_id):
     search_condition = and_(Cases.case_id.in_([]))
 
-    user_search_limitations = ac_get_fast_user_cases_access(current_user.id)
+    user_search_limitations = ac_get_fast_user_cases_access(iris_current_user.id)
     if user_search_limitations:
         search_condition = and_(Cases.case_id.in_(user_search_limitations))
 
@@ -268,7 +268,7 @@ def get_case_ioc_comment(ioc_id, comment_id):
 def delete_ioc_comment(ioc_id, comment_id):
     comment = Comments.query.filter(
         Comments.comment_id == comment_id,
-        Comments.comment_user_id == current_user.id
+        Comments.comment_user_id == iris_current_user.id
     ).first()
     if not comment:
         return False, "You are not allowed to delete this comment"

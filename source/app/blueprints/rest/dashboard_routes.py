@@ -25,7 +25,6 @@ from flask import Blueprint
 from flask import session
 from flask import request
 from flask import redirect
-from flask_login import current_user
 from flask_login import logout_user
 
 from app import db
@@ -33,6 +32,7 @@ from app import app
 from app import oidc_client
 
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.dashboard.dashboard_db import get_global_task, list_user_cases, list_user_reviews
 from app.datamgmt.dashboard.dashboard_db import get_tasks_status
 from app.datamgmt.dashboard.dashboard_db import list_global_tasks
@@ -73,10 +73,9 @@ def logout():
     Logout function. Erase its session and redirect to index i.e login
     :return: Page
     """
-
     if session['current_case']:
-        current_user.ctx_case = session['current_case']['case_id']
-        current_user.ctx_human_case = session['current_case']['case_name']
+        iris_current_user.ctx_case = session['current_case']['case_id']
+        iris_current_user.ctx_human_case = session['current_case']['case_name']
         db.session.commit()
 
     if is_authentication_oidc():
@@ -86,18 +85,18 @@ def logout():
                     state=session["oidc_state"])
                 logout_url = logout_request.request(
                     oidc_client.provider_info["end_session_endpoint"])
-                track_activity(f"user '{current_user.user}' is been logged-out", ctx_less=True, display_in_ui=False)
+                track_activity(f"user '{iris_current_user.user}' is been logged-out", ctx_less=True, display_in_ui=False)
                 logout_user()
                 session.clear()
                 return redirect(logout_url)
             except GrantError:
                 track_activity(
-                    f"no oidc session found for user '{current_user.user}', skipping oidc provider logout and continuing to logout local user",
+                    f"no oidc session found for user '{iris_current_user.user}', skipping oidc provider logout and continuing to logout local user",
                     ctx_less=True,
                     display_in_ui=False
                 )
 
-    track_activity(f"user '{current_user.user}' is been logged-out",
+    track_activity(f"user '{iris_current_user.user}' is been logged-out",
                    ctx_less=True, display_in_ui=False)
     logout_user()
     session.clear()
@@ -214,7 +213,7 @@ def add_gtask(caseid):
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
 
-    gtask.task_userid_update = current_user.id
+    gtask.task_userid_update = iris_current_user.id
     gtask.task_open_date = datetime.utcnow()
     gtask.task_last_update = datetime.utcnow()
     gtask.task_last_update = datetime.utcnow()
@@ -255,7 +254,7 @@ def edit_gtask(cur_id, caseid):
                                          caseid=caseid)
 
         gtask = gtask_schema.load(request_data, instance=task)
-        gtask.task_userid_update = current_user.id
+        gtask.task_userid_update = iris_current_user.id
         gtask.task_last_update = datetime.utcnow()
 
         db.session.commit()

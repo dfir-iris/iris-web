@@ -18,9 +18,8 @@
 
 from datetime import datetime
 
-from flask_login import current_user
-
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.cases import CasesEvent
 from app.business.errors import ObjectNotFoundError
 from app.util import add_obj_history_entry
@@ -40,7 +39,7 @@ def events_create(case_identifier, event: CasesEvent, event_category_id, event_a
 
     event.case_id = case_identifier
     event.event_added = datetime.utcnow()
-    event.user_id = current_user.id
+    event.user_id = iris_current_user.id
 
     add_obj_history_entry(event, 'created')
 

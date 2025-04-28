@@ -25,10 +25,10 @@ from flask import Blueprint
 from flask import current_app
 from flask import request
 from flask import send_file
-from flask_login import current_user
 from pathlib import Path
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.datastore.datastore_db import datastore_add_child_node
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_evidence
 from app.datamgmt.datastore.datastore_db import datastore_add_file_as_ioc
@@ -239,7 +239,7 @@ def datastore_add_file(cur_id: int, caseid: int):
         dsf_sc = dsf_schema.load(request.form, partial=True)
 
         dsf_sc.file_parent_id = dsp.path_id
-        dsf_sc.added_by_user_id = current_user.id
+        dsf_sc.added_by_user_id = iris_current_user.id
         dsf_sc.file_date_added = datetime.datetime.now()
         dsf_sc.file_local_name = 'tmp_xc'
         dsf_sc.file_case_id = caseid

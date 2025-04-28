@@ -16,10 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.models import Ioc
 from app.datamgmt.case.case_iocs_db import add_ioc
 from app.datamgmt.case.case_iocs_db import case_iocs_db_exists
@@ -66,7 +66,7 @@ def iocs_create(request_json, case_identifier):
     if case_iocs_db_exists(ioc):
         raise BusinessProcessingError('IOC with same value and type already exists')
 
-    add_ioc(ioc, current_user.id, case_identifier)
+    add_ioc(ioc, iris_current_user.id, case_identifier)
 
     ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=case_identifier)
 
@@ -94,7 +94,7 @@ def iocs_update(ioc: Ioc, request_json: dict) -> (Ioc, str):
         request_data['ioc_id'] = ioc.ioc_id
         request_data['case_id'] = ioc.case_id
         ioc_sc = ioc_schema.load(request_data, instance=ioc, partial=True)
-        ioc_sc.user_id = current_user.id
+        ioc_sc.user_id = iris_current_user.id
 
         if not check_ioc_type_id(type_id=ioc_sc.ioc_type_id):
             raise BusinessProcessingError('Not a valid IOC type')

@@ -18,7 +18,6 @@
 
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 from werkzeug import Response
 
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
@@ -36,6 +35,7 @@ from app.blueprints.rest.v2.case_objects.notes import case_notes_blueprint
 from app.blueprints.rest.v2.case_objects.tasks import case_tasks_blueprint
 from app.blueprints.rest.v2.case_objects.evidences import case_evidences_blueprint
 from app.blueprints.rest.v2.case_objects.events import case_events_blueprint
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.datamgmt.case.case_db import get_case
@@ -104,7 +104,7 @@ def get_cases() -> Response:
     is_open = request.args.get('is_open', None, type=parse_boolean)
 
     filtered_cases = get_filtered_cases(
-        current_user.id,
+        iris_current_user.id,
         pagination_parameters,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,

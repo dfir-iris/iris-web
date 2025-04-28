@@ -116,15 +116,17 @@ dropzone = Dropzone(app)
 
 set_celery_flask_context(celery, app)
 
-if app.config.get('DEVELOPMENT_ENABLED'):
-    CORS(app,
-         supports_credentials=True,
-         resources={r"/api/*": {"origins": [
-             "https://127.0.0.1:5137",
-             "https://localhost:5173",
-             "https://localhost",
-             "https://127.0.0.1"
-         ]}})
+#if app.config.get('DEVELOPMENT_ENABLED'):
+CORS(app,
+     supports_credentials=True,
+     resources={r"/api/*": {"origins": [
+         "https://127.0.0.1:5137",
+         "https://localhost:5173",
+         "https://localhost",
+         "https://127.0.0.1",
+         "http://app:8000",
+         "http://frontend:5173",
+     ]}})
 
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)

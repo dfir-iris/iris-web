@@ -19,7 +19,6 @@ from copy import deepcopy
 
 import json
 from datetime import datetime, timedelta
-from flask_login import current_user
 from sqlalchemy import desc, asc, func, tuple_, or_, not_, and_
 from sqlalchemy.orm import aliased, make_transient, selectinload
 from typing import List, Tuple
@@ -38,6 +37,7 @@ from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import case_template_post_modifier
 from app.datamgmt.states import update_timeline_state
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.models.cases import Cases
@@ -363,11 +363,11 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
         name=f"[ALERT]{case_template_title_prefix} "
              f"Merge of alerts {', '.join([str(alert.alert_id) for alert in alerts])}" if not case_title else
              f"{case_template_title_prefix} {case_title}",
-        description=f"*Alerts escalated by {current_user.name}*\n\n{escalation_note}"
+        description=f"*Alerts escalated by {iris_current_user.name}*\n\n{escalation_note}"
                     f"[Alerts link](/alerts?alert_ids={','.join([str(alert.alert_id) for alert in alerts])})",
         soc_id='',
         client_id=alerts[0].alert_customer_id,
-        user=current_user,
+        user=iris_current_user,
         classification_id=alerts[0].alert_classification_id,
         state_id=get_case_state_by_name('Open').state_id
     )
@@ -393,7 +393,7 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
             for alert_ioc in alert.iocs:
                 if str(alert_ioc.ioc_uuid) == ioc_uuid:
 
-                    add_ioc(alert_ioc, current_user.id, case.case_id)
+                    add_ioc(alert_ioc, iris_current_user.id, case.case_id)
                     ioc_links.append(alert_ioc.ioc_id)
 
         # Add the assets to the case
@@ -404,7 +404,7 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
 
                     asset = create_asset(asset=alert_asset,
                                          caseid=case.case_id,
-                                         user_id=current_user.id
+                                         user_id=iris_current_user.id
                                          )
                     asset.asset_uuid = alert_asset.asset_uuid
 
@@ -431,7 +431,7 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
             }, session=db.session)
 
             event.case_id = case.case_id
-            event.user_id = current_user.id
+            event.user_id = iris_current_user.id
             event.event_added = datetime.utcnow()
 
             add_obj_history_entry(event, 'created')
@@ -488,13 +488,13 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
     # Create the case
     case = Cases(
         name=f"[ALERT]{case_template_title_prefix} {alert.alert_title}" if not case_title else f"{case_template_title_prefix} {case_title}",
-        description=f"*Alert escalated by {current_user.name}*\n\n{escalation_note}"
+        description=f"*Alert escalated by {iris_current_user.name}*\n\n{escalation_note}"
                     f"### Alert description\n\n{alert.alert_description}"
                     f"\n\n### IRIS alert link\n\n"
                     f"[<i class='fa-solid fa-bell'></i> #{alert.alert_id}](/alerts?alert_ids={alert.alert_id})",
         soc_id=alert.alert_id,
         client_id=alert.alert_customer_id,
-        user=current_user,
+        user=iris_current_user,
         classification_id=alert.alert_classification_id,
         state_id=get_case_state_by_name('Open').state_id
     )
@@ -541,7 +541,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
                     new_alert_ioc.ioc_id = None
                     new_alert_ioc.ioc_uuid = ioc_uuid
-                    new_alert_ioc.user_id = current_user.id
+                    new_alert_ioc.user_id = iris_current_user.id
                     new_alert_ioc.case_id = case.case_id
 
                     db.session.add(new_alert_ioc)
@@ -549,7 +549,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
                     alert_ioc = new_alert_ioc
 
-                add_ioc(alert_ioc, current_user.id, case.case_id)
+                add_ioc(alert_ioc, iris_current_user.id, case.case_id)
                 ioc_links.append(alert_ioc.ioc_id)
 
     # Add the assets to the case
@@ -574,7 +574,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
 
                 asset = create_asset(asset=alert_asset,
                                      caseid=case.case_id,
-                                     user_id=current_user.id
+                                     user_id=iris_current_user.id
                                      )
                 asset.asset_uuid = alert_asset.asset_uuid
 
@@ -603,7 +603,7 @@ def create_case_from_alert(alert: Alert, iocs_list: List[str], assets_list: List
         }, session=db.session)
 
         event.case_id = case.case_id
-        event.user_id = current_user.id
+        event.user_id = iris_current_user.id
         event.event_added = datetime.utcnow()
 
         add_obj_history_entry(event, 'created')
@@ -649,7 +649,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
-    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_ids={alert.alert_id}) escalated by {current_user.name}*\n\n{escalation_note}"
+    case.description += f"\n\n*Alert [#{alert.alert_id}](/alerts?alert_ids={alert.alert_id}) escalated by {iris_current_user.name}*\n\n{escalation_note}"
 
     for tag in case_tags.split(',') if case_tags else []:
         tag = Tags(tag_title=tag).save()
@@ -675,7 +675,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
                 if tmp_ioc:
                     alert_ioc = tmp_ioc
 
-                add_ioc(alert_ioc, current_user.id, case.case_id)
+                add_ioc(alert_ioc, iris_current_user.id, case.case_id)
                 ioc_links.append(alert_ioc.ioc_id)
 
     # Add the assets to the case
@@ -698,7 +698,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
                 else:
                     asset = create_asset(asset=alert_asset,
                                          caseid=case.case_id,
-                                         user_id=current_user.id
+                                         user_id=iris_current_user.id
                                          )
 
                     set_ioc_links(ioc_links, asset.asset_id)
@@ -727,7 +727,7 @@ def merge_alert_in_case(alert: Alert, case: Cases, iocs_list: List[str],
         }, session=db.session)
 
         event.case_id = case.case_id
-        event.user_id = current_user.id
+        event.user_id = iris_current_user.id
         event.event_added = datetime.utcnow()
 
         add_obj_history_entry(event, 'created')
@@ -1131,7 +1131,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                 'color': alert_color,
                 'weight': "bold"
             },
-            'font': "12px verdana white" if current_user.in_dark_mode else ''
+            'font': "12px verdana white" if iris_current_user.in_dark_mode else ''
         })
 
         for asset_info in alert_info['assets']:
@@ -1144,7 +1144,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                     'group': 'asset',
                     'shape': 'image',
                     'image': '/static/assets/img/graph/' + asset_info['icon'],
-                    'font': "12px verdana white" if current_user.in_dark_mode else ''
+                    'font': "12px verdana white" if iris_current_user.in_dark_mode else ''
                 })
                 added_assets.add(asset_id)
 
@@ -1163,10 +1163,10 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                     'icon': {
                         'face': 'FontAwesome',
                         'code': '\ue4a8',
-                        'color': 'white' if current_user.in_dark_mode else '',
+                        'color': 'white' if iris_current_user.in_dark_mode else '',
                         'weight': "bold"
                     },
-                    'font': "12px verdana white" if current_user.in_dark_mode else ''
+                    'font': "12px verdana white" if iris_current_user.in_dark_mode else ''
                 })
                 added_iocs.add(ioc_value)
 
@@ -1246,7 +1246,7 @@ def get_related_alerts_details(customer_id, assets, iocs, open_alerts, closed_al
                         'code': '\uf0b1',
                         'color': '#c95029' if cases_data[case_id].get('close_date') else '#4cba4f'
                     },
-                    'font': "12px verdana white" if current_user.in_dark_mode else ''
+                    'font': "12px verdana white" if iris_current_user.in_dark_mode else ''
                 })
                 added_cases.add(case_id)
 
@@ -1309,7 +1309,7 @@ def delete_alert_comment(comment_id: int, alert_id: int) -> Tuple[bool, str]:
     """
     comment = Comments.query.filter(
         Comments.comment_id == comment_id,
-        Comments.comment_user_id == current_user.id,
+        Comments.comment_user_id == iris_current_user.id,
         Comments.comment_alert_id == alert_id
     ).first()
     if not comment:

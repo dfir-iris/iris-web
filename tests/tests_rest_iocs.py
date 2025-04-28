@@ -101,7 +101,7 @@ class TestsRestIocs(TestCase):
             'custom_attributes': {}
         }).json()
         filters = {'ioc_value': 'test_get_iocs_should_filter_on_ioc_value'}
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs',  query_parameters=filters).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/iocs', query_parameters=filters).json()
         identifiers = []
         for ioc in response['data']:
             identifiers.append(ioc['ioc_type_id'])
@@ -168,7 +168,7 @@ class TestsRestIocs(TestCase):
         self._subject.delete(f'/api/v2/cases/{case_identifier}/iocs/{ioc_identifier}')
         response = self._subject.delete(f'/api/v2/cases/{case_identifier}')
         self.assertEqual(204, response.status_code)
-        
+
     def test_update_ioc_should_return_200(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'ioc_type_id': 1, 'ioc_tlp_id': 2, 'ioc_value': '8.8.8.8', 'ioc_description': 'rewrw', 'ioc_tags': ''}

@@ -18,11 +18,10 @@
 import random
 import string
 
-from flask_login import current_user
-
 from app import app
 from app import bc
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_group
 from app.datamgmt.manage.manage_users_db import add_user_to_organisation
@@ -44,7 +43,7 @@ def protect_demo_mode_user(user):
     users_p = [f'user_std_{i}' for i in range(1, int(app.config.get('DEMO_USERS_COUNT', 10)))]
     users_p += [f'adm_{i}' for i in range(1, int(app.config.get('DEMO_ADM_COUNT', 4)))]
 
-    if current_user.id != 1 and user.id == 1:
+    if iris_current_user.id != 1 and user.id == 1:
         return True
 
     if user.user in users_p:
@@ -57,7 +56,7 @@ def protect_demo_mode_group(group):
     if app.config.get('DEMO_MODE_ENABLED') != 'True':
         return False
 
-    if current_user.id != 1 and group.group_id in [1, 2]:
+    if iris_current_user.id != 1 and group.group_id in [1, 2]:
         return True
 
     return False

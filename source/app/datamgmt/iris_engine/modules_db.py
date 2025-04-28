@@ -17,9 +17,9 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import base64
 import datetime
-from flask_login import current_user
 
 from app import db, app
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.models import IrisHook
 from app.models.models import IrisModule
 from app.models.models import IrisModuleHook
@@ -51,7 +51,7 @@ def iris_module_add(module_name, module_human_name, module_description,
     im.has_pipeline = has_pipeline
     im.pipeline_args = pipeline_args
     im.module_config = module_config
-    im.added_by_id = current_user.id if current_user else User.query.first().id
+    im.added_by_id = iris_current_user.id if iris_current_user else User.query.first().id
     im.is_active = True
     im.module_type = module_type
 

@@ -17,26 +17,26 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import request
-from flask_login import current_user
 from flask_socketio import emit
 from flask_socketio import join_room
 
 from app import socket_io
 from app.blueprints.access_controls import ac_socket_requires
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.authorization import CaseAccessLevel
 
 
 @ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onchange(data):
 
-    data['last_change'] = current_user.user
+    data['last_change'] = iris_current_user.user
     emit('change', data, to=data['channel'], skip_sid=request.sid)
 
 
 @ac_socket_requires(CaseAccessLevel.full_access)
 def socket_summary_onsave(data):
 
-    data['last_saved'] = current_user.user
+    data['last_saved'] = iris_current_user.user
     emit('save', data, to=data['channel'], skip_sid=request.sid)
 
 
@@ -51,7 +51,7 @@ def get_message(data):
 
     room = data['channel']
     join_room(room=room)
-    emit('join', {'message': f"{current_user.user} just joined"}, room=room)
+    emit('join', {'message': f"{iris_current_user.user} just joined"}, room=room)
 
 
 @ac_socket_requires(CaseAccessLevel.full_access)

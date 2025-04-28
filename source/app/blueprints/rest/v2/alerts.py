@@ -19,7 +19,6 @@
 from flask import Blueprint
 from flask import request
 from flask import Response
-from flask_login import current_user
 
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.rest.endpoints import response_api_success
@@ -27,6 +26,7 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema
@@ -114,7 +114,7 @@ def alerts_list_route() -> Response:
         assets=alert_assets,
         iocs=alert_iocs,
         resolution_status=request.args.get('alert_resolution_id', type=int),
-        current_user_id=current_user.id
+        current_user_id=iris_current_user.id
     )
 
     if filtered_alerts is None:

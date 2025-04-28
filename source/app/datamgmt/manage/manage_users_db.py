@@ -19,9 +19,10 @@
 from typing import List
 
 from functools import reduce
-from flask_login import current_user, AnonymousUserMixin
+from flask_login import AnonymousUserMixin
 from sqlalchemy import and_
 
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.logger import logger
 from app import bc
 from app import db
@@ -122,7 +123,7 @@ def update_user_groups(user_id, groups):
         db.session.add(user_group)
 
     for group_id in groups_to_remove:
-        if (not isinstance(current_user, AnonymousUserMixin)) and current_user.id == user_id and ac_ldp_group_removal(user_id=user_id, group_id=group_id):
+        if (not isinstance(iris_current_user, AnonymousUserMixin)) and iris_current_user.id == user_id and ac_ldp_group_removal(user_id=user_id, group_id=group_id):
             continue
 
         UserGroup.query.filter(

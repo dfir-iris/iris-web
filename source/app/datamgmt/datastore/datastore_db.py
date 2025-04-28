@@ -21,12 +21,12 @@
 import datetime
 from pathlib import Path
 
-from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
 
 from app import app
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.models import CaseReceivedFile
 from app.models.models import DataStoreFile
 from app.models.models import DataStorePath
@@ -368,7 +368,7 @@ def datastore_add_file_as_ioc(dsf, caseid):
         ioc.ioc_type_id = ioc_type_id.type_id
         ioc.ioc_tlp_id = ioc_tlp_id.tlp_id
         ioc.ioc_tags = "datastore"
-        ioc.user_id = current_user.id
+        ioc.user_id = iris_current_user.id
 
         db.session.add(ioc)
         db.session.commit()
@@ -387,7 +387,7 @@ def datastore_add_file_as_evidence(dsf, caseid):
         crf.date_added = datetime.datetime.now()
         crf.filename = dsf.file_original_name
         crf.file_size = dsf.file_size
-        crf.user_id = current_user.id
+        crf.user_id = iris_current_user.id
 
         db.session.add(crf)
         db.session.commit()

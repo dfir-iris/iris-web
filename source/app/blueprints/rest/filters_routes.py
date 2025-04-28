@@ -17,10 +17,10 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from flask import Blueprint, request
-from flask_login import current_user
 from werkzeug import Response
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.filters.filters_db import get_filter_by_id
 from app.datamgmt.filters.filters_db import list_filters_by_type
 from app.iris_engine.utils.tracker import track_activity
@@ -49,7 +49,7 @@ def filters_add_route() -> Response:
     try:
         # Load the JSON data from the request
         data = request.get_json()
-        data['created_by'] = current_user.id
+        data['created_by'] = iris_current_user.id
 
         new_saved_filter = saved_filter_schema.load(data)
 

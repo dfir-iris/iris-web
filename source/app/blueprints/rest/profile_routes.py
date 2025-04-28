@@ -21,9 +21,9 @@ import secrets
 from flask import Blueprint
 from flask import request
 from flask import session
-from flask_login import current_user
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_user_primary_org
 from app.datamgmt.manage.manage_users_db import update_user
@@ -46,7 +46,7 @@ profile_rest_blueprint = Blueprint('profile_rest', __name__)
 @ac_api_requires()
 def user_renew_api():
 
-    user = get_user(current_user.id)
+    user = get_user(iris_current_user.id)
     user.api_key = secrets.token_urlsafe(nbytes=64)
 
     db.session.commit()
@@ -80,16 +80,17 @@ def user_has_permission():
 @profile_rest_blueprint.route('/user/update', methods=['POST'])
 @ac_api_requires()
 def update_user_view():
+
     try:
-        user = get_user(current_user.id)
+        user = get_user(iris_current_user.id)
         if not user:
             return response_error("Invalid user ID for this case")
 
         # validate before saving
         user_schema = UserSchema()
         jsdata = request.get_json()
-        jsdata['user_id'] = current_user.id
-        puo = get_user_primary_org(current_user.id)
+        jsdata['user_id'] = iris_current_user.id
+        puo = get_user_primary_org(iris_current_user.id)
 
         jsdata['user_primary_organisation_id'] = puo.org_id
 
@@ -111,10 +112,11 @@ def update_user_view():
 @profile_rest_blueprint.route('/user/theme/set/<string:theme>', methods=['GET'])
 @ac_api_requires()
 def profile_set_theme(theme):
+
     if theme not in ['dark', 'light']:
         return response_error('Invalid data')
 
-    user = get_user(current_user.id)
+    user = get_user(iris_current_user.id)
     if not user:
         return response_error("Invalid user ID")
 
@@ -127,10 +129,11 @@ def profile_set_theme(theme):
 @profile_rest_blueprint.route('/user/deletion-prompt/set/<string:val>', methods=['GET'])
 @ac_api_requires()
 def profile_set_deletion_prompt(val):
+
     if val not in ['true', 'false']:
         return response_error('Invalid data')
 
-    user = get_user(current_user.id)
+    user = get_user(iris_current_user.id)
     if not user:
         return response_error("Invalid user ID")
 
@@ -143,10 +146,11 @@ def profile_set_deletion_prompt(val):
 @profile_rest_blueprint.route('/user/mini-sidebar/set/<string:val>', methods=['GET'])
 @ac_api_requires()
 def profile_set_minisidebar(val):
+
     if val not in ['true', 'false']:
         return response_error('Invalid data')
 
-    user = get_user(current_user.id)
+    user = get_user(iris_current_user.id)
     if not user:
         return response_error("Invalid user ID")
 
@@ -160,11 +164,11 @@ def profile_set_minisidebar(val):
 @ac_api_requires()
 def profile_refresh_permissions_and_ac():
 
-    user = get_user(current_user.id)
+    user = get_user(iris_current_user.id)
     if not user:
         return response_error("Invalid user ID")
 
-    ac_recompute_effective_ac(current_user.id)
+    ac_recompute_effective_ac(iris_current_user.id)
     session['permissions'] = ac_get_effective_permissions_of_user(user)
 
     return response_success('Access control and permissions refreshed')
@@ -174,7 +178,8 @@ def profile_refresh_permissions_and_ac():
 @ac_api_requires()
 def profile_whoami():
     """Returns the current user's profile"""
-    user = get_user(current_user.id)
+
+    user = get_user(iris_current_user.id)
     if not user:
         return response_error("Invalid user ID")
 

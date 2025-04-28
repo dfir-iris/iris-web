@@ -22,7 +22,6 @@ import marshmallow
 import traceback
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import desc
 
@@ -30,6 +29,7 @@ from app import app
 from app import db
 from app import socket_io
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.cases import cases_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
 from app.datamgmt.case.case_db import case_get_desc_crc
@@ -92,7 +92,7 @@ def desc_fetch(caseid):
         # API call so we propagate the message to everyone
         data = {
             'case_description': case.description,
-            'last_saved': current_user.user
+            'last_saved': iris_current_user.user
         }
         socket_io.emit('save', data, to=f'case-{caseid}')
 
@@ -227,7 +227,7 @@ def user_cac_set_case(caseid):
     if not data:
         return response_error('Invalid request')
 
-    if data.get('user_id') == current_user.id:
+    if data.get('user_id') == iris_current_user.id:
         return response_error('I can\'t let you do that, Dave')
 
     user = get_user(data.get('user_id'))

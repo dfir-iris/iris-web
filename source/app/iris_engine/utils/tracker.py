@@ -18,10 +18,10 @@
 
 from datetime import datetime
 from flask import request
-from flask_login import current_user
 
 import app
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.models import UserActivity
 
 log = app.app.logger
@@ -37,7 +37,7 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
 
     try:
 
-        ua.user_id = current_user.id
+        ua.user_id = iris_current_user.id
 
     except:
         pass
@@ -50,8 +50,8 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
     ua.activity_date = datetime.utcnow()
     ua.activity_desc = message.capitalize()
 
-    if current_user.is_authenticated:
-        log.info(f"{current_user.user} [#{current_user.id}] :: Case {caseid} :: {ua.activity_desc}")
+    if iris_current_user.is_authenticated:
+        log.info(f"{iris_current_user.user} [#{iris_current_user.id}] :: Case {caseid} :: {ua.activity_desc}")
     else:
         log.info(f"Anonymous :: Case {caseid} :: {ua.activity_desc}")
 

@@ -18,12 +18,12 @@
 
 import datetime
 
-from flask_login import current_user
 from sqlalchemy import and_
 from sqlalchemy import func
 from flask_sqlalchemy.pagination import Pagination
 
 from app import db, app
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.filtering import get_filtered_data
 from app.datamgmt.states import update_assets_state
 from app.models.models import AnalysisStatus
@@ -385,7 +385,7 @@ def get_case_asset_comment(asset_id, comment_id):
 def delete_asset_comment(asset_id, comment_id, case_id):
     comment = Comments.query.filter(
         Comments.comment_id == comment_id,
-        Comments.comment_user_id == current_user.id
+        Comments.comment_user_id == iris_current_user.id
     ).first()
     if not comment:
         return False, "You are not allowed to delete this comment"

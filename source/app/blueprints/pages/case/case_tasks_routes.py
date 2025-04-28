@@ -20,9 +20,9 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import url_for
-from flask_login import current_user
 from flask_wtf import FlaskForm
 
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_tasks_db import get_case_tasks_comments_count
 from app.datamgmt.case.case_tasks_db import get_task
@@ -65,7 +65,7 @@ def case_add_task_modal(caseid, url_redir):
     form.task_status_id.choices = [(a.id, a.status_name) for a in get_tasks_status()]
     form.task_assignees_id.choices = []
 
-    return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None,
+    return render_template("modal_add_case_task.html", form=form, task=task, uid=iris_current_user.id, user_name=None,
                            attributes=task.custom_attributes)
 
 

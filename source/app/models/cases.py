@@ -18,7 +18,6 @@
 import uuid
 
 from datetime import datetime
-from flask_login import current_user
 from sqlalchemy import BigInteger
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Boolean
@@ -38,6 +37,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import backref
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.states import update_assets_state
 from app.datamgmt.states import update_evidences_state
 from app.datamgmt.states import update_ioc_state
@@ -102,9 +102,9 @@ class Cases(db.Model):
         self.soc_id = soc_id,
         self.client_id = client_id,
         self.description = description,
-        self.user_id = current_user.id if current_user else user.id
+        self.user_id = iris_current_user.id if iris_current_user else user.id
         self.owner_id = self.user_id
-        self.author = current_user.user if current_user else user.user
+        self.author = iris_current_user.user if iris_current_user else user.user
         self.description = description
         self.open_date = datetime.utcnow()
         self.close_date = None

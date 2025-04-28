@@ -23,11 +23,11 @@ import logging as log
 import marshmallow
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.iocs import iocs_create
 from app.business.iocs import iocs_update
 from app.business.iocs import iocs_delete
@@ -181,7 +181,7 @@ def case_upload_ioc(caseid):
                 log.error(f'Unable to create IOC {ioc.ioc_value} for internal reasons')
                 continue
 
-            add_ioc(ioc, current_user.id, caseid)
+            add_ioc(ioc, iris_current_user.id, caseid)
             ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=caseid)
             ret.append(request_data)
             track_activity(f'added ioc "{ioc.ioc_value}"', caseid=caseid)
@@ -268,7 +268,7 @@ def case_comment_ioc_add(cur_id, caseid):
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = ioc.case_id
-        comment.comment_user_id = current_user.id
+        comment.comment_user_id = iris_current_user.id
         comment.comment_date = datetime.now()
         comment.comment_update_date = datetime.now()
         db.session.add(comment)

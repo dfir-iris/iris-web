@@ -1,9 +1,9 @@
 from flask import session
-from flask_login import current_user
 from sqlalchemy import and_
 
 import app
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.models.cases import Cases
 from app.models.models import Client
@@ -174,7 +174,7 @@ def ac_ldp_group_removal(user_id, group_id):
     """
     Access control lockdown prevention on group removal
     """
-    if current_user.id != user_id:
+    if iris_current_user.id != user_id:
         return False
 
     groups_perms = UserGroup.query.with_entities(
@@ -206,7 +206,7 @@ def ac_ldp_group_update(user_id):
     """
     Access control lockdown prevention on group update
     """
-    if current_user.id != user_id:
+    if iris_current_user.id != user_id:
         return False
 
     groups_perms = UserGroup.query.with_entities(
@@ -318,7 +318,7 @@ def ac_fast_check_user_has_case_access(user_id, cid, access_level: list[CaseAcce
 
 
 def ac_fast_check_current_user_has_case_access(cid, access_level):
-    return ac_fast_check_user_has_case_access(current_user.id, cid, access_level)
+    return ac_fast_check_user_has_case_access(iris_current_user.id, cid, access_level)
 
 
 def ac_recompute_effective_ac_from_users_list(users_list):
@@ -411,8 +411,8 @@ def ac_set_new_case_access(org_members, case_id, customer_id = None):
     """
 
     users = ac_apply_autofollow_groups_access(case_id)
-    if current_user.id in users:
-        del users[current_user.id]
+    if iris_current_user.id in users:
+        del users[iris_current_user.id]
 
     users_full = User.query.with_entities(User.id).all()
     users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
@@ -423,17 +423,17 @@ def ac_set_new_case_access(org_members, case_id, customer_id = None):
     # Add specific right for the user creating the case
     UserCaseAccess.query.filter(
         UserCaseAccess.case_id == case_id,
-        UserCaseAccess.user_id == current_user.id
+        UserCaseAccess.user_id == iris_current_user.id
     ).delete()
     db.session.commit()
     uca = UserCaseAccess()
     uca.case_id = case_id
-    uca.user_id = current_user.id
+    uca.user_id = iris_current_user.id
     uca.access_level = CaseAccessLevel.full_access.value
     db.session.add(uca)
     db.session.commit()
 
-    ac_add_user_effective_access([current_user.id], case_id, CaseAccessLevel.full_access.value)
+    ac_add_user_effective_access([iris_current_user.id], case_id, CaseAccessLevel.full_access.value)
 
     # Add customer permissions for all users belonging to the customer
     if customer_id:
@@ -565,7 +565,7 @@ def ac_set_case_access_for_users(users, case_id, access_level):
 
     for user in users:
         user_id = user.get('id')
-        if user_id == current_user.id:
+        if user_id == iris_current_user.id:
             logs = "It's done, but I excluded you from the list of users to update, Dave"
             ac_set_case_access_for_user(user.get('id'), case_id, access_level=CaseAccessLevel.full_access.value)
             continue

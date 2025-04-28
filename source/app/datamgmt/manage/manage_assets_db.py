@@ -1,8 +1,8 @@
-from flask_login import current_user
 from sqlalchemy import and_
 from functools import reduce
 
 import app
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.cases import Cases
@@ -49,7 +49,7 @@ def get_filtered_assets(case_id=None,
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
 
-    conditions.append(CaseAssets.case_id.in_(user_list_cases_view(current_user.id)))
+    conditions.append(CaseAssets.case_id.in_(user_list_cases_view(iris_current_user.id)))
 
     data = CaseAssets.query.filter(*conditions)
 

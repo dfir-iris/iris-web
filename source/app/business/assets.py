@@ -16,11 +16,11 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 from flask_sqlalchemy.pagination import Pagination
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.errors import BusinessProcessingError
 from app.business.errors import ObjectNotFoundError
 from app.business.cases import cases_exists
@@ -55,7 +55,7 @@ def assets_create(case_identifier, request_json):
 
     if case_assets_db_exists(asset):
         raise BusinessProcessingError('Asset with same value and type already exists')
-    asset = create_asset(asset=asset, caseid=case_identifier, user_id=current_user.id)
+    asset = create_asset(asset=asset, caseid=case_identifier, user_id=iris_current_user.id)
     # TODO should the custom attributes be set?
     if request_data.get('ioc_links'):
         errors, _ = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)

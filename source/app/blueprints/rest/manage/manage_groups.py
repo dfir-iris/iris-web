@@ -21,10 +21,10 @@ import traceback
 import marshmallow
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 
 from app import db
 from app import app
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.manage.manage_groups_db import add_all_cases_access_to_group
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_groups_db import delete_group
@@ -117,7 +117,7 @@ def manage_groups_update(cur_id):
         data['group_id'] = cur_id
         ags_c = ags.load(data, instance=group, partial=True)
 
-        if not ac_flag_match_mask(data['group_permissions'], Permissions.server_administrator.value) and ac_ldp_group_update(current_user.id):
+        if not ac_flag_match_mask(data['group_permissions'], Permissions.server_administrator.value) and ac_ldp_group_update(iris_current_user.id):
             db.session.rollback()
             return response_error(msg="That might not be a good idea Dave", data="Update the group permissions will lock you out")
 
@@ -140,7 +140,7 @@ def manage_groups_delete(cur_id):
     if protect_demo_mode_group(group):
         return ac_api_return_access_denied()
 
-    if ac_ldp_group_removal(current_user.id, group_id=group.group_id):
+    if ac_ldp_group_removal(iris_current_user.id, group_id=group.group_id):
         return response_error("I can't let you do that Dave", data="Removing this group will lock you out")
 
     delete_group(group)

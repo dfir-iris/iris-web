@@ -21,11 +21,11 @@ from datetime import datetime
 import marshmallow
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.errors import BusinessProcessingError
 from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_create
@@ -189,7 +189,7 @@ def case_comment_task_add(cur_id: int, caseid: int):
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
-        comment.comment_user_id = current_user.id
+        comment.comment_user_id = iris_current_user.id
         comment.comment_date = datetime.now()
         comment.comment_update_date = datetime.now()
         db.session.add(comment)

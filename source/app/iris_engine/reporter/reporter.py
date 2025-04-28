@@ -21,9 +21,10 @@
 import logging as log
 import os
 from datetime import datetime
+
+from app.iris_engine.access_control.iris_user import iris_current_user
 from docx_generator.docx_generator import DocxGenerator
 from docx_generator.exceptions import rendering_error
-from flask_login import current_user
 from sqlalchemy import desc
 
 from app import app
@@ -92,7 +93,7 @@ class IrisReportMaker(object):
             'auto_activities': auto_activities,
             'manual_activities': manual_activities,
             'date': datetime.utcnow(),
-            'gen_user': current_user.name,
+            'gen_user': iris_current_user.name,
             'case': {'name': case_info_in['case'].get('name'),
                      'open_date': case_info_in['case'].get('open_date'),
                      'for_customer': case_info_in['case'].get('client').get('customer_name'),
@@ -112,7 +113,7 @@ class IrisReportMaker(object):
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisReportMaker.get_docid()
-        case_info['user'] = current_user.name
+        case_info['user'] = iris_current_user.name
 
         # Set date
         case_info['date'] = datetime.utcnow().strftime("%Y-%m-%d")
@@ -335,7 +336,7 @@ class IrisMakeDocReport(IrisReportMaker):
             'auto_activities': auto_activities,
             'manual_activities': manual_activities,
             'date': datetime.utcnow(),
-            'gen_user': current_user.name,
+            'gen_user': iris_current_user.name,
             'case': {'name': case_info_in['case'].get('name'),
                      'open_date': case_info_in['case'].get('open_date'),
                      'for_customer': case_info_in['case'].get('for_customer'),
@@ -355,7 +356,7 @@ class IrisMakeDocReport(IrisReportMaker):
 
         # Get customer, user and case title
         case_info['doc_id'] = IrisMakeDocReport.get_docid()
-        case_info['user'] = current_user.name
+        case_info['user'] = iris_current_user.name
 
         # Set date
         case_info['date'] = datetime.utcnow().strftime("%Y-%m-%d")

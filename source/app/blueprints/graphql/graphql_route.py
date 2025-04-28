@@ -21,7 +21,6 @@ from functools import wraps
 from flask import request
 from flask_wtf import FlaskForm
 from flask import Blueprint
-from flask_login import current_user
 
 from graphql_server.flask import GraphQLView
 from graphene import ObjectType
@@ -51,6 +50,7 @@ from app.blueprints.graphql.cases import CaseConnection
 
 from app.business.cases import cases_get_by_identifier
 from app.business.iocs import iocs_get
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_case_access
 import warnings
 
@@ -70,7 +70,7 @@ class Query(ObjectType):
     @staticmethod
     def resolve_cases(root, info, classification_id=None, client_id=None, state_id=None, owner_id=None, open_date=None, name=None, soc_id=None,
                       severity_id=None, tags=None, open_since=None, **kwargs):
-        return build_filter_case_query(current_user.id, start_open_date=open_date, end_open_date=None, case_customer_id=client_id, case_ids=None,
+        return build_filter_case_query(iris_current_user.id, start_open_date=open_date, end_open_date=None, case_customer_id=client_id, case_ids=None,
                                        case_name=name, case_description=None, case_classification_id=classification_id, case_owner_id=owner_id,
                                        case_opening_user_id=None, case_severity_id=severity_id, case_state_id=state_id, case_soc_id=soc_id,
                                        case_tags=tags, case_open_since=open_since)

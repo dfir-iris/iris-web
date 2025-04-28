@@ -29,7 +29,6 @@ from flask import render_template
 from flask import request
 from flask import session
 from flask import url_for
-from flask_login import current_user
 from oic import rndstr
 from oic.oic.message import AuthorizationResponse
 
@@ -46,6 +45,7 @@ from app.business.auth import wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user, update_user_groups
 from app.datamgmt.manage.manage_users_db import get_user
 from app.forms import LoginForm, MFASetupForm
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.iris_engine.utils.tracker import track_activity
 from app.datamgmt.manage.manage_groups_db import get_groups_list
 
@@ -113,7 +113,7 @@ def _authenticate_password(form, username, password):
 if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap", "oidc"]:
     @login_blueprint.route('/login', methods=['GET', 'POST'])
     def login():
-        if current_user.is_authenticated:
+        if iris_current_user.is_authenticated:
             return redirect(url_for('index.index'))
 
         if is_authentication_oidc() and app.config.get('AUTHENTICATION_LOCAL_FALLBACK') is False:
@@ -138,7 +138,7 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap", "oidc"]:
 if is_authentication_oidc():
     @login_blueprint.route('/oidc-login')
     def oidc_login():
-        if current_user.is_authenticated:
+        if iris_current_user.is_authenticated:
             return redirect(url_for('index.index'))
 
         session["oidc_state"] = rndstr()

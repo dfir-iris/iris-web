@@ -21,7 +21,6 @@ from datetime import datetime
 import marshmallow
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 
 from app import db
 from app.blueprints.rest.case_comments import case_comment_update
@@ -31,6 +30,7 @@ from app.business.assets import assets_create
 from app.business.assets import assets_get_detailed
 from app.business.assets import assets_get
 from app.business.assets import assets_update
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.errors import BusinessProcessingError
 from app.datamgmt.case.case_assets_db import get_raw_assets
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
@@ -86,7 +86,7 @@ def case_filter_assets(caseid):
         else:
             cache_ioc_link[ioc.asset_id].append(ioc._asdict())
 
-    cases_access = get_user_cases_fast(current_user.id)
+    cases_access = get_user_cases_fast(iris_current_user.id)
 
     for a in assets:
         a['ioc_links'] = cache_ioc_link.get(a['asset_id'])
@@ -129,7 +129,7 @@ def case_list_assets(caseid):
         else:
             cache_ioc_link[ioc.asset_id].append(ioc._asdict())
 
-    cases_access = get_user_cases_fast(current_user.id)
+    cases_access = get_user_cases_fast(iris_current_user.id)
 
     for asset in assets:
         asset = asset._asdict()
@@ -246,7 +246,7 @@ def case_upload_ioc(caseid):
             asset_sc.custom_attributes = get_default_custom_attributes('asset')
             asset = create_asset(asset=asset_sc,
                                  caseid=caseid,
-                                 user_id=current_user.id
+                                 user_id=iris_current_user.id
                                  )
 
             asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
@@ -345,7 +345,7 @@ def case_comment_asset_add(cur_id, caseid):
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
-        comment.comment_user_id = current_user.id
+        comment.comment_user_id = iris_current_user.id
         comment.comment_date = datetime.now()
         comment.comment_update_date = datetime.now()
         db.session.add(comment)

@@ -17,10 +17,10 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from datetime import datetime
-from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.models.models import ObjectState
 
 
@@ -37,7 +37,7 @@ def _update_object_state(object_name, caseid, userid=None) -> ObjectState:
         ObjectState object
     """
     if not userid:
-        userid = current_user.id
+        userid = iris_current_user.id
 
     os = ObjectState.query.filter(and_(
         ObjectState.object_name == object_name,

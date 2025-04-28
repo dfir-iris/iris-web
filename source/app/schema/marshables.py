@@ -25,7 +25,6 @@ import re
 import shutil
 import string
 import tempfile
-from flask_login import current_user
 from flask import current_app
 from marshmallow import EXCLUDE
 from marshmallow import fields
@@ -47,6 +46,7 @@ from werkzeug.datastructures import FileStorage
 
 from app import db
 from app import ma
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.logger import logger
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
@@ -1354,7 +1354,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
                 dsf.file_is_evidence = False
                 dsf.file_case_id = cid
                 dsf.file_date_added = datetime.datetime.now()
-                dsf.added_by_user_id = current_user.id
+                dsf.added_by_user_id = iris_current_user.id
                 dsf.file_local_name = 'tmp_xc'
                 dsf.file_parent_id = dsp.path_id
                 dsf.file_sha256 = file_hash

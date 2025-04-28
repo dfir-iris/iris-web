@@ -20,11 +20,11 @@ import datetime
 import traceback
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 from marshmallow import ValidationError
 
 from app import ac_current_user_has_permission
 from app.blueprints.access_controls import ac_api_requires
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.client.client_db import create_client
 from app.datamgmt.client.client_db import create_contact
 from app.datamgmt.client.client_db import delete_client
@@ -54,7 +54,7 @@ manage_customers_rest_blueprint = Blueprint('manage_customers_rest', __name__)
 @ac_api_requires(Permissions.customers_read)
 def list_customers():
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
-    client_list = get_client_list(current_user_id=current_user.id,
+    client_list = get_client_list(current_user_id=iris_current_user.id,
                                   is_server_administrator=user_is_server_administrator)
 
     return response_success("", data=client_list)
@@ -255,7 +255,7 @@ def add_customers():
     track_activity(f"Added customer {client.name}", ctx_less=True)
 
     # Associate the created customer with the current user
-    add_user_to_customer(current_user.id, client.client_id)
+    add_user_to_customer(iris_current_user.id, client.client_id)
 
     # Return the customer
     client_schema = CustomerSchema()

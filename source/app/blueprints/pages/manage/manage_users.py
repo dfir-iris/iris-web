@@ -20,8 +20,8 @@ from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import url_for
-from flask_login import current_user
 
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_groups_db import get_groups_list
@@ -103,7 +103,7 @@ def manage_user_customers_modal(cur_id, caseid, url_redir):
         return response_error("Invalid user ID")
 
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
-    groups = get_client_list(current_user_id=current_user.id,
+    groups = get_client_list(current_user_id=iris_current_user.id,
                              is_server_administrator=user_is_server_administrator)
 
     return render_template("modal_manage_user_customers.html", groups=groups, user=user)
@@ -120,7 +120,7 @@ def manage_user_cac_modal(cur_id, caseid, url_redir):
     if not user:
         return response_error("Invalid user ID")
 
-    cases_list = list_cases_dict(current_user.id)
+    cases_list = list_cases_dict(iris_current_user.id)
 
     user_cases_access = [case.get('case_id') for case in user.get('user_cases_access')]
     outer_cases_list = []

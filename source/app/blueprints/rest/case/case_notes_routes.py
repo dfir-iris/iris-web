@@ -20,7 +20,6 @@ import marshmallow
 from datetime import datetime
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 from sqlalchemy import or_
 from sqlalchemy import and_
 
@@ -28,6 +27,7 @@ from app import db
 from app import app
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.business.errors import BusinessProcessingError
 from app.business.notes import notes_create
 from app.business.notes import notes_list_revisions
@@ -398,7 +398,7 @@ def case_comment_note_add(cur_id, caseid):
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
-        comment.comment_user_id = current_user.id
+        comment.comment_user_id = iris_current_user.id
         comment.comment_date = datetime.now()
         comment.comment_update_date = datetime.now()
         db.session.add(comment)

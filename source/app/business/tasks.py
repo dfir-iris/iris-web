@@ -19,9 +19,9 @@
 from datetime import datetime
 
 from flask_sqlalchemy.pagination import Pagination
-from flask_login import current_user
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.case.case_tasks_db import delete_task
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
@@ -68,7 +68,7 @@ def tasks_create(case_identifier: int, request_json: dict) -> (str, CaseTasks):
 
     ctask = add_task(task=task,
                      assignee_id_list=task_assignee_list,
-                     user_id=current_user.id,
+                     user_id=iris_current_user.id,
                      caseid=case_identifier
                      )
 
@@ -104,7 +104,7 @@ def tasks_update(task: CaseTasks, request_json):
     request_data['id'] = task.id
     task = _load(request_data, instance=task)
 
-    task.task_userid_update = current_user.id
+    task.task_userid_update = iris_current_user.id
     task.task_last_update = datetime.utcnow()
 
     update_task_assignees(task.id, task_assignee_list, case_identifier)

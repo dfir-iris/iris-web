@@ -25,11 +25,11 @@ from flask import flash
 from flask import redirect
 from flask import request
 from flask import send_file
-from flask_login import current_user
 from werkzeug.utils import secure_filename
 
 from app import app
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.models.authorization import User
@@ -96,7 +96,7 @@ def add_template():
     report_template.language_id = request.form.get('report_language', '', type=int)
     report_template.report_type_id = request.form.get('report_type', '', type=int)
 
-    report_template.created_by_user_id = current_user.id
+    report_template.created_by_user_id = iris_current_user.id
     report_template.date_created = datetime.utcnow()
 
     template_file = request.files['file']

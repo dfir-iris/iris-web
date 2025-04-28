@@ -26,11 +26,11 @@ import weakref
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives import hmac
-from flask_login import current_user
 from sqlalchemy.orm.attributes import flag_modified
 from flask import current_app
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 
 
 class FileRemover(object):
@@ -53,8 +53,8 @@ def add_obj_history_entry(obj, action, commit=False):
 
             obj.modification_history.update({
                 datetime.datetime.now().timestamp(): {
-                    'user': current_user.user,
-                    'user_id': current_user.id,
+                    'user': iris_current_user.user,
+                    'user_id': iris_current_user.id,
                     'action': action
                 }
             })
@@ -63,8 +63,8 @@ def add_obj_history_entry(obj, action, commit=False):
 
             obj.modification_history = {
                 datetime.datetime.now().timestamp(): {
-                    'user': current_user.user,
-                    'user_id': current_user.id,
+                    'user': iris_current_user.user,
+                    'user_id': iris_current_user.id,
                     'action': action
                 }
             }

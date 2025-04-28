@@ -18,10 +18,10 @@
 
 import datetime
 import traceback
-from flask_login import current_user
 from marshmallow.exceptions import ValidationError
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.logger import logger
 from app.util import add_obj_history_entry
 from app.schema.marshables import CaseSchema
@@ -78,7 +78,7 @@ def cases_create(request_data):
 
     case = _load(request_data)
 
-    case.owner_id = current_user.id
+    case.owner_id = iris_current_user.id
     case.severity_id = 4
 
     case_template_id = request_data.pop('case_template_id', None)
@@ -145,7 +145,7 @@ def cases_update(case_identifier, request_data):
 
         # If user tries to update the customer, check if the user has access to the new customer
         if request_data.get('case_customer') and request_data.get('case_customer') != case_i.client_id:
-            if not user_has_client_access(current_user.id, request_data.get('case_customer')):
+            if not user_has_client_access(iris_current_user.id, request_data.get('case_customer')):
                 raise BusinessProcessingError('Invalid customer ID. Permission denied.')
 
         if 'case_name' in request_data:

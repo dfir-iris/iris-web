@@ -24,13 +24,13 @@ from datetime import datetime
 from marshmallow.exceptions import ValidationError
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
 from app import app
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.case.case_assets_db import get_asset_by_name
 from app.datamgmt.case.case_events_db import add_comment_to_event
 from app.datamgmt.case.case_events_db import get_category_by_name
@@ -136,7 +136,7 @@ def case_comment_add(cur_id, caseid):
 
         comment = comment_schema.load(request.get_json())
         comment.comment_case_id = caseid
-        comment.comment_user_id = current_user.id
+        comment.comment_user_id = iris_current_user.id
         comment.comment_date = datetime.now()
         comment.comment_update_date = datetime.now()
         db.session.add(comment)
@@ -773,7 +773,7 @@ def case_duplicate_event(cur_id, caseid):
 
         # Override event_added and user_id
         event.event_added = datetime.utcnow()
-        event.user_id = current_user.id
+        event.user_id = iris_current_user.id
         if event.event_title.startswith("[DUPLICATED] - ") is False:
             event.event_title = f"[DUPLICATED] - {event.event_title}"
 
@@ -947,7 +947,6 @@ def case_events_upload_csv(caseid):
     except Exception as e:
         return response_error(msg="Data error", data={"Exception": f"Unhandled error {e}.\nrow number: {line}"})
 
-    # ========================== begin saving data ============================
     session = db.session.begin_nested()
     line = 0
     try:
@@ -962,7 +961,7 @@ def case_events_upload_csv(caseid):
                                                                                 request_data.get(u'event_tz'))
             event.case_id = caseid
             event.event_added = datetime.utcnow()
-            event.user_id = current_user.id
+            event.user_id = iris_current_user.id
 
             add_obj_history_entry(event, 'created')
 

@@ -22,13 +22,13 @@ import urllib.parse
 
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 from werkzeug import Response
 from werkzeug.utils import secure_filename
 
 from app import db
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
@@ -111,7 +111,7 @@ def manage_case_filter() -> Response:
         draw = 1
 
     filtered_cases = get_filtered_cases(
-        current_user.id,
+        iris_current_user.id,
         pagination_parameters,
         case_ids=case_ids_str,
         case_customer_id=case_customer_id,
@@ -254,7 +254,7 @@ def api_add_case():
 @manage_cases_rest_blueprint.route('/manage/cases/list', methods=['GET'])
 @ac_api_requires(Permissions.standard_user)
 def api_list_case():
-    data = list_cases_dict(current_user.id)
+    data = list_cases_dict(iris_current_user.id)
 
     return response_success("", data=data)
 

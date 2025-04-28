@@ -19,9 +19,9 @@
 import os
 import urllib.parse
 from celery.signals import task_prerun
-from flask_login import current_user
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.module_handler.module_handler import pipeline_dispatcher
 from app.iris_engine.utils.common import build_upload_path
@@ -59,8 +59,8 @@ def task_case_update(module, pipeline, pipeline_args, caseid):
                 task_args = {
                     "pipeline_args": pipeline_args,
                     "db_name": '',
-                    "user": current_user.name,
-                    "user_id": current_user.id,
+                    "user": iris_current_user.name,
+                    "user_id": iris_current_user.id,
                     "case_name": case.name,
                     "case_id": case.case_id,
                     "path": fpath,
@@ -73,7 +73,7 @@ def task_case_update(module, pipeline, pipeline_args, caseid):
                                           hook_name=IrisPipelineTypes.pipeline_type_update,
                                           pipeline_type=IrisPipelineTypes.pipeline_type_update,
                                           pipeline_data=task_args,
-                                          init_user=current_user.name,
+                                          init_user=iris_current_user.name,
                                           caseid=caseid)
 
                 return IStatus.I2Success('Pipeline task queued')

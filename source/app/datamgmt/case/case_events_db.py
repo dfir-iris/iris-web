@@ -15,10 +15,10 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from flask_login import current_user
 from sqlalchemy import and_
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.datamgmt.states import update_timeline_state
 from app.models.models import AssetsType
 from app.models.models import CaseAssets
@@ -158,7 +158,7 @@ def get_case_event_comment(event_id, comment_id):
 def delete_event_comment(event_id, comment_id):
     comment = Comments.query.filter(
         Comments.comment_id == comment_id,
-        Comments.comment_user_id == current_user.id
+        Comments.comment_user_id == iris_current_user.id
     ).first()
     if not comment:
         return False, "You are not allowed to delete this comment"

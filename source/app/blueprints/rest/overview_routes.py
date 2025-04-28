@@ -18,11 +18,11 @@
 
 from flask import Blueprint
 from flask import request
-from flask_login import current_user
 
 from app.datamgmt.overview.overview_db import get_overview_db
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_success
+from app.iris_engine.access_control.iris_user import iris_current_user
 
 overview_rest_blueprint = Blueprint('overview_rest', __name__)
 
@@ -32,6 +32,6 @@ overview_rest_blueprint = Blueprint('overview_rest', __name__)
 def get_overview_filter():
     """Return an overview of the cases"""
     show_full = request.args.get('show_closed', 'false') == 'true'
-    overview = get_overview_db(current_user.id, show_full)
+    overview = get_overview_db(iris_current_user.id, show_full)
 
     return response_success('', data=overview)

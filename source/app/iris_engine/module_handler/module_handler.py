@@ -21,13 +21,13 @@ import traceback
 
 import base64
 import importlib
-from flask_login import current_user
 from packaging import version
 from pickle import dumps
 from pickle import loads
 from sqlalchemy import and_
 
 from app import app
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.logger import logger
 from app import celery
 from app import db
@@ -542,7 +542,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int = None, hook_ui_nam
             ser_data_auth = hmac_sign(ser_data) + b" " + ser_data
             task_hook_wrapper.delay(module_name=module.module_name, hook_name=hook_name,
                                     hook_ui_name=module.manual_hook_ui_name, data=ser_data_auth.decode("utf8"),
-                                    init_user=current_user.name, caseid=caseid)
+                                    init_user=iris_current_user.name, caseid=caseid)
 
         else:
             # Direct call. Should be fast

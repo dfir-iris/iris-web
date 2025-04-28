@@ -149,7 +149,7 @@ class TestsRestPermissions(TestCase):
         case_identifier = self._subject.create_dummy_case()
         user = self._subject.create_dummy_user()
         body = {'task_assignees_id': [1], 'task_description': '', 'task_status_id': 1, 'task_tags': '', 'task_title': 'dummy title', 'custom_attributes': {}}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks',  body).json()
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         task_identifier = response['id']
         body = {
             'cases_list': [_INITIAL_DEMO_CASE_IDENTIFIER],

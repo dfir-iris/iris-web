@@ -17,10 +17,10 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from datetime import datetime
-from flask_login import current_user
 from marshmallow import ValidationError
 
 from app import db
+from app.iris_engine.access_control.iris_user import iris_current_user
 from app.logger import logger
 from app.business.errors import BusinessProcessingError
 from app.business.errors import UnhandledBusinessError
@@ -60,7 +60,7 @@ def notes_create(request_json, case_identifier):
 
         note.note_creationdate = datetime.utcnow()
         note.note_lastupdate = datetime.utcnow()
-        note.note_user = current_user.id
+        note.note_user = iris_current_user.id
         note.note_case_id = case_identifier
 
         db.session.add(note)
@@ -125,7 +125,7 @@ def notes_update(note: Notes, request_json: dict):
                 revision_number=revision_number,
                 note_title=note.note_title,
                 note_content=note.note_content,
-                note_user=current_user.id,
+                note_user=iris_current_user.id,
                 revision_timestamp=datetime.utcnow()
             )
             db.session.add(note_version)
@@ -134,7 +134,7 @@ def notes_update(note: Notes, request_json: dict):
         request_data['note_id'] = note.note_id
         addnote_schema.load(request_data, partial=True, instance=note)
         note.update_date = datetime.utcnow()
-        note.user_id = current_user.id
+        note.user_id = iris_current_user.id
 
         add_obj_history_entry(note, 'updated note', commit=True)
         note = call_modules_hook('on_postload_note_update', data=note, caseid=note.note_case_id)
