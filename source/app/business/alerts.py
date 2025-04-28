@@ -27,10 +27,12 @@ from app.models.alerts import Alert
 from app.datamgmt.alerts.alerts_db import cache_similar_alert
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.datamgmt.alerts.alerts_db import get_alert_by_id
+from app.datamgmt.alerts.alerts_db import get_related_alerts
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.util import add_obj_history_entry
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 from app.schema.marshables import AlertSchema
 from app.schema.marshables import CaseAssetsSchema
 from app.schema.marshables import IocSchema
@@ -84,7 +86,16 @@ def alerts_create(request_data) -> Alert:
 
 
 def alerts_get(identifier) -> Alert:
-
+    
+    alert_schema = AlertSchema()
     alert = get_alert_by_id(identifier)
+    if not alert:
+        raise ObjectNotFoundError
 
-    return alert
+    if not user_has_client_access(iris_current_user.id, alert.alert_customer_id):
+        raise BusinessProcessingError('Alert not found') 
+    alert_dump = alert_schema.dump(alert)
+
+    similar_alerts = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
+    alert_dump['related_alerts'] = similar_alerts
+    return alert_dump

@@ -33,6 +33,7 @@ from app.schema.marshables import AlertSchema
 from app.business.alerts import alerts_create
 from app.business.alerts import alerts_get
 from app.business.errors import BusinessProcessingError
+from app.business.errors import ObjectNotFoundError
 
 
 alerts_blueprint = Blueprint('alerts_rest_v2', __name__, url_prefix='/alerts')
@@ -158,9 +159,10 @@ def get_alert(identifier):
 
     try:
         alert = alerts_get(identifier)
-        if not alert:
-            return response_api_not_found()
         return response_api_success(alert)
+    
+    except ObjectNotFoundError:
+        return response_api_not_found()
 
     except BusinessProcessingError as e:
         return response_api_error(e.get_message(), data=e.get_data())
