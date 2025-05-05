@@ -1,0 +1,120 @@
+<div class="modal-header">
+  <h4>Upload webhook</h4>
+  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+<div class="modal-body">
+  <div class="container col-md-12">
+    <form method="post" webhook="" id="form_upload_case_template">
+      <div class="modal-content">
+        <div class="modal-body">
+          <div class="accordion accordion-primary">
+            <p>
+              Webhooks allow to prefill webhook objects such as Header Auth,
+              Payload Schema, and URLs.<br />
+              It can be the webhook used to add procedures defining how to react
+              against a specific kind of incident (phishing, ransomware, APT...)
+            </p>
+            <div class="alert-std alert-warning" role="alert">
+              Webhooks can be uploaded as JSON files, or they can be added and
+              edited in the Add/Edit case template UI.<br />
+            </div>
+            <label class="placeholder">JSON File format example</label>
+            <div class="card">
+              <div
+                class="card-header collapsed"
+                id="drop_up_case_template_taxonomy"
+                data-toggle="collapse"
+                data-target="#drop_up_tax_case_template"
+                aria-expanded="false"
+                aria-controls="drop_up_tax_attr"
+                role="button"
+              >
+                <div class="span-icon">
+                  <div class="flaticon-pencil"></div>
+                </div>
+                <div class="span-title">Webhook taxonomy</div>
+                <div class="span-mode"></div>
+              </div>
+
+              <div
+                id="drop_up_tax_case_template"
+                class="collapse"
+                aria-labelledby="drop_up_tax_case_template"
+                style=""
+              >
+                <div class="card-body">
+                  An webhook is defined as below.
+                  <pre>
+
+                                        {
+                                            "name": "webhook 1",
+                                            "header_auth": [
+                                            {
+                                                "key": "auth 1"
+                                            },
+                                            {
+                                                "key": "auth 2"
+                                            }
+                                            ],
+                                            "payload_schema": [
+                                            {
+                                                "type": "object",
+                                                "properties": [
+                                                    {
+                                                        "property": "property name",
+                                                        "type": "type of data"
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                            "url": "www.some-webhook1.com",
+                                        }
+                                </pre
+                  >
+
+                  <h4>Field types</h4>
+                  The supported fields types are:
+                  <ul>
+                    <li>name: The name of the webhook (required).</li>
+                    <li>
+                      header_auth: The Header Authetication for the webhook.
+                    </li>
+                    <li>payload_schema: The payload of the webhook.</li>
+                    <li>url: The url of the webhook.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="placeholder">Choose JSON file to import : </label>
+            <input id="input_upload_webhook" type="file" accept="text/json" />
+          </div>
+        </div>
+        <div class="invalid-feedback" id="ctempl-invalid-msg"></div>
+      </div>
+      <!-- /.modal-content -->
+    </form>
+  </div>
+  <div
+    class="alert alert-warning"
+    style="display: none"
+    role="alert"
+    id="alert_upload_webhook_details"
+  >
+    <span id="alert_upload_webhook"></span><br />
+    <b>Logs:</b>
+    <ul id="upload_webhook_err_details_list"></ul>
+  </div>
+</div>
+<div class="modal-footer">
+  <button
+    type="button"
+    class="btn btn-outline-success"
+    onclick="upload_webhook();"
+  >
+    Upload
+  </button>
+</div>

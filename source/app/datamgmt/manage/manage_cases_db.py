@@ -19,8 +19,8 @@ from datetime import datetime
 from datetime import date
 from datetime import timedelta
 from pathlib import Path
-
-from sqlalchemy import and_
+import requests
+from sqlalchemy import and_, desc, asc
 from sqlalchemy.orm import aliased
 from functools import reduce
 
@@ -66,6 +66,9 @@ from app.models.models import Ioc
 from app.models.cases import CaseProtagonist
 from app.models.cases import CaseTags
 from app.models.cases import CaseState
+from app.models.models import CaseResponse
+from app.datamgmt.manage.manage_webhooks_db import get_webhook_by_id
+from app.models.models import TaskResponse
 from app.models.pagination_parameters import PaginationParameters
 
 
@@ -540,3 +543,154 @@ def get_filtered_cases(current_user_id,
         return None
 
     return filtered_cases
+
+
+def execute_and_save_trigger(trigger, case_id):
+    try:
+        # Extract webhook_id from the trigger
+        webhook_id = trigger.get("webhook_id")
+        if not webhook_id:
+            raise ValueError("Trigger execution failed: webhook_id is missing in trigger.")
+
+        # Fetch the webhook object from the database
+        webhook = get_webhook_by_id(webhook_id)
+        if not webhook:
+            raise ValueError(f"Trigger execution failed: No webhook found for webhook_id {webhook_id}.")
+
+        # Fetch the URL from the webhook object
+        url = webhook.url  # Adjust this based on your webhook model's attributes
+        if not url:
+            raise ValueError(f"Trigger execution failed: URL is missing in webhook with id {webhook_id}.")
+
+        # Execute the webhook request
+        response = requests.post(url, json=trigger , verify=False)
+        print(f"Webhook Response Status Code: {response.status_code}")  # Log response status
+
+        # Check response status
+        if response.status_code == 200:
+            results = response.json()
+            save_results(results, case_id, webhook_id)  # Assuming save_results is implemented to handle the output
+            return f"Trigger executed successfully and saved for webhook_id {webhook_id}."
+        else:
+            raise ValueError(
+                f"Trigger execution failed: Webhook request returned status {response.status_code}, "
+                f"response: {response.text}"
+            )
+
+    except Exception as e:
+        print(f"Error in execute_and_save_trigger: {str(e)}")  # Log the error
+        return str(e)
+
+
+def save_results(data, case_id, webhook_id):
+    """
+    Save the results of a webhook execution into the CaseResponse model.
+
+    :param data: The response data to save (JSON).
+    :param case_template_id: The case template ID.
+    :param webhook_id: The webhook ID.
+    """
+    try:
+        # Create a new CaseResponse object
+        case_response = CaseResponse(
+            case=case_id,
+            trigger=webhook_id,
+            body=data,
+        )
+
+        # Add the object to the session and commit
+        db.session.add(case_response)
+        db.session.commit()
+
+        print(f"CaseResponse saved successfully with id {case_response.id}")
+    except Exception as e:
+        db.session.rollback()  # Roll back the session in case of an error
+        print(f"Error saving CaseResponse: {str(e)}")
+
+
+def execute_and_save_action(action, task_id, action_id):
+    try:
+        # Extract webhook_id
+        webhook_id = action_id
+        if not webhook_id:
+            raise ValueError("Action execution failed: webhook_id is missing in action.")
+
+        # Fetch webhook details
+        webhook = get_webhook_by_id(webhook_id)
+        if not webhook:
+            raise ValueError(f"Action execution failed: No webhook found for webhook_id {webhook_id}.")
+
+        # Validate the webhook URL
+        url = webhook.url
+        if not url:
+            raise ValueError(f"Action execution failed: URL is missing in webhook with id {webhook_id}.")
+
+        # Execute the webhook request
+        response = requests.post(url, json=action, verify=False)
+        print(f"Webhook Response Status Code: {response.status_code}")
+
+        # Validate and process the response
+        if response.status_code == 200:
+            if 'application/json' in response.headers.get('Content-Type', ''):
+                results = response.json()
+                print(f"Webhook Execution Results: {results}")
+
+                # Save results in the database
+                save_results_for_tasks(results, task_id, webhook_id)
+
+                # Ensure results are a list of dictionaries
+                if isinstance(results, dict):
+                    results = [results]  # Wrap single dictionary in a list
+                elif not isinstance(results, list):
+                    raise ValueError("Unexpected response format: Expected a dictionary or a list of dictionaries.")
+
+                return results
+            else:
+                raise ValueError("Webhook response is not in JSON format.")
+        else:
+            raise ValueError(
+                f"Action execution failed: Webhook request returned status {response.status_code}, "
+                f"response: {response.text}"
+            )
+
+    except Exception as e:
+        print(f"Error in execute_and_save_action: {str(e)}")
+        raise  # Propagate the exception for handling in the calling function
+
+
+
+def save_results_for_tasks(data, task_id, webhook_id):
+    """
+    Save the results of an action execution into the TaskResponse model.
+    :param data: The response data to save (JSON, list of dictionaries or dictionary).
+    :param task_id: The task ID.
+    :param webhook_id: The webhook ID.
+    """
+    try:
+        # Ensure data is a list of dictionaries
+        # if isinstance(data, dict):
+        #     data = [data]
+        # elif not isinstance(data, list):
+        #     raise ValueError("Unexpected data format: Expected a dictionary or list of dictionaries.")
+
+        # for item in data:
+        # Create a new TaskResponse object for each result
+        task_response = TaskResponse(
+            task=task_id,
+            action=webhook_id,
+            body=data,  # Assuming item is JSON-serializable
+        )
+
+        # Add the object to the session
+        db.session.add(task_response)
+
+        # Commit all changes at once
+        db.session.commit()
+
+        print(f"TaskResponses saved successfully for task ID {task_id}")
+
+    except Exception as e:
+        db.session.rollback()  # Roll back the session in case of an error
+        print(f"Error saving TaskResponse: {str(e)}")
+        raise
+

@@ -48,6 +48,7 @@ from app.blueprints.pages.manage.manage_srv_settings_routes import manage_srv_se
 from app.blueprints.pages.manage.manage_templates_routes import manage_templates_blueprint
 from app.blueprints.pages.manage.manage_case_templates_routes import manage_case_templates_blueprint
 from app.blueprints.pages.manage.manage_users import manage_users_blueprint
+from app.blueprints.pages.manage.manage_webhooks_routes import manage_webhooks_blueprint
 from app.blueprints.pages.overview.overview_routes import overview_blueprint
 from app.blueprints.pages.profile.profile_routes import profile_blueprint
 from app.blueprints.pages.search.search_routes import search_blueprint
@@ -95,7 +96,7 @@ from app.blueprints.rest.profile_routes import profile_rest_blueprint
 from app.blueprints.rest.reports_route import reports_rest_blueprint
 from app.blueprints.rest.search_routes import search_rest_blueprint
 from app.blueprints.graphql.graphql_route import graphql_blueprint
-
+from app.blueprints.pages.case.case_triggers_routes import case_triggers_blueprint
 from app.blueprints.rest.v2 import rest_v2_blueprint
 from app.models.authorization import User
 
@@ -150,7 +151,7 @@ def register_blusprints(app):
     app.register_blueprint(manage_assets_rest_blueprint)
     app.register_blueprint(manage_tags_rest_blueprint)
     app.register_blueprint(saved_filters_rest_blueprint)
-
+    app.register_blueprint(manage_webhooks_blueprint)
     app.register_blueprint(context_rest_blueprint)
     app.register_blueprint(case_timeline_blueprint)
     app.register_blueprint(case_timeline_rest_blueprint)
@@ -177,10 +178,9 @@ def register_blusprints(app):
     app.register_blueprint(datastore_rest_blueprint)
     app.register_blueprint(alerts_blueprint)
     app.register_blueprint(alerts_rest_blueprint)
-
+    app.register_blueprint(case_triggers_blueprint)
     app.register_blueprint(rest_api_blueprint)
     app.register_blueprint(demo_blueprint)
-
     app.register_blueprint(rest_v2_blueprint)
 
 

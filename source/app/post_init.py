@@ -137,8 +137,8 @@ def run_post_init(development=False):
             exit(1)
 
         # Setup database before everything
-        #log.info("Adding pgcrypto extension")
-        #pg_add_pgcrypto_ext()
+        log.info("Adding pgcrypto extension")
+        pg_add_pgcrypto_ext()
 
         # Setup database before everything
         with app.app_context():
@@ -151,9 +151,10 @@ def run_post_init(development=False):
             db.create_all(bind_key="iris_tasks")
             db.session.commit()
 
-            log.info("Running DB migration")
+            log.info("Running DB migration - Updated")
 
             alembic_cfg = Config(file_='app/alembic.ini')
+            log.info("alembic.ini ")
             alembic_cfg.set_main_option('sqlalchemy.url', app.config['SQLALCHEMY_DATABASE_URI'])
             command.upgrade(alembic_cfg, 'head')
 

@@ -32,6 +32,8 @@ services:
       - POSTGRES_ADMIN_USER
       - POSTGRES_ADMIN_PASSWORD
       - POSTGRES_DB
+    env_file:
+      - .env
     networks:
       - iris_backend
     volumes:

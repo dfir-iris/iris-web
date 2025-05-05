@@ -15,7 +15,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+import json
 from datetime import datetime
 
 import marshmallow
@@ -39,6 +39,8 @@ from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.case.case_tasks_db import get_tasks_status
 from app.datamgmt.case.case_tasks_db import get_tasks_with_assignees
 from app.datamgmt.case.case_tasks_db import update_task_status
+from app.datamgmt.manage.manage_cases_db import execute_and_save_action
+from app.datamgmt.manage.manage_task_response_db import get_task_responses_list, get_task_response_by_id
 from app.datamgmt.states import get_tasks_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -246,3 +248,66 @@ def case_comment_task_delete(cur_id: int, com_id: int, caseid: int):
 
     track_activity(f"comment {com_id} on task {cur_id} deleted", caseid=caseid)
     return response_success(msg)
+
+
+@case_tasks_rest_blueprint.route('/case/tasks/action_responses/<int:cur_id>', methods=['GET'])
+@ac_api_requires()
+def case_task_action_response(cur_id):
+    # Retrieve the list of task action responses
+    task_action_responses = get_task_responses_list(cur_id)
+
+    for response in task_action_responses:
+        # Serialize 'created_at' field if it is a datetime object
+        if isinstance(response.get('created_at'), datetime):
+            response['created_at'] = response['created_at'].strftime("%Y-%m-%d %H:%M:%S")
+
+        # Serialize 'updated_at' field if it is a datetime object
+        if isinstance(response.get('updated_at'), datetime):
+            response['updated_at'] = response['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
+
+        # Handle 'body' field serialization
+        if 'body' in response:
+            try:
+                # Attempt to serialize 'body' if it's a dictionary or list
+                if isinstance(response['body'], (dict, list)):
+                    response['body'] = json.dumps(response['body'])
+            except (TypeError, ValueError):
+                # If serialization fails, convert it to a string
+                response['body'] = str(response['body'])
+
+    # Return a successful response with serialized task action responses
+    return response_success("success", task_action_responses)
+
+
+@case_tasks_rest_blueprint.route('/case/jsoneditor', methods=['POST'])
+def save_data():
+    try:
+        data = request.get_json()
+
+        if not isinstance(data, dict):
+            raise ValueError("Request payload is not a valid JSON object")
+
+        payload = data.get('payload')
+        task_id = data.get('task_id')
+        action_id = data.get('action_id')
+
+        if not payload or not task_id or not action_id:
+            raise KeyError("Missing one or more required keys: 'payload', 'task_id', 'action_id'")
+
+        action_response = execute_and_save_action(payload, task_id, action_id)
+        return response_success("ac_requires_case_identifier", action_response)
+    except KeyError as e:
+        return response_error(f"Missing key: {e}")
+    # except ValueError as e:
+    #     return jsonify({"status": "error", "message": str(e)}), 400
+    # except Exception as e:
+    #     return jsonify({"status": "error", "message": str(e)})
+
+@case_tasks_rest_blueprint.route('/case/tasks/action_response/<int:task_id>', methods=['GET'])
+def case_task_action_response_by_id(task_id):
+    action_response = get_task_response_by_id(task_id)
+
+    if action_response:
+        return response_success("Task action response fetched successfully", data=action_response)
+    else:
+        return response_error("No action response found for this task", 404)

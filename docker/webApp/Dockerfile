@@ -83,6 +83,8 @@ COPY --from=compile-js-image /ui/dist/ /iriswebapp/static/
 RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/fd
 RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/evtx_dump
 
+# RUN chmod +x iris-entrypoint.sh wait-for-iriswebapp.sh entrypoint.sh
+
 RUN chmod +x iris-entrypoint.sh
 RUN chmod +x wait-for-iriswebapp.sh
-#ENTRYPOINT [ "./iris-entrypoint.sh" ]
+#ENTRYPOINT ["./iris-entrypoint.sh"]

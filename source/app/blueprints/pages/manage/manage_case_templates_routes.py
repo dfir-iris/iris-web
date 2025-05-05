@@ -100,12 +100,24 @@ def add_template_modal(caseid, url_redir):
         "classification": "known-template-classification",
         "title_prefix": "[PREFIX]",
         "summary": "Summary to be set",
-        "tags": ["ransomware", "malware"],
+        "tags": [
+            "ransomware",
+            "malware"
+        ],
         "tasks": [
             {
                 "title": "Task 1",
                 "description": "Task 1 description",
-                "tags": ["tag1", "tag2"]
+                "tags": [
+                    "tag1",
+                    "tag2"
+                ],
+                "actions": [
+                    {
+                        "webhook_id": "Webhook Id",
+                        "display_name": "Action Name"
+                    }
+                ]
             }
         ],
         "note_directories": [
@@ -118,7 +130,16 @@ def add_template_modal(caseid, url_redir):
                     }
                 ]
             }
+        ],
+        "triggers": [
+            {
+                "webhook_id": "Webhook Id",
+                "display_name": "Trigger Name",
+                "input_params": {
+                }
+            }
         ]
+
     }
 
     return render_template("modal_case_template.html", form=form, case_template=case_template)

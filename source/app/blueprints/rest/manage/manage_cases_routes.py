@@ -14,15 +14,22 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
+from typing import Union
 import logging as log
 import os
 import traceback
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
+from flask import jsonify, current_app, g
+from threading import Thread
 
 from flask import Blueprint
+from flask import redirect
+from flask import render_template
 from flask import request
+from flask import url_for
 from flask_login import current_user
+from flask_wtf import FlaskForm
 from werkzeug import Response
 from werkzeug.utils import secure_filename
 
@@ -31,14 +38,23 @@ from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.datamgmt.alerts.alerts_db import get_alert_status_by_name
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.client.client_db import get_client_list
 from app.datamgmt.iris_engine.modules_db import get_pipelines_args_from_name
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
+from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
+from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
+from app.datamgmt.manage.manage_case_state_db import get_case_states_list
+from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list, get_triggers_by_case_template_id
+from app.datamgmt.manage.manage_cases_db import execute_and_save_trigger, get_filtered_cases
 from app.datamgmt.manage.manage_cases_db import close_case, map_alert_resolution_to_case_status
 from app.datamgmt.manage.manage_cases_db import get_case_details_rt
+from app.datamgmt.manage.manage_cases_db import get_case_protagonists
 from app.datamgmt.manage.manage_cases_db import list_cases_dict
 from app.datamgmt.manage.manage_cases_db import reopen_case
+from app.datamgmt.manage.manage_common import get_severities_list
+from app.forms import AddCaseForm
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
+from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.module_handler.module_handler import configure_module_on_init
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
@@ -245,8 +261,37 @@ def api_add_case():
     case_schema = CaseSchema()
 
     try:
-        case = cases_create(request.get_json())
+        # Extract case template data from the request
+        request_data = request.get_json()
+        print(request_data)
+        case_template_id = request_data.get("case_template_id")
+
+        if not case_template_id:
+            raise BusinessProcessingError("Missing 'case_template_id' in request.")
+
+        case = cases_create(request_data)  # You can use request_data directly
+        case_id = case.case_id  # Retrieve the case_id of the created case
+
+        # Get triggers for the case_template_id
+        triggers = get_triggers_by_case_template_id(case_template_id)
+
+        if not triggers:
+            raise BusinessProcessingError("No triggers found for the provided case_template_id.")
+
+        # Function to execute a trigger in a new thread with app context
+        def execute_trigger_with_context(trigger):
+            # Make sure each thread runs within the Flask app context
+            with current_app.app_context():
+                print(f"Trigger executed for case: {trigger}")
+                execute_and_save_trigger(trigger, case_id)
+
+        # Start a new thread for each trigger
+        for trigger in triggers:
+            thread = Thread(target=execute_trigger_with_context, args=(trigger,))
+            thread.start()
+
         return response_success('Case created', data=case_schema.dump(case))
+
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
 
