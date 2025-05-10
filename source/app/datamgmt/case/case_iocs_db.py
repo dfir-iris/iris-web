@@ -105,7 +105,7 @@ def get_detailed_iocs(caseid):
         Ioc.ioc_tlp_id
     ).filter(Ioc.case_id == caseid)
      .join(Ioc.ioc_type)
-     .join(Ioc.tlp)
+     .outerjoin(Ioc.tlp)
      .order_by(IocType.type_name).all())
 
     return detailed_iocs

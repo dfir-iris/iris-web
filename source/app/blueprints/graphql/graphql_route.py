@@ -57,11 +57,6 @@ import warnings
 # Ignore all UserWarnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-import warnings
-
-# Ignore all UserWarnings
-warnings.filterwarnings("ignore", category=UserWarning)
-
 
 
 class Query(ObjectType):

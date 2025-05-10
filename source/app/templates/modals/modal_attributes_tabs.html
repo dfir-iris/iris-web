@@ -1,9 +1,9 @@
 {% if attributes and attributes|length > 0 %}
     {% for ca in attributes %}
      {% set outer_loop = loop %}
-      <div class="tab-pane {%if is_case_page %}{% if outer_loop.index == 1 %}{{"active show"}}{% endif %}{% endif %}"
-            id="{% if is_case_page %}itab_{% endif %}{{page_uid}}{{ outer_loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}"
-            aria-labelledby="{% if is_case_page %}itab_{% endif %}{{page_uid}}{{ outer_loop.index }}_{{  ca.lower() | replace(' ', '_' ) }}-tab">
+      <div class="tab-pane {%if is_case_page %}{% if outer_loop.index == 1 %}{{"active"}}{% endif %}{% endif %}"
+            id="{% if is_case_page %}itab_{% endif %}{{ ca.lower() | replace(' ', '_' ) }}_{{page_uid}}{{ outer_loop.index }}"
+            aria-labelledby="{% if is_case_page %}itab_{% endif %}{{  ca.lower() | replace(' ', '_' ) }}_{{page_uid}}{{ outer_loop.index }}-tab">
           {% for cle in attributes[ca] %}
                 {% set tag_id = cle.lower() | replace(' ', '_' ) %}
                 <div class="form-group row">

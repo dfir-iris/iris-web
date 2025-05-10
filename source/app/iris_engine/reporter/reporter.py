@@ -558,11 +558,13 @@ class IrisMakeMdReport(IrisReportMaker):
         try:
             env = IrisJinjaEnv()
             env.filters = app.jinja_env.filters
-            template = env.from_string(
-               open(os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference)).read())
+
+            template_path = os.path.join(app.config['TEMPLATES_PATH'], report.internal_reference)
+            with open(template_path, 'r', encoding="utf-8") as template_file:
+                template = env.from_string(template_file.read())
+
             output_text = template.render(case_info)
 
-            # Write the result in the output file
             with open(output_file_path, 'w', encoding="utf-8") as html_file:
                 html_file.write(output_text)
 

@@ -43,6 +43,7 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
+
 from werkzeug.datastructures import FileStorage
 
 from app import app
@@ -823,6 +824,7 @@ class CaseTemplateSchema(ma.Schema):
                                                                                                 allow_none=True,
                                                                                                 missing=[])
 
+    @staticmethod
     def validate_string_or_list(value: Union[str, List[str]]) -> Union[str, List[str]]:
         """Validates that a value is a string or a list of strings.
 
@@ -847,6 +849,7 @@ class CaseTemplateSchema(ma.Schema):
                     raise ValidationError('All items in list must be strings')
         return value
 
+    @staticmethod
     def validate_string_or_list_of_dict(value: Union[str, List[Dict[str, str]]]) -> Union[str, List[Dict[str, str]]]:
         """Validates that a value is a string or a list of dictionaries with string values.
 
@@ -2364,7 +2367,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     classification = ma.Nested(CaseClassificationSchema)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'])
     iocs = ma.Nested(IocSchema, many=True)
-    assets = ma.Nested(CaseAssetsSchema, many=True)
+    assets = ma.Nested(CaseAssetsSchema, many=True, exclude=['alerts'])
     resolution_status = ma.Nested(AlertResolutionSchema)
 
     class Meta:

@@ -1186,7 +1186,7 @@ def create_safe_ioctypes():
                         type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="authentihash",
                         type_description="Authenticode executable signature hash", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters"
+                        type_validation_regex=r"[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters"
                         )
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="boolean",
                         type_description="Boolean value - to be used in objects",
@@ -1277,7 +1277,7 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|authentihash",
                         type_description="A checksum in md5 format",
                         type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{64}',
+                        type_validation_regex=r'.+\|[a-f0-9]{64}',
                         type_validation_expect="filename|64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|impfuzzy",
                         type_description="Import fuzzy hash - a fuzzy hash created based on the imports in the sample.",
@@ -1285,59 +1285,59 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|imphash",
                         type_description="Import hash - a hash created based on the imports in the sample.",
                         type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{32}',
+                        type_validation_regex=r'.+\|[a-f0-9]{32}',
                         type_validation_expect="filename|32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|md5",
                         type_description="A filename and an md5 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{32}',
+                        type_validation_regex=r'.+\|[a-f0-9]{32}',
                         type_validation_expect="filename|32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|pehash",
                         type_description="A filename and a PEhash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{40}',
+                        type_validation_regex=r'.+\|[a-f0-9]{40}',
                         type_validation_expect="filename|40 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha1",
                         type_description="A filename and an sha1 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{40}',
+                        type_validation_regex=r'.+\|[a-f0-9]{40}',
                         type_validation_expect="filename|40 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha224",
                         type_description="A filename and a sha-224 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{56}',
+                        type_validation_regex=r'.+\|[a-f0-9]{56}',
                         type_validation_expect="filename|56 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha256",
                         type_description="A filename and an sha256 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{64}',
+                        type_validation_regex=r'.+\|[a-f0-9]{64}',
                         type_validation_expect="filename|64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha3-224",
                         type_description="A filename and an sha3-224 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{56}',
+                        type_validation_regex=r'.+\|[a-f0-9]{56}',
                         type_validation_expect="filename|56 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha3-256",
                         type_description="A filename and an sha3-256 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{64}',
+                        type_validation_regex=r'.+\|[a-f0-9]{64}',
                         type_validation_expect="filename|64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha3-384",
                         type_description="A filename and an sha3-384 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{96}',
+                        type_validation_regex=r'.+\|[a-f0-9]{96}',
                         type_validation_expect="filename|96 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha3-512",
                         type_description="A filename and an sha3-512 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{128}',
+                        type_validation_regex=r'.+\|[a-f0-9]{128}',
                         type_validation_expect="filename|128 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha384",
                         type_description="A filename and a sha-384 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{96}',
+                        type_validation_regex=r'.+\|[a-f0-9]{96}',
                         type_validation_expect="filename|96 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha512",
                         type_description="A filename and a sha-512 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{128}',
+                        type_validation_regex=r'.+\|[a-f0-9]{128}',
                         type_validation_expect="filename|128 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha512/224",
                         type_description="A filename and a sha-512/224 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{56}',
+                        type_validation_regex=r'.+\|[a-f0-9]{56}',
                         type_validation_expect="filename|56 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|sha512/256",
                         type_description="A filename and a sha-512/256 hash separated by a |", type_taxonomy="",
-                        type_validation_regex='.+\|[a-f0-9]{64}',
+                        type_validation_regex=r'.+\|[a-f0-9]{64}',
                         type_validation_expect="filename|64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|ssdeep",
                         type_description="A checksum in ssdeep format",
@@ -1345,7 +1345,7 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|tlsh",
                         type_description="A filename and a Trend Micro Locality Sensitive Hash separated by a |",
                         type_taxonomy="",
-                        type_validation_regex='.+\|t?[a-f0-9]{35,}',
+                        type_validation_regex=r'.+\|t?[a-f0-9]{35,}',
                         type_validation_expect="filename|at least 35 hexadecimal characters, optionally starting with t1 instead of hexadecimal characters"
                         )
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="filename|vhash",
@@ -1363,7 +1363,7 @@ def create_safe_ioctypes():
                         type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="git-commit-id",
                         type_description="A git commit ID.", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="github-organisation",
                         type_description="A github organisation",
                         type_taxonomy="")
@@ -1376,11 +1376,11 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="hassh-md5",
                         type_description="hassh is a network fingerprinting standard which can be used to identify specific Client SSH implementations. The fingerprints can be easily stored, searched and shared in the form of an MD5 fingerprint.",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="hasshserver-md5",
                         type_description="hasshServer is a network fingerprinting standard which can be used to identify specific Server SSH implementations. The fingerprints can be easily stored, searched and shared in the form of an MD5 fingerprint.",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="hex",
                         type_description="A value in hexadecimal format",
                         type_taxonomy="")
@@ -1402,7 +1402,7 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="imphash",
                         type_description="Import hash - a hash created based on the imports in the sample.",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="ip-any",
                         type_description="A source or destination IP address of the attacker or C&C server",
                         type_taxonomy="")
@@ -1418,12 +1418,12 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="ja3-fingerprint-md5",
                         type_description="JA3 is a method for creating SSL/TLS client fingerprints that should be easy to produce on any platform and can be easily shared for threat intelligence.",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="jabber-id",
                         type_description="Jabber ID", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="jarm-fingerprint",
                         type_description="JARM is a method for creating SSL/TLS server fingerprints.", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{62}", type_validation_expect="62 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{62}", type_validation_expect="62 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="kusto-query",
                         type_description="Kusto query - Kusto from Microsoft Azure is a service for storing and running interactive analytics over Big Data.",
                         type_taxonomy="")
@@ -1440,7 +1440,7 @@ def create_safe_ioctypes():
                         type_description="Malware type", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="md5",
                         type_description="A checksum in md5 format", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="middle-name",
                         type_description="Middle name of a natural person",
                         type_taxonomy="")
@@ -1450,9 +1450,9 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="mobile-application-id",
                         type_description="The application id of a mobile application", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="mutex",
-                        type_description="Mutex, use the format \BaseNamedObjects<Mutex>", type_taxonomy="")
+                        type_description="Mutex, use the format \\BaseNamedObjects<Mutex>", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="named pipe",
-                        type_description="Named pipe, use the format .\pipe<PipeName>", type_taxonomy="")
+                        type_description="Named pipe, use the format .\\pipe<PipeName>", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="other",
                         type_description="Other attribute", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="file-path",
@@ -1468,7 +1468,7 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="pehash",
                         type_description="PEhash - a hash calculated based of certain pieces of a PE executable file",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="pgp-private-key",
                         type_description="A PGP private key",
                         type_taxonomy="")
@@ -1490,47 +1490,47 @@ def create_safe_ioctypes():
                         type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha1",
                         type_description="A checksum in sha1 format", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha224",
                         type_description="A checksum in sha-224 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{56}", type_validation_expect="56 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{56}", type_validation_expect="56 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha256",
                         type_description="A checksum in sha256 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha3-224",
                         type_description="A checksum in sha3-224 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{56}", type_validation_expect="56 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{56}", type_validation_expect="56 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha3-256",
                         type_description="A checksum in sha3-256 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha3-384",
                         type_description="A checksum in sha3-384 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{96}", type_validation_expect="96 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{96}", type_validation_expect="96 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha3-512",
                         type_description="A checksum in sha3-512 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{128}", type_validation_expect="128 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{128}", type_validation_expect="128 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha384",
                         type_description="A checksum in sha-384 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{96}", type_validation_expect="96 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{96}", type_validation_expect="96 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha512",
                         type_description="A checksum in sha-512 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{128}", type_validation_expect="128 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{128}", type_validation_expect="128 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha512/224",
                         type_description="A checksum in the sha-512/224 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{56}", type_validation_expect="56 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{56}", type_validation_expect="56 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sha512/256",
                         type_description="A checksum in the sha-512/256 format",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="sigma",
                         type_description="Sigma - Generic Signature Format for SIEM Systems", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="size-in-bytes",
@@ -1565,7 +1565,7 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="telfhash",
                         type_description="telfhash is symbol hash for ELF files, just like imphash is imports hash for PE files.",
                         type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{70}", type_validation_expect="70 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{70}", type_validation_expect="70 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="text",
                         type_description="Name, ID or a reference", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="threat-actor",
@@ -1574,7 +1574,7 @@ def create_safe_ioctypes():
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="tlsh",
                         type_description="A checksum in the Trend Micro Locality Sensitive Hash format",
                         type_taxonomy="",
-                        type_validation_regex="^t?[a-f0-9]{35,}",
+                        type_validation_regex=r"^t?[a-f0-9]{35,}",
                         type_validation_expect="at least 35 hexadecimal characters, optionally starting with t1 instead of hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="travel-details",
                         type_description="Travel details", type_taxonomy="")
@@ -1621,13 +1621,13 @@ def create_safe_ioctypes():
                         type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="x509-fingerprint-md5",
                         type_description="X509 fingerprint in MD5 format", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{32}", type_validation_expect="32 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="x509-fingerprint-sha1",
                         type_description="X509 fingerprint in SHA-1 format", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{40}", type_validation_expect="40 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="x509-fingerprint-sha256",
                         type_description="X509 fingerprint in SHA-256 format", type_taxonomy="",
-                        type_validation_regex="[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
+                        type_validation_regex=r"[a-f0-9]{64}", type_validation_expect="64 hexadecimal characters")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="xmr",
                         type_description="Monero Address", type_taxonomy="")
     create_safe_limited(db.session, IocType, ["type_name", "type_description"], type_name="yara",

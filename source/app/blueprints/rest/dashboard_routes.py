@@ -86,7 +86,7 @@ def logout():
                     state=session["oidc_state"])
                 logout_url = logout_request.request(
                     oidc_client.provider_info["end_session_endpoint"])
-                track_activity("user '{}' has been logged-out".format(
+                track_activity("user '{}' is been logged-out".format(
                     current_user.user), ctx_less=True, display_in_ui=False)
                 logout_user()
                 session.clear()
@@ -98,7 +98,7 @@ def logout():
                     display_in_ui=False
                 )
 
-    track_activity("user '{}' has been logged-out".format(current_user.user),
+    track_activity("user '{}' is been logged-out".format(current_user.user),
                    ctx_less=True, display_in_ui=False)
     logout_user()
     session.clear()

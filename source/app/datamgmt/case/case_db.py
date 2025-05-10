@@ -157,7 +157,11 @@ def get_activities_report_template():
     ).filter(and_(
         ReportType.name == "Activities",
         Languages.id == CaseTemplateReport.language_id
-    )).all()
+    )).outerjoin(
+        CaseTemplateReport.report_type
+    ).outerjoin(
+        CaseTemplateReport.language
+    ).all()
 
     return reports
 

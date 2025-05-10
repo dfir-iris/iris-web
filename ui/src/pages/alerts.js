@@ -2202,7 +2202,6 @@ $(document).ready(function () {
         });
       }
 
-
     editor = ace.edit('custom_conditions');
     if ($("#custom_conditions").attr("data-theme") != "dark") {
         editor.setTheme("ace/theme/tomorrow");

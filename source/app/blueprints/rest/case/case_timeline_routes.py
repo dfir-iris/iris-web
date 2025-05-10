@@ -508,6 +508,7 @@ def case_filter_timeline(caseid):
 
     assets_map = {}
     cache = {}
+
     for asset in assets_cache:
         if asset.asset_id not in cache:
             cache[asset.asset_id] = [asset.asset_name, asset.type]
@@ -539,11 +540,11 @@ def case_filter_timeline(caseid):
     tim = []
     events_list = []
     for row in timeline:
-        if assets is not None or assets_id is not None and row.event_id not in assets_filter:
-            continue
+        if (assets is not None or assets_id is not None) and row.event_id not in assets_filter:
+                continue
 
         if iocs is not None and row.event_id not in iocs_filter:
-            continue
+                continue
 
         ras = row._asdict()
 
@@ -567,7 +568,6 @@ def case_filter_timeline(caseid):
                         "compromised": asset.asset_compromise_status_id == CompromiseStatus.compromised.value
                     }
                 )
-
         ras['assets'] = alki
 
         alki = []

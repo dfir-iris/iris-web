@@ -623,8 +623,10 @@ function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, rea
 
     let day = dta[0];
     // Transform the date to the user's system format. day is in the format YYYY-MM-DD. We want our date in the user's host format, without the minutes and seconds.
-    // First parse the date to a Date object
-    let date = new Date(day);
+    // First extract the year, month, and day from the date
+    let [event_year, event_month, event_day] = day.split('-');
+    // Then parse the date to a Date object
+    let date = new Date(event_year, parseInt(event_month)-1, event_day);
     // Then use the toLocaleDateString method to get the date in the user's host format
     day = date.toLocaleDateString();
 
@@ -866,8 +868,8 @@ function build_timeline(data) {
             console.log('Ignoring IOC with length 0 or > 64')
             continue;
         }
-        let capture_start = "(^|;|:|||>|<|[|]|(|)|\s|\>)(";
-        let capture_end = ")(;|:|||>|<|[|]|(|)|\s|>|$|<br/>)";
+        let capture_start = "(^|;|:|||>|<|[|]|(|)|\\s|\\>)(";
+        let capture_end = ")(;|:|||>|<|[|]|(|)|\\s|>|$|<br/>)";
         // When an IOC contains another IOC in its description, we want to avoid to replace that particular pattern
         var avoid_inception_start = "(?!<span[^>]*?>)" + capture_start;
         var avoid_inception_end = "(?![^<]*?<\/span>)" + capture_end;
@@ -1160,18 +1162,18 @@ function timelineToCsv(){
     csv_data = "event_date(UTC),event_title,event_description,event_tz,event_date_wtz,event_category,event_tags,linked_assets,linked_iocs\n";
     for (index in current_timeline) {
         item = current_timeline[index];
-        content = item.event_content.replace(/"/g, '\"');
+        content = item.event_content.replace(/"/g, '""');
         content_parsed = content.replace(/(\r?\n)+/g, ' - ');
-        title = item.event_title.replace(/"/g, '\"');
-        tags = item.event_tags.replace(/"/g, '\"');
+        title = item.event_title.replace(/"/g, '""');
+        tags = item.event_tags.replace(/"/g, '""');
         assets = "";
         for (k in item.assets) {
-            asset = item.assets[k].name.replace(/"/g, '\"');
+            asset = item.assets[k].name.replace(/"/g, '""');
             assets += `${asset};`;
         }
         iocs = "";
         for (k in item.iocs) {
-            ioc = item.iocs[k].name.replace(/"/g, '\"');
+            ioc = item.iocs[k].name.replace(/"/g, '""');
             iocs += `${ioc};`;
         }
         csv_data += `"${item.event_date}","${title}","${content_parsed}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}","${iocs}"\n`;
@@ -1184,18 +1186,18 @@ function timelineToCsvWithUI(){
     for (index in current_timeline) {
 
         item = current_timeline[index];
-        content = item.event_content.replace(/"/g, '\"');
+        content = item.event_content.replace(/"/g, '""');
         content_parsed = content.replace(/(\r?\n)+/g, ' - ');
-        title = item.event_title.replace(/"/g, '\"');
-        tags = item.event_tags.replace(/"/g, '\"');
+        title = item.event_title.replace(/"/g, '""');
+        tags = item.event_tags.replace(/"/g, '""');
         assets = "";
         for (k in item.assets) {
-            asset = item.assets[k].name.replace(/"/g, '\"');
+            asset = item.assets[k].name.replace(/"/g, '""');
             assets += `${asset};`;
         }
         iocs = "";
         for (k in item.iocs) {
-            ioc = item.iocs[k].name.replace(/"/g, '\"');
+            ioc = item.iocs[k].name.replace(/"/g, '""');
             iocs += `${ioc};`;
         }
         csv_data += `"${item.event_date}","${title}","${content_parsed}","${item.event_tz}","${item.event_date_wtz}","${item.category_name}","${tags}","${assets}","${iocs}","${item.user}","${item.event_added}"\n`;

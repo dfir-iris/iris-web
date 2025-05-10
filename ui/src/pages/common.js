@@ -964,7 +964,18 @@ function createSanitizeExtensionForImg() {
       regex: /<.*?>/g,
       replace: function (match) {
         if (match.startsWith('<img')) {
-          return match.replace(/on\w+="[^"]*"/gi, '');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = match;
+
+            tempDiv.querySelectorAll('*').forEach(el => {
+                [...el.attributes].forEach(attr => {
+                    if (attr.name.startsWith('on')) {
+                        el.removeAttribute(attr.name);
+                    }
+                });
+            });
+
+            return tempDiv.innerHTML;
         }
         return match;
       },
