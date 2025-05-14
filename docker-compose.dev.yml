@@ -42,6 +42,8 @@ services:
     image: iriswebapp_app:v2.4.7
     ports:
       - "127.0.0.1:8000:8000"
+    volumes:
+      - ./source/app:/iriswebapp/app
 
   worker:
     extends:
@@ -75,3 +77,4 @@ networks:
     name: iris_backend
   iris_frontend:
     name: iris_frontend
+
