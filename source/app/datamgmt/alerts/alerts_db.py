@@ -1447,3 +1447,20 @@ def get_alert_status_by_name(name: str) -> AlertStatus:
     """
     return AlertStatus.query.filter(AlertStatus.status_name == name).first()
 
+
+def get_elapsed_sla(alert_id: int) -> Alert:
+    elapsed_sla = Alert.query.filter(Alert.alert_id == alert_id).first()
+    return elapsed_sla
+
+def set_elapsed_sla(alert_id: int, new_elapsed_sla: int):
+    alert = Alert.query.filter(Alert.alert_id == alert_id).first()
+    if alert:
+        # Update the column with the new value
+        alert.alert_elapsed_sla = new_elapsed_sla
+        # Commit the changes to the database
+        db.session.commit()
+        return alert
+    else:
+        # Optionally handle the case where no alert is found
+        return None
+

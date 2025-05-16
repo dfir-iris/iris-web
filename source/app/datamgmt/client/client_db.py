@@ -55,6 +55,10 @@ def get_client_list(current_user_id: int = None,
 
     return output
 
+def get_clients_sla():
+    client_data = Client.query.with_entities(Client.sla, Client.client_id).all()
+    return client_data
+
 
 def get_client(client_id: int) -> Client:
     client = Client.query.filter(Client.client_id == client_id).first()

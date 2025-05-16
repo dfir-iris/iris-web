@@ -31,6 +31,16 @@ from app.blueprints.responses import response_error
 from app.blueprints.access_controls import ac_requires
 from app.iris_engine.access_control.iris_user import iris_current_user
 
+
+from app.datamgmt.client.client_db import get_clients_sla
+from app.blueprints.responses import response_success
+
+from app.blueprints.access_controls import ac_api_requires
+
+from app.datamgmt.alerts.alerts_db import get_elapsed_sla
+
+from app.datamgmt.alerts.alerts_db import set_elapsed_sla
+
 alerts_blueprint = Blueprint(
     'alerts',
     __name__,
@@ -56,6 +66,39 @@ def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
     form = FlaskForm()
 
     return render_template('alerts.html', caseid=caseid, form=form)
+
+#later move this to source/app/blueprints/rest/alerts_routes.py
+@alerts_blueprint.route('/alerts/api/set_elapsed_sla_api/<int:alert_id>/<int:new_elapsed_sla>', methods=['GET'])
+@ac_api_requires(Permissions.alerts_write)
+def set_elapsed_sla_api(alert_id: int, new_elapsed_sla: int):
+    updated_alert = set_elapsed_sla(alert_id, new_elapsed_sla)
+    return response_success(data=updated_alert)
+
+
+@alerts_blueprint.route('/alerts/api/get_clients_sla_api', methods=['GET'])
+@ac_api_requires()
+def get_clients_sla_api():
+    rows= get_clients_sla()
+    customers = [dict(row._mapping) for row in rows]
+    output = {
+        "customers_sla": customers
+    }
+
+    return response_success(data=output)
+
+#later move this to source/app/blueprints/rest/alerts_routes.py
+@alerts_blueprint.route('/alerts/api/get_elapsed_sla_api/<int:alert_id>', methods=['GET'])
+@ac_api_requires()
+def get_elapsed_sla_api(alert_id: int):
+    elapsed_sla = get_elapsed_sla(alert_id)
+    #output = {
+     #   "elapsed_sla": elapsed_sla
+    #}
+
+    return response_success(data=elapsed_sla)
+
+
+
 
 
 @alerts_blueprint.route('/alerts/<int:cur_id>/comments/modal', methods=['GET'])
