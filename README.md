@@ -46,6 +46,8 @@ to configure and enable them.
 To ease the installation and upgrades, Iris is shipped in Docker containers. Thanks to Docker compose, 
 it can be ready in a few minutes.  
 
+Remove the latest tags from the .env file manually or use `sed '/latest$/d' .env.model > .env`
+
 ``` bash
 #  Clone the iris-web repository
 git clone https://github.com/dfir-iris/iris-web.git
@@ -55,8 +57,14 @@ cd iris-web
 git checkout v2.4.20
 # Copy the environment file 
 cp .env.model .env
+# Edit your `.env` file and remove/comment out the following lines:
+# NGINX_IMAGE_TAG=latest
+# DB_IMAGE_TAG=latest
+# APP_IMAGE_TAG=latest
+# A alternative way of doing this is "sed '/latest$/d' .env.model > .env"
 
-# Pull the dockers
+
+# Pull the images
 docker compose pull
 
 # Run IRIS 
