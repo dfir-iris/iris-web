@@ -521,7 +521,7 @@ class TestsRestAlerts(TestCase):
         response = self._subject.get(f'/api/v2/alerts/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/related-alerts')
         self.assertEqual(404, response.status_code)
 
-    def test_get_related_alerts_should_return_403_when_user_has_no_permission_to_delete_alert(self):
+    def test_get_related_alerts_should_return_403_when_user_has_no_permission_to_get_alert(self):
         user = self._subject.create_dummy_user()
         body = {
             'alert_title': 'title',
