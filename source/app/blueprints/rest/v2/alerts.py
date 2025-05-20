@@ -248,7 +248,7 @@ def delete_alert(identifier):
 
 
 @alerts_blueprint.get('/<int:identifier>/related-alerts')
-@ac_api_requires()
+@ac_api_requires(Permissions.alerts_read)
 def get_related_alerts(identifier):
 
     try:
