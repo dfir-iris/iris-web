@@ -481,3 +481,38 @@ class TestsRestAlerts(TestCase):
         identifier = response['alert_id']
         response = self._subject.get(f'/api/v2/alerts/{identifier}/related-alerts')
         self.assertEqual(200, response.status_code)
+
+    def test_get_related_alerts_should_return_two_alerts_identifier_in_iocs_table(self):
+        body = {
+            'alert_title': 'title',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1,
+            "alert_iocs": [{
+                "ioc_value": "Tarzan 5",
+                "ioc_description": "description of Tarzan",
+                "ioc_tlp_id": 1,
+                "ioc_type_id": 2,
+                "ioc_tags": "tag1,tag2",
+            }]
+        }
+        response = self._subject.create('api/v2/alerts', body).json()
+        identifier = response['alert_id']
+        body = {
+            'alert_title': 'title_2',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1,
+            "alert_iocs": [{
+                "ioc_value": "Tarzan 5",
+                "ioc_description": "description of Tarzan",
+                "ioc_tlp_id": 1,
+                "ioc_type_id": 2,
+                "ioc_tags": "tag1,tag2",
+            }]
+        }
+        response = self._subject.create('api/v2/alerts', body).json()
+        identifier2 = response['alert_id']
+        response = self._subject.get(f'/api/v2/alerts/{identifier}/related-alerts').json()
+        alert_ids=[identifier, identifier2]
+        self.assertEqual(alert_ids, response['iocs'])

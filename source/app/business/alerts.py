@@ -29,6 +29,7 @@ from app.datamgmt.alerts.alerts_db import delete_similar_alert_cache
 from app.datamgmt.alerts.alerts_db import delete_related_alerts_cache
 from app.datamgmt.alerts.alerts_db import get_alert_by_id
 from app.datamgmt.alerts.alerts_db import delete_alert
+from app.datamgmt.alerts.alerts_db import get_related_alerts
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.util import add_obj_history_entry
@@ -110,4 +111,11 @@ def alerts_delete(alert: Alert):
     delete_alert(alert)
 
     call_modules_hook('on_postload_alert_delete', data=alert.alert_id)
-    track_activity(f'delete alert #{alert.alert_id}', ctx_less=True)
+
+    track_activity(f"delete alert #{alert.alert_id}", ctx_less=True)
+
+
+def alerts_related(alert: Alert):
+
+        similarities = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
+        return similarities
