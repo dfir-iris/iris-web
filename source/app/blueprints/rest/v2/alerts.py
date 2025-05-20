@@ -244,3 +244,10 @@ def delete_alert(identifier):
 
     except ObjectNotFoundError:
         return response_api_not_found()
+
+
+@alerts_blueprint.get('/<int:identifier>/related-alerts')
+@ac_api_requires()
+def get_related_alerts(identifier):
+
+    return response_api_success(None)
