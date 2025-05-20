@@ -258,6 +258,7 @@ def alerts_get_route(alert_id) -> Response:
 
 @alerts_rest_blueprint.route('/alerts/similarities/<int:alert_id>', methods=['GET'])
 @ac_api_requires(Permissions.alerts_read)
+@endpoint_deprecated('GET', '/api/v2/alerts/{identifier}/related-alerts')
 def alerts_similarities_route(alert_id) -> Response:
     """
     Get an alert and similarities from the database
