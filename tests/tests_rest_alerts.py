@@ -533,3 +533,26 @@ class TestsRestAlerts(TestCase):
         identifier = response['alert_id']
         response = user.get(f'/api/v2/alerts/{identifier}/related-alerts')
         self.assertEqual(403, response.status_code)
+
+    def test_get_related_alerts_should_return_404_when_user_has_no_customer_access(self):
+        body = {
+            'group_name': 'Customer read',
+            'group_description': 'Group with customers can read alert',
+            'group_permissions': [_PERMISSION_ALERTS_READ]
+        }
+        response = self._subject.create('/manage/groups/add', body).json()
+        group_identifier = response['data']['group_id']
+        user = self._subject.create_dummy_user()
+        body = {'groups_membership': [group_identifier]}
+        self._subject.create(f'/manage/users/{user.get_identifier()}/groups/update', body)
+
+        body = {
+            'alert_title': 'title',
+            'alert_severity_id': 4,
+            'alert_status_id': 3,
+            'alert_customer_id': 1,
+        }
+        response = self._subject.create('/api/v2/alerts', body).json()
+        identifier = response['alert_id']
+        response = user.get(f'/api/v2/alerts/{identifier}/related-alerts')
+        self.assertEqual(404, response.status_code)
