@@ -514,7 +514,7 @@ class TestsRestAlerts(TestCase):
         response = self._subject.create('api/v2/alerts', body).json()
         identifier2 = response['alert_id']
         response = self._subject.get(f'/api/v2/alerts/{identifier}/related-alerts').json()
-        alert_ids=[identifier, identifier2]
+        alert_ids = [identifier, identifier2]
         self.assertEqual(alert_ids, response['iocs'])
 
     def test_get_related_alerts_should_return_404_when_alert_not_found(self):
