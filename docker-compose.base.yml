@@ -27,11 +27,11 @@ services:
     container_name: iriswebapp_db
     restart: always
     environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_ADMIN_USER
-      - POSTGRES_ADMIN_PASSWORD
-      - POSTGRES_DB
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_ADMIN_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_ADMIN_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     networks:
       - iris_backend
     volumes:
@@ -41,9 +41,8 @@ services:
     container_name: iriswebapp_app
     command: ["nohup", "./iris-entrypoint.sh", "iriswebapp"]
     volumes:
-      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
-      - ./certificates/:/home/iris/certificates/:ro
-      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
+      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro,z
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro,z
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -54,15 +53,15 @@ services:
     env_file:
       - .env
     environment:
-      - LOG_LEVEL
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_ADMIN_USER
-      - POSTGRES_ADMIN_PASSWORD
-      - POSTGRES_SERVER
-      - POSTGRES_PORT
-      - IRIS_SECRET_KEY
-      - IRIS_SECURITY_PASSWORD_SALT
+      - LOG_LEVEL=${LOG_LEVEL}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_ADMIN_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_ADMIN_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_SERVER=${POSTGRES_SERVER}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - IRIS_SECRET_KEY=${IRIS_SECRET_KEY}
+      - IRIS_SECURITY_PASSWORD_SALT=${IRIS_SECURITY_PASSWORD_SALT}
     networks:
       - iris_backend
       - iris_frontend
@@ -78,9 +77,8 @@ services:
         "iris-worker",
       ]
     volumes:
-      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro
-      - ./certificates/:/home/iris/certificates/:ro
-      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
+      - ./certificates/rootCA/irisRootCACert.pem:/etc/irisRootCACert.pem:ro,z
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro,z
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -91,37 +89,36 @@ services:
     env_file:
       - .env
     environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_ADMIN_USER
-      - POSTGRES_ADMIN_PASSWORD
-      - POSTGRES_SERVER
-      - POSTGRES_PORT
-      - IRIS_SECRET_KEY
-      - IRIS_SECURITY_PASSWORD_SALT
-      - IRIS_WORKER
-      - LOG_LEVEL
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_ADMIN_USER=${POSTGRES_ADMIN_USER}
+      - POSTGRES_ADMIN_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - POSTGRES_SERVER=${POSTGRES_SERVER}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - IRIS_SECRET_KEY=${IRIS_SECRET_KEY}
+      - IRIS_SECURITY_PASSWORD_SALT=${IRIS_SECURITY_PASSWORD_SALT}
+      - IRIS_WORKER=1
+      - LOG_LEVEL=${LOG_LEVEL}
     networks:
       - iris_backend
 
   nginx:
     container_name: iriswebapp_nginx
     environment:
-      - IRIS_UPSTREAM_SERVER
-      - IRIS_UPSTREAM_PORT
-      - IRIS_FRONTEND_SERVER
-      - IRIS_FRONTEND_PORT
-      - INTERFACE_HTTPS_PORT
-      - SERVER_NAME
-      - CERT_FILENAME
-      - KEY_FILENAME
-      - IRIS_AUTHENTICATION_TYPE
+      - IRIS_UPSTREAM_SERVER=${IRIS_UPSTREAM_SERVER}
+      - IRIS_UPSTREAM_PORT=${IRIS_UPSTREAM_PORT}
+      - IRIS_FRONTEND_SERVER=${IRIS_FRONTEND_SERVER}
+      - IRIS_FRONTEND_PORT=${IRIS_FRONTEND_PORT}
+      - INTERFACE_HTTPS_PORT=${INTERFACE_HTTPS_PORT}
+      - SERVER_NAME=${SERVER_NAME}
+      - CERT_FILENAME=${CERT_FILENAME}
+      - KEY_FILENAME=${KEY_FILENAME}
     networks:
       - iris_frontend
     ports:
       - "${INTERFACE_HTTPS_PORT:-443}:${INTERFACE_HTTPS_PORT:-443}"
     volumes:
-      - "./certificates/web_certificates/:/www/certs/:ro"
+      - ./certificates/web_certificates/:/www/certs/:ro,Z
     restart: always
     depends_on:
       - "app"
