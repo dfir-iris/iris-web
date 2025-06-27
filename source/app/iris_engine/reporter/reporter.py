@@ -369,6 +369,7 @@ class IrisMakeDocReport(IrisReportMaker):
 
         # Set date
         case_info['date'] = datetime.utcnow().strftime("%Y-%m-%d")
+        case_info['case']['for_customer'] = case_info['case'].get('client').get('customer_name')
 
         return case_info
 
