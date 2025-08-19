@@ -1,4 +1,4 @@
-## @section rabbitmq Configuration
+# @section rabbitmq Configuration
 ##
 rabbitmq:
   ## @param rabbitmq.app App name for rabbitmq
@@ -28,7 +28,7 @@ rabbitmq:
   ## @param rabbitmq.podSecurityContext podSecurityContext for rabbitmq
   ##
   podSecurityContext: {}
-   
+
 
 ## @section PostgreSQL Configuration
 ##
@@ -41,9 +41,9 @@ postgres:
   name: postgres
   ## @param postgres.image PostgreSQL Image
   ##
-  image: <postgres_image>
+  image: postgres
   ## @param postgres.tag PostgreSQL Tag
-  tag: <tag>
+  tag: 15.14
   ## @param postgres.imagePullPolicy PostgreSQL PullPolicy
   ##
   imagePullPolicy: "IfNotPresent"
@@ -53,8 +53,8 @@ postgres:
   ## @param postgres.resources Resources for postgres
   ##
   resources: {}
-  
-  
+
+
   ## @param postgres.service PostgreSQL Service
   ##
   service:
@@ -64,7 +64,7 @@ postgres:
   ##
   POSTGRES_USER: postgres
   POSTGRES_PASSWORD: postgres
-  POSTGRES_ADMIN_USER: raptor
+  POSTGRES_ADMIN_USER: postgres
   POSTGRES_ADMIN_PASSWORD: postgres
   POSTGRES_DB: iris_db
   POSTGRES_PORT: 5432
@@ -86,10 +86,10 @@ irisapp:
   name: iriswebapp-app
   ## @param irisapp.image Iris Frontend Image
   ##
-  image: <irisapp_image>
+  image: ghcr.io/dfir-iris/iriswebapp_app
   ## @param irisapp.tag Iris Frontend Tag
   ##
-  tag: <tag>
+  tag: v2.4.22
   ## @param irisapp.imagePullPolicy Iris Frontend imagePullPolicy
   ##
   imagePullPolicy: "IfNotPresent"
@@ -104,23 +104,23 @@ irisapp:
   ##
   service:
     port: 8000
-    
+
   ## @param irisapp.type Iris Frontend Service type
   ##
   type: NodePort
 
   ## @param  Iris Frontend Environments
   ##
-  POSTGRES_USER: raptor
+  POSTGRES_USER: postgres
   POSTGRES_PASSWORD: postgres
-  POSTGRES_ADMIN_USER: raptor
+  POSTGRES_ADMIN_USER: postgres
   POSTGRES_ADMIN_PASSWORD: postgres
   POSTGRES_PORT: 5432
-  POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+  POSTGRES_SERVER: postgres.test.svc.cluster.local
   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
   IRIS_ADM_USERNAME: administrator
-  # Must be 12 characters minimum and contains a capital letter and a number. 
+  # Must be 12 characters minimum and contains a capital letter and a number.
   IRIS_ADM_PASSWORD: Hello12345!
   DB_RETRY_COUNT: 5
   DB_RETRY_DELAY: 5
@@ -148,17 +148,17 @@ irisapp:
 ##
 irisworker:
   ## @param irisworker.app Iris Backend App
-  ##    
+  ##
   app: iriswebapp-worker
   ## @param irisworker.name Iris Backend Name
   ##
   name: iriswebapp-worker
   ## @param irisworker.image Iris Backend Image
   ##
-  image: <irisworker_image>
+  image: ghcr.io/dfir-iris/iriswebapp_app
   ## @param irisworker.tag Iris Backend Tag
   ##
-  tag: <tag>
+  tag: v2.4.22
   ## @param irisworker.imagePullPolicy Iris Backend imagePullPolicy
   ##
   imagePullPolicy: "IfNotPresent"
@@ -171,12 +171,12 @@ irisworker:
 
   ## @param  Iris Backend Environments
   ##
-  POSTGRES_USER: raptor
+  POSTGRES_USER: postgres
   POSTGRES_PASSWORD: postgres
-  POSTGRES_ADMIN_USER: raptor
+  POSTGRES_ADMIN_USER: postgres
   POSTGRES_ADMIN_PASSWORD: postgres
   POSTGRES_PORT: 5432
-  POSTGRES_SERVER: postgres.<name_space>.svc.cluster.local
+  POSTGRES_SERVER: postgres.test.svc.cluster.local
   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
   ## @param irisworker.securityContext securityContext for irisworker
@@ -198,7 +198,7 @@ ingress:
     nginx.ingress.kubernetes.io/rewrite-target: /$1
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
   hosts:
-    - host: <host_name>
+    - host: iris.lan
       paths:
         - path: /(.*)
           pathType: ImplementationSpecific
@@ -207,4 +207,4 @@ ingress:
   tls:
     - secretName: iris-ingress-tls-secret
       hosts:
-        - <host_name>        
+        -  iris.lan

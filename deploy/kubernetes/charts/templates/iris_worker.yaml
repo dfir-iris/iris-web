@@ -52,20 +52,20 @@ spec:
           - name: POSTGRES_USER
             value: {{ .Values.irisworker.POSTGRES_USER | quote }}
 
-          - name:  POSTGRES_PASSWORDD
+          - name:  POSTGRES_PASSWORD
             value: {{ .Values.irisworker.POSTGRES_PASSWORD | quote }}
 
           - name:  POSTGRES_ADMIN_USER
             value: {{ .Values.irisworker.POSTGRES_ADMIN_USER | quote }}
 
           - name:  POSTGRES_ADMIN_PASSWORD
-            value: {{ .Values.irisworker.POSTGRES_ADMIN_PASSWORD | quote }}    
+            value: {{ .Values.irisworker.POSTGRES_ADMIN_PASSWORD | quote }}
 
           - name:  POSTGRES_PORT
-            value: {{ .Values.irisworker.POSTGRES_PORT | quote }}   
+            value: {{ .Values.irisworker.POSTGRES_PORT | quote }}
 
           - name:  POSTGRES_SERVER
-            value: {{ .Values.irisworker.POSTGRES_SERVER | quote }}  
+            value: {{ .Values.irisworker.POSTGRES_SERVER | quote }}
 
           - name:  IRIS_SECRET_KEY
             value: {{ .Values.irisworker.IRIS_SECRET_KEY | quote }}
@@ -92,10 +92,10 @@ spec:
               readOnly: true
       volumes:
         - name: iris-downloads
-          emptyDir: {}  
+          emptyDir: {}
         - name: user-templates
           emptyDir: {}
-        - name: server-data 
+        - name: server-data
           emptyDir: {}
         - name: iris-ldap-certs
           secret:
