@@ -117,5 +117,4 @@ def alerts_delete(alert: Alert):
 
 def alerts_related(alert: Alert):
 
-        similarities = get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
-        return similarities
+    return get_related_alerts(alert.alert_customer_id, alert.assets, alert.iocs)
