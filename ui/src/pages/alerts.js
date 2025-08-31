@@ -1288,6 +1288,8 @@ async function showAlertHistory(alertId) {
     let alertData = alertDataReq.data;
     let entryDiv = $('#modal_alert_history_content');
 
+    entryDiv.empty();
+
     for (let entry in alertData.modification_history)  {
         let date = new Date(Math.floor(entry) * 1000);
         let dateStr = date.toLocaleString();
