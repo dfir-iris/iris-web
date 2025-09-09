@@ -1,0 +1,71 @@
+---
+- name: "IRIS Web Application Deployment - Master Playbook"
+  hosts: localhost
+  gather_facts: false
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Display deployment information
+      debug:
+        msg: 
+          - "========================================"
+          - "  IRIS Web Application Deployment"
+          - "========================================"
+          - "Project: {{ project_name }}"
+          - "Version: {{ project_version }}"
+          - "Deployment Mode: Development"
+          - "========================================"
+
+- name: "Setup Control Node"
+  hosts: control_nodes
+  gather_facts: true
+  vars_files:
+    - ../vars/secrets.yml
+  roles:
+    - common
+  tags:
+    - control-node
+    - setup
+
+- name: "Setup Docker Environment"
+  hosts: iris_servers
+  gather_facts: true
+  vars_files:
+    - ../vars/secrets.yml
+  roles:
+    - common
+    - docker
+  tags:
+    - managed-node
+    - docker
+    - setup
+
+- name: "Deploy IRIS Application"
+  hosts: iris_servers
+  gather_facts: true
+  vars_files:
+    - ../vars/secrets.yml
+  roles:
+    - iris-app
+  tags:
+    - iris-app
+    - deploy
+
+- name: "Post-Deployment Validation"
+  hosts: iris_servers
+  gather_facts: false
+  vars_files:
+    - ../vars/secrets.yml
+  tasks:
+    - name: Display deployment completion
+      debug:
+        msg:
+          - "========================================"
+          - "  IRIS Deployment Completed Successfully!"
+          - "========================================"
+          - "Application URL: https://{{ iris_server_name }}:{{ iris_https_port }}"
+          - "Please check the logs for initial admin password"
+          - "========================================"
+  tags:
+    - validation
+    - final

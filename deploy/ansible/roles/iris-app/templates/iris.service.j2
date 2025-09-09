@@ -1,0 +1,32 @@
+[Unit]
+Description=IRIS Web Application
+Documentation=https://docs.dfir-iris.org/
+After=docker.service
+Requires=docker.service
+PartOf=docker.service
+ReloadPropagatedFrom=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/bin/docker-compose -f {{ iris_project_path }}/docker-compose.dev.yml up -d
+ExecStop=/usr/bin/docker-compose -f {{ iris_project_path }}/docker-compose.dev.yml down
+ExecReload=/usr/bin/docker-compose -f {{ iris_project_path }}/docker-compose.dev.yml restart
+WorkingDirectory={{ iris_project_path }}
+User={{ iris_user }}
+Group={{ iris_group }}
+TimeoutStartSec=300
+TimeoutStopSec=120
+
+# Security settings
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={{ iris_project_path }}
+
+# Restart policy
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

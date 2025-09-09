@@ -1,0 +1,60 @@
+---
+# Variables specific to IRIS servers
+
+# IRIS Application Configuration
+iris_server_name: "nisir-iris.local"
+iris_app_version: "v1.2.0"
+
+# Database Configuration
+postgres_user: "postgres"
+postgres_admin_user: "iris_admin" 
+postgres_db: "iris_db"
+postgres_server: "db"
+
+# IRIS Security Configuration
+iris_secret_key: "{{ vault_iris_secret_key }}"
+iris_security_password_salt: "{{ vault_iris_security_password_salt }}"
+
+# Database Passwords (will be stored in vault)
+postgres_password: "{{ vault_postgres_password }}"
+postgres_admin_password: "{{ vault_postgres_admin_password }}"
+
+# SSL Certificate Configuration
+cert_filename: "iris_dev_cert.pem"
+key_filename: "iris_dev_key.pem"
+
+# Authentication Configuration
+iris_authentication_type: "local"
+iris_session_timeout: 1440  # minutes
+
+# Worker Configuration
+celery_broker: "amqp://rabbitmq"
+
+# Docker Images Configuration
+nginx_image_name: "ghcr.io/dfir-iris/iriswebapp_nginx"
+db_image_name: "ghcr.io/dfir-iris/iriswebapp_db"  
+app_image_name: "ghcr.io/dfir-iris/iriswebapp_app"
+
+# Development Mode Settings
+development_mode: true
+live_reload: true
+
+# Service Configuration
+services:
+  - rabbitmq
+  - db
+  - app
+  - worker
+  - nginx
+
+# Volume Configuration
+docker_volumes:
+  - iris-downloads
+  - user_templates
+  - server_data
+  - db_data
+
+# Network Configuration  
+docker_networks:
+  - iris_backend
+  - iris_frontend

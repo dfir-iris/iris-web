@@ -1,0 +1,23 @@
+---
+- name: "Setup Docker Environment on Managed Nodes"
+  hosts: iris_servers
+  gather_facts: true
+  vars_files:
+    - ../vars/secrets.yml
+  roles:
+    - common
+    - docker
+  tags:
+    - docker
+    - setup
+
+  post_tasks:
+    - name: Display Docker setup completion
+      debug:
+        msg:
+          - "========================================"
+          - "  Docker Setup Completed Successfully!"
+          - "========================================"
+          - "Docker version: {{ docker_version.stdout | default('Unknown') }}"
+          - "Docker Compose version: {{ docker_compose_version_output.stdout | default('Unknown') }}"
+          - "========================================"

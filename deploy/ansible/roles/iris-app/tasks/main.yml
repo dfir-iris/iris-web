@@ -1,0 +1,147 @@
+#SPDX-License-Identifier: MIT-0
+---
+# IRIS Web Application deployment tasks
+
+- name: Ensure project directory exists
+  file:
+    path: "{{ iris_project_path }}"
+    state: directory
+    owner: "{{ iris_user }}"
+    group: "{{ iris_group }}"
+    mode: "0755"
+  tags: [iris, copy]
+
+# - name: Copy IRIS source code from local project
+#   copy:
+#     src: "/path/to/your/iris-web-project/"
+#     dest: "{{ iris_project_path }}"
+#     owner: "{{ iris_user }}"
+#     group: "{{ iris_group }}"
+#     mode: preserve
+#     remote_src: false
+#   tags: [iris, copy]
+
+- name: Set ownership of project directory
+  file:
+    path: "{{ iris_project_path }}"
+    owner: "{{ iris_user }}"
+    group: "{{ iris_group }}"
+    recurse: true
+  tags: [iris, permissions]
+
+- name: Generate .env file from template
+  template:
+    src: .env.j2
+    dest: "{{ iris_project_path }}/.env"
+    owner: "{{ iris_user }}"
+    group: "{{ iris_group }}"
+    mode: "0640"
+    backup: true
+  notify:
+    - restart iris services
+  tags: [iris, config]
+
+- name: Create certificates directory structure
+  file:
+    path: "{{ iris_project_path }}/certificates/{{ item }}"
+    state: directory
+    owner: "{{ iris_user }}"
+    group: "{{ iris_group }}"
+    mode: "0755"
+  loop:
+    - rootCA
+    - web_certificates
+    - ldap
+  tags: [iris, certificates]
+
+- name: Check if SSL certificates exist
+  stat:
+    path: "{{ iris_project_path }}/certificates/web_certificates/{{ cert_filename }}"
+  register: ssl_cert_check
+  tags: [iris, certificates]
+
+- name: Generate self-signed SSL certificates if not exist
+  block:
+    - name: Generate private key
+      openssl_privatekey:
+        path: "{{ iris_project_path }}/certificates/web_certificates/{{ key_filename }}"
+        size: "{{ ssl_key_size }}"
+        owner: "{{ iris_user }}"
+        group: "{{ iris_group }}"
+        mode: "0600"
+
+    - name: Generate certificate signing request
+      openssl_csr:
+        path: "{{ iris_project_path }}/certificates/web_certificates/iris.csr"
+        privatekey_path: "{{ iris_project_path }}/certificates/web_certificates/{{ key_filename }}"
+        common_name: "{{ iris_server_name }}"
+        owner: "{{ iris_user }}"
+        group: "{{ iris_group }}"
+
+    - name: Generate self-signed certificate
+      openssl_certificate:
+        path: "{{ iris_project_path }}/certificates/web_certificates/{{ cert_filename }}"
+        privatekey_path: "{{ iris_project_path }}/certificates/web_certificates/{{ key_filename }}"
+        csr_path: "{{ iris_project_path }}/certificates/web_certificates/iris.csr"
+        provider: selfsigned
+        valid_in: "{{ ssl_cert_days * 24 * 3600 }}"
+        owner: "{{ iris_user }}"
+        group: "{{ iris_group }}"
+        mode: "0644"
+  when: not ssl_cert_check.stat.exists and generate_ssl_certificates
+  tags: [iris, certificates]
+
+- name: Pull Docker images
+  command: docker-compose pull
+  args:
+    chdir: "{{ iris_project_path }}"
+  become_user: "{{ iris_user }}"
+  tags: [iris, docker]
+
+- name: Stop existing IRIS services
+  command: docker-compose down
+  args:
+    chdir: "{{ iris_project_path }}"
+  become_user: "{{ iris_user }}"
+  ignore_errors: true
+  tags: [iris, docker]
+
+- name: Start IRIS services using docker-compose.dev.yml
+  command: docker-compose -f docker-compose.dev.yml up -d
+  args:
+    chdir: "{{ iris_project_path }}"
+  become_user: "{{ iris_user }}"
+  register: docker_compose_result
+  tags: [iris, docker, deploy]
+
+- name: Wait for services to be ready
+  wait_for:
+    port: "{{ iris_https_port }}"
+    host: "{{ ansible_default_ipv4.address }}"
+    delay: 30
+    timeout: 300
+  tags: [iris, health-check]
+
+- name: Check running containers
+  command: docker-compose -f docker-compose.dev.yml ps
+  args:
+    chdir: "{{ iris_project_path }}"
+  become_user: "{{ iris_user }}"
+  register: container_status
+  tags: [iris, status]
+
+- name: Display container status
+  debug:
+    msg: "{{ container_status.stdout_lines }}"
+  tags: [iris, status]
+
+- name: Create systemd service for IRIS (optional)
+  template:
+    src: iris.service.j2
+    dest: /etc/systemd/system/iris.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - enable iris service
+  when: create_systemd_service | default(true)
+  tags: [iris, systemd]

@@ -1,0 +1,73 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Common system setup tasks for all hosts
+
+- name: Update system packages (Debian/Ubuntu)
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+  tags: [system, packages]
+
+- name: Update system packages (RedHat/CentOS)
+  yum:
+    update_cache: true
+  when: ansible_os_family == "RedHat"
+  tags: [system, packages]
+
+- name: Install essential packages
+  package:
+    name:
+      - curl
+      - wget
+      - git
+      - unzip
+      - vim
+      - htop
+      - tree
+      - rsync
+    state: present
+  tags: [system, packages]
+
+- name: Create IRIS system group
+  group:
+    name: "{{ iris_group }}"
+    system: true
+  tags: [system, users]
+
+- name: Create IRIS system user
+  user:
+    name: "{{ iris_user }}"
+    group: "{{ iris_group }}"
+    shell: /bin/bash
+    home: "{{ iris_base_path }}"
+    create_home: true
+    system: true
+  tags: [system, users]
+
+- name: Create IRIS directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ iris_user }}"
+    group: "{{ iris_group }}"
+    mode: '0755'
+  loop:
+    - "{{ iris_base_path }}"
+    - "{{ iris_project_path }}"
+    - "{{ iris_backup_path }}"
+  tags: [system, directories]
+
+- name: Set system timezone
+  timezone:
+    name: "{{ system_timezone }}"
+  ignore_errors: true
+  tags: [system, timezone]
+
+- name: Configure system locale
+  locale_gen:
+    name: "{{ system_locale }}"
+    state: present
+  when: ansible_os_family == "Debian"
+  ignore_errors: true
+  tags: [system, locale]

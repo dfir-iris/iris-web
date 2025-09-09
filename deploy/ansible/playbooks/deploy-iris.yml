@@ -1,0 +1,33 @@
+---
+- name: "Deploy IRIS Web Application"
+  hosts: iris_servers
+  gather_facts: true
+  vars_files:
+    - ../vars/secrets.yml
+  roles:
+    - iris-app
+  tags:
+    - iris
+    - deploy
+
+  post_tasks:
+    - name: Wait for IRIS services to be healthy
+      wait_for:
+        port: "{{ iris_https_port }}"
+        host: "{{ ansible_default_ipv4.address }}"
+        delay: 30
+        timeout: 300
+        msg: "IRIS services did not start within 5 minutes"
+      tags: [health-check]
+
+    - name: Display deployment completion
+      debug:
+        msg:
+          - "========================================"
+          - "  IRIS Deployment Completed Successfully!"
+          - "========================================"
+          - "Application URL: https://{{ iris_server_name }}:{{ iris_https_port }}"
+          - "Local Access: https://{{ ansible_default_ipv4.address }}:{{ iris_https_port }}"
+          - "Admin Interface: Check container logs for initial admin password"
+          - "Container Status: {{ container_status.stdout_lines | default(['Not available']) }}"
+          - "========================================"

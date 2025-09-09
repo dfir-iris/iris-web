@@ -1,0 +1,139 @@
+#SPDX-License-Identifier: MIT-0
+---
+# Docker installation and configuration tasks
+
+- name: Install Docker dependencies (Debian/Ubuntu)
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    state: present
+  when: ansible_os_family == "Debian"
+  tags: [docker, dependencies]
+
+- name: Create keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  when: ansible_os_family == "Debian"
+  tags: [docker, repository]
+
+- name: Set Docker distribution for repository
+  set_fact:
+    docker_distribution: "{{ 'debian' if ansible_distribution == 'Kali' else ansible_distribution | lower }}"
+  when: ansible_os_family == "Debian"
+  tags: [docker, repository]
+
+- name: Add Docker GPG key (Debian/Ubuntu/Kali)
+  get_url:
+    url: "https://download.docker.com/linux/{{ docker_distribution }}/gpg"
+    dest: /etc/apt/keyrings/docker.gpg
+    mode: '0644'
+  when: ansible_os_family == "Debian"
+  tags: [docker, repository]
+
+- name: Set Docker release for repository
+  set_fact:
+    docker_release: "{{ 'bookworm' if ansible_distribution == 'Kali' else ansible_distribution_release }}"
+  when: ansible_os_family == "Debian"
+  tags: [docker, repository]
+
+- name: Add Docker repository (Debian/Ubuntu/Kali)
+  apt_repository:
+    repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ docker_distribution }} {{ docker_release }} stable"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+  tags: [docker, repository]
+
+- name: Remove conflicting Docker packages (for Kali Linux)
+  apt:
+    name:
+      - docker-buildx
+      - docker-compose
+      - docker.io
+      - docker-cli
+      - containerd
+      - runc
+    state: absent
+    autoremove: yes
+  when: ansible_distribution == "Kali"
+  tags: [docker, cleanup]
+
+- name: Install Docker CE
+  package:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+      - docker-buildx-plugin
+    state: present
+  tags: [docker, install]
+
+- name: Start and enable Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: true
+    daemon_reload: true
+  tags: [docker, service]
+
+- name: Add IRIS user to Docker group
+  user:
+    name: "{{ iris_user }}"
+    groups: docker
+    append: true
+  notify: restart docker
+  tags: [docker, users]
+
+- name: Install Docker Compose plugin (comes with Docker CE)
+  debug:
+    msg: "Docker Compose plugin is installed with Docker CE packages"
+  tags: [docker, compose]
+
+- name: Create docker-compose wrapper script for compatibility
+  copy:
+    dest: /usr/local/bin/docker-compose
+    mode: '0755'
+    content: |
+      #!/bin/bash
+      if [[ "$1" == "--version" || "$1" == "-v" ]]; then
+          docker compose version
+      else
+          docker compose "$@"
+      fi
+  tags: [docker, compose]
+
+- name: Create Docker Compose symlink
+  file:
+    src: /usr/local/bin/docker-compose
+    dest: /usr/bin/docker-compose
+    state: link
+  tags: [docker, compose]
+
+- name: Verify Docker installation
+  command: docker --version
+  register: docker_version
+  changed_when: false
+  tags: [docker, verify]
+
+- name: Verify Docker Compose installation
+  command: docker-compose --version
+  register: docker_compose_version_output
+  changed_when: false
+  tags: [docker, compose, verify]
+
+- name: Display Docker version
+  debug:
+    msg: "{{ docker_version.stdout }}"
+  tags: [docker, verify]
+
+- name: Display Docker Compose version
+  debug:
+    msg: "{{ docker_compose_version_output.stdout }}"
+  tags: [docker, compose, verify]
