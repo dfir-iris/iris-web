@@ -1,17 +1,18 @@
 ---
-# Global Variables for NISIR-IRIS Deployment
+# Global Variables for DFIR-IRIS Deployment
 
 # Project Configuration
-project_name: "NISIR-iris-web"
-project_version: "v1.2.0"
+project_name: "dfir-iris-web"
+project_version: "v2.4.20"
 
 # Deployment Paths
-iris_base_path: "/opt/NISIR-iris"
-iris_project_path: "{{ iris_base_path }}/NISIR-iris-web"
+iris_base_path: "/opt/iris"
+iris_project_path: "{{ iris_base_path }}/iris-web"
 iris_backup_path: "{{ iris_base_path }}/backups"
 
 # Docker Configuration
 docker_compose_version: "2.20.0"
+docker_compose_cmd: "docker compose"
 docker_service_restart_policy: "always"
 
 # System Configuration

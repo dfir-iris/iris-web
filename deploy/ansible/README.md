@@ -123,6 +123,15 @@ ansible-playbook deploy/ansible/playbooks/site.yml --tags="config" --ask-vault-p
 ansible all -m ping -i deploy/ansible/inventory/hosts.yml
 ```
 
+### Security Notes
+
+**SSH Host Key Checking**: For security, SSH host key checking is enabled by default. For lab environments, you can temporarily disable it:
+
+```bash
+# For labs/testing only - NOT for production
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook deploy/ansible/playbooks/site.yml --ask-vault-pass
+```
+
 ## 📁 Directory Structure
 
 ```

@@ -9,9 +9,9 @@ ReloadPropagatedFrom=docker.service
 [Service]
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/usr/bin/docker-compose -f {{ iris_project_path }}/docker-compose.dev.yml up -d
-ExecStop=/usr/bin/docker-compose -f {{ iris_project_path }}/docker-compose.dev.yml down
-ExecReload=/usr/bin/docker-compose -f {{ iris_project_path }}/docker-compose.dev.yml restart
+ExecStart={{ docker_compose_cmd }} -f {{ iris_project_path }}/docker-compose.dev.yml up -d
+ExecStop={{ docker_compose_cmd }} -f {{ iris_project_path }}/docker-compose.dev.yml down
+ExecReload={{ docker_compose_cmd }} -f {{ iris_project_path }}/docker-compose.dev.yml restart
 WorkingDirectory={{ iris_project_path }}
 User={{ iris_user }}
 Group={{ iris_group }}

@@ -2,8 +2,9 @@
 # Variables specific to IRIS servers
 
 # IRIS Application Configuration
-iris_server_name: "nisir-iris.local"
-iris_app_version: "v1.2.0"
+iris_server_name: "dfir-iris.local"
+iris_app_version: "v2.4.20"
+iris_https_port: 443
 
 # Database Configuration
 postgres_user: "postgres"

@@ -2,6 +2,7 @@
 - name: "Deploy IRIS Web Application"
   hosts: iris_servers
   gather_facts: true
+  become: true
   vars_files:
     - ../vars/secrets.yml
   roles:

@@ -92,24 +92,27 @@
   tags: [iris, certificates]
 
 - name: Pull Docker images
-  command: docker-compose pull
+  command: "{{ docker_compose_cmd }} -f docker-compose.dev.yml pull"
   args:
     chdir: "{{ iris_project_path }}"
+  become: true
   become_user: "{{ iris_user }}"
   tags: [iris, docker]
 
 - name: Stop existing IRIS services
-  command: docker-compose down
+  command: "{{ docker_compose_cmd }} -f docker-compose.dev.yml down"
   args:
     chdir: "{{ iris_project_path }}"
+  become: true
   become_user: "{{ iris_user }}"
   ignore_errors: true
   tags: [iris, docker]
 
 - name: Start IRIS services using docker-compose.dev.yml
-  command: docker-compose -f docker-compose.dev.yml up -d
+  command: "{{ docker_compose_cmd }} -f docker-compose.dev.yml up -d"
   args:
     chdir: "{{ iris_project_path }}"
+  become: true
   become_user: "{{ iris_user }}"
   register: docker_compose_result
   tags: [iris, docker, deploy]
@@ -123,9 +126,10 @@
   tags: [iris, health-check]
 
 - name: Check running containers
-  command: docker-compose -f docker-compose.dev.yml ps
+  command: "{{ docker_compose_cmd }} -f docker-compose.dev.yml ps"
   args:
     chdir: "{{ iris_project_path }}"
+  become: true
   become_user: "{{ iris_user }}"
   register: container_status
   tags: [iris, status]
@@ -140,6 +144,7 @@
     src: iris.service.j2
     dest: /etc/systemd/system/iris.service
     mode: "0644"
+  become: true
   notify:
     - reload systemd
     - enable iris service
