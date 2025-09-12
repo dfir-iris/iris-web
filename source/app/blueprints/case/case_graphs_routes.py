@@ -28,8 +28,8 @@ from flask_wtf import FlaskForm
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_events_db import get_case_events_assets_graph
 from app.datamgmt.case.case_events_db import get_case_events_ioc_graph
-from app.models.authorization import CaseAccessLevel
-from app.util import ac_api_case_requires
+from app.models.authorization import CaseAccessLevel, Permissions
+from app.util import ac_api_case_requires, ac_requires, ac_api_requires
 from app.util import ac_case_requires
 from app.util import response_success
 
@@ -40,6 +40,7 @@ case_graph_blueprint = Blueprint('case_graph',
 
 # CONTENT ------------------------------------------------
 @case_graph_blueprint.route('/case/graph', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_graph(caseid, url_redir):
     if url_redir:
@@ -52,6 +53,7 @@ def case_graph(caseid, url_redir):
 
 
 @case_graph_blueprint.route('/case/graph/getdata', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_graph_get_data(caseid):
     events = get_case_events_assets_graph(caseid)

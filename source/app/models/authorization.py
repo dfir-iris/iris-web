@@ -1,6 +1,5 @@
 import enum
 import secrets
-import pyotp
 import uuid
 from flask_login import UserMixin
 from sqlalchemy import BigInteger, JSON
@@ -46,6 +45,13 @@ class Permissions(enum.Enum):
 
     activities_read = 0x400
     all_activities_read = 0x800
+
+    cases_read = 0x1000
+    cases_write = 0x2000
+    cases_delete = 0x4000
+    cases_create = 0x8000
+    cases_manage_permissions = 0x10000
+    cases_manage_meta = 0x20000
 
 
 class Organisation(db.Model):

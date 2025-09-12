@@ -19,7 +19,7 @@
 import marshmallow
 # IMPORTS ------------------------------------------------
 from datetime import datetime
-from flask import Blueprint, jsonify
+from flask import Blueprint
 from flask import redirect
 from flask import render_template
 from flask import request
@@ -31,7 +31,7 @@ from sqlalchemy import or_, and_
 
 from app import db, socket_io, app
 from app.blueprints.case.case_comments import case_comment_update
-from app.business.errors import BusinessProcessingError, UnhandledBusinessError
+from app.business.errors import BusinessProcessingError
 from app.business.notes import update, create, list_note_revisions, get_note_revision, delete_note_revision
 from app.datamgmt.case.case_db import case_get_desc_crc
 from app.datamgmt.case.case_db import get_case
@@ -46,12 +46,15 @@ from app.datamgmt.states import get_notes_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Notes
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.schema.marshables import CaseNoteDirectorySchema, CaseNoteRevisionSchema
 from app.schema.marshables import CaseNoteSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires, ac_socket_requires, endpoint_deprecated, add_obj_history_entry
-from app.util import ac_case_requires
+from app.util import (
+    ac_socket_requires,
+    endpoint_deprecated,
+    ac_guard,
+)
 from app.util import response_error
 from app.util import response_success
 
@@ -63,7 +66,9 @@ case_notes_blueprint = Blueprint('case_notes',
 
 # CONTENT ------------------------------------------------
 @case_notes_blueprint.route('/case/notes', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_notes(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_notes.case_notes', cid=caseid, redirect=True))
@@ -81,7 +86,9 @@ def case_notes(caseid, url_redir):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_note_detail(cur_id, caseid):
     """
     Returns a note and its comments
@@ -129,7 +136,9 @@ def case_note_detail(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/delete/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_note_delete(cur_id, caseid):
 
     call_modules_hook('on_preload_note_delete', data=cur_id, caseid=caseid)
@@ -152,7 +161,9 @@ def case_note_delete(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/update/<int:cur_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_note_save(cur_id, caseid):
     addnote_schema = CaseNoteSchema()
 
@@ -169,7 +180,9 @@ def case_note_save(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/revisions/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_note_list_history(cur_id, caseid):
     note_version_sc = CaseNoteRevisionSchema(many=True)
 
@@ -178,14 +191,16 @@ def case_note_list_history(cur_id, caseid):
         note_version = list_note_revisions(identifier=cur_id,
                                            case_identifier=caseid)
 
-        return response_success(f"ok", data=note_version_sc.dump(note_version))
+        return response_success("ok", data=note_version_sc.dump(note_version))
 
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/revisions/<int:revision_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_note_revision(cur_id, revision_id, caseid):
     note_version_sc = CaseNoteRevisionSchema()
 
@@ -195,14 +210,16 @@ def case_note_revision(cur_id, revision_id, caseid):
                                          revision_number=revision_id,
                                          case_identifier=caseid)
 
-        return response_success(f"ok", data=note_version_sc.dump(note_version))
+        return response_success("ok", data=note_version_sc.dump(note_version))
 
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/revisions/<int:revision_id>/delete', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_note_revision_delete(cur_id, revision_id, caseid):
 
     try:
@@ -218,7 +235,9 @@ def case_note_revision_delete(cur_id, revision_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_note_add(caseid):
     addnote_schema = CaseNoteSchema()
 
@@ -234,7 +253,9 @@ def case_note_add(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/directories/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_directory_add(caseid):
     try:
 
@@ -260,7 +281,9 @@ def case_directory_add(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/directories/update/<dir_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_directory_update(dir_id, caseid):
     try:
 
@@ -293,7 +316,9 @@ def case_directory_update(dir_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/directories/delete/<dir_id>', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_directory_delete(dir_id, caseid):
     try:
 
@@ -315,13 +340,17 @@ def case_directory_delete(dir_id, caseid):
 
 @case_notes_blueprint.route('/case/notes/groups/list', methods=['GET'])
 @endpoint_deprecated('Use /case/notes/directories/filter', 'v2.4.0')
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_load_notes_groups(caseid):
     pass
 
 
 @case_notes_blueprint.route('/case/notes/state', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_notes_state(caseid):
     os = get_notes_state(caseid=caseid)
     if os:
@@ -331,7 +360,9 @@ def case_notes_state(caseid):
 
 
 @case_notes_blueprint.route('/case/notes/search', methods=['GET', 'POST'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_search_notes(caseid):
     search_input = request.args.get('search_input')
 
@@ -349,27 +380,35 @@ def case_search_notes(caseid):
 
 @case_notes_blueprint.route('/case/notes/groups/add', methods=['POST'])
 @endpoint_deprecated('Use /case/notes/directories/add', 'v2.4.0')
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_add_notes_groups(caseid):
     pass
 
 
 @case_notes_blueprint.route('/case/notes/groups/delete/<int:cur_id>', methods=['POST'])
 @endpoint_deprecated('Use /case/notes/directories/delete/<ID>', 'v2.4.0')
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_delete_notes_groups(cur_id, caseid):
     pass
 
 
 @case_notes_blueprint.route('/case/notes/groups/<int:cur_id>', methods=['GET'])
 @endpoint_deprecated('Use /case/notes/directories/<ID>', 'v2.4.0')
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_get_notes_group(cur_id, caseid):
     pass
 
 
 @case_notes_blueprint.route('/case/notes/directories/filter', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_filter_notes_directories(caseid):
 
     if not get_case(caseid=caseid):
@@ -382,13 +421,17 @@ def case_filter_notes_directories(caseid):
 
 @case_notes_blueprint.route('/case/notes/groups/update/<int:cur_id>', methods=['POST'])
 @endpoint_deprecated('Use /case/notes/directories/update/<ID>', 'v2.4.0')
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_edit_notes_groups(cur_id, caseid):
     pass
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/modal', methods=['GET'])
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_comment_note_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_note.case_note', cid=caseid, redirect=True))
@@ -402,9 +445,15 @@ def case_comment_note_modal(cur_id, caseid, url_redir):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/list', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_comment_note_list(cur_id, caseid):
-
+    
+    note = get_note(cur_id, caseid=caseid)
+    if not note:
+        return response_error("Invalid note ID")
+    
     note_comments = get_case_note_comments(cur_id)
     if note_comments is None:
         return response_error('Invalid note ID')
@@ -413,7 +462,9 @@ def case_comment_note_list(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/add', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_comment_note_add(cur_id, caseid):
 
     try:
@@ -449,7 +500,9 @@ def case_comment_note_add(cur_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          permissions=(Permissions.cases_read,))
 def case_comment_note_get(cur_id, com_id, caseid):
 
     comment = get_case_note_comment(cur_id, com_id)
@@ -460,14 +513,18 @@ def case_comment_note_get(cur_id, com_id, caseid):
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          access_levels=(CaseAccessLevel.full_access,),
+          permissions=(Permissions.cases_write,))
 def case_comment_note_edit(cur_id, com_id, caseid):
 
     return case_comment_update(com_id, 'notes', caseid)
 
 
 @case_notes_blueprint.route('/case/notes/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+            access_levels=(CaseAccessLevel.full_access,),
+            permissions=(Permissions.cases_write,))
 def case_comment_note_delete(cur_id, com_id, caseid):
 
     success, msg = delete_note_comment(cur_id, com_id)

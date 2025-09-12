@@ -63,7 +63,7 @@ from app.iris_engine.utils.collab import collab_notify
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CompromiseStatus
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.models.authorization import User
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
@@ -76,7 +76,7 @@ from app.models.models import Ioc
 from app.models.models import IocLink
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import EventSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, ac_requires
 from app.util import ac_case_requires
 from app.util import add_obj_history_entry
 from app.util import response_error
@@ -91,6 +91,7 @@ case_timeline_blueprint = Blueprint('case_timeline',
 
 
 @case_timeline_blueprint.route('/case/timeline', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_timeline(caseid, url_redir):
     if url_redir:
@@ -103,6 +104,7 @@ def case_timeline(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph_page(caseid, url_redir):
     if url_redir:
@@ -112,6 +114,7 @@ def case_getgraph_page(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -126,6 +129,7 @@ def case_comment_modal(cur_id, caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/list', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comments_get(cur_id, caseid):
     event_comments = get_case_event_comments(cur_id, caseid=caseid)
@@ -136,6 +140,7 @@ def case_comments_get(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_delete(cur_id, com_id, caseid):
     success, msg = delete_event_comment(cur_id, com_id)
@@ -149,6 +154,7 @@ def case_comment_delete(cur_id, com_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_get(cur_id, com_id, caseid):
     comment = get_case_event_comment(cur_id, com_id, caseid=caseid)
@@ -159,12 +165,14 @@ def case_comment_get(cur_id, com_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_edit(cur_id, com_id, caseid):
     return case_comment_update(com_id, 'events', caseid)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/comments/add', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_add(cur_id, caseid):
     try:
@@ -202,6 +210,7 @@ def case_comment_add(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/state', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_timeline_state(caseid):
     os = get_timeline_state(caseid=caseid)
@@ -212,6 +221,7 @@ def case_get_timeline_state(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph_assets(caseid):
     assets_cache = CaseAssets.query.with_entities(
@@ -252,6 +262,7 @@ def case_getgraph_assets(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/visualize/data/by-category', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_getgraph(caseid):
     timeline = CasesEvent.query.filter(and_(
@@ -290,12 +301,14 @@ def case_getgraph(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_gettimeline_api_nofilter(caseid):
     return case_gettimeline_api(0)
 
 
 @case_timeline_blueprint.route('/case/timeline/events/list/filter/<int:asset_id>', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_gettimeline_api(asset_id, caseid):
     if asset_id:
@@ -382,6 +395,7 @@ def case_gettimeline_api(asset_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/advanced-filter', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_timeline(caseid):
     args = request.args.to_dict()
@@ -391,7 +405,7 @@ def case_filter_timeline(caseid):
 
         filter_d = dict(json.loads(urllib.parse.unquote_plus(query_filter)))
 
-    except Exception as e:
+    except Exception:
         return response_error('Invalid query string')
 
     assets = filter_d.get('asset')
@@ -467,7 +481,7 @@ def case_filter_timeline(caseid):
             parsed_end_date = parse_bf_date_format(end_date[0])
             condition = and_(condition,
                              CasesEvent.event_date <= parsed_end_date)
-        except Exception as e:
+        except Exception:
             pass
 
     if categories:
@@ -478,7 +492,7 @@ def case_filter_timeline(caseid):
     if event_ids:
         try:
             event_ids = [int(event_id) for event_id in event_ids]
-        except Exception as e:
+        except Exception:
             return response_error('Invalid event id')
 
         condition = and_(condition,
@@ -691,6 +705,7 @@ def case_delete_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/flag/<int:cur_id>', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def event_flag(cur_id, caseid):
     event = get_case_event(cur_id, caseid)
@@ -706,6 +721,7 @@ def event_flag(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view(cur_id, caseid):
     event = get_case_event(cur_id, caseid)
@@ -727,6 +743,7 @@ def event_view(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/<int:cur_id>/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def event_view_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -763,6 +780,7 @@ def event_view_modal(cur_id, caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_event(cur_id, caseid):
     try:
@@ -823,6 +841,7 @@ def case_edit_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add/modal', methods=['GET'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_event_modal(caseid):
     event = CasesEvent()
@@ -841,6 +860,7 @@ def case_add_event_modal(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/filter-help/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_help_modal(caseid, url_redir):
     if url_redir:
@@ -850,6 +870,7 @@ def case_filter_help_modal(caseid, url_redir):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/add', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_event(caseid):
     try:
@@ -904,6 +925,7 @@ def case_add_event(caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/duplicate/<int:cur_id>', methods=['GET'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_duplicate_event(cur_id, caseid):
     call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
@@ -967,6 +989,7 @@ def case_duplicate_event(cur_id, caseid):
 
 
 @case_timeline_blueprint.route('/case/timeline/events/convert-date', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_event_date_convert(caseid):
     jsdata = request.get_json()
@@ -991,6 +1014,7 @@ def case_event_date_convert(caseid):
 
 # BEGIN_RS_CODE
 @case_timeline_blueprint.route('/case/timeline/events/csv_upload', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_events_upload_csv(caseid):
     event_schema = EventSchema()
@@ -1053,7 +1077,7 @@ def case_events_upload_csv(caseid):
             line += 1
 
             if len(event_title) == 0:
-                return response_error(msg=f"Data error",
+                return response_error(msg="Data error",
                                       data={"Error": f"Event Title can not be empty.\nrow number: {line}"})
 
             assets = []
@@ -1064,7 +1088,7 @@ def case_events_upload_csv(caseid):
                 if asset:
                     assets.append(asset.asset_id)
                 else:
-                    return response_error(msg=f"Data error", data={
+                    return response_error(msg="Data error", data={
                         "Error": f"Asset not recognized : {asset_name}.\nrow number: {line}"})
 
             row['event_assets'] = assets
@@ -1077,7 +1101,7 @@ def case_events_upload_csv(caseid):
                 if ioc:
                     iocs.append(ioc.ioc_id)
                 else:
-                    return response_error(msg=f"Data error",
+                    return response_error(msg="Data error",
                                           data={"Error": f"IoC not recognized : {ioc_value}.\nrow number: {line}"})
             row['event_iocs'] = iocs
 
@@ -1086,7 +1110,7 @@ def case_events_upload_csv(caseid):
                 if event_category:
                     row['event_category_id'] = event_category.id
                 else:
-                    return response_error(msg=f"Data error", data={
+                    return response_error(msg="Data error", data={
                         "Error": f"event_category not recognized : {event_category}.\nrow number: {line}"})
             else:
                 row['event_category_id'] = DEFAULT_CAT_ID
@@ -1100,7 +1124,7 @@ def case_events_upload_csv(caseid):
 
             csv_lines.append(row)
     except Exception as e:
-        return response_error(msg=f"Data error", data={"Exception": f"Unhandled error {e}.\nrow number: {line}"})
+        return response_error(msg="Data error", data={"Exception": f"Unhandled error {e}.\nrow number: {line}"})
 
     # ========================== begin saving data ============================
     session = db.session.begin_nested()
@@ -1152,7 +1176,7 @@ def case_events_upload_csv(caseid):
         return response_error(msg="Data error", data=e.normalized_messages())
 
     except Exception as e:
-        return response_error(msg=f"Data error", data={"Error": f"{e}"})
+        return response_error(msg="Data error", data={"Error": f"{e}"})
 
     # db.session.commit()
     try:

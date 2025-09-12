@@ -56,17 +56,21 @@ from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_c
 from app.datamgmt.manage.manage_users_db import set_user_case_access
 from app.datamgmt.reporter.report_db import export_case_json
 from app.forms import PipelinesCaseForm
-from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_fast_check_current_user_has_case_access, \
-    ac_fast_check_user_has_case_access
+from app.iris_engine.access_control.utils import ac_get_all_access_level, ac_fast_check_user_has_case_access
 from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
 from app.models import CaseStatus, ReviewStatusList
 from app.models import UserActivity
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.models.authorization import User
 from app.schema.marshables import TaskLogSchema, CaseSchema, CaseDetailsSchema
-from app.util import ac_api_case_requires, add_obj_history_entry
+from app.util import (
+    ac_api_case_requires,
+    add_obj_history_entry,
+    ac_requires,
+    ac_api_requires,
+)
 from app.util import ac_case_requires
 from app.util import ac_socket_requires
 from app.util import response_error
@@ -92,6 +96,7 @@ log = app.logger
 
 # CONTENT ------------------------------------------------
 @case_blueprint.route('/case', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_r(caseid, url_redir):
 
@@ -119,6 +124,7 @@ def case_r(caseid, url_redir):
 
 
 @case_blueprint.route('/case/exists', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_exists_r(caseid):
 
@@ -129,6 +135,7 @@ def case_exists_r(caseid):
 
 
 @case_blueprint.route('/case/pipelines-modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.full_access)
 def case_pipelines_modal(caseid, url_redir):
     if url_redir:
@@ -183,6 +190,7 @@ def get_message(data):
 
 
 @case_blueprint.route('/case/summary/update', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def desc_fetch(caseid):
 
@@ -208,6 +216,7 @@ def desc_fetch(caseid):
 
 
 @case_blueprint.route('/case/summary/fetch', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def summary_fetch(caseid):
     desc_crc32, description = case_get_desc_crc(caseid)
@@ -216,6 +225,7 @@ def summary_fetch(caseid):
 
 
 @case_blueprint.route('/case/activities/list', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def activity_fetch(caseid):
     ua = UserActivity.query.with_entities(
@@ -238,12 +248,14 @@ def activity_fetch(caseid):
 
 
 @case_blueprint.route("/case/export", methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def export_case(caseid):
     return response_success('', data=export_case_json(caseid))
 
 
 @case_blueprint.route("/case/meta", methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def meta_case(caseid):
     case_details = get_case(caseid)
@@ -251,6 +263,7 @@ def meta_case(caseid):
 
 
 @case_blueprint.route('/case/tasklog/add', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_tasklog(caseid):
 
@@ -269,6 +282,7 @@ def case_add_tasklog(caseid):
 
 
 @case_blueprint.route('/case/users/list', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_users(caseid):
 
@@ -278,6 +292,7 @@ def case_get_users(caseid):
 
 
 @case_blueprint.route('/case/groups/access/modal', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.full_access)
 def groups_cac_view(caseid, url_redir):
     if url_redir:
@@ -290,6 +305,7 @@ def groups_cac_view(caseid, url_redir):
 
 
 @case_blueprint.route('/case/access/set-group', methods=['POST'])
+@ac_api_requires(Permissions.cases_manage_permissions)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def group_cac_set_case(caseid):
 
@@ -332,6 +348,7 @@ def group_cac_set_case(caseid):
 
 
 @case_blueprint.route('/case/access/set-user', methods=['POST'])
+@ac_api_requires(Permissions.cases_manage_permissions)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def user_cac_set_case(caseid):
 
@@ -373,6 +390,7 @@ def user_cac_set_case(caseid):
 
 
 @case_blueprint.route('/case/update-status', methods=['POST'])
+@ac_api_requires(Permissions.cases_manage_meta)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_update_status(caseid):
 
@@ -402,6 +420,7 @@ def case_update_status(caseid):
 
 
 @case_blueprint.route('/case/md-helper', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_md_helper(caseid, url_redir):
 
@@ -409,6 +428,7 @@ def case_md_helper(caseid, url_redir):
 
 
 @case_blueprint.route('/case/review/update', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_review(caseid):
 

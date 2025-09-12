@@ -131,19 +131,19 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respon
 
 
 @manage_cases_blueprint.route('/case/details/<int:cur_id>', methods=['GET'])
-@ac_requires(no_cid_required=True)
+@ac_requires(Permissions.cases_read, no_cid_required=True)
 def details_case_from_case_modal(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     return details_case(cur_id, caseid, url_redir)
 
 
 @manage_cases_blueprint.route('/manage/cases/details/<int:cur_id>', methods=['GET'])
-@ac_requires(no_cid_required=True)
+@ac_requires(Permissions.cases_read, no_cid_required=True)
 def manage_details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[Response, str]:
     return details_case(cur_id, caseid, url_redir)
 
 
 @manage_cases_blueprint.route('/manage/cases/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(Permissions.cases_read)
 def get_case_api(cur_id):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -156,7 +156,7 @@ def get_case_api(cur_id):
 
 
 @manage_cases_blueprint.route('/manage/cases/filter', methods=['GET'])
-@ac_api_requires()
+@ac_api_requires(Permissions.cases_read)
 def manage_case_filter() -> Response:
 
     page = request.args.get('page', 1, type=int)
@@ -230,7 +230,7 @@ def manage_case_filter() -> Response:
 
 
 @manage_cases_blueprint.route('/manage/cases/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_delete)
 def api_delete_case(cur_id):
     try:
         delete(cur_id)
@@ -242,7 +242,7 @@ def api_delete_case(cur_id):
 
 
 @manage_cases_blueprint.route('/manage/cases/reopen/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_write)
 def api_reopen_case(cur_id):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -279,7 +279,7 @@ def api_reopen_case(cur_id):
 
 
 @manage_cases_blueprint.route('/manage/cases/close/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_write)
 def api_case_close(cur_id):
     if not ac_fast_check_current_user_has_case_access(cur_id, [CaseAccessLevel.full_access]):
         return ac_api_return_access_denied(caseid=cur_id)
@@ -324,7 +324,7 @@ def api_case_close(cur_id):
 
 
 @manage_cases_blueprint.route('/manage/cases/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_write)
 def add_case_modal():
 
     form = AddCaseForm()
@@ -344,7 +344,7 @@ def add_case_modal():
 
 
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_create)
 def api_add_case():
     case_schema = CaseSchema()
 
@@ -356,7 +356,7 @@ def api_add_case():
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_read)
 def api_list_case():
     data = list_cases_dict(current_user.id)
 
@@ -364,7 +364,7 @@ def api_list_case():
 
 
 @manage_cases_blueprint.route('/manage/cases/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_manage_meta)
 def update_case_info(cur_id):
     case_schema = CaseSchema()
     try:
@@ -375,7 +375,7 @@ def update_case_info(cur_id):
 
 
 @manage_cases_blueprint.route('/manage/cases/trigger-pipeline', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_write)
 @ac_requires_case_identifier()
 def update_case_files(caseid):
     if not ac_fast_check_current_user_has_case_access(caseid, [CaseAccessLevel.full_access]):
@@ -431,13 +431,13 @@ def update_case_files(caseid):
             # We got some errors and cannot continue
             return response_error(status.get_message(), data=status.get_data())
 
-    except Exception as e:
+    except Exception:
         traceback.print_exc()
         return response_error('Fail to update case', data=traceback.print_exc())
 
 
 @manage_cases_blueprint.route('/manage/cases/upload_files', methods=['POST'])
-@ac_api_requires(Permissions.standard_user)
+@ac_api_requires(Permissions.cases_write)
 @ac_requires_case_identifier()
 def manage_cases_uploadfiles(caseid):
     """

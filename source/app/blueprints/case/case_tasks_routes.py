@@ -50,12 +50,12 @@ from app.datamgmt.states import update_tasks_state
 from app.forms import CaseTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.models.authorization import User
 from app.models.models import CaseTasks
 from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, ac_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
@@ -67,6 +67,7 @@ case_tasks_blueprint = Blueprint('case_tasks',
 
 # CONTENT ------------------------------------------------
 @case_tasks_blueprint.route('/case/tasks', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_tasks(caseid, url_redir):
     if url_redir:
@@ -79,6 +80,7 @@ def case_tasks(caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/list', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks(caseid):
     ct = get_tasks_with_assignees(caseid)
@@ -98,6 +100,7 @@ def case_get_tasks(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/state', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_get_tasks_state(caseid):
     os = get_tasks_state(caseid=caseid)
@@ -108,6 +111,7 @@ def case_get_tasks_state(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/status/update/<int:cur_id>', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_task_statusupdate(cur_id, caseid):
     task = get_task(task_id=cur_id, caseid=caseid)
@@ -128,6 +132,7 @@ def case_task_statusupdate(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/add/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_task_modal(caseid):
 
@@ -142,6 +147,7 @@ def case_add_task_modal(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/add', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_task(caseid):
     try:
@@ -175,6 +181,7 @@ def case_add_task(caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_task_view(cur_id, caseid):
     task = get_task_with_assignees(task_id=cur_id, case_id=caseid)
@@ -187,6 +194,7 @@ def case_task_view(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_task_view_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -211,6 +219,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_edit_task(cur_id, caseid):
     try:
@@ -254,6 +263,7 @@ def case_edit_task(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/delete/<int:cur_id>', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_delete_task(cur_id, caseid):
     call_modules_hook('on_preload_task_delete', data=cur_id, caseid=caseid)
@@ -273,6 +283,7 @@ def case_delete_task(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_task_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -287,6 +298,7 @@ def case_comment_task_modal(cur_id, caseid, url_redir):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/list', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_task_list(cur_id, caseid):
 
@@ -298,6 +310,7 @@ def case_comment_task_list(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/add', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_task_add(cur_id, caseid):
 
@@ -334,6 +347,7 @@ def case_comment_task_add(cur_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_task_get(cur_id, com_id, caseid):
 
@@ -345,6 +359,7 @@ def case_comment_task_get(cur_id, com_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_task_edit(cur_id, com_id, caseid):
 
@@ -352,6 +367,7 @@ def case_comment_task_edit(cur_id, com_id, caseid):
 
 
 @case_tasks_blueprint.route('/case/tasks/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_task_delete(cur_id, com_id, caseid):
 

@@ -28,7 +28,6 @@ from flask import request
 from flask import url_for
 from flask_login import current_user
 
-import app
 from app import db
 from app.blueprints.case.case_comments import case_comment_update
 from app.datamgmt.case.case_assets_db import add_comment_to_asset, get_raw_assets
@@ -61,10 +60,10 @@ from app.forms import ModalAddCaseAssetForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models import AnalysisStatus
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.schema.marshables import CaseAssetsSchema
 from app.schema.marshables import CommentSchema
-from app.util import ac_api_case_requires
+from app.util import ac_api_case_requires, ac_requires, ac_api_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
@@ -75,6 +74,7 @@ case_assets_blueprint = Blueprint('case_assets',
 
 
 @case_assets_blueprint.route('/case/assets', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_assets(caseid, url_redir):
     """
@@ -95,6 +95,7 @@ def case_assets(caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/filter', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_assets(caseid):
     """
@@ -136,6 +137,7 @@ def case_filter_assets(caseid):
     return response_success("", data=ret)
 
 @case_assets_blueprint.route('/case/assets/list', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_list_assets(caseid):
     """
@@ -181,6 +183,7 @@ def case_list_assets(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/state', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_assets_state(caseid):
     os = get_assets_state(caseid=caseid)
@@ -191,6 +194,7 @@ def case_assets_state(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/add/modal', methods=['GET'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def add_asset_modal(caseid):
     form = AssetBasicForm()
@@ -207,6 +211,7 @@ def add_asset_modal(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/add', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def add_asset(caseid):
 
@@ -226,7 +231,7 @@ def add_asset(caseid):
         if request_data.get('ioc_links'):
             errors, logs = set_ioc_links(request_data.get('ioc_links'), asset.asset_id)
             if errors:
-                return response_error(f'Encountered errors while linking IOC. Asset has still been updated.')
+                return response_error('Encountered errors while linking IOC. Asset has still been updated.')
 
         asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
@@ -242,6 +247,7 @@ def add_asset(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/upload', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_upload_ioc(caseid):
 
@@ -282,7 +288,7 @@ def case_upload_ioc(caseid):
             # Asset name must not be empty
             if not row.get("asset_name"):
                 errors.append(f"Empty asset name for row {index}")
-                track_activity(f"Attempted to upload an empty asset name")
+                track_activity("Attempted to upload an empty asset name")
                 index += 1
                 continue
 
@@ -291,7 +297,7 @@ def case_upload_ioc(caseid):
 
             if not row.get('asset_type_name'):
                 errors.append(f"Empty asset type for row {index}")
-                track_activity(f"Attempted to upload an empty asset type")
+                track_activity("Attempted to upload an empty asset type")
                 index += 1
                 continue
 
@@ -320,7 +326,7 @@ def case_upload_ioc(caseid):
             asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
 
             if not asset:
-                errors.append(f"Unable to add asset for internal reason")
+                errors.append("Unable to add asset for internal reason")
                 index += 1
                 continue
 
@@ -341,6 +347,7 @@ def case_upload_ioc(caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>', methods=['GET'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def asset_view(cur_id, caseid):
 
@@ -361,6 +368,7 @@ def asset_view(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def asset_view_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -394,6 +402,7 @@ def asset_view_modal(cur_id, caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def asset_update(cur_id, caseid):
 
@@ -418,7 +427,7 @@ def asset_update(cur_id, caseid):
         if hasattr(asset_schema, 'ioc_links'):
             errors, logs = set_ioc_links(asset_schema.ioc_links, asset.asset_id)
             if errors:
-                return response_error(f'Encountered errors while linking IOC. Asset has still been updated.')
+                return response_error('Encountered errors while linking IOC. Asset has still been updated.')
 
         asset_schema = call_modules_hook('on_postload_asset_update', data=asset_schema, caseid=caseid)
 
@@ -434,6 +443,7 @@ def asset_update(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/delete/<int:cur_id>', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def asset_delete(cur_id, caseid):
 
@@ -454,6 +464,7 @@ def asset_delete(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/modal', methods=['GET'])
+@ac_requires(Permissions.cases_read)
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_asset_modal(cur_id, caseid, url_redir):
     if url_redir:
@@ -468,6 +479,7 @@ def case_comment_asset_modal(cur_id, caseid, url_redir):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/list', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_asset_list(cur_id, caseid):
 
@@ -481,6 +493,7 @@ def case_comment_asset_list(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/add', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_asset_add(cur_id, caseid):
 
@@ -517,6 +530,7 @@ def case_comment_asset_add(cur_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
+@ac_api_requires(Permissions.cases_read)
 @ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_comment_asset_get(cur_id, com_id, caseid):
 
@@ -528,6 +542,7 @@ def case_comment_asset_get(cur_id, com_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_asset_edit(cur_id, com_id, caseid):
 
@@ -535,6 +550,7 @@ def case_comment_asset_edit(cur_id, com_id, caseid):
 
 
 @case_assets_blueprint.route('/case/assets/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
+@ac_api_requires(Permissions.cases_write)
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_comment_asset_delete(cur_id, com_id, caseid):
 

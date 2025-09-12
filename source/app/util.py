@@ -40,6 +40,7 @@ from flask import Request
 from flask import render_template
 from flask import request
 from flask import session
+from flask import g
 from flask import url_for
 from flask_login import current_user
 from flask_login import login_user
@@ -550,27 +551,6 @@ def ac_api_return_access_denied(caseid: int = None):
     return response_error('Permission denied', data=data, status=403)
 
 
-def ac_case_requires(*access_level):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url(request.full_path))
-
-            else:
-                redir, caseid, has_access = get_case_access(request, access_level)
-
-                if not has_access:
-                    return ac_return_access_denied(caseid=caseid)
-
-                kwargs.update({"caseid": caseid, "url_redir": redir})
-
-                return f(*args, **kwargs)
-
-        return wrap
-    return inner_wrap
-
-
 def ac_socket_requires(*access_level):
     def inner_wrap(f):
         @wraps(f)
@@ -610,61 +590,6 @@ def _user_has_required_permissions(permissions):
     return False
 
 
-def ac_requires(*permissions, no_cid_required=False):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-
-            if not is_user_authenticated(request):
-                return redirect(not_authenticated_redirection_url(request.full_path))
-
-            else:
-                redir, caseid, _ = get_case_access(request, [], no_cid_required=no_cid_required)
-
-                kwargs.update({"caseid": caseid, "url_redir": redir})
-
-                if not _user_has_required_permissions(permissions):
-                    return ac_return_access_denied()
-
-                return f(*args, **kwargs)
-        return wrap
-    return inner_wrap
-
-
-def ac_api_case_requires(*access_level):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
-                if cookie_session and not is_api:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
-
-            if not is_user_authenticated(request):
-                return response_error("Authentication required", status=401)
-
-            else:
-                redir, caseid, has_access = get_case_access(request, access_level, from_api=True)
-
-                if not caseid or redir:
-                    return response_error("Invalid case ID", status=404)
-
-                if not has_access:
-                    return ac_api_return_access_denied(caseid=caseid)
-
-                kwargs.update({"caseid": caseid})
-
-                return f(*args, **kwargs)
-
-        return wrap
-    return inner_wrap
-
-
 def endpoint_deprecated(message, version):
     def inner_wrap(f):
         @wraps(f)
@@ -699,6 +624,159 @@ def ac_requires_client_access():
         return wrap
     return inner_wrap
 
+def _is_api_request(req) -> bool:
+    # "API-like" if token headers are present
+    return (req.headers.get('X-IRIS-AUTH') is not None) or (req.headers.get('Authorization') is not None)
+
+def _csrf_cookie_post_guard_api_style():
+    """
+    API behavior: Only enforce CSRF when a POST comes from a browser cookie session
+    without API tokens. Matches previous API decorators’ behavior.
+    """
+    if request.method != 'POST':
+        return None
+    cookie_session = request.cookies.get('session')
+    if cookie_session and not _is_api_request(request):
+        form = FlaskForm()
+        if not form.validate():
+            return response_error('Invalid CSRF token')
+        # remove csrf token from JSON body if present
+        payload = request.get_json(silent=True)
+        if isinstance(payload, dict):
+            payload.pop('csrf_token', None)
+    return None
+
+def _ensure_authenticated(api: bool):
+    """
+    - API: return JSON 401
+    - Web: redirect to login
+    """
+    if is_user_authenticated(request):
+        return None
+    if api:
+        return response_error("Authentication required", status=401)
+    return redirect(not_authenticated_redirection_url(request.full_path))
+
+def _load_permissions_once():
+    if getattr(g, 'effective_permissions', None) is None:
+        g.effective_permissions = ac_get_effective_permissions_of_user(current_user)
+        # Keep session in sync for legacy code that reads it
+        if session.get('permissions') != g.effective_permissions:
+            session['permissions'] = g.effective_permissions
+    return g.effective_permissions
+
+def _ensure_permissions(permissions, *, api: bool):
+    if not permissions:
+        return None
+    _load_permissions_once()
+    if not _user_has_required_permissions(permissions):
+        # Deny shape depends on API vs web
+        return response_error('Permission denied', status=403) if api else ac_return_access_denied()
+    return None
+
+def _ensure_case_context(access_levels, *, enforce_access: bool, no_cid_required: bool, api: bool):
+    """
+    - Always call get_case_access when:
+        * access_levels requested (case guard), or
+        * no_cid_required is False (web ac_requires original behavior expects cid/url_redir)
+    - Injects {"caseid", "url_redir"} in kwargs if available.
+    - On access enforcement failure:
+        * API: use ac_api_return_access_denied(caseid=?)
+        * Web: use ac_return_access_denied()
+    """
+    redir, caseid, has_access = get_case_access(
+        request, access_levels, from_api=api, no_cid_required=no_cid_required
+    )
+
+    if enforce_access:
+        # API case guard previously 404’d on invalid case/redir;
+        # web case guard didn’t 404—just denied. Keep same behavior by branching on api.
+        if api:
+            if not caseid or redir:
+                return response_error("Invalid case ID", status=404), {}
+            if not has_access:
+                return ac_api_return_access_denied(caseid=caseid), {}
+        else:
+            if not has_access:
+                return ac_return_access_denied(), {}
+
+    return None, {"caseid": caseid, "url_redir": redir}
+
+
+def ac_guard(
+    *,
+    # Route type / behavior
+    api: bool = False,                 # API routes use JSON errors; web routes redirect/HTML.
+    csrf_cookie_posts: bool = None,    # None → auto: True only for API mode (keeps old behavior).
+    # Permissions
+    permissions=(),
+    # Case access
+    access_levels=(),
+    enforce_case_access: bool = False, # True for ac_case_requires / ac_api_case_requires
+    # Case ID presence behavior for web "requires" variant
+    no_cid_required: bool = False,     # Same meaning as your web ac_requires
+):
+    """
+    A single decorator to secure both API and web routes.
+
+    Parameters map to legacy decorators:
+      - API:
+        * ac_api_requires(*perms) → ac_guard(api=True, permissions=perms, enforce_case_access=False)
+        * ac_api_case_requires(*levels) → ac_guard(api=True, access_levels=levels, enforce_case_access=True)
+      - Web:
+        * ac_requires(*perms, no_cid_required=False) → ac_guard(api=False, permissions=perms, enforce_case_access=False, no_cid_required=no_cid_required)
+        * ac_case_requires(*levels) → ac_guard(api=False, access_levels=levels, enforce_case_access=True)
+
+    Notes:
+      - Injects kwargs: "caseid" and "url_redir" when available (unchanged).
+      - Preflight runs once per request per mode (API or Web).
+    """
+    # Decide CSRF policy: only API stack enforced CSRF previously
+    if csrf_cookie_posts is None:
+        csrf_cookie_posts = api
+
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            # 0) Preflight run-once flags (separate per mode to allow mixing)
+            flag_name = "_iris_preflight_api_done" if api else "_iris_preflight_web_done"
+
+            # 1) CSRF for cookie POSTs (only when enabled), once per request
+            if csrf_cookie_posts and not getattr(g, flag_name, False):
+                resp = _csrf_cookie_post_guard_api_style()
+                if resp is not None:
+                    return resp
+
+            # 2) Authentication (JSON 401 for API, redirect for web), once per request
+            if not getattr(g, flag_name, False):
+                resp = _ensure_authenticated(api)
+                if resp is not None:
+                    return resp
+                setattr(g, flag_name, True)
+
+            # 3) Permissions (if requested)
+            resp = _ensure_permissions(permissions, api=api)
+            if resp is not None:
+                return resp
+
+            # 4) Case context (if needed)
+            need_case_lookup = bool(access_levels) or (not api and not no_cid_required)
+            if need_case_lookup:
+                resp, extra = _ensure_case_context(
+                    access_levels,
+                    enforce_access=enforce_case_access,
+                    no_cid_required=no_cid_required,
+                    api=api
+                )
+                if resp is not None:
+                    return resp
+                kwargs.update(extra)
+
+            # 5) OK
+            return f(*args, **kwargs)
+        return wrapped
+    return decorator
+
 
 def ac_requires_case_identifier():
     def decorate_with_requires_case_identifier(f):
@@ -720,33 +798,6 @@ def ac_requires_case_identifier():
         return wrap
     return decorate_with_requires_case_identifier
 
-
-def ac_api_requires(*permissions):
-    def inner_wrap(f):
-        @wraps(f)
-        def wrap(*args, **kwargs):
-            if request.method == 'POST':
-                cookie_session = request.cookies.get('session')
-                is_api = (request.headers.get('X-IRIS-AUTH') is not None) | (request.headers.get('Authorization') is not None)
-                if cookie_session and not is_api:
-                    form = FlaskForm()
-                    if not form.validate():
-                        return response_error('Invalid CSRF token')
-                    elif request.is_json:
-                        request.json.pop('csrf_token')
-
-            if not is_user_authenticated(request):
-                return response_error("Authentication required", status=401)
-
-            if 'permissions' not in session:
-                session['permissions'] = ac_get_effective_permissions_of_user(current_user)
-
-            if not _user_has_required_permissions(permissions):
-                return response_error('Permission denied', status=403)
-
-            return f(*args, **kwargs)
-        return wrap
-    return inner_wrap
 
 
 def decompress_7z(filename: Path, output_dir):
