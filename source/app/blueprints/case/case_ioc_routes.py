@@ -57,8 +57,7 @@ from app.models.authorization import CaseAccessLevel, Permissions
 from app.models.models import Ioc
 from app.schema.marshables import CommentSchema
 from app.schema.marshables import IocSchema
-from app.util import ac_api_case_requires, ac_requires, ac_api_requires
-from app.util import ac_case_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 from app.business.iocs import create
@@ -75,8 +74,9 @@ case_ioc_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @case_ioc_blueprint.route('/case/ioc', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_ioc(caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
@@ -91,8 +91,9 @@ def case_ioc(caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/list', methods=['GET'])
-@ac_api_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_list_ioc(caseid):
     iocs = get_detailed_iocs(caseid)
 
@@ -117,8 +118,9 @@ def case_list_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/state', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_ioc_state(caseid):
     os = get_ioc_state(caseid=caseid)
     if os:
@@ -128,8 +130,9 @@ def case_ioc_state(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add', methods=['POST'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_add_ioc(caseid):
     ioc_schema = IocSchema()
 
@@ -141,8 +144,9 @@ def case_add_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/upload', methods=['POST'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_upload_ioc(caseid):
     try:
         # validate before saving
@@ -237,8 +241,9 @@ def case_upload_ioc(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/add/modal', methods=['GET'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_add_ioc_modal(caseid):
 
     form = ModalAddCaseIOCForm()
@@ -251,8 +256,9 @@ def case_add_ioc_modal(caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_delete_ioc(cur_id, caseid):
     try:
 
@@ -264,8 +270,9 @@ def case_delete_ioc(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/modal', methods=['GET'])
-@ac_api_requires(Permissions.cases_read)
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_assets.case_assets', cid=caseid, redirect=True))
@@ -289,8 +296,9 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_view_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
     ioc = get_ioc(cur_id, caseid)
@@ -301,8 +309,9 @@ def case_view_ioc(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_update_ioc(cur_id, caseid):
     ioc_schema = IocSchema()
 
@@ -314,8 +323,9 @@ def case_update_ioc(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/modal', methods=['GET'])
-@ac_api_requires(Permissions.cases_read)
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_comment_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('case_ioc.case_ioc', cid=caseid, redirect=True))
@@ -329,9 +339,13 @@ def case_comment_ioc_modal(cur_id, caseid, url_redir):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/list', methods=['GET'])
-@ac_api_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_comment_ioc_list(cur_id, caseid):
+    ioc = get_ioc(cur_id, caseid=caseid)
+    if not ioc:
+        return response_error('Invalid ioc ID')
 
     ioc_comments = get_case_ioc_comments(cur_id)
     if ioc_comments is None:
@@ -341,8 +355,9 @@ def case_comment_ioc_list(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/add', methods=['POST'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_comment_ioc_add(cur_id, caseid):
 
     try:
@@ -378,8 +393,9 @@ def case_comment_ioc_add(cur_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_read],
+          access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_comment_ioc_get(cur_id, com_id, caseid):
 
     comment = get_case_ioc_comment(cur_id, com_id)
@@ -390,16 +406,18 @@ def case_comment_ioc_get(cur_id, com_id, caseid):
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_comment_ioc_edit(cur_id, com_id, caseid):
 
     return case_comment_update(com_id, 'ioc', caseid)
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=[Permissions.cases_write],
+          access_levels=[CaseAccessLevel.full_access])
 def case_comment_ioc_delete(cur_id, com_id, caseid):
 
     success, msg = delete_ioc_comment(cur_id, com_id)
