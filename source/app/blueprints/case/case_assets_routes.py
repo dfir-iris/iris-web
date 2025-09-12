@@ -547,6 +547,9 @@ def case_comment_asset_add(cur_id, caseid):
           permissions=[Permissions.cases_read],
           access_levels=[CaseAccessLevel.read_only, CaseAccessLevel.full_access])
 def case_comment_asset_get(cur_id, com_id, caseid):
+    asset = get_asset(cur_id, caseid=caseid)
+    if not asset:
+        return response_error("Invalid asset ID")
 
     comment = get_case_asset_comment(cur_id, com_id)
     if not comment:
