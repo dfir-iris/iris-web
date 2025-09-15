@@ -31,8 +31,7 @@ from app.models import Ioc
 from app.models import IocType
 from app.models.authorization import Permissions
 from app.schema.marshables import IocTypeSchema
-from app.util import ac_api_requires
-from app.util import ac_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 
@@ -43,7 +42,8 @@ manage_ioc_type_blueprint = Blueprint('manage_ioc_types',
 
 # CONTENT ------------------------------------------------
 @manage_ioc_type_blueprint.route('/manage/ioc-types/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_ioc_types():
     lstatus = get_ioc_types_list()
 
@@ -51,7 +51,8 @@ def list_ioc_types():
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def get_ioc_type(cur_id):
 
     ioc_type = IocType.query.filter(IocType.type_id == cur_id).first()
@@ -62,7 +63,9 @@ def get_ioc_type(cur_id):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/update/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def view_ioc_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_ioc_types.view_ioc_modal', cid=caseid))
@@ -82,7 +85,9 @@ def view_ioc_modal(cur_id, caseid, url_redir):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_ioc_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_ioc_types.view_ioc_modal', cid=caseid))
@@ -93,7 +98,9 @@ def add_ioc_modal(caseid, url_redir):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_ioc_type_api():
     if not request.is_json:
         return response_error("Invalid request")
@@ -115,7 +122,9 @@ def add_ioc_type_api():
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/delete/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def remove_ioc_type(cur_id):
 
     type_id = IocType.query.filter(
@@ -137,7 +146,9 @@ def remove_ioc_type(cur_id):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def update_ioc(cur_id):
     if not request.is_json:
         return response_error("Invalid request")
@@ -163,7 +174,9 @@ def update_ioc(cur_id):
 
 
 @manage_ioc_type_blueprint.route('/manage/ioc-types/search', methods=['POST'])
-@ac_api_requires()
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def search_ioc_type():
     """Searches for IOC types in the database.
 
