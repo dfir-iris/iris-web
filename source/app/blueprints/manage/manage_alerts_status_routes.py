@@ -36,7 +36,7 @@ manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
 
 # CONTENT ------------------------------------------------
 @manage_alerts_status_blueprint.route('/manage/alert-status/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard
 def list_alert_status() -> Response:
     """
     Get the list of alert status
