@@ -45,8 +45,7 @@ from app.iris_engine.module_handler.module_handler import iris_update_hooks
 from app.iris_engine.module_handler.module_handler import register_module
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
-from app.util import ac_api_requires
-from app.util import ac_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 from app.schema.marshables import IrisModuleSchema
@@ -66,7 +65,7 @@ def has_no_empty_params(rule):
 
 # CONTENT ------------------------------------------------
 @manage_modules_blueprint.route("/sitemap")
-@ac_requires()
+@ac_guard(api=True,)
 def site_map(caseid, url_redir):
     links = []
     for rule in app.url_map.iter_rules():
@@ -77,7 +76,9 @@ def site_map(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_modules_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_module.manage_modules_index', cid=caseid))
@@ -88,7 +89,9 @@ def manage_modules_index(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_modules_list():
     output = iris_modules_list()
 
@@ -96,7 +99,9 @@ def manage_modules_list():
 
 
 @manage_modules_blueprint.route('/manage/modules/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_module():
     if request.json is None:
         return response_error('Invalid request')
@@ -134,7 +139,9 @@ def add_module():
 
 
 @manage_modules_blueprint.route('/manage/modules/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_module_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_modules.add_module', cid=caseid))
@@ -146,7 +153,9 @@ def add_module_modal(caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/get-parameter/<param_name>', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def getmodule_param(param_name, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_modules.add_module', cid=caseid))
@@ -163,7 +172,9 @@ def getmodule_param(param_name, caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/set-parameter/<param_name>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def update_module_param(param_name):
 
     if request.json is None:
@@ -190,7 +201,9 @@ def update_module_param(param_name):
 
 
 @manage_modules_blueprint.route('/manage/modules/update/<int:mod_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def view_module(mod_id, caseid, url_redir):
 
     if url_redir:
@@ -210,7 +223,9 @@ def view_module(mod_id, caseid, url_redir):
 
 
 @manage_modules_blueprint.route('/manage/modules/enable/<int:mod_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def enable_module(mod_id):
 
     module_name = iris_module_name_from_id(mod_id)
@@ -230,7 +245,9 @@ def enable_module(mod_id):
 
 
 @manage_modules_blueprint.route('/manage/modules/disable/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def disable_module(module_id):
     if iris_module_disable_by_id(module_id):
 
@@ -241,7 +258,9 @@ def disable_module(module_id):
 
 
 @manage_modules_blueprint.route('/manage/modules/remove/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def view_delete_module(module_id):
     try:
 
@@ -255,7 +274,9 @@ def view_delete_module(module_id):
 
 
 @manage_modules_blueprint.route('/manage/modules/export-config/<int:module_id>', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def export_mod_config(module_id):
 
     mod_config, mod_name, _ = get_module_config_from_id(module_id)
@@ -270,7 +291,9 @@ def export_mod_config(module_id):
 
 
 @manage_modules_blueprint.route('/manage/modules/import-config/<int:module_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def import_mod_config(module_id):
 
     mod_config, mod_name, _ = get_module_config_from_id(module_id)
@@ -280,7 +303,7 @@ def import_mod_config(module_id):
     if type(parameters_data) is not list:
         try:
             parameters = json.loads(parameters_data)
-        except Exception as e:
+        except Exception:
             return response_error('Invalid data', data="Not a JSON file")
     else:
         parameters = parameters_data
@@ -302,7 +325,9 @@ def import_mod_config(module_id):
 
 
 @manage_modules_blueprint.route('/manage/modules/hooks/list', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def view_modules_hook():
     output = module_list_hooks_view()
     data = [item._asdict() for item in output]
