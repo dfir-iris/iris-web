@@ -48,8 +48,7 @@ from app.forms import ModalDSFileForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel, Permissions
 from app.schema.marshables import DSFileSchema, DSPathSchema
-from app.util import ac_api_case_requires, ac_requires
-from app.util import ac_case_requires
+from app.util import ac_guard
 from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success
@@ -64,8 +63,9 @@ logger = app.logger
 
 
 @datastore_blueprint.route('/datastore/list/tree', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_read,),
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
 def datastore_list_tree(caseid):
 
     data = ds_list_tree(caseid)
@@ -74,8 +74,9 @@ def datastore_list_tree(caseid):
 
 
 @datastore_blueprint.route('/datastore/list/filter', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_read,),
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
 def datastore_list_filter(caseid):
 
     args = request.args.to_dict()
@@ -99,8 +100,9 @@ def datastore_list_filter(caseid):
 
 
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.cases_write)
-@ac_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -116,8 +118,9 @@ def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>/multi-modal', methods=['GET'])
-@ac_requires(Permissions.cases_write)
-@ac_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access))
 def datastore_add_multi_files_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -133,8 +136,9 @@ def datastore_add_multi_files_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/filter-help/modal', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=(Permissions.cases_read,),
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
 def datastore_filter_help_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('index.index', cid=caseid, redirect=True))
@@ -143,8 +147,9 @@ def datastore_filter_help_modal(caseid, url_redir):
 
 
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.cases_write)
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -168,8 +173,9 @@ def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/info/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=False,
+          permissions=(Permissions.cases_read,),
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
 def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
     if url_redir:
@@ -185,8 +191,9 @@ def datastore_info_file_modal(cur_id: int, caseid: int, url_redir: bool):
 
 
 @datastore_blueprint.route('/datastore/file/info/<int:cur_id>', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_read,),
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
 def datastore_info_file(cur_id: int, caseid: int):
 
     file = datastore_get_file(cur_id, caseid)
@@ -201,8 +208,9 @@ def datastore_info_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/update/<int:cur_id>', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access))
 def datastore_update_file(cur_id: int, caseid: int):
 
     dsf = datastore_get_file(cur_id, caseid)
@@ -250,8 +258,9 @@ def datastore_update_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/move/<int:cur_id>', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_move_file(cur_id: int, caseid: int):
 
     if not request.json:
@@ -273,8 +282,9 @@ def datastore_move_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/move/<int:cur_id>', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_move_folder(cur_id: int, caseid: int):
 
     if not request.json:
@@ -302,8 +312,9 @@ def datastore_move_folder(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/view/<int:cur_id>', methods=['GET'])
-@ac_requires(Permissions.cases_read)
-@ac_api_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_read,),
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
 def datastore_view_file(cur_id: int, caseid: int):
     has_error, dsf = datastore_get_local_file_path(cur_id, caseid)
     if has_error:
@@ -326,8 +337,9 @@ def datastore_view_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/add/<int:cur_id>', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_add_file(cur_id: int, caseid: int):
 
     dsp = datastore_get_path_node(cur_id, caseid)
@@ -378,8 +390,9 @@ def datastore_add_file(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/add-interactive', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_add_interactive_file(caseid: int):
 
     dsp = datastore_get_interactive_path_node(caseid)
@@ -412,8 +425,9 @@ def datastore_add_interactive_file(caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/add', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_add_folder(caseid: int):
     data = request.json
     if not data:
@@ -436,8 +450,9 @@ def datastore_add_folder(caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/rename/<int:cur_id>', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_rename_folder(cur_id: int, caseid: int):
     data = request.json
     if not data:
@@ -463,8 +478,9 @@ def datastore_rename_folder(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/folder/delete/<int:cur_id>', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_delete_folder_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_node(cur_id, caseid)
@@ -476,8 +492,9 @@ def datastore_delete_folder_route(cur_id: int, caseid: int):
 
 
 @datastore_blueprint.route('/datastore/file/delete/<int:cur_id>', methods=['POST'])
-@ac_requires(Permissions.cases_write)
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def datastore_delete_file_route(cur_id: int, caseid: int):
 
     has_error, logs = datastore_delete_file(cur_id, caseid)
