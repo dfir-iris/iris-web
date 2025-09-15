@@ -51,10 +51,9 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ContactSchema
 from app.schema.marshables import CustomerSchema
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import ac_api_requires_client_access
 from app.util import ac_requires_client_access
-from app.util import ac_requires
 from app.util import page_not_found
 from app.util import response_error
 from app.util import response_success
@@ -68,7 +67,9 @@ manage_customers_blueprint = Blueprint(
 
 # CONTENT ------------------------------------------------
 @manage_customers_blueprint.route('/manage/customers')
-@ac_requires(Permissions.customers_read, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 def manage_customers(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -80,7 +81,9 @@ def manage_customers(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/list')
-@ac_api_requires(Permissions.customers_read)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 def list_customers():
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
     client_list = get_client_list(current_user_id=current_user.id,
@@ -90,7 +93,9 @@ def list_customers():
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>', methods=['GET'])
-@ac_api_requires(Permissions.customers_read)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 @ac_api_requires_client_access()
 def view_customer(client_id):
 
@@ -102,7 +107,9 @@ def view_customer(client_id):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/view', methods=['GET'])
-@ac_requires(Permissions.customers_read, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 @ac_requires_client_access()
 def view_customer_page(client_id, caseid, url_redir):
     if url_redir:
@@ -120,7 +127,9 @@ def view_customer_page(client_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/add/modal', methods=['GET'])
-@ac_requires(Permissions.customers_write, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.customers_write,),
+          no_cid_required=True)
 @ac_requires_client_access()
 def customer_add_contact_modal(client_id, caseid, url_redir):
     if url_redir:
@@ -132,7 +141,9 @@ def customer_add_contact_modal(client_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/<int:contact_id>/modal', methods=['GET'])
-@ac_requires(Permissions.customers_read, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 @ac_requires_client_access()
 def customer_edit_contact_modal(client_id, contact_id, caseid, url_redir):
     if url_redir:
@@ -154,7 +165,9 @@ def customer_edit_contact_modal(client_id, contact_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/<int:contact_id>/update', methods=['POST'])
-@ac_api_requires(Permissions.customers_write)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_write,),
+          no_cid_required=True)
 @ac_api_requires_client_access()
 def customer_update_contact(client_id, contact_id):
 
@@ -183,7 +196,9 @@ def customer_update_contact(client_id, contact_id):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/add', methods=['POST'])
-@ac_api_requires(Permissions.customers_write)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_write,),
+          no_cid_required=True)
 @ac_api_requires_client_access()
 def customer_add_contact(client_id):
 
@@ -212,7 +227,9 @@ def customer_add_contact(client_id):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/cases', methods=['GET'])
-@ac_api_requires(Permissions.customers_read)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 @ac_api_requires_client_access()
 def get_customer_case_stats(client_id):
 
@@ -296,7 +313,9 @@ def get_customer_case_stats(client_id):
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:client_id>/modal', methods=['GET'])
-@ac_requires(Permissions.customers_read, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 @ac_requires_client_access()
 def view_customer_modal(client_id, caseid, url_redir):
     if url_redir:
@@ -316,7 +335,9 @@ def view_customer_modal(client_id, caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:client_id>', methods=['POST'])
-@ac_api_requires(Permissions.customers_write)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_write,),
+          no_cid_required=True)
 @ac_api_requires_client_access()
 def view_customers(client_id):
     if not request.is_json:
@@ -340,7 +361,9 @@ def view_customers(client_id):
 
 
 @manage_customers_blueprint.route('/manage/customers/add/modal', methods=['GET'])
-@ac_requires(Permissions.customers_read, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.customers_read,),
+          no_cid_required=True)
 def add_customers_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
@@ -350,7 +373,9 @@ def add_customers_modal(caseid, url_redir):
 
 
 @manage_customers_blueprint.route('/manage/customers/add', methods=['POST'])
-@ac_api_requires(Permissions.customers_write)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_write,),
+          no_cid_required=True)
 def add_customers():
     if not request.is_json:
         return response_error("Invalid request")
@@ -374,7 +399,9 @@ def add_customers():
 
 
 @manage_customers_blueprint.route('/manage/customers/delete/<int:client_id>', methods=['POST'])
-@ac_api_requires(Permissions.customers_write)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_write,),
+          no_cid_required=True)
 @ac_api_requires_client_access()
 def delete_customers(client_id):
     try:
@@ -396,7 +423,9 @@ def delete_customers(client_id):
 
 
 @manage_customers_blueprint.route('/manage/customers/<int:client_id>/contacts/<int:contact_id>/delete', methods=['POST'])
-@ac_api_requires(Permissions.customers_write)
+@ac_guard(api=True,
+          permissions=(Permissions.customers_write,),
+          no_cid_required=True)
 @ac_api_requires_client_access()
 def delete_contact_route(client_id, contact_id):
     try:
