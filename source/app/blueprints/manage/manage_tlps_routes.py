@@ -18,7 +18,7 @@
 from flask import Blueprint
 
 from app.models import Tlp
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 
@@ -29,7 +29,8 @@ manage_tlp_type_blueprint = Blueprint('manage_tlp_types',
 
 # CONTENT ------------------------------------------------
 @manage_tlp_type_blueprint.route('/manage/tlp/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_tlp_types():
     lstatus = Tlp.query.all()
 
@@ -37,7 +38,8 @@ def list_tlp_types():
 
 
 @manage_tlp_type_blueprint.route('/manage/tlp/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def get_tlp_type(cur_id):
 
     tlp_type = Tlp.query.filter(Tlp.tlp_id == cur_id).first()

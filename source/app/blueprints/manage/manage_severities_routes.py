@@ -23,7 +23,7 @@ from app.datamgmt.manage.manage_common import get_severity_by_id
 from app.datamgmt.manage.manage_common import get_severities_list
 from app.datamgmt.manage.manage_common import search_severity_by_name
 from app.schema.marshables import SeveritySchema
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 
@@ -33,7 +33,7 @@ manage_severities_blueprint = Blueprint('manage_severities',
 
 
 @manage_severities_blueprint.route('/manage/severities/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def list_severities() -> Response:
     """
     Get the list of severities
@@ -48,7 +48,7 @@ def list_severities() -> Response:
 
 
 @manage_severities_blueprint.route('/manage/severities/<int:severity_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def get_case_alert_status(severity_id: int) -> Response:
     """
     Get the alert status
@@ -63,7 +63,7 @@ def get_case_alert_status(severity_id: int) -> Response:
 
 
 @manage_severities_blueprint.route('/manage/severities/search', methods=['POST'])
-@ac_api_requires()
+@ac_guard(api=True)
 def search_analysis_status():
     if not request.is_json:
         return response_error("Invalid request")

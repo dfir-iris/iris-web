@@ -36,8 +36,7 @@ from app.iris_engine.updater.updater import setup_periodic_update_checks
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ServerSettingsSchema
-from app.util import ac_api_requires
-from app.util import ac_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 from dictdiffer import diff
@@ -51,7 +50,9 @@ manage_srv_settings_blueprint = Blueprint(
 
 
 @manage_srv_settings_blueprint.route('/manage/server/make-update', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_update(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
@@ -61,7 +62,9 @@ def manage_update(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/server/backups/make-db', methods=['GET'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_make_db_backup():
 
     has_error, logs = backup_iris_db()
@@ -75,7 +78,9 @@ def manage_make_db_backup():
 
 
 @manage_srv_settings_blueprint.route('/manage/server/check-updates/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_check_updates_modal(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
@@ -87,7 +92,9 @@ def manage_check_updates_modal(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/settings', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_settings(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_srv_settings_blueprint.manage_settings', cid=caseid))
@@ -110,7 +117,9 @@ def manage_settings(caseid, url_redir):
 
 
 @manage_srv_settings_blueprint.route('/manage/settings/update', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_update_settings():
     if not request.is_json:
         return response_error('Invalid request')
