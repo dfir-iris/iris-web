@@ -53,6 +53,8 @@ class Permissions(enum.Enum):
     cases_manage_permissions = 0x10000
     cases_manage_meta = 0x20000
 
+    dim_read = 0x40000
+
 
 class Organisation(db.Model):
     __tablename__ = 'organisations'

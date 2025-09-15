@@ -44,10 +44,7 @@ from app.models import Notes
 from app.models.alerts import Alert
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
-from app.util import ac_api_case_requires
-from app.util import ac_api_requires
-from app.util import ac_case_requires
-from app.util import ac_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 from iris_interface.IrisInterfaceStatus import IIStatus
@@ -63,7 +60,8 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 # CONTENT ------------------------------------------------
 @dim_tasks_blueprint.route('/dim/tasks', methods=['GET'])
-@ac_requires(Permissions.standard_user)
+@ac_guard(api=False,
+          permissions=(Permissions.dim_read,))
 def dim_index(caseid: int, url_redir):
     if url_redir:
         return redirect(url_for('dim.dim_index', cid=caseid))
@@ -74,7 +72,7 @@ def dim_index(caseid: int, url_redir):
 
 
 @dim_tasks_blueprint.route('/dim/hooks/options/<hook_type>/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def list_dim_hook_options_ioc(hook_type):
     mods_options = (IrisModuleHook.query.with_entities(
         IrisModuleHook.manual_hook_ui_name,
@@ -94,7 +92,9 @@ def list_dim_hook_options_ioc(hook_type):
 
 
 @dim_tasks_blueprint.route('/dim/hooks/call', methods=['POST'])
-@ac_api_case_requires(CaseAccessLevel.full_access)
+@ac_guard(api=True,
+          permissions=(Permissions.cases_write,),
+          access_levels=(CaseAccessLevel.full_access,))
 def dim_hooks_call(caseid):
     logs = []
     js_data = request.json
@@ -200,7 +200,8 @@ def dim_hooks_call(caseid):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/list/<int:count>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          permissions=(Permissions.dim_read,))
 def list_dim_tasks(count):
     tasks = CeleryTaskMeta.query.filter(
         ~ CeleryTaskMeta.name.like('app.iris_engine.updater.updater.%')
@@ -263,6 +264,9 @@ def list_dim_tasks(count):
 
 
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
+@ac_guard(api=False,
+          permissions=(Permissions.cases_read, Permissions.dim_read),
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
 @ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def task_status(task_id, caseid, url_redir):
     if url_redir:
