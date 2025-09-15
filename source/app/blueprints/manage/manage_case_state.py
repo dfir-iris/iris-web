@@ -32,9 +32,8 @@ from app.forms import CaseStateForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import CaseStateSchema
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import response_error
-from app.util import ac_requires
 from app.util import response_success
 
 manage_case_state_blueprint = Blueprint('manage_case_state',
@@ -44,7 +43,8 @@ manage_case_state_blueprint = Blueprint('manage_case_state',
 
 # CONTENT ------------------------------------------------
 @manage_case_state_blueprint.route('/manage/case-states/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_case_state() -> Response:
     """Get the list of case state
 
@@ -58,7 +58,8 @@ def list_case_state() -> Response:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/<int:state_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def get_case_state(state_id: int) -> Response:
     """Get a case state
 
@@ -79,7 +80,9 @@ def get_case_state(state_id: int) -> Response:
 
 @manage_case_state_blueprint.route('/manage/case-states/update/<int:state_id>/modal',
                                             methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def update_case_state_modal(state_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     """Update a case state
 
@@ -109,7 +112,9 @@ def update_case_state_modal(state_id: int, caseid: int, url_redir: bool) -> Unio
 
 @manage_case_state_blueprint.route('/manage/case-states/update/<int:state_id>',
                                             methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def update_case_state(state_id: int) -> Response:
     """Update a case state
 
@@ -146,7 +151,9 @@ def update_case_state(state_id: int) -> Response:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_case_state_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
     """Add a case state
 
@@ -167,7 +174,9 @@ def add_case_state_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_case_state() -> Response:
     """Add a case state
 
@@ -197,7 +206,9 @@ def add_case_state() -> Response:
 
 
 @manage_case_state_blueprint.route('/manage/case-states/delete/<int:state_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def delete_case_state(state_id: int) -> Response:
     """Delete a case state
 

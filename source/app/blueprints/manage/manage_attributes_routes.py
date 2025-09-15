@@ -119,7 +119,7 @@ def attributes_preview(caseid, url_redir):
 @manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
 @ac_guard(api=True,
           permissions=(Permissions.server_administrator,),
-         no_cid_required=True)
+          no_cid_required=True)
 def update_attribute(cur_id):
     if not request.is_json:
         return response_error("Invalid request")
