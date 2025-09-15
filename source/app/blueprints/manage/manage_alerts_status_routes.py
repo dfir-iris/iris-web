@@ -25,7 +25,7 @@ from app.datamgmt.alerts.alerts_db import get_alert_resolution_list
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.schema.marshables import AlertStatusSchema
 from app.schema.marshables import AlertResolutionSchema
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 
@@ -36,7 +36,7 @@ manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
 
 # CONTENT ------------------------------------------------
 @manage_alerts_status_blueprint.route('/manage/alert-status/list', methods=['GET'])
-@ac_guard
+@ac_guard(api=True)
 def list_alert_status() -> Response:
     """
     Get the list of alert status
@@ -54,7 +54,7 @@ def list_alert_status() -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/<int:classification_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def get_case_alert_status(classification_id: int) -> Response:
     """
     Get the alert status
@@ -70,7 +70,7 @@ def get_case_alert_status(classification_id: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/search', methods=['POST'])
-@ac_api_requires()
+@ac_guard(api=True)
 def search_alert_status():
     if not request.is_json:
         return response_error("Invalid request")
@@ -92,7 +92,7 @@ def search_alert_status():
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def list_alert_resolution() -> Response:
     """
     Get the list of alert resolution
@@ -110,7 +110,7 @@ def list_alert_resolution() -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/<int:resolution_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def get_case_alert_resolution(resolution_id: int) -> Response:
     """
     Get the alert resolution
@@ -126,7 +126,7 @@ def get_case_alert_resolution(resolution_id: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/search', methods=['POST'])
-@ac_api_requires()
+@ac_guard(api=True)
 def search_alert_resolution():
     if not request.is_json:
         return response_error("Invalid request")
