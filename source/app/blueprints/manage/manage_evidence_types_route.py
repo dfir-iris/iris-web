@@ -32,9 +32,8 @@ from app.forms import EvidenceTypeForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import EvidenceTypeSchema
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import response_error
-from app.util import ac_requires
 from app.util import response_success
 
 manage_evidence_types_blueprint = Blueprint('manage_evidence_types',
@@ -44,7 +43,8 @@ manage_evidence_types_blueprint = Blueprint('manage_evidence_types',
 
 # CONTENT ------------------------------------------------
 @manage_evidence_types_blueprint.route('/manage/evidence-types/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_evidence_types() -> Response:
     """Get the list of evidence types
 
@@ -58,7 +58,8 @@ def list_evidence_types() -> Response:
 
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/<int:evidence_type_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def get_evidence_type(evidence_type_id: int) -> Response:
     """Get an evidence type
 
@@ -80,7 +81,9 @@ def get_evidence_type(evidence_type_id: int) -> Response:
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/update/<int:evidence_type_id>/modal',
                                        methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def update_evidence_type_modal(evidence_type_id: int, caseid: int, url_redir: bool) -> Union[str, Response]:
     """Update an evidence type
 
@@ -110,7 +113,9 @@ def update_evidence_type_modal(evidence_type_id: int, caseid: int, url_redir: bo
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/update/<int:evidence_type_id>',
                                        methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def update_case_classification(evidence_type_id: int) -> Response:
     """Update an evidence type
 
@@ -144,7 +149,9 @@ def update_case_classification(evidence_type_id: int) -> Response:
 
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/add/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_evidence_type_modal(caseid: int, url_redir: bool) -> Union[str, Response]:
     """Add an evidence type
 
@@ -165,7 +172,9 @@ def add_evidence_type_modal(caseid: int, url_redir: bool) -> Union[str, Response
 
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/add', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def add_evidence_type() -> Response:
     """Add an evidence type
 
@@ -196,7 +205,9 @@ def add_evidence_type() -> Response:
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/delete/<int:evidence_type_id>',
                                        methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def delete_evidence_type(evidence_type_id: int) -> Response:
     """Delete an evidence type
 
@@ -221,7 +232,8 @@ def delete_evidence_type(evidence_type_id: int) -> Response:
 
 
 @manage_evidence_types_blueprint.route('/manage/evidence-types/search', methods=['POST'])
-@ac_api_requires()
+@ac_guard(api=False,
+          no_cid_required=True)
 def search_evidence_type():
     if not request.is_json:
         return response_error("Invalid request")

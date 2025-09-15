@@ -21,7 +21,7 @@ from flask import Blueprint, request
 from app.datamgmt.manage.manage_case_objs import search_event_category_by_name
 from app.models.models import EventCategory
 from app.schema.marshables import EventCategorySchema
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 
@@ -32,7 +32,8 @@ manage_event_cat_blueprint = Blueprint('manage_event_cat',
 
 # CONTENT ------------------------------------------------
 @manage_event_cat_blueprint.route('/manage/event-categories/list', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_event_categories():
     lcat= EventCategory.query.with_entities(
         EventCategory.id,
@@ -45,7 +46,8 @@ def list_event_categories():
 
 
 @manage_event_cat_blueprint.route('/manage/event-categories/<int:cur_id>', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def get_event_category(cur_id):
     lcat = EventCategory.query.with_entities(
         EventCategory.id,
@@ -63,7 +65,8 @@ def get_event_category(cur_id):
 
 
 @manage_event_cat_blueprint.route('/manage/event-categories/search', methods=['POST'])
-@ac_api_requires()
+@ac_guard(api=True,
+          no_cid_required=True)
 def search_event_category():
     if not request.is_json:
         return response_error("Invalid request")
