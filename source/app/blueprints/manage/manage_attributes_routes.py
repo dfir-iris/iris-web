@@ -30,8 +30,7 @@ from app.forms import AddAssetForm
 from app.forms import AttributeForm
 from app.models.authorization import Permissions
 from app.models.models import CustomAttribute
-from app.util import ac_api_requires
-from app.util import ac_requires
+from app.util import ac_guard
 from app.util import response_error
 from app.util import response_success
 
@@ -40,7 +39,9 @@ manage_attributes_blueprint = Blueprint('manage_attributes', __name__, template_
 
 # CONTENT ------------------------------------------------
 @manage_attributes_blueprint.route('/manage/attributes')
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_attributes(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -51,7 +52,9 @@ def manage_attributes(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/list')
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def list_attributes():
     # Get all attributes
     attributes = CustomAttribute.query.with_entities(
@@ -69,7 +72,9 @@ def list_attributes():
 
 
 @manage_attributes_blueprint.route('/manage/attributes/<int:cur_id>/modal', methods=['GET'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def attributes_modal(cur_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
@@ -86,18 +91,20 @@ def attributes_modal(cur_id, caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/preview', methods=['POST'])
-@ac_requires(Permissions.server_administrator, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def attributes_preview(caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_attributes.manage_attributes', cid=caseid))
 
     data = request.get_json()
     if not data:
-        return response_error(f"Invalid request")
+        return response_error("Invalid request")
 
     attribute = data.get('attribute_content')
     if not attribute:
-        return response_error(f"Invalid request")
+        return response_error("Invalid request")
 
     try:
         attribute = json.loads(attribute)
@@ -110,7 +117,9 @@ def attributes_preview(caseid, url_redir):
 
 
 @manage_attributes_blueprint.route('/manage/attributes/update/<int:cur_id>', methods=['POST'])
-@ac_api_requires(Permissions.server_administrator)
+@ac_guard(api=True,
+          permissions=(Permissions.server_administrator,),
+         no_cid_required=True)
 def update_attribute(cur_id):
     if not request.is_json:
         return response_error("Invalid request")

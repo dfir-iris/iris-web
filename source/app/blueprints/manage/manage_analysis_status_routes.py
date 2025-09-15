@@ -33,7 +33,8 @@ manage_anastatus_blueprint = Blueprint('manage_anastatus', __name__, template_fo
 
 # CONTENT ------------------------------------------------
 @manage_anastatus_blueprint.route('/manage/analysis-status/list', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_anastatus():
     lstatus = AnalysisStatus.query.with_entities(
         AnalysisStatus.id,
@@ -46,7 +47,8 @@ def list_anastatus():
 
 
 @manage_anastatus_blueprint.route('/manage/compromise-status/list', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_compr_status():
     compro_status = get_compromise_status_dict()
 
@@ -54,7 +56,8 @@ def list_compr_status():
 
 
 @manage_anastatus_blueprint.route('/manage/outcome-status/list', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_outcome_status() -> Response:
     """ Returns a list of outcome status
 
@@ -71,7 +74,8 @@ def list_outcome_status() -> Response:
 
 
 @manage_anastatus_blueprint.route('/manage/analysis-status/<int:cur_id>', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def view_anastatus(cur_id):
     lstatus = AnalysisStatus.query.with_entities(
         AnalysisStatus.id,
@@ -87,7 +91,8 @@ def view_anastatus(cur_id):
 
 
 @manage_anastatus_blueprint.route('/manage/analysis-status/search', methods=['POST'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def search_analysis_status():
     if not request.is_json:
         return response_error("Invalid request")

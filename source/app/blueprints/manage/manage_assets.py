@@ -33,7 +33,8 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/assets/filter', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def manage_assets_filter() -> Response:
     """ Returns a list of assets, filtered by the given parameters.
     """

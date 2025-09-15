@@ -38,7 +38,8 @@ manage_ac_blueprint = Blueprint(
 
 @manage_ac_blueprint.route('/manage/access-control', methods=['GET'])
 @ac_guard(api=False,
-          permissions=(Permissions.server_administrator,))
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_ac_index(caseid, url_redir):
     if url_redir:
         return redirect(url_for('access_control.manage_ac_index', cid=caseid))
@@ -50,7 +51,8 @@ def manage_ac_index(caseid, url_redir):
 
 @manage_ac_blueprint.route('/manage/access-control/recompute-effective-users-ac', methods=['GET'])
 @ac_guard(api=True,
-          permissions=(Permissions.server_administrator,))
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_ac_compute_effective_all_ac():
 
     ac_recompute_all_users_effective_ac()
@@ -60,7 +62,8 @@ def manage_ac_compute_effective_all_ac():
 
 @manage_ac_blueprint.route('/manage/access-control/recompute-effective-user-ac/<int:cur_id>', methods=['GET'])
 @ac_guard(api=True,
-          permissions=(Permissions.server_administrator,))
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_ac_compute_effective_ac(cur_id):
 
     ac_recompute_effective_ac(cur_id)
@@ -70,7 +73,8 @@ def manage_ac_compute_effective_ac(cur_id):
 
 @manage_ac_blueprint.route('/manage/access-control/reset-mfa/<int:cur_id>', methods=['GET'])
 @ac_guard(api=True,
-          permissions=(Permissions.server_administrator,))
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_ac_reset_mfa(cur_id):
 
     _reset_user_mfa(cur_id)
@@ -81,7 +85,8 @@ def manage_ac_reset_mfa(cur_id):
 
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>', methods=['GET'])
 @ac_guard(api=True,
-          permissions=(Permissions.server_administrator,))
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_ac_audit_user(cur_id):
     user_audit = {
         'access_audit': ac_trace_user_effective_cases_access_2(cur_id),
@@ -93,7 +98,8 @@ def manage_ac_audit_user(cur_id):
 
 @manage_ac_blueprint.route('/manage/access-control/audit/users/<int:cur_id>/modal', methods=['GET'])
 @ac_guard(api=True,
-          permissions=(Permissions.server_administrator,))
+          permissions=(Permissions.server_administrator,),
+          no_cid_required=True)
 def manage_ac_audit_user_modal(cur_id):
     access_audit = ac_trace_user_effective_cases_access_2(cur_id)
     permissions_audit = ac_trace_effective_user_permissions(cur_id)

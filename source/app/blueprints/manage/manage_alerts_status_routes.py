@@ -36,7 +36,8 @@ manage_alerts_status_blueprint = Blueprint('manage_alerts_status',
 
 # CONTENT ------------------------------------------------
 @manage_alerts_status_blueprint.route('/manage/alert-status/list', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_alert_status() -> Response:
     """
     Get the list of alert status
@@ -54,7 +55,8 @@ def list_alert_status() -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/<int:classification_id>', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def get_case_alert_status(classification_id: int) -> Response:
     """
     Get the alert status
@@ -70,7 +72,8 @@ def get_case_alert_status(classification_id: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-status/search', methods=['POST'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def search_alert_status():
     if not request.is_json:
         return response_error("Invalid request")
@@ -92,7 +95,8 @@ def search_alert_status():
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/list', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def list_alert_resolution() -> Response:
     """
     Get the list of alert resolution
@@ -110,7 +114,8 @@ def list_alert_resolution() -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/<int:resolution_id>', methods=['GET'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def get_case_alert_resolution(resolution_id: int) -> Response:
     """
     Get the alert resolution
@@ -126,7 +131,8 @@ def get_case_alert_resolution(resolution_id: int) -> Response:
 
 
 @manage_alerts_status_blueprint.route('/manage/alert-resolutions/search', methods=['POST'])
-@ac_guard(api=True)
+@ac_guard(api=True,
+          no_cid_required=True)
 def search_alert_resolution():
     if not request.is_json:
         return response_error("Invalid request")
