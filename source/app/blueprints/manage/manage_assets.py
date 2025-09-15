@@ -23,7 +23,7 @@ from app.datamgmt.manage.manage_assets_db import get_filtered_assets
 from app.iris_engine.access_control.utils import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import ac_api_return_access_denied
 from app.util import response_success
 
@@ -33,7 +33,7 @@ manage_assets_blueprint = Blueprint('manage_assets',
 
 
 @manage_assets_blueprint.route('/manage/assets/filter', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def manage_assets_filter() -> Response:
     """ Returns a list of assets, filtered by the given parameters.
     """
