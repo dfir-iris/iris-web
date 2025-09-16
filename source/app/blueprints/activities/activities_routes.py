@@ -27,8 +27,7 @@ import app
 from app.datamgmt.activities.activities_db import get_all_users_activities
 from app.datamgmt.activities.activities_db import get_users_activities
 from app.models.authorization import Permissions
-from app.util import ac_api_requires
-from app.util import ac_requires
+from app.util import ac_guard
 from app.util import response_success
 
 activities_blueprint = Blueprint(
@@ -41,7 +40,8 @@ basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 
 @activities_blueprint.route('/activities', methods=['GET'])
-@ac_requires(Permissions.activities_read, Permissions.all_activities_read)
+@ac_guard(api=False,
+          permissions=[Permissions.activities_read, Permissions.all_activities_read])
 def activities_index(caseid: int, url_redir):
     if url_redir:
         return redirect(url_for('activities.activities_index', cid=caseid, redirect=True))
@@ -52,7 +52,8 @@ def activities_index(caseid: int, url_redir):
 
 
 @activities_blueprint.route('/activities/list', methods=['GET'])
-@ac_api_requires(Permissions.activities_read, Permissions.all_activities_read)
+@ac_guard(api=False,
+          permissions=[Permissions.activities_read, Permissions.all_activities_read])
 def list_activities():
     # Get User activities from database
 
@@ -65,7 +66,8 @@ def list_activities():
 
 
 @activities_blueprint.route('/activities/list-all', methods=['GET'])
-@ac_api_requires(Permissions.all_activities_read)
+@ac_guard(api=False,
+          permissions=[Permissions.all_activities_read])
 def list_all_activities():
     # Get User activities from database
 
