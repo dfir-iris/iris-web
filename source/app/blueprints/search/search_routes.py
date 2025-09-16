@@ -25,7 +25,6 @@ from flask import url_for
 from sqlalchemy import and_
 
 from app.forms import SearchForm
-from app.iris_engine.access_control.utils import ac_flag_match_mask
 from app.iris_engine.utils.tracker import track_activity
 from app.models import Comments
 from app.models.authorization import Permissions
@@ -36,8 +35,7 @@ from app.models.models import IocLink
 from app.models.models import IocType
 from app.models.models import Notes
 from app.models.models import Tlp
-from app.util import ac_api_requires
-from app.util import ac_requires
+from app.util import ac_guard
 from app.util import response_success
 
 search_blueprint = Blueprint('search',
@@ -46,7 +44,9 @@ search_blueprint = Blueprint('search',
 
 
 @search_blueprint.route('/search', methods=['POST'])
-@ac_api_requires(Permissions.search_across_cases)
+@ac_guard(api=True,
+          permissions=[Permissions.search_across_cases],
+          no_cid_required=True)
 def search_file_post():
 
     jsdata = request.get_json()
@@ -127,12 +127,13 @@ def search_file_post():
         ).all()
 
         files = [row._asdict() for row in comments]
-
+    
     return response_success("Results fetched", files)
 
 
 @search_blueprint.route('/search', methods=['GET'])
-@ac_requires(Permissions.search_across_cases)
+@ac_guard(api=False,
+          no_cid_required=True)
 def search_file_get(caseid, url_redir):
     if url_redir:
         return redirect(url_for('search.search_file_get', cid=caseid))
