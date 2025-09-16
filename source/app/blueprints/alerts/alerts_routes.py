@@ -42,8 +42,8 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import AlertStatus
 from app.models.authorization import Permissions
 from app.schema.marshables import AlertSchema, CaseSchema, CommentSchema, CaseAssetsSchema, IocSchema
-from app.util import ac_api_requires
-from app.util import response_error, add_obj_history_entry, ac_requires
+from app.util import ac_guard
+from app.util import response_error, add_obj_history_entry
 from app.util import response_success
 
 alerts_blueprint = Blueprint(
@@ -54,7 +54,8 @@ alerts_blueprint = Blueprint(
 
 
 @alerts_blueprint.route('/alerts/filter', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_read,))
 def alerts_list_route() -> Response:
     """
     Get a list of alerts from the database
@@ -157,7 +158,8 @@ def alerts_list_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/add', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,))
 def alerts_add_route() -> Response:
     """
     Add a new alert to the database
@@ -231,7 +233,8 @@ def alerts_add_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_read,))
 def alerts_get_route(alert_id) -> Response:
     """
     Get an alert from the database
@@ -266,7 +269,8 @@ def alerts_get_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/similarities/<int:alert_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_read,))
 def alerts_similarities_route(alert_id) -> Response:
     """
     Get an alert and similarities from the database
@@ -311,7 +315,8 @@ def alerts_similarities_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/update/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,))
 def alerts_update_route(alert_id) -> Response:
     """
     Update an alert in the database
@@ -400,7 +405,8 @@ def alerts_update_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/update', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,))
 def alerts_batch_update_route() -> Response:
     """
     Update multiple alerts in the database
@@ -476,7 +482,8 @@ def alerts_batch_update_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/delete', methods=['POST'])
-@ac_api_requires(Permissions.alerts_delete)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_delete,))
 def alerts_batch_delete_route() -> Response:
     """
     Delete multiple alerts from the database
@@ -521,7 +528,8 @@ def alerts_batch_delete_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/delete/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_delete)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_delete,))
 def alerts_delete_route(alert_id) -> Response:
     """
     Delete an alert from the database
@@ -567,7 +575,8 @@ def alerts_delete_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/escalate/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,Permissions.cases_write,))
 def alerts_escalate_route(alert_id) -> Response:
     """
     Escalate an alert
@@ -638,7 +647,8 @@ def alerts_escalate_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/merge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,Permissions.cases_write,))
 def alerts_merge_route(alert_id) -> Response:
     """
     Merge an alert into a case
@@ -706,7 +716,8 @@ def alerts_merge_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/unmerge/<int:alert_id>', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,Permissions.cases_write,))
 def alerts_unmerge_route(alert_id) -> Response:
     """
     Unmerge an alert from a case
@@ -762,7 +773,8 @@ def alerts_unmerge_route(alert_id) -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/merge', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,Permissions.cases_write,))
 def alerts_batch_merge_route() -> Response:
     """
     Merge multiple alerts into a case
@@ -841,7 +853,8 @@ def alerts_batch_merge_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts/batch/escalate', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,Permissions.cases_write,))
 def alerts_batch_escalate_route() -> Response:
     """
     Escalate multiple alerts into a case
@@ -918,7 +931,8 @@ def alerts_batch_escalate_route() -> Response:
 
 
 @alerts_blueprint.route('/alerts', methods=['GET'])
-@ac_requires(Permissions.alerts_read, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.alerts_read,))
 def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
     """
     List all alerts
@@ -938,7 +952,8 @@ def alerts_list_view_route(caseid, url_redir) -> Union[str, Response]:
 
 
 @alerts_blueprint.route('/alerts/<int:cur_id>/comments/modal', methods=['GET'])
-@ac_requires(Permissions.alerts_read, no_cid_required=True)
+@ac_guard(api=False,
+          permissions=(Permissions.alerts_read,))
 def alert_comment_modal(cur_id, caseid, url_redir):
     """
     Get the modal for the alert comments
@@ -965,7 +980,8 @@ def alert_comment_modal(cur_id, caseid, url_redir):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/list', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_read,))
 def alert_comments_get(alert_id):
     """
     Get the comments for an alert
@@ -993,7 +1009,8 @@ def alert_comments_get(alert_id):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/delete', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,))
 def alert_comment_delete(alert_id, com_id):
     """
     Delete a comment for an alert
@@ -1026,7 +1043,8 @@ def alert_comment_delete(alert_id, com_id):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>', methods=['GET'])
-@ac_api_requires(Permissions.alerts_read)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_read,))
 def alert_comment_get(alert_id, com_id):
     """
     Get a comment for an alert
@@ -1055,7 +1073,8 @@ def alert_comment_get(alert_id, com_id):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/edit', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,))
 def alert_comment_edit(alert_id, com_id):
     """
     Edit a comment for an alert
@@ -1079,7 +1098,8 @@ def alert_comment_edit(alert_id, com_id):
 
 
 @alerts_blueprint.route('/alerts/<int:alert_id>/comments/add', methods=['POST'])
-@ac_api_requires(Permissions.alerts_write)
+@ac_guard(api=True,
+          permissions=(Permissions.alerts_write,))
 def case_comment_add(alert_id):
     """
     Add a comment to an alert
