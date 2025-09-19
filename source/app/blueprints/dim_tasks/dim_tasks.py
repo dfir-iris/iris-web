@@ -58,7 +58,6 @@ dim_tasks_blueprint = Blueprint(
 basedir = os.path.abspath(os.path.dirname(app.__file__))
 
 
-# CONTENT ------------------------------------------------
 @dim_tasks_blueprint.route('/dim/tasks', methods=['GET'])
 @ac_guard(api=False,
           permissions=(Permissions.dim_read,))
@@ -266,8 +265,8 @@ def list_dim_tasks(count):
 @dim_tasks_blueprint.route('/dim/tasks/status/<task_id>', methods=['GET'])
 @ac_guard(api=False,
           permissions=(Permissions.cases_read, Permissions.dim_read),
-          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access))
-@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+          access_levels=(CaseAccessLevel.read_only, CaseAccessLevel.full_access),
+          enforce_case_access=True)
 def task_status(task_id, caseid, url_redir):
     if url_redir:
         return response_error("Invalid request")

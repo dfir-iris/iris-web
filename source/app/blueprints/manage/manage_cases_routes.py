@@ -374,7 +374,7 @@ def api_add_case():
 
 
 @manage_cases_blueprint.route('/manage/cases/list', methods=['GET'])
-@ac_api_requires(Permissions.cases_read)
+@ac_guard(api=True, permissions=[Permissions.cases_read])
 def api_list_case():
     data = list_cases_dict(current_user.id)
 

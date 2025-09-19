@@ -19,7 +19,7 @@
 from flask import Blueprint
 
 from app import app
-from app.util import ac_api_requires
+from app.util import ac_guard
 from app.util import response_success
 
 api_blueprint = Blueprint(
@@ -29,15 +29,14 @@ api_blueprint = Blueprint(
 )
 
 
-# CONTENT ------------------------------------------------
 @api_blueprint.route('/api/ping', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def api_ping():
     return response_success("pong")
 
 
 @api_blueprint.route('/api/versions', methods=['GET'])
-@ac_api_requires()
+@ac_guard(api=True)
 def api_version():
     versions = {
         "iris_current": app.config.get('IRIS_VERSION'),
