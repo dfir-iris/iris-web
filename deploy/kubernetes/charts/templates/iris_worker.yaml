@@ -73,6 +73,26 @@ spec:
           - name: NUMBER_OF_CHILD
             value: {{ .Values.irisworker.NUMBER_OF_CHILD | quote }}
 
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  ps -eo cmd | grep -E "celery -A app.celery worker" | grep -Pv ^grep > /dev/null
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  ps -eo cmd | grep -E "celery -A app.celery worker" | grep -Pv ^grep > /dev/null
+            initialDelaySeconds: 15
+            periodSeconds: 10
 
           volumeMounts:
             - mountPath: /home/iris/downloads
