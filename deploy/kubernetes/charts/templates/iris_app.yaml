@@ -108,6 +108,19 @@ spec:
           ports:
             - containerPort: 8000
 
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
           volumeMounts:
             - mountPath: /home/iris/downloads
               name: iris-downloads  
