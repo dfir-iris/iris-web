@@ -45,65 +45,59 @@ spec:
           imagePullPolicy: "{{ .Values.irisapp.imagePullPolicy }}"
           command: ['nohup', './iris-entrypoint.sh', 'iriswebapp']
 
+          envFrom:
+          {{- range $.Values.irisapp.envFromSecrets }}
+            - secretRef:
+                name: {{ .name }}
+          {{- end }}
+
           env:
-          {{- range $key := list "POSTGRES_USER" "POSTGRES_PASSWORD" "POSTGRES_ADMIN_USER" "POSTGRES_ADMIN_PASSWORD" "POSTGRES_PORT" "POSTGRES_SERVER" }}
-          - name: {{ $key }}
-            {{- if and (hasKey $.Values.irisapp "envFromSecret") (has $key $.Values.irisapp.envFromSecret.keys) }}
-            valueFrom:
-              secretKeyRef:
-                name: {{ $.Values.irisapp.envFromSecret.name }}
-                key: {{ $key }}
-            {{- else }}
-            value: {{ index $.Values.irisapp $key | quote }}
+            - name:  IRIS_SECRET_KEY
+              value: {{ .Values.irisapp.IRIS_SECRET_KEY | quote }}
+
+            - name:  IRIS_SECURITY_PASSWORD_SALT
+              value: {{ .Values.irisapp.IRIS_SECURITY_PASSWORD_SALT | quote }}
+
+            - name:  DB_RETRY_COUNT
+              value: {{ .Values.irisapp.DB_RETRY_COUNT | quote }}
+
+            - name:  DB_RETRY_DELAY
+              value: {{ .Values.irisapp.DB_RETRY_DELAY | quote }}
+
+            - name:  INTERFACE_HTTPS_PORT
+              value: {{ .Values.irisapp.INTERFACE_HTTPS_PORT | quote }}
+
+            - name:  IRIS_ADM_USERNAME
+              value: {{ .Values.irisapp.IRIS_ADM_USERNAME | quote }}
+
+            - name:  IRIS_ADM_PASSWORD
+              value: {{ .Values.irisapp.IRIS_ADM_PASSWORD | quote }}
+
+            {{- if eq .Values.irisapp.IRIS_AUTHENTICATION_TYPE "oidc" }}
+            - name: OIDC_ISSUER_URL
+              value: {{ .Values.irisapp.OIDC_ISSUER_URL | quote }}
+
+            - name: OIDC_CLIENT_ID
+              value: {{ .Values.irisapp.OIDC_CLIENT_ID | quote }}
+
+            - name: OIDC_CLIENT_SECRET
+              value: {{ .Values.irisapp.OIDC_CLIENT_SECRET | quote }}
+
+            - name: OIDC_AUTH_ENDPOINT
+              value: {{ .Values.irisapp.OIDC_AUTH_ENDPOINT | quote }}
+
+            - name: OIDC_TOKEN_ENDPOINT
+              value: {{ .Values.irisapp.OIDC_TOKEN_ENDPOINT | quote }}
+
+            - name: OIDC_END_SESSION_ENDPOINT
+              value: {{ .Values.irisapp.OIDC_END_SESSION_ENDPOINT | quote }}
+
+            - name: OIDC_MAPPING_USERGROUP
+              value: {{ .Values.irisapp.OIDC_MAPPING_USERGROUP | quote }}
+
+            - name: OIDC_MAPPING_ROLES
+              value: {{ .Values.irisapp.OIDC_MAPPING_ROLES | quote }}
             {{- end }}
-          {{- end }}
-
-          - name:  IRIS_SECRET_KEY 
-            value: {{ .Values.irisapp.IRIS_SECRET_KEY | quote }}
-
-          - name:  IRIS_SECURITY_PASSWORD_SALT 
-            value: {{ .Values.irisapp.IRIS_SECURITY_PASSWORD_SALT | quote }}
-
-          - name:  DB_RETRY_COUNT
-            value: {{ .Values.irisapp.DB_RETRY_COUNT | quote }}
-
-          - name:  DB_RETRY_DELAY
-            value: {{ .Values.irisapp.DB_RETRY_DELAY | quote }}
-
-          - name:  INTERFACE_HTTPS_PORT
-            value: {{ .Values.irisapp.INTERFACE_HTTPS_PORT | quote }}
-
-          - name:  IRIS_ADM_USERNAME
-            value: {{ .Values.irisapp.IRIS_ADM_USERNAME | quote }}
-
-          - name:  IRIS_ADM_PASSWORD
-            value: {{ .Values.irisapp.IRIS_ADM_PASSWORD | quote }}
-          
-          {{- if eq .Values.irisapp.IRIS_AUTHENTICATION_TYPE "oidc" }}
-          - name: OIDC_ISSUER_URL
-            value: {{ .Values.irisapp.OIDC_ISSUER_URL | quote }}
-
-          - name: OIDC_CLIENT_ID
-            value: {{ .Values.irisapp.OIDC_CLIENT_ID | quote }}
-
-          - name: OIDC_CLIENT_SECRET
-            value: {{ .Values.irisapp.OIDC_CLIENT_SECRET | quote }}
-
-          - name: OIDC_AUTH_ENDPOINT
-            value: {{ .Values.irisapp.OIDC_AUTH_ENDPOINT | quote }}
-
-          - name: OIDC_TOKEN_ENDPOINT
-            value: {{ .Values.irisapp.OIDC_TOKEN_ENDPOINT | quote }}
-
-          - name: OIDC_END_SESSION_ENDPOINT
-            value: {{ .Values.irisapp.OIDC_END_SESSION_ENDPOINT | quote }}
-
-          - name: OIDC_MAPPING_USERGROUP
-            value: {{ .Values.irisapp.OIDC_MAPPING_USERGROUP | quote }}
-
-          - name: OIDC_MAPPING_ROLES
-            value: {{ .Values.irisapp.OIDC_MAPPING_ROLES | quote }}
-          {{- end }}
           
           ports:
             - containerPort: 8000

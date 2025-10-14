@@ -43,23 +43,18 @@ spec:
           image: "{{ .Values.irisworker.image}}:{{ .Values.irisworker.tag }}"
           imagePullPolicy: "{{ .Values.irisworker.imagePullPolicy }}"
           command: ['./wait-for-iriswebapp.sh', "{{ .Values.irisapp.name }}:{{ .Values.irisapp.service.port }}", './iris-entrypoint.sh', 'iris-worker']
+          
+          envFrom:
+          {{- range $.Values.irisworker.envFromSecrets }}
+            - secretRef:
+                name: {{ .name }}
+          {{- end }}
 
           env:
 
           - name: DOCKERIZED
             value: {{ .Values.irisworker.DOCKERIZED | quote }}
 
-          {{- range $key := list "POSTGRES_USER" "POSTGRES_PASSWORD" "POSTGRES_ADMIN_USER" "POSTGRES_ADMIN_PASSWORD" "POSTGRES_PORT" "POSTGRES_SERVER" }}
-          - name: {{ $key }}
-            {{- if and (hasKey $.Values.irisworker "envFromSecret") (has $key $.Values.irisworker.envFromSecret.keys) }}
-            valueFrom:
-              secretKeyRef:
-                name: {{ $.Values.irisworker.envFromSecret.name }}
-                key: {{ $key }}
-            {{- else }}
-            value: {{ index $.Values.irisworker $key | quote }}
-            {{- end }}
-          {{- end }}
 
           - name: CELERY_BROKER
             value: {{ .Values.irisworker.CELERY_BROKER | quote }}
