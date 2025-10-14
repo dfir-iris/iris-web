@@ -132,17 +132,11 @@ irisapp:
   DB_RETRY_DELAY: 5
   INTERFACE_HTTPS_PORT: 443
   
-  ## @param irisapp.envFromSecret Environment variables from a secret
+  ## @param irisapp.envFromSecrets List of secrets to load environment variables from
   ##
-  envFromSecret:
-    name: postgres-secret
-    keys:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_ADMIN_USER
-      - POSTGRES_ADMIN_PASSWORD
-      - POSTGRES_PORT
-      - POSTGRES_SERVER
+  envFromSecrets:
+    - name: postgres-secret
+    # - name: extra-secret
 
   ## @param irisapp.securityContext securityContext for irisapp
   ##
@@ -199,17 +193,11 @@ irisworker:
   IRIS_SECRET_KEY: AVerySuperSecretKey-SoNotThisOne
   IRIS_SECURITY_PASSWORD_SALT: ARandomSalt-NotThisOneEither
   
-  ## @param irisapp.envFromSecret Environment variables from a secret
+  ## @param irisworker.envFromSecrets List of secrets to load environment variables from
   ##
-  envFromSecret:
-    name: postgres-secret
-    keys:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_ADMIN_USER
-      - POSTGRES_ADMIN_PASSWORD
-      - POSTGRES_PORT
-      - POSTGRES_SERVER
+  envFromSecrets:
+    - name: postgres-secret
+    # - name: extra-secret
 
   ## @param irisworker.securityContext securityContext for irisworker
   ##
