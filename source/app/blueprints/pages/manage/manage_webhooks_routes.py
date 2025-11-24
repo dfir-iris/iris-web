@@ -72,7 +72,7 @@ def list_webhooks_by_case_template_id(cur_id, task_id):
     return response_success("",data = webhooks)
 
 @manage_webhooks_blueprint.route('/manage/webhooks/<int:cur_id>', methods=['GET'])
-@ac_api_requires(Permissions.webhooks_read)
+@ac_api_requires(Permissions.webhooks_read, Permissions.tasks_execute)
 def get_webhook(cur_id):
     """Fetch a webhook by ID
     Args:

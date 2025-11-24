@@ -54,33 +54,33 @@ document.addEventListener("DOMContentLoaded", () => {
     
         $("#trigger_table").dataTable({
             ajax: {
-                url: `/case/triggers-list/${caseId}`, // Include caseId in the URL
+                url: `/case/triggers-list/${caseId}` + case_param(),
                 contentType: "application/json",
                 type: "GET",
-                dataSrc: "data",
+                dataSrc: function(json){
+                  return json.success ? json.data : [];
+                }
             },
             order: [[0, "desc"]],
             autoWidth: false,
             columns: [
                 { data: "id" },
-                { data: "trigger" },
-                { data: "case" },
+                { data: "action_id" },
+                { data: "task_id" },
                 {
                     data: "body",
                     render: function (data, type, row) {
-                        console.log("Body data:", data);
-                        const task = row.id;
+                        const resp = data;
                         return `
                             <button type="button" class="btn btn-primary btn-sm view-response"
-                                data-task='${task}'
-                                data-response='${data}' >
+                                data-response='${resp}' >
                                 View Response
                             </button>
                         `;
-                    },
+                    }
                 },
                 { data: "created_at" },
-                { data: "updated_at" },
+                { data: "created_by" }
             ],
             error: function (xhr, error, code) {
                 console.error("DataTables AJAX error:", xhr.responseText);
@@ -88,8 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     
         setInterval(() => {
-            console.log("Reloading table every 3 seconds");
             $("#trigger_table").DataTable().ajax.reload(null, false);
-        }, 3000);
+        }, 5000);
     }
     

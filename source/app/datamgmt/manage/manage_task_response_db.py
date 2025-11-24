@@ -19,7 +19,7 @@ from datetime import datetime
 from typing import List, Optional, Union
 
 from app import db
-from app.models.models import TaskResponse
+from app.models.models import TaskResponse, CaseTasks
 from app.models.authorization import User
 from app.schema.marshables import TaskResponseSchema
 
@@ -41,6 +41,32 @@ def get_task_responses_list(task_id: int) -> List[dict]:
         TaskResponse.body,
         User.name.label('created_by')
     ).filter(TaskResponse.task == task_id).all()
+
+    return [row._asdict() for row in task_responses]
+
+
+def get_task_responses_list_for_case(case_id: int) -> List[dict]:
+    """Get a list of task action responses for an entire case.
+
+    Args:
+        case_id (int): The case identifier.
+
+    Returns:
+        List[dict]: List of task action responses for all tasks in the case.
+    """
+    task_responses = TaskResponse.query.join(
+        CaseTasks, TaskResponse.task == CaseTasks.id
+    ).join(
+        User, TaskResponse.created_by_user_id == User.id, isouter=True
+    ).with_entities(
+        TaskResponse.id,
+        TaskResponse.created_at,
+        TaskResponse.updated_at,
+        TaskResponse.task.label('task_id'),
+        TaskResponse.action.label('action_id'),
+        TaskResponse.body,
+        User.name.label('created_by')
+    ).filter(CaseTasks.task_case_id == case_id).all()
 
     return [row._asdict() for row in task_responses]
 

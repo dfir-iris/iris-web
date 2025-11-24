@@ -58,7 +58,7 @@ from app.iris_engine.module_handler.module_handler import list_available_pipelin
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import CaseStatus
 from app.models.models import ReviewStatusList
-from app.models.authorization import CaseAccessLevel
+from app.models.authorization import CaseAccessLevel, Permissions
 from app.schema.marshables import TaskLogSchema
 from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
@@ -476,8 +476,8 @@ def get_task_action_response(response_id, caseid):
 
 
 @case_rest_blueprint.route('/case/jsoneditor', methods=['POST'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
-@ac_api_requires()
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires(Permissions.tasks_execute)
 def execute_task_action(caseid):
     """Execute a task action with the provided payload"""
     from app.datamgmt.manage.manage_cases_db import execute_and_save_action

@@ -21,54 +21,49 @@ from flask import Blueprint, jsonify, request, redirect, render_template, url_fo
 import json
 from flask_wtf import FlaskForm
 from app.datamgmt.case.case_db import get_case
-from app.datamgmt.manage.manage_case_response_db import get_case_responses_list_by_case_id
+from app.datamgmt.manage.manage_task_response_db import get_task_responses_list_for_case
+from app.blueprints.access_controls import ac_requires_case_identifier
+from app.blueprints.access_controls import ac_api_requires
+from app.models.authorization import CaseAccessLevel
 
 case_triggers_blueprint = Blueprint('case_triggers',
                                     __name__,
                                     template_folder='templates')
 
 @case_triggers_blueprint.route('/case/triggers', methods=['GET'])
-def case_triggers():
-    # Retrieve query parameters from the URL
-    caseid = request.args.get('cid')
-    url_redir = request.args.get('url_redir', type=bool)
-
-    if url_redir:
-        return redirect(url_for('case_triggers.case_triggers', cid=caseid, redirect=True))
-
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_triggers(caseid):
+    # Page route uses ac_requires_case_identifier which only injects 'caseid'
     form = FlaskForm()
     case = get_case(caseid)
-    return render_template("case_triggers.html", case=case, form=form)
+
+    if case is None:
+        return render_template("case_triggers.html", case=None, caseid=caseid, form=form)
+
+    return render_template("case_triggers.html", case=case, caseid=caseid, form=form)
 
 
-@case_triggers_blueprint.route('/case/triggers-list/<int:cur_id>', methods=['GET'])
-def case_triggers_list(cur_id):
-
+@case_triggers_blueprint.route('/case/triggers-list/<int:case_id>', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def case_triggers_list(case_id, caseid):
+    # case_id path param should match resolved caseid
+    if case_id != caseid:
+        return jsonify({"success": False, "error": "Inconsistent case id"}), 400
     try:
-        # Retrieve the triggers list
-        triggers = get_case_responses_list_by_case_id(cur_id)
-        print(f"triggers", triggers)
-        # Serialize datetime objects for rendering
-        for trigger in triggers:
-            # Format created_at
-            if 'created_at' in trigger and trigger['created_at']:
-                trigger['created_at'] = trigger['created_at'].strftime("%Y-%m-%d %H:%M:%S")
-
-            # Format updated_at
-            if 'updated_at' in trigger and trigger['updated_at']:
-                trigger['updated_at'] = trigger['updated_at'].strftime("%Y-%m-%d %H:%M:%S")
-
-            # Serialize body
-            if 'body' in trigger and trigger['body']:
-                try:
-                    trigger['body'] = json.dumps(trigger['body'])
-                except (TypeError, ValueError):
-                    trigger['body'] = str(trigger['body'])  # Fallback to string representation
-
-        # Return the JSON response
-        return jsonify({"success": True, "data": triggers})
-
+        responses = get_task_responses_list_for_case(caseid)
+        # Normalize field names to match tasks tab expectations
+        normalized = []
+        for r in responses:
+            normalized.append({
+                'id': r.get('id'),
+                'action_id': r.get('action_id') or r.get('action'),
+                'task_id': r.get('task_id') or r.get('task'),
+                'body': json.dumps(r.get('body')) if isinstance(r.get('body'), dict) else r.get('body'),
+                'created_at': r.get('created_at').strftime('%Y-%m-%d %H:%M:%S') if r.get('created_at') else None,
+                'created_by': r.get('created_by')
+            })
+        return jsonify({"success": True, "data": normalized})
     except Exception as e:
-        # Log the exception for debugging (optional: use a logger instead of print)
         print(f"Error processing case triggers: {e}")
         return jsonify({"success": False, "error": str(e)}), 500

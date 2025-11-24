@@ -79,7 +79,7 @@ endblock title %} {% block stylesheets %} {% include 'includes/header_case.html'
 {% endblock content %} {% block javascripts %} {% include
 'includes/footer_case.html' %}
 <script>
-    const caseId = {{ case.case_id }}
+    const caseId = {{ case.case_id if case else caseid }}
   </script>
 <script src="/static/assets/js/plugin/datatables/dataTables.cellEdit.js"></script>
 <script src="/static/assets/js/plugin/select/bootstrap-multiselect.min.js"></script>

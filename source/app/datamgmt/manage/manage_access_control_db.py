@@ -199,6 +199,12 @@ def set_user_case_effective_access(access_level, case_id, user_id):
         UserCaseEffectiveAccess.case_id == case_id
     )).first()
     if uac:
-        uac = uac[0]
         uac.access_level = access_level
+    else:
+        # Create new effective access entry if it doesn't exist
+        uac = UserCaseEffectiveAccess()
+        uac.user_id = user_id
+        uac.case_id = case_id
+        uac.access_level = access_level
+        db.session.add(uac)
     db.session.commit()

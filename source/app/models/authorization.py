@@ -61,11 +61,13 @@ class Permissions(enum.Enum):
     case_templates_read = 0x100
     case_templates_write = 0x200
 
-    webhooks_read = 0x100
-    webhooks_write = 0x200
-
     activities_read = 0x400
     all_activities_read = 0x800
+
+    tasks_execute = 0x1000
+
+    webhooks_read = 0x2000
+    webhooks_write = 0x4000
 
 
 class Organisation(db.Model):
@@ -260,3 +262,5 @@ class User(UserMixin, db.Model):
 
 def ac_flag_match_mask(flag, mask):
     return (flag & mask) == mask
+
+

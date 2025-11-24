@@ -39,7 +39,7 @@ from app import celery
 from app import db
 from app.iris_engine.access_control.utils import ac_add_user_effective_access
 from app.iris_engine.demo_builder import create_demo_cases
-from app.iris_engine.access_control.utils import ac_get_mask_analyst, ac_get_mask_executers
+from app.iris_engine.access_control.utils import ac_get_mask_analyst
 from app.iris_engine.access_control.utils import ac_get_mask_full_permissions
 from app.iris_engine.module_handler.module_handler import check_module_health
 from app.iris_engine.module_handler.module_handler import instantiate_module_from_name
@@ -1064,26 +1064,6 @@ def create_safe_auth_model():
     if ganalysts.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
         ganalysts.group_auto_follow_access_level = CaseAccessLevel.full_access.value
 
-    db.session.commit()
-
-    # Create new Executors Group object (task executers)
-    try:
-        gexecuters = get_or_create(db.session, Group, group_name="Executers", group_description="Case Task Executors",
-                                   group_auto_follow=False,
-                                   group_auto_follow_access_level=CaseAccessLevel.full_access.value,
-                                   group_permissions=ac_get_mask_executers())
-    except exc.IntegrityError:
-        db.session.rollback()
-        log.warning('Executers group integrity error. Group permissions were probably changed. Updating.')
-        gexecuters = get_group_by_name("Executers")
-
-    # Update Executors Group attributes if drifted
-    if gexecuters.group_permissions != ac_get_mask_executers():
-        gexecuters.group_permissions = ac_get_mask_executers()
-    if gexecuters.group_auto_follow is not False:
-        gexecuters.group_auto_follow = False
-    if gexecuters.group_auto_follow_access_level != CaseAccessLevel.full_access.value:
-        gexecuters.group_auto_follow_access_level = CaseAccessLevel.full_access.value
     db.session.commit()
 
     return def_org, gadm, ganalysts

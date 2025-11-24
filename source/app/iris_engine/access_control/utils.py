@@ -77,17 +77,6 @@ def ac_get_mask_analyst():
         | Permissions.alerts_write.value | Permissions.search_across_cases.value | Permissions.customers_read.value \
         | Permissions.activities_read.value
 
-def ac_get_mask_executers():
-    """Return a minimal access mask for task executers.
-
-    Executors can view cases (standard_user), read alerts for context (alerts_read),
-    and view activity history (activities_read). They do NOT get write/delete
-    on alerts, customer modification, or global search across cases unless explicitly granted.
-    Case task creation/update/delete still governed by case access level (full_access on specific cases).
-    """
-    return Permissions.standard_user.value | Permissions.alerts_read.value | Permissions.activities_read.value
-
-
 def ac_permission_to_list(permission):
     """
     Return a list of permissions from a permission mask
