@@ -61,6 +61,7 @@ function build_ds_tree(data, tree_node) {
         }
 
         if (data[node].type == 'directory') {
+            data[node].name = sanitizeHTML(data[node].name);
             can_delete = '';
             if (!data[node].is_root) {
                 can_delete = `<div class="dropdown-divider"></div><a href="#" class="dropdown-item text-danger" onclick="delete_ds_folder('${node}');"><small class="fa fa-trash mr-2"></small>Delete</a>`;
@@ -72,7 +73,7 @@ function build_ds_tree(data, tree_node) {
                                 <a href="#" class="dropdown-item" onclick="add_ds_multi_files('${node}');return false;"><small class="fa-solid fa-file-circle-plus fa-box mr-2"></small>Add files</a>
                                 <div class="dropdown-divider"></div>
                                 <a href="#" class="dropdown-item" onclick="move_ds_folder('${node}');return false;"><small class="fa fa-arrow-right-arrow-left mr-2"></small>Move</a>
-                                <a href="#" class="dropdown-item" onclick="rename_ds_folder('${node}', '${toBinary64(data[node].name)}');return false;"><small class="fa-solid fa-pencil mr-2"></small>Rename</a>
+                                <a href="#" class="dropdown-item" onclick="rename_ds_folder('${node}', '${sanitizeHTML(data[node].name)}');return false;"><small class="fa-solid fa-pencil mr-2"></small>Rename</a>
                                 ${can_delete}
                         </div>
                     <ul id='tree-${node}'></ul>
@@ -90,6 +91,9 @@ function build_ds_tree(data, tree_node) {
             });
             icon = '';
             if (data[node].file_is_ioc) {
+                icon += '<i class="fa-solid fa-virus-covid text-danger mr-1" title="File is an IOC"></i>';
+            }
+            if (data[node].file_is_artifact) {
                 icon += '<i class="fa-solid fa-virus-covid text-danger mr-1" title="File is an IOC"></i>';
             }
             if (data[node].file_is_evidence) {
@@ -167,7 +171,6 @@ function add_ds_folder(parent_node) {
 }
 
 function rename_ds_folder(parent_node, name) {
-    name = fromBinary64(name);
     $('#ds_mod_folder_name').data('parent-node', parent_node);
     $('#ds_mod_folder_name').data('node-update', true);
     $('#ds_mod_folder_name').val(name);
@@ -290,7 +293,8 @@ async function save_ds_multi_files(node, index_i) {
     let file = $('#input_upload_ds_files').prop('files')[index];
     formData.append('file_content', file);
     formData.append('file_original_name', file.name);
-    await post_request_data_api(`/datastore/file/add/${node}`, formData, function () {
+    let uri = `/datastore/file/add/${node}`;
+    await post_request_data_api(uri, formData, function () {
         window.swal({
             title: `File ${file.name} is uploading. (${index}/${totalFiles} files)`,
             text: "Please wait. This window will close automatically when the file is uploaded.",

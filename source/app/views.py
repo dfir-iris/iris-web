@@ -22,6 +22,7 @@ from app.blueprints.pages.activities.activities_routes import activities_bluepri
 from app.blueprints.pages.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.pages.case.case_routes import case_blueprint
 from app.blueprints.pages.case.case_assets_routes import case_assets_blueprint
+from app.blueprints.pages.case.case_artifact_routes import case_artifact_blueprint
 from app.blueprints.pages.case.case_graphs_routes import case_graph_blueprint
 from app.blueprints.pages.case.case_notes_routes import case_notes_blueprint
 from app.blueprints.pages.case.case_rfiles_routes import case_rfiles_blueprint
@@ -162,6 +163,7 @@ def register_blueprints(app):
     app.register_blueprint(case_notes_rest_blueprint)
     app.register_blueprint(case_assets_blueprint)
     app.register_blueprint(case_assets_rest_blueprint)
+    app.register_blueprint(case_artifact_blueprint)
     app.register_blueprint(case_ioc_blueprint)
     app.register_blueprint(case_ioc_rest_blueprint)
     app.register_blueprint(case_rfiles_blueprint)

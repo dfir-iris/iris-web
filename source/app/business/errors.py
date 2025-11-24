@@ -45,3 +45,6 @@ class UnhandledBusinessError(BusinessProcessingError):
         self._data = data
         logger.exception(message)
         logger.exception(data)
+
+class PermissionDeniedError(Exception):
+    pass

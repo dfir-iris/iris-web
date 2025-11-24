@@ -104,6 +104,16 @@ def create_safe_limited(session, model, keywords_list, **kwargs):
         session.commit()
         return True
 
+def get_by_value_or_create(session, model, fieldname, **kwargs):
+    select_value = {fieldname: kwargs.get(fieldname)}
+    instance = session.query(model).filter_by(**select_value).first()
+    if instance:
+        return instance
+    else:
+        instance = model(**kwargs)
+        session.add(instance)
+        session.commit()
+        return instance
 
 def get_or_create(session, model, **kwargs):
     instance = session.query(model).filter_by(**kwargs).first()
@@ -149,6 +159,22 @@ alert_assets_association = Table(
 )
 
 
+alert_iocs_association = Table(
+    'alert_iocs_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('ioc_id', ForeignKey('ioc.ioc_id'), primary_key=True),
+    extend_existing=True
+)
+
+
+alert_artifacts_association = Table(
+    'alert_artifacts_association',
+    db.Model.metadata,
+    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
+    Column('artifact_id', ForeignKey('artifact.artifact_id'), primary_key=True)
+)
+
 class CaseAssets(db.Model):
     __tablename__ = 'case_assets'
 
@@ -177,7 +203,7 @@ class CaseAssets(db.Model):
     analysis_status = relationship('AnalysisStatus')
 
     alerts = relationship('Alert', secondary=alert_assets_association, back_populates='assets')
-    iocs = relationship('IocAssetLink', back_populates='asset')
+    #iocs = relationship('IocAssetLink', back_populates='asset')
 
 
 class AnalysisStatus(db.Model):
@@ -359,6 +385,18 @@ class CaseEventsIoc(db.Model):
     case = relationship('Cases')
 
 
+class CaseEventsArtifact(db.Model):
+    __tablename__ = 'case_events_artifact'
+
+    id = Column(BigInteger, primary_key=True)
+    event_id = Column(ForeignKey('cases_events.event_id'))
+    artifact_id = Column(ForeignKey('artifact.artifact_id'))
+    case_id = Column(ForeignKey('cases.case_id'))
+
+    event = relationship('CasesEvent')
+    artifact = relationship('Artifact')
+    case = relationship('Cases')
+
 class ObjectState(db.Model):
     __tablename__ = 'object_state'
 
@@ -446,6 +484,61 @@ class CaseTemplateReport(db.Model):
     language = relationship('Languages')
     created_by_user = relationship('User')
 
+class Tlp(db.Model):
+    __tablename__ = 'tlp'
+    __table_args__ = {'extend_existing': True}
+
+    tlp_id = Column(Integer, primary_key=True)
+    tlp_name = Column(Text)
+    tlp_bscolor = Column(Text)
+
+
+class Ioc(db.Model):
+    __tablename__ = 'ioc'
+    __table_args__ = {'extend_existing': True}
+
+    ioc_id = Column(BigInteger, primary_key=True)
+    ioc_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
+    ioc_value = Column(Text)
+    ioc_type_id = Column(ForeignKey('ioc_type.type_id'))
+    ioc_description = Column(Text)
+    ioc_tags = Column(String(512))
+    user_id = Column(ForeignKey('user.id'))
+    ioc_misp = Column(Text)
+    ioc_tlp_id = Column(ForeignKey('tlp.tlp_id'))
+    custom_attributes = Column(JSON)
+    ioc_enrichment = Column(JSONB)
+    modification_history = Column(JSON)
+    case_id = Column(ForeignKey('cases.case_id'))
+
+    user = relationship('User')
+    tlp = relationship('Tlp')
+    ioc_type = relationship('IocType')
+    case = relationship('Cases')
+
+    alerts = relationship('Alert', secondary=alert_iocs_association, back_populates='iocs')
+
+class Artifact(db.Model):
+    __tablename__ = 'artifact'
+
+    artifact_id = Column(BigInteger, primary_key=True)
+    artifact_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
+    artifact_value = Column(Text)
+    artifact_type_id = Column(ForeignKey('ioc_type.type_id'))
+    artifact_description = Column(Text)
+    artifact_tags = Column(String(512))
+    user_id = Column(ForeignKey('user.id'))
+    artifact_misp = Column(Text)
+    artifact_tlp_id = Column(ForeignKey('tlp.tlp_id'))
+    custom_attributes = Column(JSON)
+    artifact_enrichment = Column(JSONB)
+    modification_history = Column(JSON)
+
+    user = relationship('User')
+    tlp = relationship('Tlp')
+    artifact_type = relationship('IocType')
+    alerts = relationship('Alert', secondary=alert_artifacts_association, back_populates='artifacts')
+
 
 class CustomAttribute(db.Model):
     __tablename__ = 'custom_attribute'
@@ -482,6 +575,7 @@ class DataStoreFile(db.Model):
     file_tags = Column(Text)
     file_size = Column(BigInteger)
     file_is_ioc = Column(Boolean)
+    file_is_artifact = Column(Boolean)
     file_is_evidence = Column(Boolean)
     file_password = Column(Text)
     file_parent_id = Column(ForeignKey('data_store_path.path_id'), nullable=False)
@@ -505,6 +599,26 @@ class IocType(db.Model):
     type_validation_regex = Column(Text)
     type_validation_expect = Column(Text)
 
+class IocLink(db.Model):
+    __tablename__ = 'ioc_link'
+
+    ioc_link_id = Column(Integer, primary_key=True)
+    ioc_id = Column(ForeignKey('ioc.ioc_id'))
+    case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    ioc = relationship('Ioc')
+    case = relationship('Cases')
+
+
+class ArtifactLink(db.Model):
+    __tablename__ = 'artifact_link'
+
+    artifact_link_id = Column(Integer, primary_key=True)
+    artifact_id = Column(ForeignKey('artifact.artifact_id'))
+    case_id = Column(ForeignKey('cases.case_id'), nullable=False)
+
+    artifact = relationship('Artifact')
+    case = relationship('Cases')
 
 class IocAssetLink(db.Model):
     __tablename__ = 'ioc_asset_link'
@@ -513,9 +627,18 @@ class IocAssetLink(db.Model):
     ioc_id = Column(ForeignKey('ioc.ioc_id'), nullable=False)
     asset_id = Column(ForeignKey('case_assets.asset_id'), nullable=False)
 
-    ioc = relationship('Ioc', back_populates='assets')
-    asset = relationship('CaseAssets', back_populates='iocs')
+    ioc = relationship('Ioc')
+    asset = relationship('CaseAssets')
 
+class ArtifactAssetLink(db.Model):
+    __tablename__ = 'artifact_asset_link'
+
+    artifact_asset_link_id = Column(Integer, primary_key=True)
+    artifact_id = Column(ForeignKey('artifact.artifact_id'), nullable=False)
+    asset_id = Column(ForeignKey('case_assets.asset_id'), nullable=False)
+
+    artifact = relationship('Artifact')
+    asset = relationship('CaseAssets')
 
 class OsType(db.Model):
     __tablename__ = 'os_type'
@@ -781,6 +904,107 @@ class ServerSettings(db.Model):
     password_policy_special_chars = Column(Text)
     enforce_mfa = Column(Boolean)
     force_confirmation_before_delete = Column(Boolean)
+
+class Comments(db.Model):
+    __tablename__ = "comments"
+    __table_args__ = {'extend_existing': True}
+
+    comment_id = Column(BigInteger, primary_key=True)
+    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
+                          nullable=False)
+    comment_text = Column(Text)
+    comment_date = Column(DateTime)
+    comment_update_date = Column(DateTime)
+    comment_user_id = Column(ForeignKey('user.id'))
+    comment_case_id = Column(ForeignKey('cases.case_id'))
+    comment_alert_id = Column(ForeignKey('alerts.alert_id'))
+
+    user = relationship('User')
+    case = relationship('Cases')
+    alert = relationship('Alert')
+
+
+class EventComments(db.Model):
+    __tablename__ = "event_comments"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_event_id = Column(ForeignKey('cases_events.event_id'))
+
+    event = relationship('CasesEvent')
+    comment = relationship('Comments')
+
+
+class TaskComments(db.Model):
+    __tablename__ = "task_comments"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_task_id = Column(ForeignKey('case_tasks.id'))
+
+    task = relationship('CaseTasks')
+    comment = relationship('Comments')
+
+
+class IocComments(db.Model):
+    __tablename__ = "ioc_comments"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_ioc_id = Column(ForeignKey('ioc.ioc_id'))
+
+    ioc = relationship('Ioc')
+    comment = relationship('Comments')
+
+class ArtifactComments(db.Model):
+    __tablename__ = "artifact_comments"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_artifact_id = Column(ForeignKey('artifact.artifact_id'))
+
+    artifact = relationship('Artifact')
+    comment = relationship('Comments')
+
+
+class AssetComments(db.Model):
+    __tablename__ = "asset_comments"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_asset_id = Column(ForeignKey('case_assets.asset_id'))
+
+    asset = relationship('CaseAssets')
+    comment = relationship('Comments')
+
+
+class EvidencesComments(db.Model):
+    __tablename__ = "evidence_comments"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_evidence_id = Column(ForeignKey('case_received_file.id'))
+
+    evidence = relationship('CaseReceivedFile')
+    comment = relationship('Comments')
+
+
+class NotesComments(db.Model):
+    __tablename__ = "note_comments"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(BigInteger, primary_key=True)
+    comment_id = Column(ForeignKey('comments.comment_id'))
+    comment_note_id = Column(ForeignKey('notes.note_id'))
+
+    note = relationship('Notes')
+    comment = relationship('Comments')
 
 
 class IrisModule(db.Model):

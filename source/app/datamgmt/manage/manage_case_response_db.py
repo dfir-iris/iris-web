@@ -41,6 +41,8 @@ def get_case_responses_list_by_case_id(case_id: int) -> List[dict]:
         CaseResponse.trigger,
         CaseResponse.body,
         User.name.label('created_by')
+    ).join(
+        User, CaseResponse.created_by_user_id == User.id
     ).filter(CaseResponse.case == case_id).all()  # Filter responses by case_id
 
     return [row._asdict() for row in case_response]

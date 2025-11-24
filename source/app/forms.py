@@ -84,6 +84,13 @@ class AddIocTypeForm(FlaskForm):
     type_validation_expect = StringField(u'Type validation expectation')
 
 
+class AddArtifactTypeForm(FlaskForm):
+    type_name = StringField(u'Type name', validators=[DataRequired()])
+    type_description = StringField(u'Type description', validators=[DataRequired()])
+    type_taxonomy = TextAreaField(u'Type taxonomy')
+    type_validation_regex = StringField(u'Type validation regex')
+    type_validation_expect = StringField(u'Type validation expectation')
+
 class CaseClassificationForm(FlaskForm):
     name = StringField(u'Case classification name', validators=[DataRequired()])
     name_expanded = StringField(u'Case classification name expanded', validators=[DataRequired()])
@@ -214,12 +221,19 @@ class ModalAddCaseIOCForm(FlaskForm):
     ioc_type_id = SelectField(u'IOC Type', validators=[DataRequired()])
     ioc_tlp_id = SelectField(u'IOC TLP', validators=[DataRequired()])
 
+class ModalAddCaseArtifactForm(FlaskForm):
+    artifact_tags = StringField(u'Artifact Tags')
+    artifact_value = TextAreaField(u'Artifact Value', validators=[DataRequired()])
+    artifact_description = TextAreaField(u'Artifact Description')
+    artifact_type_id = SelectField(u'Artifact Type', validators=[DataRequired()])
+    artifact_tlp_id = SelectField(u'Artifact TLP', validators=[DataRequired()])
 
 class ModalDSFileForm(FlaskForm):
     file_original_name = StringField(u'Filename', validators=[DataRequired()])
     file_description = TextAreaField(u'file_description')
     file_password = StringField(u'File password')
     file_is_ioc = BooleanField(u'File is IOC')
+    file_is_artifact = BooleanField(u'File is Artifact')
     file_is_evidence = BooleanField(u'File is Evidence')
 
 

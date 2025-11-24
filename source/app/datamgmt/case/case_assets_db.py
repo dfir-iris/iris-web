@@ -191,6 +191,13 @@ def delete_asset(asset: CaseAssets):
 
     db.session.commit()
 
+def get_assets_types():
+    assets_types = [(c.asset_id, c.asset_name) for c
+                    in AssetsType.query.with_entities(AssetsType.asset_name,
+                                                      AssetsType.asset_id).order_by(AssetsType.asset_name)
+                    ]
+
+    return assets_types
 
 def get_unspecified_analysis_status_id():
     """

@@ -20,8 +20,7 @@ from datetime import datetime
 
 import uuid
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy import BigInteger
-from sqlalchemy import String
+from sqlalchemy import BigInteger, Table, Boolean, String
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
@@ -29,12 +28,13 @@ from sqlalchemy import Integer
 from sqlalchemy import Text
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 
 from app import db
-from app.models.models import alert_assets_association
+from app.models.models import Base, alert_assets_association, alert_iocs_association
 from app.models.iocs import alert_iocs_association
-
+from app.models.models import alert_artifacts_association
+from app.models.cases import Cases
 
 class AlertCaseAssociation(db.Model):
     __tablename__ = 'alert_case_association'
@@ -80,6 +80,8 @@ class Alert(db.Model):
 
     assets = relationship('CaseAssets', secondary=alert_assets_association, back_populates='alerts')
     iocs = relationship('Ioc', secondary=alert_iocs_association, back_populates='alerts')
+
+    artifacts = relationship('Artifact', secondary=alert_artifacts_association, back_populates='alerts')
 
 
 class Severity(db.Model):

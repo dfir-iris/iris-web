@@ -252,39 +252,38 @@ def api_add_case():
     case_schema = CaseSchema()
 
     try:
-        # Extract case template data from the request
-        request_data = request.get_json()
-        print(request_data)
-        case_template_id = request_data.get("case_template_id")
+        # Accept and possibly transform request via deprecated preload hook
+        request_data = call_deprecated_on_preload_modules_hook('case_create', request.get_json(), None)
 
-        if not case_template_id:
-            raise BusinessProcessingError("Missing 'case_template_id' in request.")
+        # Extract and remove case_template_id from payload (may be None)
+        case_template_id = request_data.pop('case_template_id', None)
 
-        # Create the case first
-        case, msg = create(request_data)
-        case_id = case.case_id  # Retrieve the case_id of the created case
+        # Validate & build Case object from payload
+        case_obj = case_schema.load(request_data)
 
-        # Get triggers for the case_template_id
+        # Create the case with the template id (can be None)
+        case = cases_create(case_obj, case_template_id)
+        case_id = case.case_id
+
+        # Get triggers for the case_template_id (if any)
         triggers = get_triggers_by_case_template_id(case_template_id)
 
-        if not triggers:
-            raise BusinessProcessingError("No triggers found for the provided case_template_id.")
+        if triggers:
+            # Function to execute a trigger in a new thread with app context
+            def execute_trigger_with_context(trigger, app):
+                with app.app_context():
+                    execute_and_save_trigger(trigger, case_id)
 
-        # Function to execute a trigger in a new thread with app context
-        def execute_trigger_with_context(trigger, app):
-            with app.app_context():
-                print('in Execute')
-                execute_and_save_trigger(trigger, case_id)
-                print(f"Trigger {trigger} executed successfully.")
+            for trigger in triggers:
+                thread = Thread(target=execute_trigger_with_context, args=(trigger, current_app._get_current_object()))
+                thread.start()
 
-        for trigger in triggers:
-            thread = Thread(target=execute_trigger_with_context, args=(trigger, current_app._get_current_object()))
-            thread.start()
-
-        # Return success response immediately
+        msg = f'Case {case.case_id} created'
         return response_success(msg, data=case_schema.dump(case))
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
+    except ValidationError as e:
+        return response_error('Data error', e.messages)
 
 
 @manage_cases_rest_blueprint.route('/manage/cases/list', methods=['GET'])

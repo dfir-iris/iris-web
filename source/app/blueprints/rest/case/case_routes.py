@@ -22,6 +22,15 @@ import marshmallow
 import traceback
 from flask import Blueprint
 from flask import request
+from flask import render_template
+from flask import redirect
+from flask import url_for
+from flask_login import current_user
+from flask_socketio import emit
+from flask_socketio import join_room
+from flask_wtf import FlaskForm
+from sqlalchemy import and_
+from sqlalchemy import desc
 
 from app import app
 from app import db
@@ -30,16 +39,22 @@ from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.iris_user import iris_current_user
 from app.business.cases import cases_exists
 from app.datamgmt.case.case_db import get_review_id_from_name
-from app.datamgmt.case.case_db import case_get_desc_crc
+from app.datamgmt.case.case_db import case_get_desc_crc, get_activities_report_template
 from app.datamgmt.case.case_db import get_case
+from app.datamgmt.case.case_db import get_case_report_template
+from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
+from app.datamgmt.manage.manage_groups_db import get_groups_list
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.business.access_controls import set_user_case_access, ac_fast_check_user_has_case_access
 from app.business.activity import activity_search_in_case
 from app.business.cases import cases_export_to_json
+from app.forms import PipelinesCaseForm
 from app.iris_engine.access_control.utils import ac_set_case_access_for_users
+from app.iris_engine.access_control.utils import ac_get_all_access_level
+from app.iris_engine.module_handler.module_handler import list_available_pipelines
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import CaseStatus
 from app.models.models import ReviewStatusList
@@ -49,6 +64,7 @@ from app.schema.marshables import CaseSchema
 from app.schema.marshables import CaseDetailsSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_socket_requires
 from app.util import add_obj_history_entry
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
@@ -56,6 +72,33 @@ from app.blueprints.responses import response_success
 case_rest_blueprint = Blueprint('case_rest', __name__)
 
 log = app.logger
+
+# CONTENT ------------------------------------------------
+@case_rest_blueprint.route('/case', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_r(caseid, url_redir):
+
+    if url_redir:
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
+
+    case = get_case(caseid)
+    setattr(case, 'case_tags', get_case_tags(caseid))
+    form = FlaskForm()
+
+    reports = get_case_report_template()
+    reports = [row for row in reports]
+
+    reports_act = get_activities_report_template()
+    reports_act = [row for row in reports_act]
+
+    if not case:
+        return render_template('select_case.html')
+
+    desc_crc32, description = case_get_desc_crc(caseid)
+    setattr(case, 'status_name', CaseStatus(case.status_id).name.replace('_', ' ').title())
+
+    return render_template('case.html', case=case, desc=description, crc=desc_crc32,
+                           reports=reports, reports_act=reports_act, form=form)
 
 
 @case_rest_blueprint.route('/case/exists', methods=['GET'])
@@ -67,6 +110,59 @@ def case_routes_exists(caseid):
     if cases_exists(caseid):
         return response_success('Case exists')
     return response_error('Case does not exist', 404)
+
+@case_rest_blueprint.route('/case/pipelines-modal', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+def case_pipelines_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
+
+    case = get_case(caseid)
+
+    form = PipelinesCaseForm()
+
+    pl = list_available_pipelines()
+
+    form.pipeline.choices = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                                         ap[1]['pipeline_human_name'])for ap in pl]
+
+    # Return default page of case management
+    pipeline_args = [("{}-{}".format(ap[0], ap[1]['pipeline_internal_name']),
+                      ap[1]['pipeline_human_name'], ap[1]['pipeline_args'])for ap in pl]
+
+    return render_template('modal_case_pipelines.html', case=case, form=form, pipeline_args=pipeline_args)
+
+
+@socket_io.on('change')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_summary_onchange(data):
+
+    data['last_change'] = current_user.user
+    emit('change', data, to=data['channel'], skip_sid=request.sid)
+
+
+@socket_io.on('save')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_summary_onsave(data):
+
+    data['last_saved'] = current_user.user
+    emit('save', data, to=data['channel'], skip_sid=request.sid)
+
+
+@socket_io.on('clear_buffer')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def socket_summary_onchange(message):
+
+    emit('clear_buffer', message)
+
+
+@socket_io.on('join')
+@ac_socket_requires(CaseAccessLevel.full_access)
+def get_message(data):
+
+    room = data['channel']
+    join_room(room=room)
+    emit('join', {'message': f"{current_user.user} just joined"}, room=room)
 
 
 @case_rest_blueprint.route('/case/summary/update', methods=['POST'])
@@ -155,6 +251,17 @@ def case_get_users(caseid):
     users = get_users_list_restricted_from_case(caseid)
 
     return response_success(data=users)
+
+@case_rest_blueprint.route('/case/groups/access/modal', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+def groups_cac_view(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('case.case_r', cid=caseid, redirect=True))
+
+    groups = get_groups_list()
+    access_levels = ac_get_all_access_level()
+
+    return render_template('modal_cac_to_groups.html', groups=groups, access_levels=access_levels, caseid=caseid)
 
 
 @case_rest_blueprint.route('/case/access/set-group', methods=['POST'])
@@ -278,6 +385,12 @@ def case_update_status(caseid):
     db.session.commit()
 
     return response_success('Case status updated', data=case.status_id)
+
+@case_rest_blueprint.route('/case/md-helper', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def case_md_helper(caseid, url_redir):
+
+    return render_template('case_md_helper.html')
 
 
 @case_rest_blueprint.route('/case/review/update', methods=['POST'])

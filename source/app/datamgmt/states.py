@@ -110,9 +110,14 @@ def get_evidences_state(caseid):
 def update_ioc_state(caseid, userid=None):
     return _update_object_state('ioc', caseid, userid=userid)
 
+def update_artifact_state(caseid, userid=None):
+    return _update_object_state('artifact', caseid, userid=userid)
 
 def get_ioc_state(caseid):
     return get_object_state('ioc', caseid=caseid)
+
+def get_artifact_state(caseid):
+    return get_object_state('artifact', caseid=caseid)
 
 
 def update_assets_state(caseid, userid=None):

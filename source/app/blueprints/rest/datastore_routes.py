@@ -22,10 +22,15 @@ import json
 import marshmallow.exceptions
 import urllib.parse
 from flask import Blueprint
+from flask import render_template
 from flask import current_app
 from flask import request
 from flask import send_file
+from flask import url_for
+from flask_login import current_user
 from pathlib import Path
+from werkzeug.utils import redirect
+import app
 
 from app import db
 from app.blueprints.iris_user import iris_current_user
@@ -42,12 +47,14 @@ from app.datamgmt.datastore.datastore_db import datastore_get_path_node
 from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.datastore.datastore_db import datastore_rename_node
 from app.datamgmt.datastore.datastore_db import ds_list_tree
+from app.forms import ModalDSFileForm
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import DSFileSchema
 from app.schema.marshables import DSPathSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_case_requires
 from app.util import add_obj_history_entry
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
@@ -86,6 +93,71 @@ def datastore_list_filter(caseid):
         return response_error('Invalid query')
 
     return response_success("", data=data)
+
+@datastore_rest_blueprint.route('/datastore/file/add/<int:cur_id>/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.full_access)
+def datastore_add_file_modal(cur_id: int, caseid: int, url_redir: bool):
+
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    dsp = datastore_get_path_node(cur_id, caseid)
+    if not dsp:
+        return response_error('Invalid path node for this case')
+
+    form = ModalDSFileForm()
+
+    return render_template("modal_ds_file.html", form=form, file=None, dsp=dsp)
+
+
+@datastore_rest_blueprint.route('/datastore/file/add/<int:cur_id>/multi-modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.full_access)
+def datastore_add_multi_files_modal(cur_id: int, caseid: int, url_redir: bool):
+
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    dsp = datastore_get_path_node(cur_id, caseid)
+    if not dsp:
+        return response_error('Invalid path node for this case')
+
+    form = ModalDSFileForm()
+
+    return render_template("modal_ds_multi_files.html", form=form, file=None, dsp=dsp)
+
+
+@datastore_rest_blueprint.route('/datastore/filter-help/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def datastore_filter_help_modal(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    return render_template("modal_help_filter_ds.html")
+
+
+@datastore_rest_blueprint.route('/datastore/file/update/<int:cur_id>/modal', methods=['GET'])
+@ac_case_requires(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+def datastore_update_file_modal(cur_id: int, caseid: int, url_redir: bool):
+
+    if url_redir:
+        return redirect(url_for('index.index', cid=caseid, redirect=True))
+
+    file = datastore_get_file(cur_id, caseid)
+    if not file:
+        return response_error('Invalid file ID for this case')
+
+    dsp = datastore_get_path_node(file.file_parent_id, caseid)
+
+    form = ModalDSFileForm()
+    form.file_is_ioc.data = file.file_is_ioc
+    # form.file_is_artifact.data = file.file_is_artifact
+    form.file_original_name.data = file.file_original_name
+    form.file_password.data = file.file_password
+    form.file_password.render_kw = {'disabled': 'disabled'}
+    form.file_description.data = file.file_description
+    form.file_is_evidence.data = file.file_is_evidence
+
+    return render_template("modal_ds_file.html", form=form, file=file, dsp=dsp)
 
 
 @datastore_rest_blueprint.route('/datastore/file/info/<int:cur_id>', methods=['GET'])

@@ -26,11 +26,12 @@ from sqlalchemy import func
 
 from app import app
 from app import db
+from app.datamgmt.case.case_iocs_db import add_ioc_link
 from app.blueprints.iris_user import iris_current_user
 from app.models.models import CaseReceivedFile
 from app.models.models import DataStoreFile
 from app.models.models import DataStorePath
-from app.models.iocs import Ioc
+from app.models.models import Ioc, Artifact
 from app.models.models import IocType
 from app.models.iocs import Tlp
 
@@ -372,6 +373,9 @@ def datastore_add_file_as_ioc(dsf, caseid):
 
         db.session.add(ioc)
         db.session.commit()
+
+    add_ioc_link(ioc.ioc_id, caseid)
+    return
 
 
 def datastore_add_file_as_evidence(dsf, caseid):

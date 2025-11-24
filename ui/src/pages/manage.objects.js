@@ -238,6 +238,10 @@ function refresh_ioc_table() {
   notify_success("Refreshed");
 }
 
+function refresh_artifact_table() {
+  $('#artifact_table').DataTable().ajax.reload();
+  notify_success("Refreshed");
+}
 
 /* Fetch the details of an asset and allow modification */
 function ioc_type_detail(ioc_id) {

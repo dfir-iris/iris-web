@@ -16,99 +16,29 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import uuid
+"""
+Compatibility shim: re-export comment-related models from `models.py`.
 
-from sqlalchemy import Column
-from sqlalchemy import BigInteger
-from sqlalchemy import UUID
-from sqlalchemy import text
-from sqlalchemy import Text
-from sqlalchemy import DateTime
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
+This prevents duplicate declarative class registrations while keeping
+imports like `from app.models.comments import Comments` working.
+"""
 
-from app import db
+from app.models.models import (
+    Comments,
+    EventComments,
+    TaskComments,
+    IocComments,
+    AssetComments,
+    EvidencesComments,
+    NotesComments,
+)
 
-
-class Comments(db.Model):
-    __tablename__ = "comments"
-
-    comment_id = Column(BigInteger, primary_key=True)
-    comment_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"),
-                          nullable=False)
-    comment_text = Column(Text)
-    comment_date = Column(DateTime)
-    comment_update_date = Column(DateTime)
-    comment_user_id = Column(ForeignKey('user.id'))
-    comment_case_id = Column(ForeignKey('cases.case_id'))
-    comment_alert_id = Column(ForeignKey('alerts.alert_id'))
-
-    user = relationship('User')
-    case = relationship('Cases')
-    alert = relationship('Alert')
-
-
-class EventComments(db.Model):
-    __tablename__ = "event_comments"
-
-    id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.comment_id'))
-    comment_event_id = Column(ForeignKey('cases_events.event_id'))
-
-    event = relationship('CasesEvent')
-    comment = relationship('Comments')
-
-
-class TaskComments(db.Model):
-    __tablename__ = "task_comments"
-
-    id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.comment_id'))
-    comment_task_id = Column(ForeignKey('case_tasks.id'))
-
-    task = relationship('CaseTasks')
-    comment = relationship('Comments')
-
-
-class IocComments(db.Model):
-    __tablename__ = "ioc_comments"
-
-    id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.comment_id'))
-    comment_ioc_id = Column(ForeignKey('ioc.ioc_id'))
-
-    ioc = relationship('Ioc')
-    comment = relationship('Comments')
-
-
-class AssetComments(db.Model):
-    __tablename__ = "asset_comments"
-
-    id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.comment_id'))
-    comment_asset_id = Column(ForeignKey('case_assets.asset_id'))
-
-    asset = relationship('CaseAssets')
-    comment = relationship('Comments')
-
-
-class EvidencesComments(db.Model):
-    __tablename__ = "evidence_comments"
-
-    id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.comment_id'))
-    comment_evidence_id = Column(ForeignKey('case_received_file.id'))
-
-    evidence = relationship('CaseReceivedFile')
-    comment = relationship('Comments')
-
-
-class NotesComments(db.Model):
-    __tablename__ = "note_comments"
-
-    id = Column(BigInteger, primary_key=True)
-    comment_id = Column(ForeignKey('comments.comment_id'))
-    comment_note_id = Column(ForeignKey('notes.note_id'))
-
-    note = relationship('Notes')
-    comment = relationship('Comments')
+__all__ = [
+    "Comments",
+    "EventComments",
+    "TaskComments",
+    "IocComments",
+    "AssetComments",
+    "EvidencesComments",
+    "NotesComments",
+]

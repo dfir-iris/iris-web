@@ -1,3 +1,4 @@
+from asyncio import log
 from flask import session
 from sqlalchemy import and_
 
@@ -17,7 +18,15 @@ from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import UserCaseEffectiveAccess
 from app.models.authorization import UserGroup
+from app.models.authorization import Organisation
+from app.models.authorization import OrganisationCaseAccess
+from app.models.authorization import UserOrganisation
 
+import app
+log = app.app.logger
+
+def ac_flag_match_mask(flag, mask):
+    return (flag & mask) == mask
 
 def ac_get_mask_full_permissions():
     """
@@ -282,6 +291,71 @@ def ac_trace_effective_user_permissions(user_id):
                         })
 
     return perms
+
+def ac_fast_check_user_has_case_access(user_id, cid, access_level):
+    """
+    Returns true if the user has access to the case
+    """
+    ucea = UserCaseEffectiveAccess.query.with_entities(
+        UserCaseEffectiveAccess.access_level
+    ).filter(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.case_id == cid
+    ).first()
+
+    if not ucea:
+        # The user has no direct access, check if he is part of the client
+        cuacu = check_ua_case_client(user_id, cid)
+        if cuacu is None:
+            return None
+        ac_set_case_access_for_user(user_id, cid, cuacu.access_level)
+
+        return cuacu.access_level
+
+    if ac_flag_match_mask(ucea[0], CaseAccessLevel.deny_all.value):
+        return None
+
+    for acl in access_level:
+        if ac_flag_match_mask(ucea[0], acl.value):
+            return ucea[0]
+
+    return None
+
+
+def ac_fast_check_current_user_has_case_access(cid, access_level):
+    return ac_fast_check_user_has_case_access(iris_current_user.id, cid, access_level)
+
+def ac_set_case_access_for_user(user_id, case_id, access_level, commit=True):
+    """
+    Set a case access from a user
+    """
+
+    uac = UserCaseEffectiveAccess.query.where(and_(
+        UserCaseEffectiveAccess.user_id == user_id,
+        UserCaseEffectiveAccess.case_id == case_id
+    )).all()
+
+    if len(uac) > 1:
+        log.error(f'Multiple access found for user {user_id} and case {case_id}')
+
+        for u in uac:
+            db.session.delete(u)
+        db.session.commit()
+
+        uac = UserCaseEffectiveAccess()
+        uac.user_id = user_id
+        uac.case_id = case_id
+        uac.access_level = access_level
+        db.session.add(uac)
+
+    elif len(uac) == 1:
+        uac = uac[0]
+        uac.access_level = access_level
+
+    if commit:
+        db.session.commit()
+
+    return
 
 
 def ac_recompute_effective_ac_from_users_list(users_list):
@@ -801,7 +875,196 @@ def ac_trace_user_effective_cases_access_2(user_id):
 
         effective_cases_access[uca.case_id]['user_access'].append(access)
 
+    for case_id in effective_cases_access:
+        effective_cases_access[case_id]['user_effective_access'] = ac_access_level_to_list(
+            effective_cases_access[case_id]['user_effective_access'])
+    
     return effective_cases_access
+
+def ac_trace_case_access(case_id):
+
+    case = Cases.query.with_entities(
+        Cases.case_id,
+        Cases.name
+    ).filter(
+        Cases.case_id == case_id
+    ).first()
+
+    if not case:
+        return {}
+
+    ocas = OrganisationCaseAccess.query.with_entities(
+        Organisation.org_name,
+        Organisation.org_id,
+        Organisation.org_uuid,
+        OrganisationCaseAccess.access_level,
+        User.id.label('user_id'),
+        User.name.label('user_name'),
+        User.email.label('user_email'),
+        User.uuid.label('user_uuid')
+    ).filter(
+        and_(OrganisationCaseAccess.case_id == case.case_id,
+             OrganisationCaseAccess.org_id == UserOrganisation.org_id)
+    ).join(
+        OrganisationCaseAccess.org,
+        UserOrganisation.user
+    ).all()
+
+    gcas = GroupCaseAccess.query.with_entities(
+        Group.group_name,
+        Group.group_id,
+        Group.group_uuid,
+        GroupCaseAccess.access_level,
+        User.id.label('user_id'),
+        User.name.label('user_name'),
+        User.email.label('user_email'),
+        User.uuid.label('user_uuid')
+    ).filter(
+        and_(GroupCaseAccess.case_id == case.case_id,
+             UserGroup.group_id == GroupCaseAccess.group_id)
+    ).join(
+        GroupCaseAccess.group,
+        UserGroup.user
+    ).all()
+
+    ucas = UserCaseAccess.query.with_entities(
+        User.id.label('user_id'),
+        User.name.label('user_name'),
+        User.uuid.label('user_uuid'),
+        User.email.label('user_email'),
+        UserCaseAccess.access_level
+    ).filter(
+        and_(UserCaseAccess.case_id == case.case_id)
+    ).join(
+        UserCaseAccess.user
+    ).all()
+
+    case_access = {}
+
+    for uca in ucas:
+        user = {
+            'access_trace': [],
+            'user_effective_access': 0,
+            'user_effective_access_list': [],
+            'user_info': {
+                'user_name': uca.user_name,
+                'user_uuid': uca.user_uuid,
+                'user_email': uca.user_email
+            }
+        }
+        for ac_l in CaseAccessLevel:
+
+            if uca:
+                if ac_flag_match_mask(uca.access_level, ac_l.value):
+                    user['user_effective_access'] |= uca.access_level
+                    user['access_trace'].append({
+                        'state': 'Effective',
+                        'name': ac_l.name,
+                        'value': ac_l.value,
+                        'inherited_from': {
+                            'object_type': 'user_access_level',
+                            'object_name': 'self',
+                            'object_id': 'self',
+                            'object_uuid': 'self'
+                        }
+                    })
+                    user['user_effective_access_list'].append(ac_l.name)
+                    has_uca_overwritten = True
+                    if ac_l.value == CaseAccessLevel.deny_all.value:
+                        has_uca_deny_all = True
+
+        if uca.user_id not in case_access:
+            case_access.update({
+                uca.user_id: user
+            })
+
+    for gca in gcas:
+        if gca.user_id not in case_access:
+            user = {
+                'access_trace': [],
+                'user_effective_access': 0,
+                'user_effective_access_list': [],
+                'user_info': {
+                    'user_name': gca.user_name,
+                    'user_uuid': gca.user_uuid,
+                    'user_email': gca.user_email
+                }
+            }
+        else:
+            user = case_access[gca.user_id]
+
+        for ac_l in CaseAccessLevel:
+
+            if gca:
+                if ac_flag_match_mask(gca.access_level, ac_l.value):
+                    if gca.user_id not in case_access:
+                        user['user_effective_access'] |= gca.access_level
+                        user['user_effective_access_list'].append(ac_l.name)
+                        state = 'Effective'
+                    else:
+                        state = 'Overwritten by user access'
+
+                    user['access_trace'].append({
+                            'state': state,
+                            'name': ac_l.name,
+                            'value': ac_l.value,
+                            'inherited_from': {
+                                'object_type': 'group_access_level',
+                                'object_name': gca.group_name,
+                                'object_id': gca.group_id,
+                                'object_uuid': gca.group_uuid
+                            }
+                        })
+
+        if gca.user_id not in case_access:
+            case_access.update({
+                gca.user_id: user
+            })
+
+    for oca in ocas:
+        if oca.user_id not in case_access:
+            user = {
+                'access_trace': [],
+                'user_effective_access': 0,
+                'user_effective_access_list': [],
+                'user_info': {
+                    'user_name': oca.user_name,
+                    'user_uuid': oca.user_uuid,
+                    'user_email': oca.user_email
+                }
+            }
+        else:
+            user = case_access[oca.user_id]
+
+        for ac_l in CaseAccessLevel:
+
+            if oca:
+                if ac_flag_match_mask(oca.access_level, ac_l.value):
+                    if oca.user_id not in case_access:
+                        user['user_effective_access'] |= oca.access_level
+                        user['user_effective_access_list'].append(ac_l.name)
+                        state = 'Effective'
+                    else:
+                        state = 'Overwritten by user or group access'
+
+                    user['access_trace'].append({
+                            'state': state,
+                            'name': ac_l.name,
+                            'value': ac_l.value,
+                            'inherited_from': {
+                                'object_type': 'organisation_access_level',
+                                'object_name': oca.org_name,
+                                'object_id': oca.org_id,
+                                'object_uuid': oca.org_uuid
+                            }
+                        })
+
+        if oca.user_id not in case_access:
+            case_access.update({
+                oca.user_id: user
+            })
+
+    return case_access
 
 
 def ac_get_mask_case_access_level_full():
