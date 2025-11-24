@@ -35,6 +35,7 @@ services:
     image: iriswebapp_db:develop
     ports:
       - "127.0.0.1:5432:5432"
+      - "0.0.0.0:5432:5432"
     healthcheck:
       test: pg_isready -U postgres -d iris_db || exit 1
       start_period: 60s

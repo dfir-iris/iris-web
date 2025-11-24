@@ -1,0 +1,104 @@
+{% extends "layouts/default.html" %} {% block title %} Manage Webhooks {%
+endblock title %} {% block stylesheets %} {% endblock stylesheets %} {% block
+content %} {% if current_user.is_authenticated %} {{ form.hidden_tag() }}
+<div class="page-inner">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="row">
+            <div class="col">
+              <div class="card-title">Webhooks</div>
+            </div>
+            <div class="col">
+              <button
+                type="button"
+                class="btn btn-sm btn-dark float-right ml-2"
+                onclick="refresh_webhook_table();"
+              >
+                Refresh
+              </button>
+              <button
+                class="btn btn-sm btn-dark float-right ml-2"
+                onclick="add_webhook();"
+              >
+                Add Webhook
+              </button>
+              <!-- <button
+                class="btn btn-sm btn-dark float-right ml-2"
+                onclick="fire_upload_webhook();"
+              >
+                Upload Webhook
+              </button> -->
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive" id="hooks_table_wrapper">
+            <div class="selectgroup">
+              <span id="table_buttons"></span>
+            </div>
+            <table
+              aria-describedby="Webhook list"
+              class="table display table table-striped table-hover"
+              style="width: 100%; border-spacing: 0"
+              id="webhooks_table"
+            >
+              <thead>
+                <tr>
+                  <th scope="col">#ID</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Header Auth</th>
+                  <th scope="col">Payload Schema</th>
+                  <th scope="col">URL</th>
+                </tr>
+              </thead>
+              <tfoot>
+                <tr>
+                  <th scope="col">#ID</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Header Auth</th>
+                  <th scope="col">Payload Schema</th>
+                  <th scope="col">URL</th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" tabindex="-1" id="modal_webhook" data-backdrop="true">
+  <div class="modal-xxl modal-dialog" role="document">
+    <div class="modal-content" id="modal_webhook_json"></div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<div
+  class="modal"
+  tabindex="-1"
+  role="dialog"
+  id="modal_upload_webhook"
+  data-backdrop="true"
+>
+  <div class="modal-xl modal-dialog" role="document">
+    <div class="modal-content" id="modal_upload_webhook_json"></div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+{% endif %} {% endblock content %} {% block javascripts %}
+<script
+  src="/static/assets/js/plugin/ace/src-noconflict/ace.js"
+  type="text/javascript"
+  charset="utf-8"
+></script>
+<script
+  src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js"
+  type="text/javascript"
+  charset="utf-8"
+></script>
+<script src="/static/assets/js/iris/manage.webhooks.js"></script>
+{% endblock javascripts %}

@@ -19,18 +19,15 @@ from datetime import datetime
 from typing import List, Optional, Union
 
 from app import db
+from app.datamgmt.case.case_notes_db import add_note
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_name
 from app.iris_engine.module_handler.module_handler import call_modules_hook
-from app.models.cases import Cases
-from app.models.models import CaseTemplate
-from app.models.models import Tags
-from app.models.models import NoteDirectory
+from app.models.models import CaseTemplate, Webhook, Tags, NoteDirectory
+from app.models import cases
 from app.models.authorization import User
-from app.schema.marshables import CaseSchema
-from app.schema.marshables import CaseTaskSchema
-from app.schema.marshables import CaseNoteDirectorySchema
-from app.schema.marshables import CaseNoteSchema
+from app.schema.marshables import CaseSchema, CaseTaskSchema, CaseNoteDirectorySchema, CaseNoteSchema
+from app.datamgmt.manage.manage_webhooks_db import get_webhook_by_id
 
 
 def get_case_templates_list() -> List[dict]:
@@ -58,7 +55,7 @@ def get_case_templates_list() -> List[dict]:
     return c_cl
 
 
-def get_case_template_by_id(cur_id: int) -> Optional[CaseTemplate]:
+def get_case_template_by_id(cur_id: int) -> CaseTemplate:
     """Get a case template
 
     Args:
@@ -67,7 +64,8 @@ def get_case_template_by_id(cur_id: int) -> Optional[CaseTemplate]:
     Returns:
         CaseTemplate: Case template
     """
-    return CaseTemplate.query.filter_by(id=cur_id).first()
+    case_template = CaseTemplate.query.filter_by(id=cur_id).first()
+    return case_template
 
 
 def delete_case_template_by_id(case_template_id: int):
@@ -127,6 +125,40 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
                     for tag in task["tags"]:
                         if not isinstance(tag, str):
                             return "Each tag must be a string."
+                        
+                        # Check actions within the task
+                if "actions" in task:
+                    if not isinstance(task["actions"], list):
+                        return "Actions must be a list."
+                    for action in task["actions"]:
+                        if not isinstance(action, dict):
+                            return "Each action must be a dictionary."
+                        if "webhook_id" not in action:
+                            return "Each action must have a 'webhook_id' field."
+                        if "display_name" not in action:
+                            return "Each action must have a 'display_name' field."
+                
+                        # Check if webhook_id matches an existing Webhook.id
+                        webhook = get_webhook_by_id(action["webhook_id"])
+                        if not webhook:
+                            return f"Webhook with id {action['webhook_id']} does not exist."
+                
+        # We check that action, if any, are a list of dictionaries with mandatory keys
+        if "triggers" in data:
+            if not isinstance(data["triggers"], list):
+                return "Trigger must be a list."
+            for trigger in data["triggers"]:
+                if not isinstance(trigger, dict):
+                    return "Each trigger must be a dictionary."
+                if "webhook_id" not in trigger:
+                    return "Each trigger must have a 'webhook_id' field."
+                if "display_name" not in trigger:
+                    return "Each trigger must have a 'display_name' field."
+                # Check if webhook_id matches an existing Webhook.id
+                webhook = get_webhook_by_id(trigger["webhook_id"])
+                if not webhook:
+                    return f"Webhook with id {trigger['webhook_id']} does not exist."
+                
 
         # We check that note groups, if any, are a list of dictionaries with mandatory keys
         if "note_groups" in data:
@@ -168,8 +200,7 @@ def case_template_pre_modifier(case_schema: CaseSchema, case_template_id: str):
 
     return case_schema
 
-
-def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
+def case_template_populate_tasks(case: cases, case_template: CaseTemplate):
     logs = []
     # Update case tasks
     for task_template in case_template.tasks:
@@ -183,7 +214,13 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
                 "task_title": task_template['title'],
                 "task_description": task_template['description'] if task_template.get('description') else "",
                 "task_tags": ",".join(tag for tag in task_template["tags"]) if task_template.get('tags') else "",
-                "task_status_id": 1
+                "task_status_id": 1,
+                "task_actions": [
+                    {
+                        "webhook_id": action["webhook_id"],
+                        "display_name": action["display_name"]
+                    } for action in task_template.get("actions", [])
+                ]
             }
 
             mapped_task_template = call_modules_hook('on_preload_task_create', data=mapped_task_template, caseid=case.case_id)
@@ -209,7 +246,7 @@ def case_template_populate_tasks(case: Cases, case_template: CaseTemplate):
     return logs
 
 
-def case_template_populate_notes(case: Cases, note_dir_template: dict, ng: NoteDirectory):
+def case_template_populate_notes(case: cases, note_dir_template: dict, ng: NoteDirectory):
     logs = []
     if note_dir_template.get("notes"):
         for note_template in note_dir_template["notes"]:
@@ -244,7 +281,7 @@ def case_template_populate_notes(case: Cases, note_dir_template: dict, ng: NoteD
     return logs
 
 
-def case_template_populate_note_groups(case: Cases, case_template: CaseTemplate):
+def case_template_populate_note_groups(case: cases, case_template: CaseTemplate):
     logs = []
     # Update case tasks
     if case_template.note_directories:
@@ -279,7 +316,7 @@ def case_template_populate_note_groups(case: Cases, case_template: CaseTemplate)
     return logs
 
 
-def case_template_post_modifier(case: Cases, case_template_id: Union[str, int]):
+def case_template_post_modifier(case: cases, case_template_id: Union[str, int]):
     case_template = get_case_template_by_id(int(case_template_id))
     logs = []
     if not case_template:

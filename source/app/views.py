@@ -43,6 +43,7 @@ from app.blueprints.pages.manage.manage_customers_routes import manage_customers
 from app.blueprints.pages.manage.manage_groups_routes import manage_groups_blueprint
 from app.blueprints.pages.manage.manage_ioc_types_routes import manage_ioc_type_blueprint
 from app.blueprints.pages.manage.manage_modules_routes import manage_modules_blueprint
+from app.blueprints.pages.manage.manage_webhooks_routes import manage_webhooks_blueprint
 from app.blueprints.pages.manage.manage_objects_routes import manage_objects_blueprint
 from app.blueprints.pages.manage.manage_srv_settings_routes import manage_srv_settings_blueprint
 from app.blueprints.pages.manage.manage_templates_routes import manage_templates_blueprint
@@ -123,6 +124,7 @@ def register_blueprints(app):
     app.register_blueprint(manage_templates_rest_blueprint)
     app.register_blueprint(manage_modules_blueprint)
     app.register_blueprint(manage_modules_rest_blueprint)
+    app.register_blueprint(manage_webhooks_blueprint)
     app.register_blueprint(manage_customers_blueprint)
     app.register_blueprint(manage_customers_rest_blueprint)
     app.register_blueprint(manage_analysis_status_rest_blueprint)
