@@ -856,6 +856,7 @@ class TaskResponseSchema(ma.Schema):
     action: int = fields.Integer(dump_only=True)
     body: Optional[dict] = fields.Dict(allow_none=True, missing={})
     execution_time: datetime = fields.DateTime(dump_only=True)
+    created_by_user: fields.Nested = fields.Nested('UserSchema', only=['name'], dump_only=True)
 
 class CaseResponseSchema(ma.Schema):
     """Schema for serializing and deserializing Case Response objects.
@@ -872,6 +873,7 @@ class CaseResponseSchema(ma.Schema):
     trigger: int = fields.Integer(dump_only=True)
     body: Optional[dict] = fields.Dict(allow_none=True, missing={})
     execution_time: datetime = fields.DateTime(dump_only=True)
+    created_by_user: fields.Nested = fields.Nested('UserSchema', only=['name'], dump_only=True)
 
 class WebhookSchema(ma.Schema):
     """Schema for serializing and deserializing Webhook objects.
@@ -1122,7 +1124,7 @@ class IocSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     tlp = ma.Nested(TlpSchema)
 
     def get_link(self, ioc):
-        ial = get_ioc_links(ioc.ioc_id)
+        ial = get_ioc_links(ioc.ioc_id, ioc.case_id)
         return [row._asdict() for row in ial]
 
     link = ma.Method('get_link')
@@ -2933,3 +2935,4 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
                 raise ValidationError(password_error, field_name='user_password')
 
         return data
+

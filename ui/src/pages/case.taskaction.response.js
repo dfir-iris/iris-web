@@ -1,47 +1,45 @@
 function toggleJsonViewer(button) {
     const responseId = button.getAttribute('data-task');
-    let id = parseInt(responseId);
+    const id = parseInt(responseId, 10);
     if (isNaN(id)) {
-        console.error("Invalid task ID:", responseId);
-        return;  
+        console.error('Invalid task response ID:', responseId);
+        return;
     }
 
     fetch(`/case/task/action_response/${id}` + case_param())
-        .then(response => response.json())
-        .then(data => {
-            if (data.status && data.data) {
-                console.log(data.data.body);
-                const responseData = data.data.body;
+        .then(r => {
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            return r.json();
+        })
+        .then(payload => {
+            if (!(payload.status && payload.data)) {
+                console.error('Unexpected payload format', payload);
+                return;
+            }
 
-                const jsonCrackEmbed = document.getElementById("jsoncrackIframe");
-                console.log("Parsed data to be displayed in JSONCrack:", responseData);
-                const jsonViewerContainer = $('#jsonViewerContainer');
+            const body = payload.data.body ?? {};
+            const jsonViewerContainer = $('#jsonViewerContainer');
+            jsonViewerContainer.slideDown();
 
-                // Show the container
-                jsonViewerContainer.slideDown();
-                console.log("here");
-
-                // Post data to the iframe
-                if (jsonCrackEmbed && jsonCrackEmbed.contentWindow) {
-                    const options = {
-                        theme: "light", 
-                        direction: "DOWN", 
-                    };
-
-                    jsonCrackEmbed.contentWindow.postMessage({ json: JSON.stringify(responseData), options }, "*");
-                } else {
-                    console.error("jsonCrackEmbed iframe is not available or not loaded.");
-                }
-            } else {
-                console.error("Failed to fetch action response data:", data);
+            const iframeEl = document.getElementById('jsoncrackIframe');
+            /** @type {HTMLIFrameElement|null} */
+            const iframe = iframeEl instanceof HTMLIFrameElement ? iframeEl : null;
+            if (!iframe || !iframe.contentWindow) {
+                console.error('jsoncrackIframe not ready');
+                return;
+            }
+            const options = { theme: 'light', direction: 'DOWN' };
+            try {
+                iframe.contentWindow.postMessage({ json: JSON.stringify(body), options }, 'https://jsoncrack.com');
+            } catch (e) {
+                console.error('Failed to postMessage to iframe:', e);
             }
         })
-        .catch(error => {
-            console.error("Error fetching task action response:", error);
+        .catch(err => {
+            console.error('Error fetching task action response:', err);
         });
 
-    // Attach event handler for the close button
     $('#jsonViewerContainer .btn[data-dismiss="collapse-frame"]').off('click').on('click', function () {
-        $('#jsonViewerContainer').slideUp(); // Hide the container
+        $('#jsonViewerContainer').slideUp();
     });
 }
