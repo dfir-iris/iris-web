@@ -16,7 +16,7 @@
 
                     <div class="mt-4">
                         <div class="input-group mb-4">
-                            {{ form.case_customer_id(class="selectpicker form-control") }}
+                            {{ form.case_customer_id(class="selectpicker form-control", id="case_customer_id", data_auto_select=auto_select_customer|default(false)|lower) }}
                         </div>
                         <div class="input-group mb-4">
                             <div class="input-group-prepend">

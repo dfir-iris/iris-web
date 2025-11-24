@@ -207,16 +207,17 @@ def _get_case_access(request_data, access_level, no_cid_required=False):
     if ctmp is not None:
         return redir, ctmp, has_access
 
+    # Check if the case exists before checking access
+    if caseid is not None and not get_case(caseid):
+        log.warning('No case found. Using default case')
+        return True, 1, True
+
     eaccess_level = ac_fast_check_user_has_case_access(iris_current_user.id, caseid, access_level)
     if eaccess_level is None and access_level:
         _update_denied_case(caseid)
         return redir, caseid, False
 
     _update_session(caseid, eaccess_level)
-
-    if caseid is not None and not get_case(caseid):
-        log.warning('No case found. Using default case')
-        return True, 1, True
 
     return redir, caseid, True
 

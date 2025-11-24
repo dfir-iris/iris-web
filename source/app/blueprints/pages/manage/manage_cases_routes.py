@@ -128,4 +128,11 @@ def add_case_modal(caseid: int, url_redir: bool):
 
     attributes = get_default_custom_attributes('case')
 
-    return render_template('modal_add_case.html', form=form, attributes=attributes)
+    # Check if there's only one customer to auto-select it
+    auto_select_customer = len(client_list) == 1
+    if auto_select_customer:
+        # Set the default value to the only customer (as string to match SelectField)
+        form.case_customer_id.data = str(client_list[0]['customer_id'])
+
+    return render_template('modal_add_case.html', form=form, attributes=attributes, 
+                         auto_select_customer=auto_select_customer)

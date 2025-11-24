@@ -1394,12 +1394,50 @@ function load_add_case() {
              ajax_notify_error(xhr, '/case/add');
              return false;
         }
-        $('#case_customer_id').selectpicker({
+        
+        // Check if we should auto-select the customer (only one available)
+        const $customerSelect = $('#case_customer_id');
+        const autoSelect = $customerSelect.attr('data-auto-select');
+        const shouldAutoSelect = (autoSelect === 'true');
+        
+        // If only one customer exists, pre-select it before initializing selectpicker
+        if (shouldAutoSelect) {
+            const options = $customerSelect.find('option');
+            if (options.length === 1) {
+                const customerValue = options.eq(0).val();
+                if (customerValue) {
+                    // Set value on the underlying select element
+                    $customerSelect.val(customerValue);
+                    // Mark option as selected
+                    options.eq(0).prop('selected', true);
+                }
+            }
+        }
+        
+        // Initialize selectpicker
+        $customerSelect.selectpicker({
             liveSearch: true,
             title: "Select customer *",
             style: "btn-outline-white",
             size: 8
         });
+        
+        // Double-check after initialization with a small delay
+        if (shouldAutoSelect) {
+            setTimeout(function() {
+                const options = $customerSelect.find('option');
+                const currentVal = $customerSelect.val();
+                
+                if (options.length === 1 && !currentVal) {
+                    const customerValue = options.eq(0).val();
+                    if (customerValue) {
+                        $customerSelect.val(customerValue);
+                        $customerSelect.selectpicker('refresh');
+                    }
+                }
+            }, 100);
+        }
+        
         $('#case_template_id').selectpicker({
             liveSearch: true,
             title: "Select case template",

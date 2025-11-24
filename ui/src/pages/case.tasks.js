@@ -174,6 +174,7 @@ function edit_task(id) {
     loadTableData(g_task_id);
 
     const actionsList = $('#actionsList');
+    const actionsButton = $('#actionsDropdownButton');
 
     fetch(webHooksurl, {
       method: "GET",
@@ -203,8 +204,31 @@ function edit_task(id) {
             text: 'No actions available',
           })
         );
+      } else if (fetchedData.length === 1) {
+        // Auto-select if there's only one action
+        const action = fetchedData[0];
+        actionsList.append(
+          $('<a>', {
+            class: 'dropdown-item',
+            href: '#',
+            text: action.display_name, 
+            click: function (e) {
+              e.preventDefault(); 
+              fetchWebhook(action.webhook_id, id)
+            },
+          })
+        );
+        
+        // Update button text to show the selected action and highlight it
+        actionsButton.text(action.display_name);
+        actionsButton.removeClass('btn-outline-secondary').addClass('btn-success');
+        
+        // Automatically trigger the action after a short delay
+        setTimeout(function() {
+          fetchWebhook(action.webhook_id, id);
+        }, 100);
       } else {
-
+        // Multiple actions available
         fetchedData.forEach(function (action) {
           actionsList.append(
             $('<a>', {

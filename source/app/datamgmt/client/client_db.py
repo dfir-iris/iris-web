@@ -198,8 +198,28 @@ def delete_client(client_id: int) -> None:
     if not client:
         raise ElementNotFoundException('No Customer found with this uuid.')
 
-    try:
+    # Check for references before attempting deletion
+    from app.models.cases import Cases
+    from app.models.alerts import Alert
+    from app.models.authorization import UserClient
+    
+    cases_count = Cases.query.filter(Cases.client_id == client_id).count()
+    alerts_count = Alert.query.filter(Alert.alert_customer_id == client_id).count()
+    users_count = UserClient.query.filter(UserClient.client_id == client_id).count()
+    
+    blocking_items = []
+    if cases_count > 0:
+        blocking_items.append(f"{cases_count} case(s)")
+    if alerts_count > 0:
+        blocking_items.append(f"{alerts_count} alert(s)")
+    if users_count > 0:
+        blocking_items.append(f"{users_count} user association(s)")
+    
+    if blocking_items:
+        details = ", ".join(blocking_items)
+        raise ElementInUseException(f'Cannot delete customer. It is referenced by: {details}. Please delete or reassign these items first.')
 
+    try:
         db.session.delete(client)
         db.session.commit()
 

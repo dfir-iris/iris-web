@@ -31,6 +31,7 @@ from app.models.authorization import User
 from app.models.authorization import UserCaseAccess
 
 from typing import Optional
+from app.logger import logger
 
 
 def manage_ac_audit_users_db():
@@ -194,6 +195,18 @@ def remove_duplicate_user_case_effective_accesses(user_id, case_id):
 
 
 def set_user_case_effective_access(access_level, case_id, user_id):
+    # Validate case_id is not None
+    if case_id is None:
+        logger.error(f'Attempted to set access for user {user_id} with NULL case_id')
+        return
+    
+    # Validate the case exists before creating access record
+    from app.models.cases import Cases
+    case_exists = Cases.query.filter(Cases.case_id == case_id).first()
+    if not case_exists:
+        logger.error(f'Attempted to set access for user {user_id} to non-existent case {case_id}')
+        return
+    
     uac = UserCaseEffectiveAccess.query.where(and_(
         UserCaseEffectiveAccess.user_id == user_id,
         UserCaseEffectiveAccess.case_id == case_id
@@ -208,3 +221,24 @@ def set_user_case_effective_access(access_level, case_id, user_id):
         uac.access_level = access_level
         db.session.add(uac)
     db.session.commit()
+
+
+def cleanup_orphaned_case_access_records():
+    """
+    Remove access records for cases that no longer exist
+    """
+    # Find all orphaned records where case_id is NULL or references non-existent cases
+    orphaned = UserCaseEffectiveAccess.query.outerjoin(
+        Cases, UserCaseEffectiveAccess.case_id == Cases.case_id
+    ).filter(
+        Cases.case_id.is_(None)
+    ).all()
+    
+    count = len(orphaned)
+    if count > 0:
+        for record in orphaned:
+            db.session.delete(record)
+        db.session.commit()
+        logger.info(f'Cleaned up {count} orphaned case access records')
+    
+    return count

@@ -73,6 +73,10 @@ def ac_fast_check_user_has_case_access(user_id, cid, expected_access_levels: lis
     if the user has access, returns the access level of the user to the case
     Returns None otherwise
     """
+    # Skip if no case ID is provided (e.g., on pages without case context)
+    if cid is None:
+        return None
+    
     access_level = get_case_effective_access(user_id, cid)
 
     if not access_level:
