@@ -547,6 +547,7 @@ $('#executeBtn').off('click').on('click', function (e) {
   const requestData = {
     action_id: action_id,
     task_id: task_id,
+    case_id: get_caseid(),
     payload: updatedData,
     csrf_token: $('#csrf_token').val()
   };

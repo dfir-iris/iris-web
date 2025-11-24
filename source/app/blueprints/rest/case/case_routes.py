@@ -498,8 +498,8 @@ def execute_task_action(caseid):
         if not action_id or not task_id:
             return response_error('Missing required parameters: action_id and task_id')
         
-        # Execute the action
-        result = execute_and_save_action(payload, task_id, action_id)
+        # Execute the action with case_id
+        result = execute_and_save_action(payload, task_id, action_id, caseid)
         
         log.info(f'Action executed successfully. Result: {result}')
         

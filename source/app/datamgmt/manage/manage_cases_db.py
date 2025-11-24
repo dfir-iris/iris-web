@@ -728,7 +728,7 @@ def save_results(data, case_id, webhook_id):
         print(f"Error saving CaseResponse: {str(e)}")
 
 
-def execute_and_save_action(action, task_id, action_id):
+def execute_and_save_action(action, task_id, action_id, case_id=None):
     try:
         # Extract webhook_id
         webhook_id = action_id
@@ -748,9 +748,17 @@ def execute_and_save_action(action, task_id, action_id):
         if not url:
             raise ValueError(f"Action execution failed: URL is missing in webhook with id {webhook_id}.")
 
+        # Add case_id to the payload if provided
+        webhook_payload = action.copy() if isinstance(action, dict) else action
+        if case_id is not None:
+            if isinstance(webhook_payload, dict):
+                webhook_payload['case_id'] = case_id
+            else:
+                webhook_payload = {'case_id': case_id, 'data': webhook_payload}
+
         # Execute the webhook request
-        print(f"Executing webhook request to URL: {url} with data: {action}")
-        response = requests.post(url, json=action, verify=False)
+        print(f"Executing webhook request to URL: {url} with data: {webhook_payload}")
+        response = requests.post(url, json=webhook_payload, verify=False)
         print(f"Webhook Response Status Code: {response.status_code}")
         print(f"Webhook Response Content: {response.text}")
 
