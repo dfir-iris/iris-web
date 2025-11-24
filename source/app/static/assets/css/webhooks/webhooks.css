@@ -1,0 +1,21 @@
+.modal.show .modal-dialog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+/* Optional: Control the width of the modal */
+.modal-dialog {
+    max-width: 800px; /* Adjust as needed */
+}
+
+/* Ensure the modal backdrop covers the entire screen */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+}

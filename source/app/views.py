@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
+from app.blueprints.pages.case.case_triggers_routes import case_triggers_blueprint
 from app.blueprints.pages.activities.activities_routes import activities_blueprint
 from app.blueprints.pages.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.pages.case.case_routes import case_blueprint
@@ -169,6 +170,7 @@ def register_blueprints(app):
     app.register_blueprint(case_graph_rest_blueprint)
     app.register_blueprint(case_tasks_blueprint)
     app.register_blueprint(case_tasks_rest_blueprint)
+    app.register_blueprint(case_triggers_blueprint)
     app.register_blueprint(case_blueprint)
     app.register_blueprint(case_rest_blueprint)
     app.register_blueprint(reports_rest_blueprint)

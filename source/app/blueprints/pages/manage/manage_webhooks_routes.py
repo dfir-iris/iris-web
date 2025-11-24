@@ -112,7 +112,7 @@ def add_template_modal():
                 ]
             }
         ]'''),
-        "url": "webhook URL",
+        "url": "webhook URL"
     }
 
     return render_template("modal_webhook.html", form=form, webhook=webhook)
