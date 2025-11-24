@@ -397,6 +397,49 @@ try {
       console.log('No default value, setting empty object');
       window.jsonEditor.setValue({});
     }
+    // Add visual markers for required fields
+    try {
+      const addRequiredMarkers = () => {
+        const schemaRequired = actionDetails?.payload_schema?.required || [];
+        const properties = actionDetails?.payload_schema?.properties || {};
+        if (!schemaRequired || schemaRequired.length === 0) return;
+
+        // Ensure CSS for required star exists
+        if (!document.getElementById('jsoneditor-required-star-style')) {
+          const style = document.createElement('style');
+          style.id = 'jsoneditor-required-star-style';
+          style.innerHTML = '.required-star{color:#d00;font-weight:700;margin-left:4px;}';
+          document.head.appendChild(style);
+        }
+
+        schemaRequired.forEach((key) => {
+          const title = (properties[key] && properties[key].title) ? properties[key].title : key;
+
+          // Try to find labels matching the title inside the editor container
+          let labels = $(jsonEditorContainer).find('label').filter(function () {
+            const txt = $(this).text().trim();
+            // match exact, with colon, or startsWith
+            return txt === title || txt.replace(/:\s*$/, '') === title || txt.indexOf(title) === 0;
+          });
+
+          // Fallback: contains
+          if (labels.length === 0) {
+            labels = $(jsonEditorContainer).find('label:contains("' + title.replace(/"/g, '\\"') + '")');
+          }
+
+          labels.each(function () {
+            if ($(this).find('.required-star').length === 0) {
+              $(this).append('<span class="required-star">*</span>');
+            }
+          });
+        });
+      };
+
+      // Run after a short delay to ensure DOM elements are rendered
+      setTimeout(addRequiredMarkers, 50);
+    } catch (e) {
+      console.warn('Failed to add required markers:', e);
+    }
   });
 
   console.log('JSONEditor created successfully');
