@@ -325,3 +325,75 @@ def case_review(caseid):
     db.session.commit()
 
     return response_success('Case review updated', data=CaseSchema().dump(case))
+
+
+@case_rest_blueprint.route('/case/task/action_responses/<int:task_id>', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def get_task_action_responses(task_id, caseid):
+    """Get all action responses for a specific task"""
+    from app.datamgmt.manage.manage_task_response_db import get_task_responses_list
+    
+    try:
+        responses = get_task_responses_list(task_id)
+        return response_success('', data=responses)
+    except Exception as e:
+        log.error(f'Error fetching task action responses: {e}')
+        return response_error(f'Error fetching action responses: {str(e)}')
+
+
+@case_rest_blueprint.route('/case/task/action_response/<int:response_id>', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def get_task_action_response(response_id, caseid):
+    """Get a single action response by ID"""
+    from app.datamgmt.manage.manage_task_response_db import get_task_response_by_id
+    from app.schema.marshables import TaskResponseSchema
+    
+    try:
+        response = get_task_response_by_id(response_id)
+        if not response:
+            return response_error('Action response not found')
+        
+        schema = TaskResponseSchema()
+        return response_success('', data=schema.dump(response))
+    except Exception as e:
+        log.error(f'Error fetching task action response: {e}')
+        return response_error(f'Error fetching action response: {str(e)}')
+
+
+@case_rest_blueprint.route('/case/jsoneditor', methods=['POST'])
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
+@ac_api_requires()
+def execute_task_action(caseid):
+    """Execute a task action with the provided payload"""
+    from app.datamgmt.manage.manage_cases_db import execute_and_save_action
+    
+    try:
+        data = request.get_json()
+        log.info(f'Received jsoneditor request: {data}')
+        
+        if not data:
+            return response_error('Invalid request data')
+        
+        action_id = data.get('action_id')
+        task_id = data.get('task_id')
+        payload = data.get('payload')
+        
+        log.info(f'Executing action {action_id} on task {task_id} with payload: {payload}')
+        
+        if not action_id or not task_id:
+            return response_error('Missing required parameters: action_id and task_id')
+        
+        # Execute the action
+        result = execute_and_save_action(payload, task_id, action_id)
+        
+        log.info(f'Action executed successfully. Result: {result}')
+        
+        track_activity(f'executed action {action_id} on task {task_id}', caseid)
+        
+        return response_success('Action executed successfully', data=result)
+    except Exception as e:
+        log.error(f'Error executing task action: {e}')
+        log.error(traceback.format_exc())
+        return response_error(f'Error executing action: {str(e)}')

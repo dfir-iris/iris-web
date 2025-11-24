@@ -1,0 +1,35 @@
+[33mcommit 135b9747b30bda559ad1e5c220922fc8bf242bf7[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m)[m
+Merge: 738ae858 59f5ffe2
+Author: whitekernel <74464599+whikernel@users.noreply.github.com>
+Date:   Wed Oct 22 09:31:31 2025 +0200
+
+    Merge pull request #934 from irontec/fix/helm-ingress-enabletls
+    
+    [FIX]: correct enableTls evaluation in ingress template
+
+[33mcommit 738ae85868e6def685bd32de293caa71e7ff4e0a[m
+Merge: a76930e0 0516cc41
+Author: whitekernel <74464599+whikernel@users.noreply.github.com>
+Date:   Wed Oct 22 09:05:42 2025 +0200
+
+    Merge pull request #932 from dfir-iris/api_v2_alert_similarity
+    
+    Api v2 alert similarity
+
+[33mcommit 0516cc4131ce6e5bac7dd9855d5eb1d3d3d5d876[m
+Author: Elise17 <elise17web@gmail.com>
+Date:   Mon Oct 6 16:38:11 2025 +0200
+
+    Removed import
+
+[33mcommit 2f1a1d4a981cefdceb711e592c7cffbbe7e26607[m
+Author: Elise17 <elise17web@gmail.com>
+Date:   Fri Oct 3 18:04:30 2025 +0200
+
+    Removed unused function
+
+[33mcommit 7f3dcd79cdc1f4121c16064376fe0367a88bbf29[m
+Author: Elise17 <elise17web@gmail.com>
+Date:   Fri Oct 3 17:26:59 2025 +0200
+
+    changed message api error

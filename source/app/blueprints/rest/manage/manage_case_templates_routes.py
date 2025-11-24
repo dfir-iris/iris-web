@@ -18,7 +18,11 @@
 
 import json
 from flask import Blueprint
+from flask import redirect
+from flask import render_template
 from flask import request
+from flask import url_for
+from flask_login import current_user
 from marshmallow import ValidationError
 
 from app import db
@@ -27,16 +31,30 @@ from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
 from app.datamgmt.manage.manage_case_templates_db import validate_case_template
 from app.datamgmt.manage.manage_case_templates_db import delete_case_template_by_id
+from app.forms import AddAssetForm, WebhookForm, CaseTemplateForm
 from app.models.models import CaseTemplate
 from app.models.authorization import Permissions
 from app.iris_engine.utils.tracker import track_activity
 from app.schema.marshables import CaseTemplateSchema
 from app.blueprints.access_controls import ac_requires_case_identifier
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_requires
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
 
 manage_case_templates_rest_blueprint = Blueprint('manage_case_templates_rest', __name__)
+
+
+# CONTENT ------------------------------------------------
+@manage_case_templates_rest_blueprint.route('/manage/case-templates', methods=['GET'])
+@ac_requires(Permissions.case_templates_read)
+def manage_case_templates(caseid, url_redir):
+    if url_redir:
+        return redirect(url_for('manage_case_templates.manage_case_templates', cid=caseid))
+
+    form = AddAssetForm()
+
+    return render_template('manage_case_templates.html', form=form)
 
 
 @manage_case_templates_rest_blueprint.route('/manage/case-templates/list', methods=['GET'])
@@ -51,6 +69,113 @@ def list_case_templates():
 
     # Return the attributes
     return response_success("", data=case_templates)
+
+
+@manage_case_templates_rest_blueprint.route('/manage/case-templates/<int:cur_id>/modal', methods=['GET'])
+@ac_requires(Permissions.case_templates_read)
+def case_template_modal(cur_id, caseid, url_redir):
+    """Get a case template
+
+    Args:
+        cur_id (int): case template id
+
+    Returns:
+        HTML Template: Case template modal
+    """
+    if url_redir:
+        return redirect(url_for('manage_case_templates.manage_case_templates', cid=caseid))
+
+    form = CaseTemplateForm()
+
+    case_template = get_case_template_by_id(cur_id)
+    if not case_template:
+        return response_error(f"Invalid Case template ID {cur_id}")
+
+    # Temporary : for now we build the full JSON form object based on case templates attributes
+    # Next step : add more fields to the form
+    case_template_dict = {
+        "name": case_template.name,
+        "display_name": case_template.display_name,
+        "description": case_template.description,
+        "author": case_template.author,
+        "title_prefix": case_template.title_prefix,
+        "summary": case_template.summary,
+        "tags": case_template.tags,
+        "tasks": case_template.tasks,
+        "note_directories": case_template.note_directories,
+        "classification": case_template.classification,
+        "actions": case_template.actions,
+        "triggers": case_template.triggers
+    }
+
+    form.case_template_json.data = case_template_dict
+
+    return render_template("modal_case_template.html", form=form, case_template=case_template)
+
+
+@manage_case_templates_rest_blueprint.route('/manage/case-templates/add/modal', methods=['GET'])
+@ac_api_requires(Permissions.case_templates_write)
+def add_template_modal():
+    case_template = CaseTemplate()
+    form = CaseTemplateForm()
+    form.case_template_json.data = {
+    "name": "Template name",
+    "display_name": "Template Display Name",
+    "description": "Template description",
+    "author": "YOUR NAME",
+    "classification": "known-template-classification",
+    "title_prefix": "[PREFIX]",
+    "summary": "Summary to be set",
+    "tags": [
+        "ransomware",
+        "malware"
+    ],
+    "tasks": [
+        {
+            "title": "Task 1",
+            "description": "Task 1 description",
+            "tags": [
+                "tag1",
+                "tag2"
+            ],
+            "actions": [
+                {
+                    "webhook_id": "Webhook Id",
+                    "display_name": "Action Name"
+                }
+            ]
+        }
+    ],
+    "note_directories": [
+        {
+            "title": "Note group 1",
+            "notes": [
+                {
+                    "title": "Note 1",
+                    "content": "Note 1 content"
+                }
+            ]
+        }
+    ],
+    "triggers": [
+        {
+            "webhook_id": "Webhook Id",
+            "display_name": "Trigger Name",
+            "input_params": {
+            }
+        }
+    ]
+
+    }
+
+    return render_template("modal_case_template.html", form=form, case_template=case_template)
+
+
+@manage_case_templates_rest_blueprint.route('/manage/case-templates/upload/modal', methods=['GET'])
+@ac_api_requires(Permissions.case_templates_write)
+def upload_template_modal():
+    return render_template("modal_upload_case_template.html")
+
 
 
 @manage_case_templates_rest_blueprint.route('/manage/case-templates/add', methods=['POST'])

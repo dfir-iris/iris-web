@@ -1,71 +1,100 @@
-$('#case_webhooks_table').DataTable({
-    "ajax": {
-        "url": "/manage/attributes/list" + case_param(),
-        "contentType": "application/json",
-        "type": "GET",
-        "data": function (d) {
-            return d.status === 'success' ? JSON.stringify(d.data) : [];
+// Initialize DataTable function
+function initializeDataTable() {
+  $("#case_webhooks_table").DataTable({
+    ajax: {
+      url: "/manage/webhooks/list" + case_param(),
+      contentType: "application/json",
+      type: "GET",
+      data: function (d) {
+        console.log(d.data);
+        if (d.status == "success") {
+          return d.data;
+        } else {
+          return JSON.stringify([]);
         }
+      },
     },
-    "order": [[0, "desc"]],
-    "autoWidth": false,
-    "columns": [
-        {
-            "data": "attribute_display_name"
-        },
-        {
-            "data": "attribute_description"
+    order: [[0, "desc"]],
+    autoWidth: false,
+    columns: [
+      {
+        data: "id",
+      },
+      {
+        data: "name",
+      },
+      {
+        data: "payload_schema",
+        render: function (data, type, row, meta) {
+          return `
+            <button type="button" class="btn btn-primary" onclick="handleButtonClick('${row.id}')">
+              View Payload
+            </button>
+          `;
         }
-    ]
-});
+      },
+    ],
+  });
+}
 
-// Event listener for row clicks
-$('#case_webhooks_table tbody').on('click', 'tr', function () {
-    var table = $('#case_webhooks_table').DataTable();
-    var data = table.row(this).data();
+// Call to initialize DataTable when the script first runs
+initializeDataTable();
 
-    // Populate modal with data
-    $('#webhookName').text(data.attribute_display_name);
-    $('#webhookDescription').text(data.attribute_description);
+function handleButtonClick(webhookId) {
+  let numericId = parseInt(webhookId, 10);
+  console.log(typeof numericId);
+  let webhookData = null; // Variable to store the fetched data
 
-    // Show modal
-    $('#webhookModal').modal('show');
-});
-
-document.getElementById('copyModalContent').addEventListener('click', function() {
-    // Select the elements containing the modal data
-    const name = document.getElementById('webhookName').innerText;
-    const description = document.getElementById('webhookDescription').innerText;
-
-    // Format the content to be copied
-    const modalContent = `Name: ${name}\nDescription: ${description}`;
-
-    // Check if the browser supports navigator.clipboard
-    if (navigator.clipboard && window.isSecureContext) {
-        // Use Clipboard API for modern browsers
-        navigator.clipboard.writeText(modalContent).then(() => {
-            notify_success('Content copied to clipboard!');
-        }).catch(err => {
-            console.error('Failed to copy content: ', err);
-            notify_success('Failed to copy content.');
-        });
-    } else {
-        // Fallback method for older browsers
-        const tempTextArea = document.createElement('textarea');
-        tempTextArea.value = modalContent;
-        document.body.appendChild(tempTextArea);
-        tempTextArea.select();
-
-        try {
-            document.execCommand('copy');
-            notify_success("content copied");
-        } catch (err) {
-            console.error('Failed to copy content: ', err);
-            notify_error("failed to copy content");
-        }
-
-        document.body.removeChild(tempTextArea);
+  $.ajax({
+    url: `/manage/webhooks/${numericId}`, // The URL for fetching the webhook by ID
+    contentType: "application/json",
+    type: "GET",
+    async: false, // Ensures that the data is available before proceeding (use with caution)
+    success: function (response) {
+      if (response.status === "success") {
+        webhookData = response.data; // Save data to the variable
+        console.log(webhookData);
+      } else {
+        console.log('No data found for this webhook.');
+      }
+    },
+    error: function (xhr, status, error) {
+      console.error("Error fetching webhook:", error);
     }
+  });
+
+  if (!webhookData || !webhookData.payload_schema) {
+    console.log('No payload schema to display.');
+    return;
+  }
+
+  // Generate HTML for displaying all key-value pairs
+  let payloadDetails = '<div><h4>Webhook PayLoad Schema</h4>{<ul style="list-style-type: none; padding-left: 0;">';
+  for (const [key, value] of Object.entries(webhookData.payload_schema)) {
+    payloadDetails += `<li>"${key}": ${JSON.stringify(value, null, 2)}</li>`;}
+  payloadDetails += '</ul>}</div>';
+  payloadDetails += `
+    <button class="btn btn-secondary" id="back-to-table">Back</button>
+  `;
+
+  // Replace the content of the parent container with the details
+  document.getElementById('drop_case_template_webhooks').querySelector('.card-body').innerHTML = payloadDetails;
+}
+
+
+$(document).on("click", "#back-to-table", function () {
+  // Remove the details section and restore the table wrapper
+  $("#webhook-details").remove();
+
+  const container = document.getElementById('drop_case_template_webhooks').querySelector('.card-body');
+  container.innerHTML = `
+    <div id="hooks_table_wrapper">
+      <table id="case_webhooks_table" class="display" style="width:100%"></table>
+    </div>
+  `;
+
+  // Reinitialize the DataTable when returning to the table view
+  initializeDataTable();
 });
 
 
@@ -203,12 +232,6 @@ $("#webhooks_table").dataTable({
           "</a>"
         );
       },
-    },
-    {
-      data: "header_auth",
-    },
-    {
-      data: "payload_schema",
     },
     {
       data: "url",

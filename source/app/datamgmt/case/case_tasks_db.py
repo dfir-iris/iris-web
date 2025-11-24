@@ -34,6 +34,7 @@ from app.models.cases import Cases
 from app.models.comments import Comments, TaskComments
 from app.models.models import TaskStatus
 from app.models.authorization import User
+from app.models.models import TaskResponse
 from app.models.pagination_parameters import PaginationParameters
 
 
@@ -121,6 +122,17 @@ def get_tasks_with_assignees(caseid):
 
 def get_task(task_id: int) -> Optional[CaseTasks]:
     return CaseTasks.query.filter(CaseTasks.id == task_id).first()
+
+
+def get_task_with_assignees(task_id: int, case_id: int) -> Optional[CaseTasks]:
+    """Get a single task with assignees and validate it belongs to the specified case"""
+    task = get_task(task_id)
+    if not task or task.task_case_id != case_id:
+        return None
+    
+    # Attach assignees to the task object as an attribute for compatibility
+    task.task_assignees = get_task_assignees(task_id)
+    return task
 
 
 def get_task_assignees(task_identifier: int):
@@ -280,21 +292,31 @@ def get_case_task_comment(task_id, comment_id):
 
 def delete_task(task_id):
     with db.session.begin_nested():
+        # Delete task assignees
         TaskAssignee.query.filter(
             TaskAssignee.task_id == task_id
         ).delete()
 
+        # Get all comment IDs associated with the task
         com_ids = TaskComments.query.with_entities(
             TaskComments.comment_id
         ).filter(
             TaskComments.comment_task_id == task_id
         ).all()
 
+        
         com_ids = [c.comment_id for c in com_ids]
+
+        # Delete task comments
         TaskComments.query.filter(TaskComments.comment_id.in_(com_ids)).delete()
 
+        # Delete comments
         Comments.query.filter(Comments.comment_id.in_(com_ids)).delete()
 
+        # Delete task responses that reference the task
+        TaskResponse.query.filter(TaskResponse.task == task_id).delete()
+
+        # Finally, delete the task itself
         CaseTasks.query.filter(
             CaseTasks.id == task_id
         ).delete()

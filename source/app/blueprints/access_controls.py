@@ -420,6 +420,14 @@ def ac_socket_requires(*access_level):
     return inner_wrap
 
 
+def ac_api_case_requires(*access_level):
+    """
+    Decorator for API endpoints that require case access validation.
+    Alias for ac_requires_case_identifier to maintain compatibility.
+    """
+    return ac_requires_case_identifier(*access_level)
+
+
 def ac_api_return_access_denied(caseid: int = None):
     user_id = iris_current_user.id if hasattr(iris_current_user, 'id') else 'Anonymous'
     error_uuid = uuid.uuid4()

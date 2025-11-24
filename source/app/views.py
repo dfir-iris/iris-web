@@ -17,7 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
-from app.blueprints.pages.case.case_triggers_routes import case_triggers_blueprint
+from app.blueprints.rest.case.case_triggers_routes import case_triggers_blueprint
 from app.blueprints.pages.activities.activities_routes import activities_blueprint
 from app.blueprints.pages.alerts.alerts_routes import alerts_blueprint
 from app.blueprints.pages.case.case_routes import case_blueprint
@@ -62,7 +62,7 @@ from app.blueprints.rest.case.case_graphs_routes import case_graph_rest_blueprin
 from app.blueprints.rest.case.case_ioc_routes import case_ioc_rest_blueprint
 from app.blueprints.rest.case.case_notes_routes import case_notes_rest_blueprint
 from app.blueprints.rest.case.case_evidences_routes import case_evidences_rest_blueprint
-from app.blueprints.rest.case.case_tasks_routes import case_tasks_rest_blueprint
+from app.blueprints.rest.case.case_tasks_routes import case_tasks_blueprint
 from app.blueprints.rest.case.case_timeline_routes import case_timeline_rest_blueprint
 from app.blueprints.rest.context_routes import context_rest_blueprint
 from app.blueprints.rest.dashboard_routes import dashboard_rest_blueprint
@@ -169,7 +169,7 @@ def register_blueprints(app):
     app.register_blueprint(case_graph_blueprint)
     app.register_blueprint(case_graph_rest_blueprint)
     app.register_blueprint(case_tasks_blueprint)
-    app.register_blueprint(case_tasks_rest_blueprint)
+    #app.register_blueprint(case_tasks_rest_blueprint)
     app.register_blueprint(case_triggers_blueprint)
     app.register_blueprint(case_blueprint)
     app.register_blueprint(case_rest_blueprint)

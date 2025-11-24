@@ -1,0 +1,32 @@
+"""Add case_template_id to cases
+
+Revision ID: 53af6b874c81
+Revises: afcff5ebcf7c
+Create Date: 2025-11-17 00:00:00.000000
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+from app.alembic.alembic_utils import _table_has_column
+
+# revision identifiers, used by Alembic.
+revision = '53af6b874c81'
+down_revision = 'afcff5ebcf7c'
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    if not _table_has_column('cases', 'case_template_id'):
+        op.add_column(
+            'cases',
+            sa.Column('case_template_id', sa.String(256), nullable=True)
+        )
+    pass
+
+
+def downgrade():
+    if _table_has_column('cases', 'case_template_id'):
+        op.drop_column('cases', 'case_template_id')
+    pass
