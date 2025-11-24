@@ -24,7 +24,8 @@ class SocketIOClient:
     def __init__(self, url, api_key):
         self._url = url
         self._api_key = api_key
-        self._client = SimpleClient()
+        # Disable SSL verification for self-signed certs used in dev/test
+        self._client = SimpleClient(ssl_verify=False)
 
     def connect(self):
         self._client.connect(self._url, headers={'Authorization': f'Bearer {self._api_key}'})

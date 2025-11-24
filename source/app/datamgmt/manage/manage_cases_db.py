@@ -44,7 +44,12 @@ from app.models.models import Tags
 from app.models.models import CaseEventCategory
 from app.models.models import CaseEventsAssets
 from app.models.models import CaseEventsIoc
+from app.models.models import CaseEventsArtifact
 from app.models.models import CaseReceivedFile
+from app.models.models import Artifact
+from app.models.models import ArtifactLink
+from app.models.models import ArtifactAssetLink
+from app.models.models import ArtifactComments
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
@@ -392,9 +397,13 @@ def _delete_notes(case_identifier):
 
 
 def _delete_tasks(case_identifier):
+    from app.models.models import TaskResponse
+    
     delete_tasks_comments_in_case(case_identifier)
     tasks = CaseTasks.query.filter(CaseTasks.task_case_id == case_identifier).all()
     for task in tasks:
+        # Delete task_response records first (they reference case_tasks via FK)
+        TaskResponse.query.filter(TaskResponse.task == task.id).delete()
         TaskAssignee.query.filter(TaskAssignee.task_id == task.id).delete()
         CaseTasks.query.filter(CaseTasks.id == task.id).delete()
 
@@ -405,6 +414,60 @@ def _delete_events(case_identifier):
     for event in da:
         CaseEventCategory.query.filter(CaseEventCategory.event_id == event.event_id).delete()
     CasesEvent.query.filter(CasesEvent.case_id == case_identifier).delete()
+
+
+def _delete_artifacts(case_identifier):
+    # Get all artifacts linked to this case
+    artifact_links = ArtifactLink.query.filter(ArtifactLink.case_id == case_identifier).all()
+    
+    for artifact_link in artifact_links:
+        artifact_id = artifact_link.artifact_id
+        
+        # Delete the case link
+        ArtifactLink.query.filter(
+            and_(
+                ArtifactLink.artifact_id == artifact_id,
+                ArtifactLink.case_id == case_identifier
+            )
+        ).delete()
+        
+        # Check if artifact is still linked to other cases
+        other_links = ArtifactLink.query.filter(
+            ArtifactLink.artifact_id == artifact_id
+        ).first()
+        
+        # If no other case references this artifact, delete it completely
+        if not other_links:
+            # Delete artifact comments
+            comment_ids = ArtifactComments.query.with_entities(
+                ArtifactComments.comment_id
+            ).filter(
+                ArtifactComments.comment_artifact_id == artifact_id
+            ).all()
+            
+            for comment_id_row in comment_ids:
+                Comments.query.filter(
+                    Comments.comment_id == comment_id_row.comment_id
+                ).delete()
+            
+            ArtifactComments.query.filter(
+                ArtifactComments.comment_artifact_id == artifact_id
+            ).delete()
+            
+            # Delete artifact-asset links
+            ArtifactAssetLink.query.filter(
+                ArtifactAssetLink.artifact_id == artifact_id
+            ).delete()
+            
+            # Delete artifact-event links
+            CaseEventsArtifact.query.filter(
+                CaseEventsArtifact.artifact_id == artifact_id
+            ).delete()
+            
+            # Finally delete the artifact itself
+            Artifact.query.filter(
+                Artifact.artifact_id == artifact_id
+            ).delete()
 
 
 def delete_case(case_id):
@@ -453,6 +516,7 @@ def delete_case(case_id):
     _delete_tasks(case_id)
 
     _delete_events(case_id)
+    _delete_artifacts(case_id)
 
     UserCaseAccess.query.filter(UserCaseAccess.case_id == case_id).delete()
     UserCaseEffectiveAccess.query.filter(UserCaseEffectiveAccess.case_id == case_id).delete()

@@ -474,7 +474,12 @@ class TestsRestComments(TestCase):
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
                 'event_assets': [], 'event_iocs': []}
-        response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
+        raw_response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body)
+        print(f"DEBUG: Raw response status: {raw_response.status_code}")
+        print(f"DEBUG: Raw response text: {raw_response.text}")
+        response = raw_response.json()
+        print(f"DEBUG: Response JSON: {response}")
+        print(f"DEBUG: Available keys: {list(response.keys()) if isinstance(response, dict) else 'Not a dict'}")
         object_identifier = response['event_id']
 
         response = self._subject.create(f'/api/v2/events/{object_identifier}/comments', {})

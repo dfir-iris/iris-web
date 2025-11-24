@@ -35,7 +35,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body)
         self.assertEqual(201, response.status_code)
 
@@ -43,7 +43,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         self.assertEqual('title', response['event_title'])
 
@@ -51,14 +51,14 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body)
         self.assertEqual(400, response.status_code)
 
     def test_create_event_should_return_404_when_case_is_missing(self):
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/events', body)
         self.assertEqual(404, response.status_code)
 
@@ -68,7 +68,7 @@ class TestsRestEvents(TestCase):
         user = self._subject.create_dummy_user()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = user.create(f'/api/v2/cases/{case_identifier}/events', body)
         self.assertEqual(403, response.status_code)
 
@@ -76,12 +76,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'title2', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': [],
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': [],
                 'parent_event_id': identifier}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         self.assertEqual(identifier, response['parent_event_id'])
@@ -94,7 +94,7 @@ class TestsRestEvents(TestCase):
 
             body = {'event_title': 'title', 'event_category_id': 1,
                     'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                    'event_assets': [], 'event_iocs': []}
+                    'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
             response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
             identifier = response['event_id']
 
@@ -105,7 +105,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 'wrong_event_category_id_type',
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body)
         self.assertEqual(400, response.status_code)
 
@@ -113,7 +113,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/events/{identifier}')
@@ -123,7 +123,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/events/{identifier}').json()
@@ -133,7 +133,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         response = self._subject.get(f'/api/v2/cases/{case_identifier}/events/{identifier}').json()
@@ -148,7 +148,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         response = self._subject.get(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/events/{identifier}')
@@ -158,7 +158,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
 
@@ -170,7 +170,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         case_identifier2 = self._subject.create_dummy_case()
@@ -181,12 +181,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'title2', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': [],
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': [],
                 'parent_event_id': identifier}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         child_identifier = response['event_id']
@@ -197,12 +197,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body)
         self.assertEqual(200, response.status_code)
 
@@ -210,12 +210,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body).json()
         self.assertEqual('new title', response['event_title'])
 
@@ -223,7 +223,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
 
@@ -232,7 +232,7 @@ class TestsRestEvents(TestCase):
 
             body = {'event_title': 'new title', 'event_category_id': 1,
                     'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                    'event_assets': [], 'event_iocs': []}
+                    'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
             self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body).json()
 
             message = socket_io_client.receive()
@@ -251,14 +251,14 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
 
         user = self._subject.create_dummy_user()
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = user.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body)
         self.assertEqual(403, response.status_code)
 
@@ -266,7 +266,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}', body)
         self.assertEqual(404, response.status_code)
 
@@ -274,12 +274,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/events/{identifier}', body)
         self.assertEqual(404, response.status_code)
 
@@ -287,12 +287,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '1744181930.204785', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body)
         self.assertEqual(400, response.status_code)
 
@@ -300,13 +300,13 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         case_identifier2 = self._subject.create_dummy_case()
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{case_identifier2}/events/{identifier}', body)
         self.assertEqual(400, response.status_code)
 
@@ -314,12 +314,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title',
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body)
         self.assertEqual(400, response.status_code)
 
@@ -327,12 +327,12 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_iocs': []}
+                'event_iocs': [], 'event_artifacts': []}
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body)
         self.assertEqual(400, response.status_code)
 
@@ -340,7 +340,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title', 'event_category_id': 1,
@@ -353,17 +353,17 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         parent_event_identifier = response['event_id']
         body = {'event_title': 'title2', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         body = {'event_title': 'new title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': [],
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': [],
                 'parent_event_id': parent_event_identifier}
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body).json()
         self.assertEqual(parent_event_identifier, response['parent_event_id'])
@@ -372,7 +372,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         response = self._subject.delete(f'/api/v2/cases/{case_identifier}/events/{identifier}')
@@ -382,7 +382,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         self._subject.delete(f'/api/v2/cases/{case_identifier}/events/{identifier}')
@@ -393,7 +393,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         response = self._subject.delete(f'/api/v2/cases/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}/events/{identifier}')
@@ -408,7 +408,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
 
@@ -420,7 +420,7 @@ class TestsRestEvents(TestCase):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,
                 'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
-                'event_assets': [], 'event_iocs': []}
+                'event_assets': [], 'event_iocs': [], 'event_artifacts': []}
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
         identifier = response['event_id']
         case_identifier2 = self._subject.create_dummy_case()

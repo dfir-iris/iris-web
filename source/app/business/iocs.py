@@ -54,7 +54,8 @@ def iocs_create(ioc: Ioc):
     if case_iocs_db_exists(ioc):
         raise BusinessProcessingError('IOC with same value and type already exists')
 
-    add_ioc(ioc, iris_current_user.id, ioc.case_id)
+    ioc, is_existing = add_ioc(ioc, iris_current_user.id, ioc.case_id)
+    add_obj_history_entry(ioc, 'created')
 
     ioc = call_modules_hook('on_postload_ioc_create', data=ioc, caseid=ioc.case_id)
 
@@ -96,7 +97,7 @@ def iocs_update(ioc: Ioc, ioc_sc: Ioc) -> (Ioc, str):
 def iocs_delete(ioc: Ioc):
     call_modules_hook('on_preload_ioc_delete', data=ioc.ioc_id)
 
-    delete_ioc(ioc)
+    delete_ioc(ioc, ioc.case_id)
 
     call_modules_hook('on_postload_ioc_delete', data=ioc.ioc_id, caseid=ioc.case_id)
 

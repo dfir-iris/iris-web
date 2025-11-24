@@ -41,35 +41,35 @@ class RestApi:
 
     def post(self, path, payload, query_parameters=None):
         url = self._build_url(path)
-        response = requests.post(url, headers=self._headers, params=query_parameters, json=payload)
+        response = requests.post(url, headers=self._headers, params=query_parameters, json=payload, verify=False)
         response_as_string = self._convert_response_to_string(response)
         print(f'POST {url} {payload} => {response_as_string}')
         return response
 
     def get(self, path, query_parameters=None):
         url = self._build_url(path)
-        response = requests.get(url, headers=self._headers, params=query_parameters)
+        response = requests.get(url, headers=self._headers, params=query_parameters, verify=False)
         response_as_string = self._convert_response_to_string(response)
         print(f'GET {url} => {response_as_string}')
         return response
 
     def put(self, path, payload):
         url = self._build_url(path)
-        response = requests.put(url, headers=self._headers, json=payload)
+        response = requests.put(url, headers=self._headers, json=payload, verify=False)
         response_as_string = self._convert_response_to_string(response)
         print(f'PUT {url} {payload} => {response_as_string}')
         return response
 
     def delete(self, path, query_parameters=None):
         url = self._build_url(path)
-        response = requests.delete(url, headers=self._headers, params=query_parameters)
+        response = requests.delete(url, headers=self._headers, params=query_parameters, verify=False)
         response_as_string = self._convert_response_to_string(response)
         print(f'DELETE {url} => {response_as_string}')
         return response
 
     def is_ready(self):
         try:
-            requests.head(self._url)
+            requests.head(self._url, verify=False)
             return True
         except ConnectionError:
             return False
@@ -78,7 +78,7 @@ class RestApi:
         headers = {'Authorization': f'Bearer {self._api_key}'}
         with open(file_path, 'rb') as file:
             url = self._build_url(path)
-            response = requests.post(url, headers=headers, data=data, files={'file': file})
+            response = requests.post(url, headers=headers, data=data, files={'file': file}, verify=False)
             response_as_string = self._convert_response_to_string(response)
             print(f'POST {url} {data} {file_path} => {response_as_string}')
             return response

@@ -1122,6 +1122,7 @@ class IocSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     ioc_enrichment: Optional[Dict[str, Any]] = auto_field('ioc_enrichment', required=False)
     ioc_type: Optional[IocTypeSchema] = ma.Nested(IocTypeSchema, required=False)
     tlp = ma.Nested(TlpSchema)
+    modification_history: str = auto_field('modification_history', required=False, readonly=True)
 
     def get_link(self, ioc):
         ial = get_ioc_links(ioc.ioc_id, ioc.case_id)

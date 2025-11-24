@@ -671,9 +671,14 @@ def update_user(user: User, name: str = None, email: str = None, password: str =
 
 
 def delete_user(user_id):
+    from app.models.models import TaskResponse
+    
     # Migrate the user activity to a shadow user
 
     UserActivity.query.filter(UserActivity.user_id == user_id).update({UserActivity.user_id: None})
+
+    # Nullify task_response created_by_user_id (they reference users via FK)
+    TaskResponse.query.filter(TaskResponse.created_by_user_id == user_id).update({TaskResponse.created_by_user_id: None})
 
     UserCaseAccess.query.filter(UserCaseAccess.user_id == user_id).delete()
     UserOrganisation.query.filter(UserOrganisation.user_id == user_id).delete()

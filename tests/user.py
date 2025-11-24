@@ -53,4 +53,4 @@ class User:
 
     def login(self, password):
         url = parse.urljoin(self._iris_url, '/api/v2/auth/login')
-        return requests.post(url, json={'username': self._login, 'password': password})
+        return requests.post(url, json={'username': self._login, 'password': password}, verify=False)

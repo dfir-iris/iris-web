@@ -199,14 +199,24 @@ def add_ioc(ioc: Ioc, user_id, caseid):
     db_ioc = find_ioc(ioc.ioc_value, ioc.ioc_type_id)
 
     if not db_ioc:
+        ioc.case_id = caseid  # Set the case_id on the IOC itself
         db.session.add(ioc)
+        db.session.flush()  # Flush to get the ioc_id before creating the link
+        
+        # Create the link between IOC and case
+        link = IocLink()
+        link.case_id = caseid
+        link.ioc_id = ioc.ioc_id
+        db.session.add(link)
 
         update_ioc_state(caseid=caseid)
         db.session.commit()
+        
         return ioc, False
 
     else:
-        # IoC already exists
+        # IoC already exists, create link if it doesn't exist
+        add_ioc_link(db_ioc.ioc_id, caseid)
         return db_ioc, True
 
 
@@ -332,6 +342,8 @@ def get_case_ioc_comment(ioc_id, comment_id):
         Comments.comment_date,
         Comments.comment_update_date,
         Comments.comment_uuid,
+        Comments.comment_user_id,
+        Comments.comment_case_id,
         User.name,
         User.user
     ).join(IocComments.comment)

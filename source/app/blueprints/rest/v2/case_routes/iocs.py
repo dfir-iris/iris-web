@@ -44,6 +44,7 @@ from app.blueprints.access_controls import ac_api_return_access_denied
 from app.models.iocs import Ioc
 from app.iris_engine.module_handler.module_handler import call_deprecated_on_preload_modules_hook
 from app.schema.marshables import IocSchema
+from app.business.cases import cases_exists
 
 
 class IocsOperations:
@@ -113,6 +114,9 @@ class IocsOperations:
             return response_api_not_found()
 
     def update(self, case_identifier, identifier):
+        if not cases_exists(case_identifier):
+            return response_api_not_found()
+
         if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=case_identifier)
 
@@ -142,6 +146,9 @@ class IocsOperations:
             return response_api_error(e.get_message(), data=e.get_data())
 
     def delete(self, case_identifier, identifier):
+        if not cases_exists(case_identifier):
+            return response_api_not_found()
+
         if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
             return ac_api_return_access_denied(caseid=case_identifier)
 

@@ -24,9 +24,9 @@ from rest_api import RestApi
 from user import User
 from socket_io_context_manager import SocketIOContextManager
 
-API_URL = 'http://127.0.0.1:8000'
+API_URL = 'https://127.0.0.1'
 # TODO SSOT: this should be directly read from the .env file
-_API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
+_API_KEY = '8kJKahIs-3OQSmCvrN6PEhl-zOKnYyiBud1EmZa94vwOeQXNYSzDyjClBqyF6y_AZto56V7UZbDexq5YoUJrMw'
 _IRIS_PATH = Path('..')
 _ADMINISTRATOR_USER_LOGIN = 'administrator'
 ADMINISTRATOR_USER_IDENTIFIER = 1
@@ -118,32 +118,47 @@ class Iris:
         return self._administrator.execute_graphql_query(payload)
 
     def clear_database(self):
+        # Delete alerts first
+        response = self.get('api/v2/alerts').json()
+        for alert in response['data']:
+            identifier = alert['alert_id']
+            self.delete(f'/api/v2/alerts/{identifier}')
+        
+        # Delete cases before users (cases reference users as owner/reviewer)
         cases = self.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
         for case in cases['data']:
             identifier = case['case_id']
             if identifier == _INITIAL_DEMO_CASE_IDENTIFIER:
                 continue
             self.delete(f'/api/v2/cases/{identifier}')
+        
+        # Now delete users (safe after cases are gone)
+        users = self.get('/manage/users/list').json()
+        for user in users['data']:
+            identifier = user['user_id']
+            if identifier == ADMINISTRATOR_USER_IDENTIFIER:
+                continue
+            self.get(f'/manage/users/deactivate/{identifier}')
+            self.delete(f'/api/v2/manage/users/{identifier}')
+        
+        # Delete groups
         groups = self.get('/manage/groups/list').json()
         for group in groups['data']:
             identifier = group['group_id']
             if identifier == GROUP_ANALYSTS_IDENTIFIER:
                 continue
             self.delete(f'/api/v2/manage/groups/{identifier}')
-        response = self.get('api/v2/alerts').json()
-        for alert in response['data']:
-            identifier = alert['alert_id']
-            self.delete(f'/api/v2/alerts/{identifier}')
-        users = self.get('/manage/users/list').json()
-        for user in users['data']:
-            identifier = user['user_id']
-            self.get(f'/manage/users/deactivate/{identifier}')
-            self.delete(f'/api/v2/manage/users/{identifier}')
+        
+        # Reset administrator customer access
         body = {'customers_membership': [_IRIS_INITIAL_CUSTOMER_IDENTIFIER]}
         self.create(f'/manage/users/{ADMINISTRATOR_USER_IDENTIFIER}/customers/update', body)
+        
+        # Delete customers last
         customers = self.get('/manage/customers/list').json()
         for customer in customers['data']:
             identifier = customer['customer_id']
+            if identifier == _IRIS_INITIAL_CUSTOMER_IDENTIFIER:
+                continue
             self.create(f'/manage/customers/delete/{identifier}', {})
 
     def extract_logs(self, service):
