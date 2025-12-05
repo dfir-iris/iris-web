@@ -401,15 +401,11 @@ class Config:
         LDAP_VALIDATE_CERTIFICATE = (LDAP_VALIDATE_CERTIFICATE == 'True')
 
         ldap_tls_v = config.load('LDAP', 'TLS_VERSION', '1.2')
-        if ldap_tls_v not in ['1.0', '1.1', '1.2']:
-            raise Exception(f'Unsupported LDAP TLS version {ldap_tls_v}')
+        # Security: Only TLS 1.2 is supported. TLS 1.0 and 1.1 are deprecated and insecure.
+        if ldap_tls_v not in ['1.2']:
+            raise Exception(f'Unsupported LDAP TLS version {ldap_tls_v}. Only TLS 1.2 is supported for security reasons.')
 
-        if ldap_tls_v == '1.1':
-            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_1
-        elif ldap_tls_v == '1.2':
-            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2
-        elif ldap_tls_v == '1.0':
-            LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1
+        LDAP_TLS_VERSION = ssl.PROTOCOL_TLSv1_2
 
         proto = 'ldaps' if LDAP_USE_SSL else 'ldap'
         LDAP_CONNECT_STRING = f'{proto}://{LDAP_SERVER}:{LDAP_PORT}'

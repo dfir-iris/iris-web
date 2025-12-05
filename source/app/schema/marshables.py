@@ -262,6 +262,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_id: Optional[int] = fields.Integer(required=False)
     user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
     user_is_service_account: Optional[bool] = auto_field('is_service_account', required=False)
+    user_api_key: Optional[str] = fields.String(required=False, load_only=True, validate=Length(min=32))
 
     class Meta:
         model = User
@@ -2557,7 +2558,7 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     user_email: str = auto_field('email', required=True, validate=Length(min=2))
     user_active: bool = auto_field('active', required=True)
     user_id: bool = auto_field('id', required=True, dump_only=True)
-    user_api_key: bool = auto_field('api_key', required=False, dump_only=True)
+    user_api_key: Optional[str] = auto_field('api_key', required=False)
     user_password: Optional[str] = auto_field('password', required=False, load_only=True)
     user_isadmin: bool = fields.Boolean(required=True)
     user_is_service_account: Optional[bool] = auto_field('is_service_account', required=False)

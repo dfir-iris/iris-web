@@ -228,7 +228,7 @@ class User(UserMixin, db.Model):
 
     def __init__(self, user: str, name: str, email: str, password: str, active: bool,
                  external_id: str = None, is_service_account: bool = False, mfa_secret: str = None,
-                 webauthn_credentials: list = None, in_dark_mode: bool = False):
+                 webauthn_credentials: list = None, in_dark_mode: bool = False, api_key: str = None):
         self.user = user
         self.name = name
         self.password = password
@@ -240,13 +240,24 @@ class User(UserMixin, db.Model):
         self.mfa_setup_complete = False
         self.webauthn_credentials = webauthn_credentials or []
         self.in_dark_mode = in_dark_mode
+        self.api_key = api_key  # Optional: can be None, will be generated in save()
 
     def __repr__(self):
         return str(self.id) + ' - ' + str(self.user)
 
     def save(self):
+        # Use provided API key or generate a new one
+        if not self.api_key:
+            self.api_key = secrets.token_urlsafe(nbytes=64)
+        else:
+            # Check if the provided API key already exists
+            existing_user = User.query.filter_by(api_key=self.api_key).first()
+            if existing_user:
+                raise ValueError(f"API key already exists for user ID {existing_user.id} ({existing_user.user})")
 
-        self.api_key = secrets.token_urlsafe(nbytes=64)
+        # Ensure the auto-generated API key is unique
+        while User.query.filter_by(api_key=self.api_key).first() is not None:
+            self.api_key = secrets.token_urlsafe(nbytes=64)
 
         # inject self into db session
         db.session.add(self)

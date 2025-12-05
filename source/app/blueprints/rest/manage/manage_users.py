@@ -42,6 +42,7 @@ from app.datamgmt.manage.manage_users_db import update_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
+from app.models.authorization import User as AuthUser
 from app.schema.marshables import UserSchema
 from app.schema.marshables import BasicUserSchema
 from app.schema.marshables import UserFullSchema
@@ -120,12 +121,17 @@ def add_user():
         jsdata['user_id'] = 0
         jsdata['active'] = jsdata.get('active', True)
         cuser = user_schema.load(jsdata, partial=True)
+
+        # Get optional custom API key from request
+        user_api_key = jsdata.get('user_api_key')
+
         user = create_user(cuser.name,
                            cuser.user,
                            cuser.password,
                            cuser.email,
                            jsdata.get('active'),
-                           user_is_service_account=cuser.is_service_account)
+                           user_is_service_account=cuser.is_service_account,
+                           user_api_key=user_api_key)
 
         udata = user_schema.dump(user)
         udata['user_api_key'] = user.api_key
@@ -136,6 +142,10 @@ def add_user():
             return response_success("user created", data=udata)
 
         return response_error("Unable to create user for internal reasons")
+
+    except ValueError as e:
+        # API key conflict
+        return response_error(msg=str(e))
 
     except marshmallow.exceptions.ValidationError as e:
         return response_error(msg="Data error", data=e.messages)
@@ -299,6 +309,15 @@ def update_user_api(cur_id):
         user_schema = UserSchema()
         jsdata = request.get_json()
         jsdata['user_id'] = cur_id
+
+        # Check if a new API key is provided and validate uniqueness
+        new_api_key = jsdata.get('user_api_key')
+        if new_api_key:
+            existing_user = AuthUser.query.filter_by(api_key=new_api_key).first()
+            if existing_user and existing_user.id != cur_id:
+                return response_error(f"API key already exists for user ID {existing_user.id} ({existing_user.user})")
+            user.api_key = new_api_key
+
         cuser = user_schema.load(jsdata, instance=user, partial=True)
         update_user(user, password=jsdata.get('user_password'))
         db.session.commit()
@@ -365,7 +384,20 @@ def renew_user_api_key(cur_id):
     if protect_demo_mode_user(user):
         return ac_api_return_access_denied()
 
-    user.api_key = secrets.token_urlsafe(nbytes=64)
+    # Check if a custom API key is provided in the request
+    jsdata = request.get_json() or {}
+    new_api_key = jsdata.get('user_api_key')
+
+    if new_api_key:
+        # Validate uniqueness of the provided API key
+        existing_user = AuthUser.query.filter_by(api_key=new_api_key).first()
+        if existing_user and existing_user.id != cur_id:
+            return response_error(f"API key already exists for user ID {existing_user.id} ({existing_user.user})")
+        user.api_key = new_api_key
+    else:
+        # Generate a new random API key
+        user.api_key = secrets.token_urlsafe(nbytes=64)
+
     db.session.commit()
 
     user_schema = UserFullSchema()

@@ -45,6 +45,8 @@ from app.business.auth import wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import update_user_groups
 from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import add_user_to_customer
+from app.models.cases import Client
 from app.forms import LoginForm, MFASetupForm
 from app.blueprints.iris_user import iris_current_user
 from app.iris_engine.utils.tracker import track_activity
@@ -257,6 +259,16 @@ if is_authentication_oidc():
                         user_is_service_account=False
                 )
 
+            # Assign new user to the first customer (acting as the default customer)
+            first_customer = Client.query.order_by(Client.client_id).first()
+            if first_customer:
+                add_user_to_customer(user.id, first_customer.client_id)
+                log.info(f'Assigned OIDC user {user_login} to default customer {first_customer.name}')
+            else:
+                log.error(
+                    f'CRITICAL: No customers found in the system. User {user.id} could not be assigned to a default customer.'
+                )
+
         if user and not user.active or (user and not user_group):
             return response_error("User not active or has no role in IRIS", 403)
         if user_group:
@@ -266,6 +278,8 @@ if is_authentication_oidc():
             else:
                 group_name_to_id = json.loads(userroles_mapping_field)
             new_user_group = [group_name_to_id[group_name] for group_name in user_group if group_name in group_name_to_id]
+            if not new_user_group:
+                return response_error("User role not in IRIS", 403)
             update_user_groups(user.id, new_user_group)
 
         return wrap_login_user(user, is_oidc=True)
