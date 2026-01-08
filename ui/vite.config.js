@@ -74,7 +74,6 @@ export default defineConfig(({ mode }) => {
                     {
                         src: 'node_modules/jquery/dist/jquery.min.js',
                         dest: 'assets/js/core',
-                        rename: 'jquery.3.2.1.min.js',
                     },
                     {
                         src: 'node_modules/jquery-validation/dist/jquery.validate.min.js',
