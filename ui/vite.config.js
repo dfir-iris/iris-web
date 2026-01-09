@@ -72,6 +72,10 @@ export default defineConfig(({ mode }) => {
                         dest: 'assets/js/core',
                     },
                     {
+                        src: 'node_modules/bootstrap/dist/css/bootstrap.min.css',
+                        dest: 'assets/css',
+                    },
+                    {
                         src: 'node_modules/jquery/dist/jquery.min.js',
                         dest: 'assets/js/core',
                     },
@@ -119,6 +123,10 @@ export default defineConfig(({ mode }) => {
                     {
                         src: 'node_modules/jquery.scrollbar/jquery.scrollbar.min.js',
                         dest: 'assets/js/plugin/jquery-scrollbar/',
+                    },
+                    {
+                        src: 'node_modules/jquery-ui/dist/jquery-ui.min.js',
+                        dest: 'assets/js/plugin/jquery-ui/',
                     },
                     {
                         src: 'node_modules/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
