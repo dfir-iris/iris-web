@@ -76,6 +76,10 @@ export default defineConfig(({ mode }) => {
                         dest: 'assets/css',
                     },
                     {
+                        src: 'node_modules/bootstrap/dist/css/bootstrap.min.css.map',
+                        dest: 'assets/css',
+                    },
+                    {
                         src: 'node_modules/jquery/dist/jquery.min.js',
                         dest: 'assets/js/core',
                     },
