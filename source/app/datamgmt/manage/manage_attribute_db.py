@@ -238,47 +238,65 @@ def validate_attribute(attribute):
     except Exception as e:
         return None, [str(e)]
 
-    for tab in data:
+for tab in data:
+        # Check if the tab content is actually a dictionary
+        if not isinstance(data[tab], dict):
+            logs.append(f"Tab '{tab}' is invalid. It must contain a dictionary of fields.")
+            continue
+
         for field in data[tab]:
-            if not data[tab][field].get('type'):
+            _field_content = data[tab][field]
+
+            # Check if field content is a dictionary before accessing .get()
+            if not isinstance(_field_content, dict):
+                logs.append(f"Field '{field}' in tab '{tab}' is invalid. Expected an object.")
+                continue
+
+            if not _field_content.get('type'):
                 logs.append(f'{tab}::{field} is missing mandatory "type" tag')
                 continue
 
-            field_type = data[tab][field].get('type')
+            field_type = _field_content.get('type')
+            
             if field_type in ['input_string', 'input_textfield', 'input_checkbox', 'input_select',
                               'input_date', 'input_datetime']:
-                if data[tab][field].get('mandatory') is None:
+                
+                if _field_content.get('mandatory') is None:
                     logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "mandatory" tag')
 
-                elif not isinstance(data[tab][field].get('mandatory'), bool):
+                elif not isinstance(_field_content.get('mandatory'), bool):
                     logs.append(f'{tab} -> {field} -> "mandatory" expects a value of type bool, '
-                                f'but got {type(data[tab][field].get("mandatory"))}')
+                                f'but got {type(_field_content.get("mandatory")).__name__}')
 
-                if data[tab][field].get('value') is None:
+                if _field_content.get('value') is None:
                     logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "value" tag')
 
-                if field_type == 'input_checkbox' and not isinstance(data[tab][field].get('value'), bool):
+                if field_type == 'input_checkbox' and not isinstance(_field_content.get('value'), bool):
                     logs.append(f'{tab} -> {field} of type {field_type} expects a value of type bool, '
-                                f'but got {type(data[tab][field]["value"])}')
+                                f'but got {type(_field_content.get("value")).__name__}')
 
                 if field_type in ['input_string', 'input_textfield', 'input_date', 'input_datetime']:
-                    if not isinstance(data[tab][field].get('value'), str):
+                    if not isinstance(_field_content.get('value'), str):
                         logs.append(f'{tab} -> {field} of type {field_type} expects a value of type str, '
-                                    f'but got {type(data[tab][field]["value"])}')
+                                    f'but got {type(_field_content.get("value")).__name__}')
 
                 if field_type == 'input_select':
-                    if data[tab][field].get('options') is None:
+                    if _field_content.get('options') is None:
                         logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "options" tag')
                         continue
 
-                    if not isinstance(data[tab][field].get('options'), list):
+                    if not isinstance(_field_content.get('options'), list):
                         logs.append(f'{tab} -> {field} of type {field_type} expects a value of type list, '
-                                    f'but got {type(data[tab][field]["value"])}')
+                                    f'but got {type(_field_content.get("value")).__name__}')
 
-                    for opt in data[tab][field].get('options'):
+                    for opt in _field_content.get('options'):
                         if not isinstance(opt, str):
                             logs.append(f'{tab} -> {field} -> "options" expects a list of str, '
-                                        f'but got {type(opt)}')
+                                        f'but got {type(opt).__name__}')
+
+            elif field_type in ['raw', 'html']:
+                if _field_content.get('value') is None:
+                    logs.append(f'{tab} -> {field} of type {field_type} is missing mandatory "value" tag')
 
             elif field_type in ['raw', 'html']:
                 if data[tab][field].get('value') is None:
