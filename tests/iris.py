@@ -54,6 +54,9 @@ class Iris:
     def post_multipart_encoded_file(self, path, data, file_path):
         return self._api.post_multipart_encoded_file(path, data, file_path)
 
+    def post_multipart_encoded_files(self, path, data, files):
+        return self._api.post_multipart_encoded_files(path, data, files)
+
     def _create_user(self, user_name):
         body = {
             'user_name': user_name,

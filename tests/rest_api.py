@@ -82,3 +82,11 @@ class RestApi:
             response_as_string = self._convert_response_to_string(response)
             print(f'POST {url} {data} {file_path} => {response_as_string}')
             return response
+
+    def post_multipart_encoded_files(self, path, data, files):
+        headers = {'Authorization': f'Bearer {self._api_key}'}
+        url = self._build_url(path)
+        response = requests.post(url, headers=headers, data=data, files=files)
+        response_as_string = self._convert_response_to_string(response)
+        print(f'POST {url} {data} {list(files)} => {response_as_string}')
+        return response

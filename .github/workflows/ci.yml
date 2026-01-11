@@ -163,6 +163,16 @@ jobs:
           docker load --input ${{ runner.temp }}/iriswebapp_app.tar
       - name: Check out iris
         uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - name: Build ui to be mounted in development docker
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
       - name: Start development server
         run: |
           # Even though, we use --env-file option when running docker compose, this is still necessary, because the compose has a env_file attribute :(
