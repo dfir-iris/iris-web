@@ -230,7 +230,7 @@ class CeleryConfig:
 
 class Config:
     # Handled by bumpversion
-    IRIS_VERSION = "v2.5.0-beta.1-dev-pr1" # DO NOT EDIT THIS LINE MANUALLY
+    IRIS_VERSION = "v2.5.0-beta.1-dev-pr2" # DO NOT EDIT THIS LINE MANUALLY
 
     if os.environ.get('IRIS_DEMO_VERSION') is not None and os.environ.get('IRIS_DEMO_VERSION') != 'None':
         IRIS_VERSION = os.environ.get('IRIS_DEMO_VERSION')
