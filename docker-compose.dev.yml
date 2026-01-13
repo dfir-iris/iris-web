@@ -108,7 +108,7 @@ services:
     working_dir: /app
     environment:
       - IRIS_SVELTEKIT_FRONTEND_DIR=${IRIS_SVELTEKIT_FRONTEND_DIR:-../iris-frontend}
-      - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-http://127.0.0.1:8000}
+      - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-http://127.0.0.1}
       - PUBLIC_INTERNAL_API_URL=http://${IRIS_UPSTREAM_SERVER}:${IRIS_UPSTREAM_PORT}
       - PUBLIC_USE_MOCK_API_DATA=false
       - ORIGIN=https://127.0.0.1
