@@ -25,24 +25,40 @@ from oic.oic.message import ProviderConfigurationResponse
 def get_oidc_client(app) -> Client:
     client = Client(client_authn_method=CLIENT_AUTHN_METHOD)
 
-    # retrieve provider configuration dynamically from metadata
-    # or fall back to env vars
+    # Normalize issuer URL - strip trailing slash to prevent "Unknown Issuer" errors
+    issuer_url = app.config.get("OIDC_ISSUER_URL", "").rstrip('/')
+    client_id = app.config.get("OIDC_CLIENT_ID")
+    client_secret = app.config.get("OIDC_CLIENT_SECRET")
+
+    # Check for explicit JWKS URI (e.g., Azure single-tenant with appid)
+    jwks_uri = app.config.get("OIDC_JWKS_URI")
+
     try:
-        client.provider_config(app.config.get("OIDC_ISSUER_URL"))
+        if jwks_uri:
+            # Manual configuration with explicit JWKS URI
+            app.logger.info(f"Using explicit JWKS URI: {jwks_uri}")
+
+            op_info = ProviderConfigurationResponse(
+                issuer=issuer_url,
+                authorization_endpoint=app.config.get("OIDC_AUTH_ENDPOINT"),
+                token_endpoint=app.config.get("OIDC_TOKEN_ENDPOINT"),
+                end_session_endpoint=app.config.get("OIDC_END_SESSION_ENDPOINT"),
+                jwks_uri=jwks_uri
+            )
+            client.handle_provider_config(op_info, issuer_url)
+        else:
+            # Auto-discovery (standard OIDC flow)
+            app.logger.info("Using OIDC auto-discovery")
+            client.provider_config(issuer_url)
+
     except Exception as e:
-        app.logger.warning(f"Could not read OIDC metadata, using environment variables - error {e}")
-        op_info = ProviderConfigurationResponse(
-            issuer=app.config.get("OIDC_ISSUER_URL"),
-            authorization_endpoint=app.config.get("OIDC_AUTH_ENDPOINT"),
-            token_endpoint=app.config.get("OIDC_TOKEN_ENDPOINT"),
-            end_session_endpoint=app.config.get("OIDC_END_SESSION_ENDPOINT"),
-        )
+        app.logger.error(f"OIDC configuration failed: {e}")
+        raise
 
-        client.handle_provider_config(op_info, op_info['issuer'])
-
+    # Client Registration
     info = {
-        "client_id": app.config.get("OIDC_CLIENT_ID"),
-        "client_secret": app.config.get("OIDC_CLIENT_SECRET")
+        "client_id": client_id,
+        "client_secret": client_secret
     }
     client_reg = RegistrationResponse(**info)
     client.store_registration_info(client_reg)
