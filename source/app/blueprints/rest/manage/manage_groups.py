@@ -220,6 +220,17 @@ def manage_groups_members_delete(cur_id, cur_id_2):
     return response_success('Member deleted from group', data=group)
 
 
+@manage_groups_rest_blueprint.route('/manage/groups/<int:cur_id>/cases-access', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_cac_list_cases(cur_id):
+
+    group = get_group_details(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    return response_success(data=group)
+
+
 @manage_groups_rest_blueprint.route('/manage/groups/<int:cur_id>/cases-access/update', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def manage_groups_cac_add_case(cur_id):
