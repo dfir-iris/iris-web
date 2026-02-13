@@ -177,7 +177,15 @@ def _update_denied_case(caseid):
 
 
 def _update_current_case(caseid, restricted_access):
-    if session['current_case']['case_id'] != caseid:
+    if 'current_case' not in session or not isinstance(session.get('current_case'), dict):
+        session['current_case'] = {
+            'case_name': '',
+            'case_info': '',
+            'case_id': caseid,
+            'access': ''
+        }
+
+    if session['current_case'].get('case_id') != caseid:
         case = get_case(caseid)
         if case:
             session['current_case'] = {
