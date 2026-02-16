@@ -207,6 +207,21 @@ def manage_user_customers_(cur_id):
     return response_success("User customers updated", data=user)
 
 
+@manage_users_rest_blueprint.route('/manage/users/<int:cur_id>/cases-access', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_cac_list_cases(cur_id):
+
+    user = get_user_details(user_id=cur_id)
+
+    if not user:
+        return response_error("Invalid user ID")
+
+    # get_user_details returns user_cases_access (API v2 schema) but keep fallback for older payloads
+    cases_access = user.get('user_cases_access', user.get('cases_access', []))
+
+    return response_success(data=cases_access)
+
+
 @manage_users_rest_blueprint.route('/manage/users/<int:cur_id>/cases-access/update', methods=['POST'])
 @ac_api_requires(Permissions.server_administrator)
 def manage_user_cac_add_case(cur_id):
