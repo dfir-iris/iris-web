@@ -18,6 +18,7 @@
 
 import configparser
 from app.logger import logger
+import json
 import logging
 import os
 import ssl
@@ -226,6 +227,54 @@ class CeleryConfig:
     result_serializer = "json"
     worker_pool_restarts = True
     broker_connection_retry_on_startup = True
+
+
+_celery_settings = [
+    ("accept_content", json.loads),
+    ("task_serializer", str),
+    ("result_serializer", str),
+    ("worker_max_tasks_per_child", int),
+    ("worker_prefetch_multiplier", int),
+    ("worker_concurrency", int),
+    ("worker_pool_restarts", bool),
+    ("enable_utc", bool),
+    ("task_acks_late", bool),
+    ("task_ignore_result", bool),
+    ("task_send_sent_event", bool),
+    ("broker_connection_retry_on_startup", bool),
+    ("beat_schedule", json.loads),
+    ("beat_scheduler", str),
+    ("timezone", str),
+    ("result_expires", int),
+    ("result_persistent", bool),
+    ("task_default_queue", str),
+    ("task_default_exchange", str),
+    ("task_default_routing_key", str),
+    ("broker_connection_timeout", int),
+    ("broker_connection_max_retries", int),
+    ("broker_heartbeat", int),
+    ("task_publish_retry", bool),
+    ("task_publish_retry_policy", json.loads),
+    ("task_queues", json.loads),
+    ("task_routes", json.loads),
+    ("task_compression", str),
+    ("result_compression", str),
+    ("result_backend_transport_options", json.loads),
+    ("redis_backend_use_ssl", bool),
+    ("cassandra_table", str),
+    ("cassandra_keyspace", str),
+    ("cassandra_servers", json.loads),
+]
+
+for _setting, _parse in _celery_settings:
+    _env_var = f"CELERY__{_setting}"
+    if _env_var in os.environ:
+        _value = os.environ[_env_var]
+        try:
+            _parsed_value = _parse(_value)
+            setattr(CeleryConfig, _setting, _parsed_value)
+        except (ValueError, SyntaxError) as e:
+            logger.warning(f"Failed to parse {_env_var}: {e}")
 
 
 class Config:
