@@ -228,6 +228,11 @@ class CeleryConfig:
     worker_pool_restarts = True
     broker_connection_retry_on_startup = True
 
+    security_key = os.environ.get('CELERY_SECURITY_KEY', '')
+    security_certificate = os.environ.get('CELERY_SECURITY_CERT', '')
+    security_cert_store = os.environ.get('CELERY_SECURITY_CERT_STORE', '')
+    security_digest = 'sha256'
+
 
 _celery_settings = [
     ("accept_content", json.loads),

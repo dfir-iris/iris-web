@@ -17,14 +17,26 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from celery import Celery
+from celery.utils.security import setup_security
 from app.configuration import CeleryConfig
 
 
 def make_celery(name):
-    return Celery(
+    celery_app = Celery(
         name,
         config_source=CeleryConfig
     )
+
+    if CeleryConfig.security_key and CeleryConfig.security_certificate:
+        setup_security(
+            allowed_serializers=['auth'],
+            key=CeleryConfig.security_key,
+            cert=CeleryConfig.security_certificate,
+            store=CeleryConfig.security_cert_store,
+            digest=CeleryConfig.security_digest
+        )
+
+    return celery_app
 
 
 def set_celery_flask_context(celery: Celery, app):
