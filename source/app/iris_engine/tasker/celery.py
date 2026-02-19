@@ -17,11 +17,26 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from celery import Celery
-from celery.utils.security import setup_security
+from celery.security import setup_security
+from kombu.serialization import register
 from app.configuration import CeleryConfig
 
 
+def _register_auth_serializer():
+    import json
+
+    def _encode_auth(data):
+        return json.dumps(data), 'application/auth'
+
+    def _decode_auth(data):
+        return json.loads(data)
+
+    register('auth', _encode_auth, _decode_auth, content_type='application/auth')
+
+
 def make_celery(name):
+    _register_auth_serializer()
+
     celery_app = Celery(
         name,
         config_source=CeleryConfig
