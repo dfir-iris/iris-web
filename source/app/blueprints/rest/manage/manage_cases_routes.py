@@ -15,6 +15,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import json
 import logging as log
 import os
 import traceback
@@ -25,6 +26,7 @@ from flask import request
 from werkzeug import Response
 from werkzeug.utils import secure_filename
 from marshmallow import ValidationError
+from typing import Any
 
 from app.db import db
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
@@ -88,6 +90,68 @@ def manage_case_filter() -> Response:
 
     pagination_parameters = parse_pagination_parameters(request)
 
+    logic = request.args.get('logic', 'and', type=str)
+    logic = (logic or 'and').lower()
+    if logic not in ('and', 'or'):
+        return response_error("Invalid logic (expected 'and' or 'or')")
+
+    raw_filters = request.args.get('filters', None, type=str)
+    advanced_filters: list[dict[str, Any]] | None = None
+
+    if raw_filters:
+        try:
+            decoded = urllib.parse.unquote(raw_filters)
+            parsed = json.loads(decoded)
+        except Exception:
+            return response_error('Invalid filters JSON')
+
+        if not isinstance(parsed, list):
+            return response_error('Invalid filters (expected a JSON array)')
+
+        advanced_filters = []
+        for i, f in enumerate(parsed):
+            if not isinstance(f, dict):
+                return response_error(f'Invalid filter at index {i} (expected object)')
+
+            field_id = f.get('fieldId')
+            operation = f.get('operation')
+            value = f.get('value', '')
+
+            if not isinstance(field_id, str) or not field_id:
+                return response_error(f'Invalid fieldId at index {i}')
+            if not isinstance(operation, str) or not operation:
+                return response_error(f'Invalid operation at index {i}')
+            if not isinstance(value, str):
+                return response_error(f'Invalid value at index {i}')
+
+            operation = operation.lower()
+
+            allowed_ops = {
+                'equals',
+                'not',
+                'starts_with',
+                'not_starts_with',
+                'contains',
+                'not_contains',
+                'ends_with',
+                'not_ends_with',
+                'empty',
+                'not_empty'
+            }
+            if operation not in allowed_ops:
+                return response_error(f'Invalid operation at index {i}')
+
+            if operation in ('empty', 'not_empty'):
+                value = ''
+
+            advanced_filters.append(
+                {
+                    'fieldId': field_id,
+                    'operation': operation,
+                    'value': value
+                }
+            )
+
     case_ids_str = request.args.get('case_ids', None, type=str)
 
     if case_ids_str:
@@ -111,6 +175,15 @@ def manage_case_filter() -> Response:
     draw = request.args.get('draw', 1, type=int)
     search_value = request.args.get('search[value]', type=str)  # Get the search value from the request
 
+    is_open_raw = request.args.get('is_open', None, type=str)
+    is_open = None
+    if is_open_raw is not None:
+        v = is_open_raw.strip().lower()
+        if v in ('1', 'true', 'yes', 'y', 'on'):
+            is_open = True
+        elif v in ('0', 'false', 'no', 'n', 'off'):
+            is_open = False
+
     if type(draw) is not int:
         draw = 1
 
@@ -129,7 +202,10 @@ def manage_case_filter() -> Response:
         case_soc_id=case_soc_id,
         start_open_date=start_open_date,
         end_open_date=end_open_date,
-        search_value=search_value
+        search_value=search_value,
+        is_open=is_open,
+        advanced_filters=advanced_filters,
+        advanced_logic=logic
     )
     if filtered_cases is None:
         return response_error('Filtering error')
