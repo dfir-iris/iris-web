@@ -22,6 +22,22 @@ from kombu.serialization import register
 from app.configuration import CeleryConfig
 
 
+def _patch_celery_cert_datetime():
+    import datetime
+    from celery.security.certificate import Certificate
+
+    _original_has_expired = Certificate.has_expired
+
+    def _patched_has_expired(self):
+        try:
+            return _original_has_expired(self)
+        except TypeError:
+            not_valid_after = self._cert.not_valid_after_utc
+            return datetime.datetime.now(datetime.timezone.utc) >= not_valid_after
+
+    Certificate.has_expired = _patched_has_expired
+
+
 def _register_auth_serializer():
     import json
 
@@ -43,6 +59,7 @@ def make_celery(name):
     )
 
     if CeleryConfig.security_key and CeleryConfig.security_certificate:
+        _patch_celery_cert_datetime()
         setup_security(
             allowed_serializers=['auth'],
             key=CeleryConfig.security_key,
