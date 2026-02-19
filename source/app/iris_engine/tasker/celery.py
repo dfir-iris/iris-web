@@ -17,7 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from celery import Celery
-from celery.utils.security import setup_security
+from celery.security import setup_security
 from app.configuration import CeleryConfig
 
 
