@@ -21,7 +21,6 @@ from celery.security import setup_security
 from kombu.serialization import register
 from app.configuration import CeleryConfig
 
-
 def _patch_celery_cert_datetime():
     import datetime
     from celery.security.certificate import Certificate
