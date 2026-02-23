@@ -16,6 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import json
+import urllib.parse
+from typing import Any
+
 from flask import Blueprint
 from flask import request
 from marshmallow import ValidationError
@@ -45,6 +49,8 @@ from app.business.cases import cases_update
 from app.models.errors import BusinessProcessingError, ObjectNotFoundError
 from app.business.cases import cases_filter
 from app.schema.marshables import CaseSchemaForAPIV2
+from app.schema.marshables import CaseDetailsSchema
+from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.access_controls import ac_current_user_has_customer_access
 from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
@@ -98,6 +104,138 @@ class CasesOperations:
         )
 
         return response_api_paginated(self._schema, filtered_cases)
+
+    def filter(self) -> Response:
+        pagination_parameters = parse_pagination_parameters(request)
+
+        logic = request.args.get('logic', 'and', type=str)
+        logic = (logic or 'and').lower()
+        if logic not in ('and', 'or'):
+            return response_api_error("Invalid logic (expected 'and' or 'or')")
+
+        raw_filters = request.args.get('filters', None, type=str)
+        advanced_filters: list[dict[str, Any]] | None = None
+
+        if raw_filters:
+            try:
+                decoded = urllib.parse.unquote(raw_filters)
+                parsed = json.loads(decoded)
+            except Exception:
+                return response_api_error('Invalid filters JSON')
+
+            if not isinstance(parsed, list):
+                return response_api_error('Invalid filters (expected a JSON array)')
+
+            advanced_filters = []
+            for i, f in enumerate(parsed):
+                if not isinstance(f, dict):
+                    return response_api_error(f'Invalid filter at index {i} (expected object)')
+
+                field_id = f.get('fieldId')
+                operation = f.get('operation')
+                value = f.get('value', '')
+
+                if not isinstance(field_id, str) or not field_id:
+                    return response_api_error(f'Invalid fieldId at index {i}')
+                if not isinstance(operation, str) or not operation:
+                    return response_api_error(f'Invalid operation at index {i}')
+                if not isinstance(value, str):
+                    return response_api_error(f'Invalid value at index {i}')
+
+                operation = operation.lower()
+
+                allowed_ops = {
+                    'equals',
+                    'not',
+                    'starts_with',
+                    'not_starts_with',
+                    'contains',
+                    'not_contains',
+                    'ends_with',
+                    'not_ends_with',
+                    'empty',
+                    'not_empty'
+                }
+                if operation not in allowed_ops:
+                    return response_api_error(f'Invalid operation at index {i}')
+
+                if operation in ('empty', 'not_empty'):
+                    value = ''
+
+                advanced_filters.append(
+                    {
+                        'fieldId': field_id,
+                        'operation': operation,
+                        'value': value
+                    }
+                )
+
+        case_ids_str = request.args.get('case_ids', None, type=str)
+        if case_ids_str:
+            try:
+                case_ids_str = parse_comma_separated_identifiers(case_ids_str)
+            except ValueError:
+                return response_api_error('Invalid case id')
+
+        case_customer_id = request.args.get('case_customer_id', None, type=str)
+        case_name = request.args.get('case_name', None, type=str)
+        case_description = request.args.get('case_description', None, type=str)
+        case_classification_id = request.args.get('case_classification_id', None, type=int)
+        case_owner_id = request.args.get('case_owner_id', None, type=int)
+        case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
+        case_severity_id = request.args.get('case_severity_id', None, type=int)
+        case_state_id = request.args.get('case_state_id', None, type=int)
+        case_soc_id = request.args.get('case_soc_id', None, type=str)
+        start_open_date = request.args.get('start_open_date', None, type=str)
+        end_open_date = request.args.get('end_open_date', None, type=str)
+        draw = request.args.get('draw', 1, type=int)
+        search_value = request.args.get('search[value]', type=str)
+
+        is_open_raw = request.args.get('is_open', None, type=str)
+        is_open = None
+        if is_open_raw is not None:
+            v = is_open_raw.strip().lower()
+            if v in ('1', 'true', 'yes', 'y', 'on'):
+                is_open = True
+            elif v in ('0', 'false', 'no', 'n', 'off'):
+                is_open = False
+
+        if type(draw) is not int:
+            draw = 1
+
+        filtered_cases = get_filtered_cases(
+            iris_current_user.id,
+            pagination_parameters,
+            case_ids=case_ids_str,
+            case_customer_id=case_customer_id,
+            case_name=case_name,
+            case_description=case_description,
+            case_classification_id=case_classification_id,
+            case_owner_id=case_owner_id,
+            case_opening_user_id=case_opening_user_id,
+            case_severity_id=case_severity_id,
+            case_state_id=case_state_id,
+            case_soc_id=case_soc_id,
+            start_open_date=start_open_date,
+            end_open_date=end_open_date,
+            search_value=search_value,
+            is_open=is_open,
+            advanced_filters=advanced_filters,
+            advanced_logic=logic
+        )
+        if filtered_cases is None:
+            return response_api_error('Filtering error')
+
+        cases_payload = {
+            'total': filtered_cases.total,
+            'cases': CaseDetailsSchema().dump(filtered_cases.items, many=True),
+            'last_page': filtered_cases.pages,
+            'current_page': filtered_cases.page,
+            'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
+            'draw': draw
+        }
+
+        return response_api_success(cases_payload)
 
     def create(self):
         try:
@@ -189,6 +327,12 @@ cases_operations = CasesOperations()
 @ac_api_requires()
 def get_cases() -> Response:
     return cases_operations.search()
+
+
+@cases_blueprint.get('/filter')
+@ac_api_requires()
+def filter_cases() -> Response:
+    return cases_operations.filter()
 
 
 @cases_blueprint.post('')
