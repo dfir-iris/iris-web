@@ -41,9 +41,11 @@ def _register_auth_serializer():
     import json
 
     def _encode_auth(data):
-        return json.dumps(data), 'application/auth'
+        return json.dumps(data).encode('utf-8'), 'application/auth'
 
     def _decode_auth(data):
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
         return json.loads(data)
 
     register('auth', _encode_auth, _decode_auth, content_type='application/auth')
