@@ -89,9 +89,11 @@ def hmac_sign(data):
 
 
 def hmac_verify(signature_enc, data):
+    import os
     signature = base64.b64decode(signature_enc)
-    # Use CELERY__ prefix for environment variables
-    key = bytes(current_app.config.get("CELERY__SECURITY_KEY"), "utf-8")
+    # Read from Flask config or environment variable directly
+    security_key = current_app.config.get("SECURITY_KEY") or os.environ.get("SECURITY_KEY")
+    key = bytes(security_key, "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
 
