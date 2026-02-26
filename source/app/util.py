@@ -80,7 +80,9 @@ def add_obj_history_entry(obj, action, commit=False):
 
 
 def hmac_sign(data):
-    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
+    import os
+    key = current_app.config.get("SECRET_KEY") or os.environ.get("SECRET_KEY")
+    key = bytes(key, "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
     signature = base64.b64encode(h.finalize())
@@ -91,9 +93,16 @@ def hmac_sign(data):
 def hmac_verify(signature_enc, data):
     import os
     signature = base64.b64decode(signature_enc)
-    # Read from Flask config or environment variable directly
-    security_key = current_app.config.get("SECURITY_KEY") or os.environ.get("SECURITY_KEY")
-    key = bytes(security_key, "utf-8")
+    # Direct environment variable access (Flask app context may not be available in Celery worker)
+    key = os.environ.get("SECRET_KEY")
+    if not key:
+        try:
+            key = current_app.config.get("SECRET_KEY")
+        except:
+            pass
+    if not key:
+        return False
+    key = bytes(key, "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
 
