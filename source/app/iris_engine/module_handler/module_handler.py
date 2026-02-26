@@ -427,13 +427,20 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     """
     try:
         # Data is serialized, so deserialized
-        signature, pdata = data.encode("utf-8").split(b" ")
-        is_verified = hmac_verify(signature, pdata)
-        if is_verified is False:
-            logger.warning("data argument has not been correctly serialised")
-            raise Exception('Unable to instantiate target module. Data has not been correctly serialised')
-
-        deser_data = loads(base64.b64decode(pdata))
+        # Support both formats:
+        # 1. Dict (when using auth serializer with security enabled)
+        # 2. String with HMAC signature (legacy format)
+        if isinstance(data, dict):
+            # Auth serializer - data is already a dict
+            deser_data = data
+        else:
+            # Legacy format with HMAC signature
+            signature, pdata = data.encode("utf-8").split(b" ")
+            is_verified = hmac_verify(signature, pdata)
+            if is_verified is False:
+                logger.warning("data argument has not been correctly serialised")
+                raise Exception('Unable to instantiate target module. Data has not been correctly serialised')
+            deser_data = loads(base64.b64decode(pdata))
 
     except Exception as e:
         logger.exception(e)

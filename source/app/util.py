@@ -90,7 +90,8 @@ def hmac_sign(data):
 
 def hmac_verify(signature_enc, data):
     signature = base64.b64decode(signature_enc)
-    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
+    # Use CELERY__ prefix for environment variables
+    key = bytes(current_app.config.get("CELERY__SECURITY_KEY"), "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
 
