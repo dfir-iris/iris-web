@@ -39,9 +39,18 @@ def _patch_celery_cert_datetime():
 
 def _register_auth_serializer():
     import json
+    from datetime import datetime, date
+
+    class _CeleryJsonEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, (datetime, date)):
+                return obj.isoformat()
+            if hasattr(obj, '__dict__'):
+                return obj.__dict__
+            return str(obj)
 
     def _encode_auth(data):
-        return json.dumps(data).encode('utf-8'), 'application/auth'
+        return json.dumps(data, cls=_CeleryJsonEncoder).encode('utf-8'), 'application/auth'
 
     def _decode_auth(data):
         if isinstance(data, bytes):

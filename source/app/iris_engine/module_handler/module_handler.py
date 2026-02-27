@@ -494,6 +494,13 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
         logger.exception(e)
         task_status = IStatus.I2Error(message=msg, logs=[traceback.format_exc()], user=init_user, caseid=caseid)
 
+    if hasattr(task_status, '__dict__'):
+        return {
+            'code': task_status.code,
+            'message': task_status.message,
+            'data': task_status.data,
+            'logs': task_status.logs
+        }
     return task_status
 
 
