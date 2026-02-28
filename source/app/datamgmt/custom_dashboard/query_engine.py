@@ -15,7 +15,7 @@ from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
 from app.iris_engine.access_control.utils import ac_current_user_has_permission, ac_get_fast_user_cases_access
 from app.models.alerts import Alert, AlertResolutionStatus, AlertStatus, Severity
 from app.models.alerts import AlertCaseAssociation
-from app.models.cases import Cases, CaseTags, CasesEvent
+from app.models.cases import Cases, CaseState, CaseTags, CasesEvent
 from app.models.authorization import Permissions, User
 from app.models.models import (
     CaseClassification,
@@ -28,7 +28,9 @@ from app.models.models import (
     IocLink,
     Notes,
     CaseTasks,
-    ReviewStatus
+    ReviewStatus,
+    alert_assets_association,
+    alert_iocs_association
 )
 
 
@@ -38,6 +40,8 @@ class QueryExecutionError(Exception):
 
 @dataclass
 class WidgetQueryResult:
+    """Normalized widget query output used by the response formatters."""
+
     chart_type: str
     rows: List[Dict[str, Any]]
     group_labels: Sequence[str]
@@ -46,6 +50,109 @@ class WidgetQueryResult:
 
 
 _MAX_TIME_BUCKET_POINTS = 2000
+_DEFAULT_BASE_TABLE = 'alerts'
+_BASE_TIME_COLUMNS = {
+    'alerts': 'alerts.alert_creation_time',
+    'cases': 'cases.initial_date'
+}
+_ALERT_BASE_FAMILY_TABLES: Set[str] = {
+    'alerts',
+    'client',
+    'alert_resolution_status',
+    'alert_status',
+    'severities',
+    'case_classification',
+    'alert_owner',
+    'alert_assets',
+    'alert_asset_types',
+    'alert_iocs',
+    'alert_ioc_types'
+}
+_CASE_BASE_FAMILY_TABLES: Set[str] = {
+    'cases',
+    'case_client',
+    'case_classification_lookup',
+    'case_severity',
+    'case_state',
+    'case_tags',
+    'case_owner',
+    'case_creator',
+    'case_reviewer',
+    'tags',
+    'case_assets',
+    'case_asset_types',
+    'case_iocs',
+    'case_ioc_types',
+    'case_events',
+    'case_notes',
+    'case_tasks',
+    'review_status'
+}
+
+
+def _parse_table_name_from_reference(value: Any) -> Optional[str]:
+    if not isinstance(value, str) or '.' not in value:
+        return None
+    table_name, _ = value.split('.', 1)
+    normalized = table_name.strip()
+    return normalized or None
+
+
+def _normalize_table_name(value: Any) -> Optional[str]:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def _add_table_reference(referenced_tables: Set[str], value: Any):
+    table_name = _normalize_table_name(value)
+    if table_name:
+        referenced_tables.add(table_name)
+
+
+def _collect_widget_tables(definition: Optional[Dict[str, Any]]) -> Set[str]:
+    if not isinstance(definition, dict):
+        return set()
+
+    referenced_tables: Set[str] = set()
+
+    for field in definition.get('fields') or []:
+        if not isinstance(field, dict):
+            continue
+        _add_table_reference(referenced_tables, field.get('table'))
+        inline_filter = field.get('filter')
+        if isinstance(inline_filter, dict):
+            _add_table_reference(referenced_tables, inline_filter.get('table'))
+
+    for group_entry in definition.get('group_by') or []:
+        table_name = _parse_table_name_from_reference(group_entry)
+        if table_name:
+            referenced_tables.add(table_name)
+
+    for filter_entry in definition.get('filters') or []:
+        if not isinstance(filter_entry, dict):
+            continue
+        _add_table_reference(referenced_tables, filter_entry.get('table'))
+
+    options = definition.get('options') or {}
+    if isinstance(options, dict):
+        time_table_name = _parse_table_name_from_reference(options.get('time_column'))
+        if time_table_name:
+            referenced_tables.add(time_table_name)
+
+    return referenced_tables
+
+
+def _infer_widget_base_table(definition: Optional[Dict[str, Any]]) -> str:
+    referenced_tables = _collect_widget_tables(definition)
+
+    if referenced_tables & _ALERT_BASE_FAMILY_TABLES:
+        return 'alerts'
+    if referenced_tables & _CASE_BASE_FAMILY_TABLES:
+        return 'cases'
+
+    return _DEFAULT_BASE_TABLE
 
 
 def _ensure_numeric(value: Any) -> Optional[float]:
@@ -224,6 +331,9 @@ CaseOwnerUser = aliased(User, name='case_owner_user')
 CaseCreatorUser = aliased(User, name='case_creator_user')
 CaseReviewerUser = aliased(User, name='case_reviewer_user')
 AlertOwnerUser = aliased(User, name='alert_owner_user')
+CaseClient = aliased(Client, name='case_client')
+CaseClassificationLookup = aliased(CaseClassification, name='case_classification_lookup')
+CaseSeverity = aliased(Severity, name='case_severity')
 AlertAsset = aliased(CaseAssets, name='alert_asset')
 CaseAsset = aliased(CaseAssets, name='case_asset')
 AlertAssetType = aliased(AssetsType, name='alert_asset_type')
@@ -236,6 +346,35 @@ CaseIocLink = aliased(IocLink, name='case_ioc_link')
 CaseEventAlias = aliased(CasesEvent, name='case_event')
 CaseNoteAlias = aliased(Notes, name='case_note')
 CaseTaskAlias = aliased(CaseTasks, name='case_task')
+
+AlertAssetCount = func.coalesce(
+    select(func.count(func.distinct(alert_assets_association.c.asset_id)))
+    .where(alert_assets_association.c.alert_id == Alert.alert_id)
+    .correlate(Alert.__table__)
+    .scalar_subquery(),
+    0
+)
+AlertIocCount = func.coalesce(
+    select(func.count(func.distinct(alert_iocs_association.c.ioc_id)))
+    .where(alert_iocs_association.c.alert_id == Alert.alert_id)
+    .correlate(Alert.__table__)
+    .scalar_subquery(),
+    0
+)
+CaseAssetCount = func.coalesce(
+    select(func.count(func.distinct(CaseAssets.asset_id)))
+    .where(CaseAssets.case_id == Cases.case_id)
+    .correlate(Cases.__table__)
+    .scalar_subquery(),
+    0
+)
+CaseIocCount = func.coalesce(
+    select(func.count(func.distinct(IocLink.ioc_id)))
+    .where(IocLink.case_id == Cases.case_id)
+    .correlate(Cases.__table__)
+    .scalar_subquery(),
+    0
+)
 
 
 def _join_cases(query):
@@ -263,7 +402,8 @@ def _join_case_tags_table(query):
 
 
 def _join_tags_table(query):
-    # Case tags join is registered before reaching this point, so reuse its alias when linking tags.
+    # Case tags join is registered before reaching this point.
+    # Reuse its alias when linking tags.
     return query.outerjoin(Tags, Tags.id == CaseTags.tag_id)
 
 
@@ -312,12 +452,28 @@ def _join_case_tasks(query):
     return query.outerjoin(CaseTaskAlias, CaseTaskAlias.task_case_id == Cases.case_id)
 
 
+def _join_case_state(query):
+    return query.outerjoin(CaseState, Cases.state)
+
+
+def _join_case_client(query):
+    return query.outerjoin(CaseClient, Cases.client)
+
+
+def _join_case_classification_lookup(query):
+    return query.outerjoin(CaseClassificationLookup, Cases.classification)
+
+
+def _join_case_severity(query):
+    return query.outerjoin(CaseSeverity, Cases.severity)
+
+
 _AGGREGATIONS = {
-    'count': lambda column: func.count(column),
-    'sum': lambda column: func.sum(column),
-    'avg': lambda column: func.avg(column),
-    'min': lambda column: func.min(column),
-    'max': lambda column: func.max(column)
+    'count': func.count,
+    'sum': func.sum,
+    'avg': func.avg,
+    'min': func.min,
+    'max': func.max
 }
 
 _OPERATORS = {
@@ -341,6 +497,8 @@ def _capitalize_label(label: str) -> str:
 
 
 class _WidgetQueryBuilder:
+    """Mutable accumulator for SELECT, GROUP BY, JOIN and filter fragments."""
+
     def __init__(self):
         self.selects: List[Any] = []
         self.select_labels: List[str] = []
@@ -385,7 +543,7 @@ def _between_dates(column, start: Optional[datetime], end: Optional[datetime]):
 class WidgetQueryExecutor:
     """Builds and executes SQLAlchemy queries for dashboard widgets."""
 
-    _BASE_TABLE = 'alerts'
+    _BASE_TABLE = _DEFAULT_BASE_TABLE
 
     _TABLES: Dict[str, Dict[str, Any]] = {
         'alerts': {
@@ -396,16 +554,28 @@ class WidgetQueryExecutor:
                 'alert_title': Alert.alert_title,
                 'alert_source': Alert.alert_source,
                 'alert_source_ref': Alert.alert_source_ref,
+                'alert_source_link': Alert.alert_source_link,
                 'alert_description': Alert.alert_description,
+                'alert_note': Alert.alert_note,
                 'alert_creation_time': Alert.alert_creation_time,
                 'alert_source_event_time': Alert.alert_source_event_time,
                 'alert_customer_id': Alert.alert_customer_id,
+                'alert_customer_name': Client.name,
                 'alert_resolution_status_id': Alert.alert_resolution_status_id,
+                'alert_resolution_status_name': AlertResolutionStatus.resolution_status_name,
                 'alert_status_id': Alert.alert_status_id,
+                'alert_status_name': AlertStatus.status_name,
                 'alert_severity_id': Alert.alert_severity_id,
+                'alert_severity_name': Severity.severity_name,
                 'alert_owner_id': Alert.alert_owner_id,
+                'alert_owner_username': AlertOwnerUser.user,
+                'alert_owner_name': AlertOwnerUser.name,
                 'alert_classification_id': Alert.alert_classification_id,
-                'alert_tags': Alert.alert_tags
+                'alert_classification_name': CaseClassification.name,
+                'alert_classification_name_expanded': CaseClassification.name_expanded,
+                'alert_tags': Alert.alert_tags,
+                'asset_count': AlertAssetCount,
+                'ioc_count': AlertIocCount
             },
             'default_time_column': Alert.alert_creation_time
         },
@@ -454,13 +624,75 @@ class WidgetQueryExecutor:
             'model': Cases,
             'columns': {
                 'case_id': Cases.case_id,
+                'case_uuid': Cases.case_uuid,
+                'soc_id': Cases.soc_id,
+                'client_id': Cases.client_id,
+                'client_name': CaseClient.name,
                 'name': Cases.name,
+                'description': Cases.description,
+                'open_date': Cases.open_date,
+                'close_date': Cases.close_date,
+                'initial_date': Cases.initial_date,
+                'closing_note': Cases.closing_note,
                 'owner_id': Cases.owner_id,
+                'owner_username': CaseOwnerUser.user,
+                'owner_name': CaseOwnerUser.name,
                 'creator_id': Cases.user_id,
+                'user_id': Cases.user_id,
+                'creator_username': CaseCreatorUser.user,
+                'creator_name': CaseCreatorUser.name,
+                'status_id': Cases.status_id,
+                'state_id': Cases.state_id,
+                'state_name': CaseState.state_name,
+                'classification_id': Cases.classification_id,
+                'classification_name': CaseClassificationLookup.name,
+                'classification_name_expanded': CaseClassificationLookup.name_expanded,
                 'reviewer_id': Cases.reviewer_id,
-                'review_status_id': Cases.review_status_id
+                'reviewer_username': CaseReviewerUser.user,
+                'reviewer_name': CaseReviewerUser.name,
+                'review_status_id': Cases.review_status_id,
+                'review_status_name': ReviewStatus.status_name,
+                'severity_id': Cases.severity_id,
+                'severity_name': CaseSeverity.severity_name,
+                'asset_count': CaseAssetCount,
+                'ioc_count': CaseIocCount
             },
             'join': _join_cases
+        },
+        'case_client': {
+            'model': CaseClient,
+            'columns': {
+                'client_id': CaseClient.client_id,
+                'name': CaseClient.name
+            },
+            'join': _join_case_client
+        },
+        'case_classification_lookup': {
+            'model': CaseClassificationLookup,
+            'columns': {
+                'id': CaseClassificationLookup.id,
+                'name': CaseClassificationLookup.name,
+                'name_expanded': CaseClassificationLookup.name_expanded
+            },
+            'join': _join_case_classification_lookup
+        },
+        'case_severity': {
+            'model': CaseSeverity,
+            'columns': {
+                'severity_id': CaseSeverity.severity_id,
+                'severity_name': CaseSeverity.severity_name
+            },
+            'join': _join_case_severity
+        },
+        'case_state': {
+            'model': CaseState,
+            'columns': {
+                'state_id': CaseState.state_id,
+                'state_name': CaseState.state_name,
+                'state_description': CaseState.state_description,
+                'protected': CaseState.protected
+            },
+            'join': _join_case_state
         },
         'case_tags': {
             'model': CaseTags,
@@ -532,7 +764,8 @@ class WidgetQueryExecutor:
                 'case_id': AlertAsset.case_id,
                 'date_added': AlertAsset.date_added,
                 'date_update': AlertAsset.date_update,
-                'user_id': AlertAsset.user_id
+                'user_id': AlertAsset.user_id,
+                'analysis_status_id': AlertAsset.analysis_status_id
             },
             'join': _join_alert_assets
         },
@@ -590,7 +823,8 @@ class WidgetQueryExecutor:
                 'case_id': CaseAsset.case_id,
                 'date_added': CaseAsset.date_added,
                 'date_update': CaseAsset.date_update,
-                'user_id': CaseAsset.user_id
+                'user_id': CaseAsset.user_id,
+                'analysis_status_id': CaseAsset.analysis_status_id
             },
             'join': _join_case_assets
         },
@@ -703,11 +937,24 @@ class WidgetQueryExecutor:
         self.definition = definition or {}
         self.builder = _WidgetQueryBuilder()
         options = self.definition.get('options') or {}
-        self.time_column_spec = options.get('time_column') or 'alerts.alert_creation_time'
+        self._explicit_time_column_spec = options.get('time_column')
+        self._base_table = self._infer_base_table()
+        self.time_column_spec = self._resolve_time_column_spec()
         self._normalized_time_column_spec = self._normalize_table_column_value(self.time_column_spec)
         raw_time_bucket = self.definition.get('time_bucket')
         self.time_bucket = raw_time_bucket.strip().lower() if isinstance(raw_time_bucket, str) else ''
         self._time_bucket_label = ''
+
+    def _infer_base_table(self) -> str:
+        inferred_base = _infer_widget_base_table(self.definition)
+        if inferred_base not in self._TABLES:
+            return self._BASE_TABLE
+        return inferred_base
+
+    def _resolve_time_column_spec(self) -> str:
+        if isinstance(self._explicit_time_column_spec, str) and self._explicit_time_column_spec.strip():
+            return self._explicit_time_column_spec
+        return _BASE_TIME_COLUMNS.get(self._base_table, _BASE_TIME_COLUMNS[self._BASE_TABLE])
 
     def execute(self, timeframe: Tuple[Optional[datetime], Optional[datetime]]) -> WidgetQueryResult:
         widgets_fields = self.definition.get('fields') or []
@@ -738,7 +985,7 @@ class WidgetQueryExecutor:
         query = self._apply_limit(query)
 
         rows = query.all()
-        mapped_rows = [dict(row._mapping) for row in rows]
+        mapped_rows = [dict(zip(self.builder.select_labels, row)) for row in rows]
 
         return WidgetQueryResult(
             chart_type=self.builder.chart_type,
@@ -760,8 +1007,43 @@ class WidgetQueryExecutor:
         column = columns.get(column_name)
         if column is None:
             raise QueryExecutionError(f"Column '{column_name}' is not allowed for table '{table_name}'.")
-        if table_name in {'case_owner', 'case_creator', 'case_reviewer', 'case_tags', 'tags', 'case_assets', 'case_asset_types', 'case_iocs', 'case_ioc_types', 'case_events', 'case_notes', 'case_tasks', 'review_status'}:
-            self.builder.add_join('cases')
+        if table_name == 'alerts':
+            alert_join_dependencies = {
+                'alert_customer_name': 'client',
+                'alert_resolution_status_name': 'alert_resolution_status',
+                'alert_status_name': 'alert_status',
+                'alert_severity_name': 'severities',
+                'alert_owner_username': 'alert_owner',
+                'alert_owner_name': 'alert_owner',
+                'alert_classification_name': 'case_classification',
+                'alert_classification_name_expanded': 'case_classification'
+            }
+            join_table_name = alert_join_dependencies.get(column_name)
+            if join_table_name:
+                self.builder.add_join(join_table_name)
+        if table_name == 'cases':
+            if self._base_table != 'cases':
+                self.builder.add_join('cases')
+            case_join_dependencies = {
+                'client_name': 'case_client',
+                'owner_username': 'case_owner',
+                'owner_name': 'case_owner',
+                'creator_username': 'case_creator',
+                'creator_name': 'case_creator',
+                'state_name': 'case_state',
+                'classification_name': 'case_classification_lookup',
+                'classification_name_expanded': 'case_classification_lookup',
+                'reviewer_username': 'case_reviewer',
+                'reviewer_name': 'case_reviewer',
+                'review_status_name': 'review_status',
+                'severity_name': 'case_severity'
+            }
+            join_table_name = case_join_dependencies.get(column_name)
+            if join_table_name:
+                self.builder.add_join(join_table_name)
+        if table_name in {'case_owner', 'case_creator', 'case_reviewer', 'case_client', 'case_classification_lookup', 'case_severity', 'case_state', 'case_tags', 'tags', 'case_assets', 'case_asset_types', 'case_iocs', 'case_ioc_types', 'case_events', 'case_notes', 'case_tasks', 'review_status'}:
+            if self._base_table != 'cases':
+                self.builder.add_join('cases')
         if table_name == 'tags':
             self.builder.add_join('case_tags')
         if table_name == 'case_asset_types':
@@ -772,7 +1054,7 @@ class WidgetQueryExecutor:
             self.builder.add_join('alert_assets')
         if table_name == 'alert_ioc_types':
             self.builder.add_join('alert_iocs')
-        if table_name != self._BASE_TABLE:
+        if table_name != self._base_table:
             self.builder.add_join(table_name)
         return column
 
@@ -846,12 +1128,22 @@ class WidgetQueryExecutor:
         user_id = getattr(current_user, 'id', None)
         if not user_id:
             # Without a logged-in user we cannot determine scope; deny by default.
-            self.builder.filters.append(Alert.alert_id == -1)
+            if self._base_table == 'cases':
+                self.builder.filters.append(Cases.case_id == -1)
+            else:
+                self.builder.filters.append(Alert.alert_id == -1)
+            return
+
+        case_ids = ac_get_fast_user_cases_access(user_id) or []
+
+        if self._base_table == 'cases':
+            if case_ids:
+                self.builder.filters.append(Cases.case_id.in_(case_ids))
+            else:
+                self.builder.filters.append(Cases.case_id == -1)
             return
 
         client_ids = get_user_clients_id(user_id) or []
-        case_ids = ac_get_fast_user_cases_access(user_id) or []
-
         access_conditions = []
 
         if client_ids:
@@ -878,8 +1170,13 @@ class WidgetQueryExecutor:
             if not self.builder.group_labels:
                 raise QueryExecutionError('Widgets must contain at least one aggregated field or grouping column.')
 
+        base_table = self._get_table(self._base_table)
+        base_model = base_table.get('model')
+        if base_model is None:
+            raise QueryExecutionError(f"No model registered for base table '{self._base_table}'.")
+
         query = db.session.query(*self.builder.selects)
-        query = query.select_from(Alert)
+        query = query.select_from(base_model)
         for join_table in self.builder.joins:
             table = self._get_table(join_table)
             join_callable = table.get('join')
@@ -938,7 +1235,8 @@ class WidgetQueryExecutor:
             return query.limit(limit_value)
         return query
 
-    def _parse_table_column(self, value: str) -> Tuple[str, str]:
+    @staticmethod
+    def _parse_table_column(value: str) -> Tuple[str, str]:
         if not value or '.' not in value:
             raise QueryExecutionError('Expected table.column format in widget definition.')
         table_name, column_name = value.split('.', 1)
@@ -967,7 +1265,8 @@ class WidgetQueryExecutor:
 
         return expression
 
-    def _build_aggregate_expression(self, aggregation: str, column, filter_expression):
+    @staticmethod
+    def _build_aggregate_expression(aggregation: str, column, filter_expression):
         normalized = aggregation.lower()
 
         if filter_expression is not None:
@@ -1011,7 +1310,8 @@ class WidgetQueryExecutor:
         if label_index < len(self.builder.group_by_exprs):
             self.builder.group_by_exprs.insert(0, self.builder.group_by_exprs.pop(label_index))
 
-    def _normalize_table_column_value(self, value: Optional[str]) -> str:
+    @staticmethod
+    def _normalize_table_column_value(value: Optional[str]) -> str:
         if not isinstance(value, str):
             return ''
         return value.replace(' ', '').lower()
@@ -1061,7 +1361,9 @@ def format_widget_payload(
     chart_type_raw = (result.chart_type or '').lower()
     chart_type = 'line' if chart_type_raw == 'timechart' else chart_type_raw
     time_bucket = (definition.get('time_bucket') or '').strip().lower()
-    time_column_spec = options.get('time_column') or 'alerts.alert_creation_time'
+    inferred_base_table = _infer_widget_base_table(definition)
+    default_time_column = _BASE_TIME_COLUMNS.get(inferred_base_table, _BASE_TIME_COLUMNS[_DEFAULT_BASE_TABLE])
+    time_column_spec = options.get('time_column') or default_time_column
     expected_time_alias = _compute_time_alias(time_column_spec, time_bucket)
 
     timeframe_start: Optional[datetime] = None

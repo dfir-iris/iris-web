@@ -22,16 +22,28 @@
         alert_title: 'Title',
         alert_source: 'Source',
         alert_source_ref: 'Source Reference',
+        alert_source_link: 'Source Link',
         alert_description: 'Description',
+        alert_note: 'Note',
         alert_creation_time: 'Creation Time',
         alert_source_event_time: 'Source Event Time',
         alert_customer_id: 'Customer ID',
+        alert_customer_name: 'Customer Name',
         alert_resolution_status_id: 'Resolution Status ID',
+        alert_resolution_status_name: 'Resolution Status Name',
         alert_status_id: 'Status ID',
+        alert_status_name: 'Status Name',
         alert_severity_id: 'Severity ID',
+        alert_severity_name: 'Severity Name',
         alert_owner_id: 'Owner ID',
+        alert_owner_username: 'Owner Username',
+        alert_owner_name: 'Owner Name',
         alert_classification_id: 'Classification ID',
-        alert_tags: 'Tags'
+        alert_classification_name: 'Classification Name',
+        alert_classification_name_expanded: 'Classification Name (Expanded)',
+        alert_tags: 'Tags',
+        asset_count: 'Asset Count',
+        ioc_count: 'IOC Count'
       }
     },
     client: {
@@ -42,7 +54,7 @@
       }
     },
     alert_resolution_status: {
-      label: 'Resolution Status',
+      label: 'Alert Resolution Status',
       columns: {
         resolution_status_id: 'Resolution Status ID',
         resolution_status_name: 'Resolution Status Name'
@@ -74,11 +86,47 @@
       label: 'Cases',
       columns: {
         case_id: 'Case ID',
+        case_uuid: 'Case UUID',
+        soc_id: 'SOC ID',
+        client_id: 'Client ID',
+        client_name: 'Client Name',
         name: 'Case Name',
+        description: 'Case Description',
+        open_date: 'Open Date',
+        close_date: 'Close Date',
+        initial_date: 'Initial Date',
+        closing_note: 'Closing Note',
         owner_id: 'Owner ID',
+        owner_username: 'Owner Username',
+        owner_name: 'Owner Name',
         creator_id: 'Creator ID',
+        user_id: 'Creator User ID',
+        creator_username: 'Creator Username',
+        creator_name: 'Creator Name',
+        status_id: 'Status ID',
+        state_id: 'State ID',
+        state_name: 'State Name',
+        classification_id: 'Classification ID',
+        classification_name: 'Classification Name',
+        classification_name_expanded: 'Classification Name (Expanded)',
         reviewer_id: 'Reviewer ID',
-        review_status_id: 'Review Status ID'
+        reviewer_username: 'Reviewer Username',
+        reviewer_name: 'Reviewer Name',
+        review_status_id: 'Review Status ID',
+        review_status_name: 'Review Status Name',
+        severity_id: 'Severity ID',
+        severity_name: 'Severity Name',
+        asset_count: 'Asset Count',
+        ioc_count: 'IOC Count'
+      }
+    },
+    case_state: {
+      label: 'Case State',
+      columns: {
+        state_id: 'State ID',
+        state_name: 'State Name',
+        state_description: 'State Description',
+        protected: 'Protected'
       }
     },
     alert_owner: {
@@ -145,7 +193,8 @@
         case_id: 'Case ID',
         date_added: 'Date Added',
         date_update: 'Date Updated',
-        user_id: 'User ID'
+        user_id: 'User ID',
+        analysis_status_id: 'Analysis Status ID'
       }
     },
     alert_asset_types: {
@@ -199,7 +248,8 @@
         case_id: 'Case ID',
         date_added: 'Date Added',
         date_update: 'Date Updated',
-        user_id: 'User ID'
+        user_id: 'User ID',
+        analysis_status_id: 'Analysis Status ID'
       }
     },
     case_asset_types: {
@@ -641,12 +691,78 @@
     return `${prefix}-${timestamp}-${random}`;
   }
 
+  function getSortedTableDefinitions() {
+    return Object.entries(TABLE_DEFINITIONS).sort((entryA, entryB) => {
+      const labelA = (entryA[1] && entryA[1].label) || entryA[0];
+      const labelB = (entryB[1] && entryB[1].label) || entryB[0];
+      const labelCompare = labelA.localeCompare(labelB, undefined, { sensitivity: 'base' });
+      if (labelCompare !== 0) {
+        return labelCompare;
+      }
+      return entryA[0].localeCompare(entryB[0], undefined, { sensitivity: 'base' });
+    });
+  }
+
   function getTableColumns(tableName) {
     const table = TABLE_DEFINITIONS[tableName];
     if (!table || !table.columns) {
       return [];
     }
-    return Object.entries(table.columns).map(([column, label]) => ({ value: column, label }));
+    return Object.entries(table.columns)
+      .map(([column, label]) => ({ value: column, label }))
+      .sort((columnA, columnB) => {
+        const labelCompare = columnA.label.localeCompare(columnB.label, undefined, { sensitivity: 'base' });
+        if (labelCompare !== 0) {
+          return labelCompare;
+        }
+        return columnA.value.localeCompare(columnB.value, undefined, { sensitivity: 'base' });
+      });
+  }
+
+  function isTimeSeriesColumnName(columnName) {
+    if (!columnName || typeof columnName !== 'string') {
+      return false;
+    }
+    const normalized = columnName.toLowerCase();
+    if (/(^|_)(time|timestamp|date)(_|$)/.test(normalized)) {
+      return true;
+    }
+    return normalized.includes('creationdate')
+      || normalized.includes('lastupdate')
+      || normalized.includes('last_update')
+      || normalized.endsWith('_added');
+  }
+
+  function getTimeSeriesColumns(tableName) {
+    return getTableColumns(tableName).filter((column) => isTimeSeriesColumnName(column.value));
+  }
+
+  function getTimeSeriesTables() {
+    return getSortedTableDefinitions().filter(([tableName]) => getTimeSeriesColumns(tableName).length > 0);
+  }
+
+  function buildTimeSeriesTableOptions(selectedTable) {
+    return getTimeSeriesTables().map(([tableName, tableDef]) => {
+      const option = document.createElement('option');
+      option.value = tableName;
+      option.textContent = (tableDef && tableDef.label) || tableName;
+      if (tableName === selectedTable) {
+        option.selected = true;
+      }
+      return option;
+    });
+  }
+
+  function buildTimeSeriesColumnOptions(selectedTable, selectedColumn) {
+    return getTimeSeriesColumns(selectedTable).map((column) => {
+      const option = document.createElement('option');
+      option.value = column.value;
+      option.textContent = column.label;
+      if (column.value === selectedColumn) {
+        option.selected = true;
+      }
+      return option;
+    });
   }
 
   function getColumnLabel(tableName, columnName) {
@@ -693,6 +809,30 @@
       return { table: trimmed, column: '' };
     }
     return { table, column };
+  }
+
+  function populateBuilderColumnDatalist() {
+    const datalist = document.getElementById('dashboardBuilderColumnOptions');
+    if (!datalist) {
+      return;
+    }
+
+    datalist.innerHTML = '';
+    const values = new Set();
+    Object.entries(TABLE_DEFINITIONS).forEach(([tableName, tableDef]) => {
+      if (!tableDef || !tableDef.columns) {
+        return;
+      }
+      Object.keys(tableDef.columns).forEach((columnName) => {
+        values.add(`${tableName}.${columnName}`);
+      });
+    });
+
+    Array.from(values).sort().forEach((value) => {
+      const option = document.createElement('option');
+      option.value = value;
+      datalist.appendChild(option);
+    });
   }
 
   function createEmptyField(overrides = {}) {
@@ -1601,7 +1741,7 @@
     tableSelect.attr('data-section-id', sectionId);
     tableSelect.attr('data-widget-id', widgetId);
     tableSelect.attr('data-field-id', field.id);
-    Object.entries(TABLE_DEFINITIONS).forEach(([tableName, tableDef]) => {
+    getSortedTableDefinitions().forEach(([tableName, tableDef]) => {
       const option = document.createElement('option');
       option.value = tableName;
       option.textContent = tableDef.label;
@@ -1676,7 +1816,7 @@
     tableSelect.attr('data-section-id', sectionId);
     tableSelect.attr('data-widget-id', widgetId);
     tableSelect.attr('data-group-id', group.id);
-    Object.entries(TABLE_DEFINITIONS).forEach(([tableName, tableDef]) => {
+    getSortedTableDefinitions().forEach(([tableName, tableDef]) => {
       const option = document.createElement('option');
       option.value = tableName;
       option.textContent = tableDef.label;
@@ -1716,6 +1856,62 @@
     return row;
   }
 
+  function renderTimeOverrideRow(sectionId, widgetId, timeColumnSpec) {
+    const parsedTimeColumn = parseTableColumn(timeColumnSpec || '');
+    const availableTimeTables = getTimeSeriesTables().map(([tableName]) => tableName);
+    const hasSelectedTable = parsedTimeColumn.table && availableTimeTables.includes(parsedTimeColumn.table);
+    const selectedTable = hasSelectedTable ? parsedTimeColumn.table : '';
+    const availableColumns = selectedTable ? getTimeSeriesColumns(selectedTable) : [];
+    const hasSelectedColumn = parsedTimeColumn.column
+      && availableColumns.some((column) => column.value === parsedTimeColumn.column);
+    const selectedColumn = hasSelectedColumn ? parsedTimeColumn.column : '';
+
+    const row = $('<div class="form-row align-items-end dashboard-builder-time-row"></div>');
+
+    const tableGroup = $('<div class="form-group col-md-4"></div>');
+    tableGroup.append('<label class="small text-muted text-uppercase">Table</label>');
+    const tableSelect = $('<select class="form-control form-control-sm builder-widget-time-column-table"></select>');
+    tableSelect.attr('data-section-id', sectionId);
+    tableSelect.attr('data-widget-id', widgetId);
+
+    const defaultTableOption = document.createElement('option');
+    defaultTableOption.value = '';
+    defaultTableOption.textContent = 'Auto';
+    if (!selectedTable) {
+      defaultTableOption.selected = true;
+    }
+    tableSelect.append(defaultTableOption);
+    buildTimeSeriesTableOptions(selectedTable).forEach((option) => tableSelect.append(option));
+    tableGroup.append(tableSelect);
+
+    const columnGroup = $('<div class="form-group col-md-8"></div>');
+    columnGroup.append('<label class="small text-muted text-uppercase">Column</label>');
+    const columnSelect = $('<select class="form-control form-control-sm builder-widget-time-column-column"></select>');
+    columnSelect.attr('data-section-id', sectionId);
+    columnSelect.attr('data-widget-id', widgetId);
+
+    const defaultColumnOption = document.createElement('option');
+    defaultColumnOption.value = '';
+    defaultColumnOption.textContent = selectedTable ? 'Select column' : 'Auto';
+    if (!selectedColumn) {
+      defaultColumnOption.selected = true;
+    }
+    columnSelect.append(defaultColumnOption);
+
+    if (selectedTable) {
+      const columnOptions = buildTimeSeriesColumnOptions(selectedTable, selectedColumn);
+      columnOptions.forEach((option) => columnSelect.append(option));
+      columnSelect.prop('disabled', columnOptions.length === 0);
+    } else {
+      columnSelect.prop('disabled', true);
+    }
+
+    columnGroup.append(columnSelect);
+    row.append(tableGroup, columnGroup);
+
+    return row;
+  }
+
   function renderFilterRow(sectionId, widgetId, filter) {
     const row = $('<div class="form-row align-items-end dashboard-builder-filter-row"></div>');
 
@@ -1725,7 +1921,7 @@
     tableSelect.attr('data-section-id', sectionId);
     tableSelect.attr('data-widget-id', widgetId);
     tableSelect.attr('data-filter-id', filter.id);
-    Object.entries(TABLE_DEFINITIONS).forEach(([tableName, tableDef]) => {
+    getSortedTableDefinitions().forEach(([tableName, tableDef]) => {
       const option = document.createElement('option');
       option.value = tableName;
       option.textContent = tableDef.label;
@@ -2053,14 +2249,16 @@
     basicRow.append(nameGroup, chartGroup, sizeGroup, bucketGroup);
     body.append(basicRow);
 
-    const timeColumnGroup = $('<div class="form-group"></div>');
-    timeColumnGroup.append('<label class="small text-muted text-uppercase">Time column override</label>');
-    const timeColumnInput = $('<input type="text" class="form-control form-control-sm builder-widget-time-column" list="dashboardBuilderColumnOptions" placeholder="alerts.alert_creation_time">');
-    timeColumnInput.attr('data-section-id', section.id);
-    timeColumnInput.attr('data-widget-id', widget.id);
-    timeColumnInput.val(widget.timeColumn || '');
-    timeColumnGroup.append(timeColumnInput);
-    body.append(timeColumnGroup);
+    const timeOverrideSection = createWidgetDetailSection({
+      sectionId: section.id,
+      widgetId: widget.id,
+      key: 'timeOverride',
+      title: 'Time override',
+      iconClass: 'fas fa-clock'
+    });
+    timeOverrideSection.body.append(renderTimeOverrideRow(section.id, widget.id, widget.timeColumn || ''));
+    timeOverrideSection.body.append('<div class="text-muted small">Use Auto to apply the default timeframe column for the selected dataset.</div>');
+    body.append(timeOverrideSection.container);
 
     const fieldsSection = createWidgetDetailSection({
       sectionId: section.id,
@@ -2897,14 +3095,58 @@
       widget.timeBucket = $(this).val();
     });
 
-    $(document).on('input', '.builder-widget-time-column', function () {
+    $(document).on('change', '.builder-widget-time-column-table', function () {
       const sectionId = $(this).data('section-id');
       const widgetId = $(this).data('widget-id');
       const { widget } = findWidget(sectionId, widgetId);
       if (!widget) {
         return;
       }
-      widget.timeColumn = $(this).val();
+      const selectedTable = $(this).val();
+      if (!selectedTable) {
+        widget.timeColumn = '';
+        rerenderWidget(sectionId, widgetId);
+        return;
+      }
+
+      const columns = getTimeSeriesColumns(selectedTable);
+      if (!columns.length) {
+        widget.timeColumn = '';
+        rerenderWidget(sectionId, widgetId);
+        return;
+      }
+
+      const currentSelection = parseTableColumn(widget.timeColumn || '');
+      const selectedColumn = currentSelection.table === selectedTable && currentSelection.column
+        && columns.some((column) => column.value === currentSelection.column)
+        ? currentSelection.column
+        : columns[0].value;
+
+      widget.timeColumn = formatTableColumn(selectedTable, selectedColumn);
+      rerenderWidget(sectionId, widgetId);
+    });
+
+    $(document).on('change', '.builder-widget-time-column-column', function () {
+      const sectionId = $(this).data('section-id');
+      const widgetId = $(this).data('widget-id');
+      const { widget } = findWidget(sectionId, widgetId);
+      if (!widget) {
+        return;
+      }
+
+      const selectedColumn = $(this).val();
+      const selectedTable = $(this)
+        .closest('.form-row')
+        .find('.builder-widget-time-column-table')
+        .first()
+        .val();
+
+      if (!selectedTable || !selectedColumn) {
+        widget.timeColumn = '';
+        return;
+      }
+
+      widget.timeColumn = formatTableColumn(selectedTable, selectedColumn);
     });
 
     $(document).on('click', '.builder-add-field', function () {
@@ -5679,6 +5921,7 @@
     if (shareInput.length) {
       canShareDashboards = shareInput.val() === '1';
     }
+    populateBuilderColumnDatalist();
     setDefaultTimeframe();
     bindEvents();
     updateDashboardActionsState();
