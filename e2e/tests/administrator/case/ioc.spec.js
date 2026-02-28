@@ -28,6 +28,40 @@ test('should be able to update IOC', async ({ page }) => {
     await expect(page.getByRole('link', { name: newIocValue })).toBeVisible();
 });
 
+test('should open IOC editor when IOC description is JSON', async ({ page, rest }) => {
+    const caseIdentifier = await Api.createCase(rest);
+    const iocValue = `IOC value - ${crypto.randomUUID()}`;
+    const iocDescription = JSON.stringify({
+        error: '',
+        name: 'sampleLookupNumber',
+        parameters: {
+            add_on: 'telo_cnam',
+            caller_name: true,
+            carrier: true,
+            pstn: '19999999999'
+        }
+    });
+
+    const pageErrors = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+
+    await rest.post(`/api/v2/cases/${caseIdentifier}/iocs`, {
+        data: {
+            ioc_type_id: 1,
+            ioc_value: iocValue,
+            ioc_tlp_id: 2,
+            ioc_description: iocDescription,
+            ioc_tags: ''
+        }
+    });
+
+    await page.goto(`/case/ioc?cid=${caseIdentifier}`);
+    await page.getByRole('link', { name: iocValue }).click();
+
+    await expect(page.getByRole('button', { name: 'Update' })).toBeVisible();
+    expect(pageErrors.filter(error => error.includes('TOOLTIP: Option "content"')).length).toBe(0);
+});
+
 test('should not be able to create an IOC with the same type and value', async ({ page }) => {
     const iocValue = `IOC value - ${crypto.randomUUID()}`;
 
