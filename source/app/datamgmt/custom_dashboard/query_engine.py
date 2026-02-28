@@ -40,6 +40,8 @@ class QueryExecutionError(Exception):
 
 @dataclass
 class WidgetQueryResult:
+    """Normalized widget query output used by the response formatters."""
+
     chart_type: str
     rows: List[Dict[str, Any]]
     group_labels: Sequence[str]
@@ -96,6 +98,19 @@ def _parse_table_name_from_reference(value: Any) -> Optional[str]:
     return normalized or None
 
 
+def _normalize_table_name(value: Any) -> Optional[str]:
+    if not isinstance(value, str):
+        return None
+    normalized = value.strip()
+    return normalized or None
+
+
+def _add_table_reference(referenced_tables: Set[str], value: Any):
+    table_name = _normalize_table_name(value)
+    if table_name:
+        referenced_tables.add(table_name)
+
+
 def _collect_widget_tables(definition: Optional[Dict[str, Any]]) -> Set[str]:
     if not isinstance(definition, dict):
         return set()
@@ -105,14 +120,10 @@ def _collect_widget_tables(definition: Optional[Dict[str, Any]]) -> Set[str]:
     for field in definition.get('fields') or []:
         if not isinstance(field, dict):
             continue
-        table_name = field.get('table')
-        if isinstance(table_name, str) and table_name.strip():
-            referenced_tables.add(table_name.strip())
+        _add_table_reference(referenced_tables, field.get('table'))
         inline_filter = field.get('filter')
         if isinstance(inline_filter, dict):
-            inline_table = inline_filter.get('table')
-            if isinstance(inline_table, str) and inline_table.strip():
-                referenced_tables.add(inline_table.strip())
+            _add_table_reference(referenced_tables, inline_filter.get('table'))
 
     for group_entry in definition.get('group_by') or []:
         table_name = _parse_table_name_from_reference(group_entry)
@@ -122,9 +133,7 @@ def _collect_widget_tables(definition: Optional[Dict[str, Any]]) -> Set[str]:
     for filter_entry in definition.get('filters') or []:
         if not isinstance(filter_entry, dict):
             continue
-        table_name = filter_entry.get('table')
-        if isinstance(table_name, str) and table_name.strip():
-            referenced_tables.add(table_name.strip())
+        _add_table_reference(referenced_tables, filter_entry.get('table'))
 
     options = definition.get('options') or {}
     if isinstance(options, dict):
@@ -393,7 +402,8 @@ def _join_case_tags_table(query):
 
 
 def _join_tags_table(query):
-    # Case tags join is registered before reaching this point, so reuse its alias when linking tags.
+    # Case tags join is registered before reaching this point.
+    # Reuse its alias when linking tags.
     return query.outerjoin(Tags, Tags.id == CaseTags.tag_id)
 
 
@@ -459,11 +469,11 @@ def _join_case_severity(query):
 
 
 _AGGREGATIONS = {
-    'count': lambda column: func.count(column),
-    'sum': lambda column: func.sum(column),
-    'avg': lambda column: func.avg(column),
-    'min': lambda column: func.min(column),
-    'max': lambda column: func.max(column)
+    'count': func.count,
+    'sum': func.sum,
+    'avg': func.avg,
+    'min': func.min,
+    'max': func.max
 }
 
 _OPERATORS = {
@@ -487,6 +497,8 @@ def _capitalize_label(label: str) -> str:
 
 
 class _WidgetQueryBuilder:
+    """Mutable accumulator for SELECT, GROUP BY, JOIN and filter fragments."""
+
     def __init__(self):
         self.selects: List[Any] = []
         self.select_labels: List[str] = []
@@ -973,7 +985,7 @@ class WidgetQueryExecutor:
         query = self._apply_limit(query)
 
         rows = query.all()
-        mapped_rows = [dict(row._mapping) for row in rows]
+        mapped_rows = [dict(zip(self.builder.select_labels, row)) for row in rows]
 
         return WidgetQueryResult(
             chart_type=self.builder.chart_type,
@@ -1223,7 +1235,8 @@ class WidgetQueryExecutor:
             return query.limit(limit_value)
         return query
 
-    def _parse_table_column(self, value: str) -> Tuple[str, str]:
+    @staticmethod
+    def _parse_table_column(value: str) -> Tuple[str, str]:
         if not value or '.' not in value:
             raise QueryExecutionError('Expected table.column format in widget definition.')
         table_name, column_name = value.split('.', 1)
@@ -1252,7 +1265,8 @@ class WidgetQueryExecutor:
 
         return expression
 
-    def _build_aggregate_expression(self, aggregation: str, column, filter_expression):
+    @staticmethod
+    def _build_aggregate_expression(aggregation: str, column, filter_expression):
         normalized = aggregation.lower()
 
         if filter_expression is not None:
@@ -1296,7 +1310,8 @@ class WidgetQueryExecutor:
         if label_index < len(self.builder.group_by_exprs):
             self.builder.group_by_exprs.insert(0, self.builder.group_by_exprs.pop(label_index))
 
-    def _normalize_table_column_value(self, value: Optional[str]) -> str:
+    @staticmethod
+    def _normalize_table_column_value(value: Optional[str]) -> str:
         if not isinstance(value, str):
             return ''
         return value.replace(' ', '').lower()
