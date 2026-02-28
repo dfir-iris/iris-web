@@ -415,12 +415,6 @@ class IrisDocxGenerator(DocxGenerator):
 
         jinja2_environment.filters['markdown'] = markdown
 
-        # Backward-compatible alias introduced during #691 work.
-        def markdown_styled(markdown_string, style_name='default'):
-            return markdown(markdown_string, style_name)
-
-        jinja2_environment.filters['markdown_styled'] = markdown_styled
-
 
 class IrisMakeDocReport:
     """

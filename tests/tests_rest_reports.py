@@ -56,10 +56,10 @@ class TestsRestReports(TestCase):
             document = Document(content)
             self.assertEqual('IrisInitialClient (legacy::use client.customer_name)', document.paragraphs[0].text)
 
-    def test_generate_docx_report_should_render_markdown_styled_variable_case_description(self):
+    def test_generate_docx_report_should_render_markdown_variable_case_description(self):
         data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
                 'report_name_format': 'report_name_format'}
-        report_identifier = self._subject.create_report(data, 'variable_case_description_markdown_styled.docx')
+        report_identifier = self._subject.create_report(data, 'variable_case_description_markdown.docx')
         case_body = {
             'case_name': 'case name',
             'case_description': '# Heading\n\n- **bold item**\n- *italic item*\n- normal item\n\n'
