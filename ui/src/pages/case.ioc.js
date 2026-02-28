@@ -150,10 +150,21 @@ function get_case_ioc() {
         Table.clear();
         Table.rows.add(data.data);
 
-        $('#ioc_table_wrapper').on('click', function(e){
-            if($('.popover').length>1)
-                $('.popover').popover('hide');
-                $(e.target).popover('toggle');
+        $('#ioc_table_wrapper')
+            .off('click', '[data-toggle="popover"]')
+            .on('click', '[data-toggle="popover"]', function(event) {
+                event.preventDefault();
+
+                if ($('.popover').length > 1) {
+                    $('.popover').popover('hide');
+                }
+
+                $(this).popover({
+                    content: function() {
+                        const content = this.getAttribute('data-content');
+                        return content === null ? '' : content;
+                    }
+                }).popover('toggle');
             });
 
         $('#ioc_table_wrapper').show();
