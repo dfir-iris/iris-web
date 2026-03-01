@@ -29,7 +29,7 @@ from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.comments import Comments, TaskComments, AssetComments, EventComments, NotesComments
+from app.models.comments import Comments, TaskComments, AssetComments, EventComments, NotesComments, EvidencesComments
 from app.models.models import EventCategory
 from app.models.iocs import Ioc
 from app.models.models import IocAssetLink
@@ -171,10 +171,36 @@ def export_case_evidences_json(case_id):
     ).all()
 
     if evidences:
+        serialized_evidences = []
+        for row in evidences:
+            serialized_evidence = row._asdict()
+            serialized_evidence['comments'] = export_case_evidence_comments_json(serialized_evidence['id'])
+            serialized_evidences.append(serialized_evidence)
 
-        return [row._asdict() for row in evidences]
+        return serialized_evidences
 
     return []
+
+
+def export_case_evidence_comments_json(evidence_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        EvidencesComments.comment_evidence_id == evidence_id
+    ).join(
+        EvidencesComments,
+        Comments.comment_id == EvidencesComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_notes_json(case_id):
