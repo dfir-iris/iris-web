@@ -130,3 +130,21 @@ class TestsRestReports(TestCase):
         response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
         self.assertIn(comment_text, response.text)
+
+    def test_generate_md_report_should_render_event_comments(self):
+        data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
+                'report_name_format': 'report_name_format'}
+        report_identifier = self._subject.create_report(data, 'variable_event_comments.md')
+        case_identifier = self._subject.create_dummy_case()
+
+        event_data = {'event_title': 'title', 'event_category_id': 1,
+                      'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
+                      'event_assets': [], 'event_iocs': []}
+        event_response = self._subject.create(f'/api/v2/cases/{case_identifier}/events', event_data).json()
+        event_identifier = event_response['event_id']
+        comment_text = 'event comment for report export'
+        self._subject.create(f'/api/v2/events/{event_identifier}/comments', {'comment_text': comment_text})
+
+        response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
+                                     {'cid': case_identifier, 'safe': True})
+        self.assertIn(comment_text, response.text)
