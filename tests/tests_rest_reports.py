@@ -152,3 +152,20 @@ class TestsRestReports(TestCase):
         response = self._subject.get(f'/case/report/generate-activities/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
         self.assertEqual('IrisInitialClient (legacy::use client.customer_name)', response.text)
+
+    def test_generate_md_report_should_render_task_comments(self):
+        data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
+                'report_name_format': 'report_name_format'}
+        report_identifier = self._subject.create_report(data, 'variable_task_comments.md')
+        case_identifier = self._subject.create_dummy_case()
+
+        task_data = {'task_assignees_id': [], 'task_description': '', 'task_status_id': 1, 'task_tags': '',
+                     'task_title': 'dummy title', 'custom_attributes': {}}
+        task_response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', task_data).json()
+        task_identifier = task_response['id']
+        comment_text = 'task comment for report export'
+        self._subject.create(f'/api/v2/tasks/{task_identifier}/comments', {'comment_text': comment_text})
+
+        response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
+                                     {'cid': case_identifier, 'safe': True})
+        self.assertIn(comment_text, response.text)

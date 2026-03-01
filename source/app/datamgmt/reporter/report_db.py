@@ -30,7 +30,7 @@ from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.comments import Comments
+from app.models.comments import Comments, TaskComments
 from app.models.models import EventCategory
 from app.models.iocs import Ioc
 from app.models.models import IocAssetLink
@@ -328,9 +328,31 @@ def export_case_tasks_json(case_id):
                     'id': member.id
                 })
         task['task_assignees'] = assignee_list.get(task['id'], [])
+        task['comments'] = export_case_task_comments_json(task_id)
         task_with_assignees.append(task)
 
     return task_with_assignees
+
+
+def export_case_task_comments_json(task_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        TaskComments.comment_task_id == task_id
+    ).join(
+        TaskComments,
+        Comments.comment_id == TaskComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_assets_json(case_id):
