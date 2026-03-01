@@ -30,7 +30,7 @@ from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.comments import Comments, TaskComments
+from app.models.comments import Comments, TaskComments, AssetComments
 from app.models.models import EventCategory
 from app.models.iocs import Ioc
 from app.models.models import IocAssetLink
@@ -401,6 +401,8 @@ def export_case_assets_json(case_id):
         else:
             row['asset_ioc'] = []
 
+        row['comments'] = export_case_asset_comments_json(row['asset_id'])
+
         if row['asset_compromise_status_id'] is None:
             row['asset_compromise_status_id'] = CompromiseStatus.unknown.value
             status_text = CompromiseStatus.unknown.name.replace('_', ' ').title()
@@ -412,6 +414,27 @@ def export_case_assets_json(case_id):
         ret.append(row)
 
     return ret
+
+
+def export_case_asset_comments_json(asset_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        AssetComments.comment_asset_id == asset_id
+    ).join(
+        AssetComments,
+        Comments.comment_id == AssetComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_comments_json(case_id):

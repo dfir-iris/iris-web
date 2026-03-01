@@ -98,3 +98,19 @@ class TestsRestReports(TestCase):
         response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
         self.assertIn(comment_text, response.text)
+
+    def test_generate_md_report_should_render_asset_comments(self):
+        data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
+                'report_name_format': 'report_name_format'}
+        report_identifier = self._subject.create_report(data, 'variable_asset_comments.md')
+        case_identifier = self._subject.create_dummy_case()
+
+        asset_data = {'asset_type_id': 1, 'asset_name': 'asset with comments'}
+        asset_response = self._subject.create(f'/api/v2/cases/{case_identifier}/assets', asset_data).json()
+        asset_identifier = asset_response['asset_id']
+        comment_text = 'asset comment for report export'
+        self._subject.create(f'/api/v2/assets/{asset_identifier}/comments', {'comment_text': comment_text})
+
+        response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
+                                     {'cid': case_identifier, 'safe': True})
+        self.assertIn(comment_text, response.text)
