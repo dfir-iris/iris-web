@@ -219,3 +219,22 @@ class TestsRestReports(TestCase):
         response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
         self.assertIn(comment_text, response.text)
+
+    def test_generate_md_report_should_render_note_comments(self):
+        data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
+                'report_name_format': 'report_name_format'}
+        report_identifier = self._subject.create_report(data, 'variable_note_comments.md')
+        case_identifier = self._subject.create_dummy_case()
+
+        directory_response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes-directories',
+                                                  {'name': 'directory_name'}).json()
+        directory_identifier = directory_response['id']
+        note_response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes',
+                                             {'directory_id': directory_identifier}).json()
+        note_identifier = note_response['note_id']
+        comment_text = 'note comment for report export'
+        self._subject.create(f'/api/v2/notes/{note_identifier}/comments', {'comment_text': comment_text})
+
+        response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
+                                     {'cid': case_identifier, 'safe': True})
+        self.assertIn(comment_text, response.text)

@@ -21,7 +21,6 @@ import re
 from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
-from app.datamgmt.case.case_notes_db import get_case_note_comments
 from app.models.assets import CompromiseStatus, AssetsType, CaseAssets, AnalysisStatus
 from app.models.models import TaskAssignee
 from app.models.models import CaseEventsAssets
@@ -30,7 +29,7 @@ from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.comments import Comments, TaskComments, AssetComments, EventComments
+from app.models.comments import Comments, TaskComments, AssetComments, EventComments, NotesComments
 from app.models.models import EventCategory
 from app.models.iocs import Ioc
 from app.models.models import IocAssetLink
@@ -41,7 +40,6 @@ from app.models.models import TaskStatus
 from app.models.iocs import Tlp
 from app.models.authorization import User
 from app.schema.marshables import CaseDetailsSchema
-from app.schema.marshables import CommentSchema
 from app.schema.marshables import CaseNoteSchema
 
 
@@ -185,21 +183,40 @@ def export_case_notes_json(case_id):
         Notes.note_case_id == case_id
     ).all()
 
-    # Initialize the schemas
+    # Initialize the schema
     note_schema = CaseNoteSchema()
-    comments_schema = CommentSchema(many=True)
 
     # Serialize the notes and their comments
     serialized_notes = []
     for note in notes:
-        note_comments = get_case_note_comments(note.note_id)
         serialized_note = note_schema.dump(note)
-        serialized_note['comments'] = comments_schema.dump(note_comments)
+        serialized_note['comments'] = export_case_note_comments_json(note.note_id)
         serialized_note['note_content'] = process_md_images_links_for_report(serialized_note['note_content'])
 
         serialized_notes.append(serialized_note)
 
     return serialized_notes
+
+
+def export_case_note_comments_json(note_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        NotesComments.comment_note_id == note_id
+    ).join(
+        NotesComments,
+        Comments.comment_id == NotesComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_tm_json(case_id):
