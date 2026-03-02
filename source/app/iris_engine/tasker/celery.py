@@ -41,13 +41,29 @@ def _register_auth_serializer():
     import json
     from datetime import datetime, date
 
+    def _serialize_value(obj):
+        if obj is None:
+            return None
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, dict):
+            return {k: _serialize_value(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_serialize_value(item) for item in obj]
+        if hasattr(obj, '__dict__'):
+            result = {}
+            for key, value in obj.__dict__.items():
+                if key.startswith('_sa_'):
+                    continue
+                result[key] = _serialize_value(value)
+            return result
+        if hasattr(obj, '__iter__'):
+            return str(obj)
+        return obj
+
     class _CeleryJsonEncoder(json.JSONEncoder):
         def default(self, obj):
-            if isinstance(obj, (datetime, date)):
-                return obj.isoformat()
-            if hasattr(obj, '__dict__'):
-                return obj.__dict__
-            return str(obj)
+            return _serialize_value(obj)
 
     def _encode_auth(data):
         return json.dumps(data, cls=_CeleryJsonEncoder).encode('utf-8'), 'application/auth'
