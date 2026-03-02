@@ -1,21 +1,3 @@
-#  IRIS Source Code
-#  Copyright (C) 2024 - DFIR-IRIS
-#  contact@dfir-iris.org
-#
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU Lesser General Public
-#  License as published by the Free Software Foundation; either
-#  version 3 of the License, or (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#  Lesser General Public License for more details.
-#
-#  You should have received a copy of the GNU Lesser General Public License
-#  along with this program; if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
 from flask import Blueprint
 from flask import request
 from marshmallow import ValidationError
@@ -36,11 +18,13 @@ from app.business.alerts_filters import alert_filter_add
 from app.business.alerts_filters import alert_filter_get
 from app.business.alerts_filters import alert_filter_update
 from app.business.alerts_filters import alert_filter_delete
+from app.business.alerts_filters import alert_filter_list
 
 
 class AlertsFiltersOperations:
     def __init__(self):
         self._schema = SavedFilterSchema()
+        self._schema_many = SavedFilterSchema(many=True)
 
     def _load(self, request_data, **kwargs):
         return self._schema.load(request_data, **kwargs)
@@ -56,6 +40,21 @@ class AlertsFiltersOperations:
 
         except ValidationError as e:
             return response_api_error("Data error", e.messages)
+
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def list(self):
+        try:
+            filter_type = request.args.get("filter_type", "alerts")
+            include_public = request.args.get("include_public", "1") == "1"
+
+            items = alert_filter_list(
+                iris_current_user,
+                filter_type=filter_type,
+                include_public=include_public
+            )
+            return response_api_success(self._schema_many.dump(items))
 
         except BusinessProcessingError as e:
             return response_api_error(e.get_message(), data=e.get_data())
@@ -115,6 +114,12 @@ alerts_filters_operations = AlertsFiltersOperations()
 @ac_api_requires()
 def create_alert_filter():
     return alerts_filters_operations.create()
+
+
+@alerts_filters_blueprint.get("")
+@ac_api_requires()
+def list_alert_filters():
+    return alerts_filters_operations.list()
 
 
 @alerts_filters_blueprint.get("/<int:identifier>")
