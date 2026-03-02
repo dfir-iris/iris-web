@@ -102,9 +102,8 @@ def make_celery(name):
         config_source=CeleryConfig
     )
 
-    _register_auth_serializer()
-
     if _check_certificate_files():
+        _register_auth_serializer()
         _patch_celery_cert_datetime()
         setup_security(
             allowed_serializers=['auth'],
