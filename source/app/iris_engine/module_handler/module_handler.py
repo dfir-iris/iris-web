@@ -18,6 +18,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import traceback
+from datetime import datetime, date
 
 import base64
 import importlib
@@ -28,6 +29,27 @@ from sqlalchemy import and_
 
 from app import app
 from app.blueprints.iris_user import iris_current_user
+
+
+def _serialize_value(obj):
+    if obj is None:
+        return None
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, dict):
+        return {k: _serialize_value(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_serialize_value(item) for item in obj]
+    if hasattr(obj, '__dict__'):
+        result = {}
+        for key, value in obj.__dict__.items():
+            if key.startswith('_sa_'):
+                continue
+            result[key] = _serialize_value(value)
+        return result
+    if hasattr(obj, '__iter__'):
+        return str(obj)
+    return obj
 from app.logger import logger
 from app import celery
 from app import db
@@ -498,7 +520,7 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
         return {
             'code': task_status.code,
             'message': task_status.message,
-            'data': task_status.data,
+            'data': _serialize_value(task_status.data),
             'logs': task_status.logs
         }
     return task_status
