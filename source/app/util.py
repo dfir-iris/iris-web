@@ -79,6 +79,7 @@ def add_obj_history_entry(obj, action, commit=False):
     return obj
 
 
+
 def hmac_sign(data):
     import os
     key = os.environ.get("SECRET_KEY")
