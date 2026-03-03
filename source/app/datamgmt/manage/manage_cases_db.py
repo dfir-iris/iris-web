@@ -649,30 +649,30 @@ def get_filtered_cases(current_user_id,
             field_expr: Any = None
 
             if field_id == 'title':
-                field_expr = getattr(Cases, 'name')
+                field_expr = Cases.name
             elif field_id == 'case_id':
-                field_expr = cast(getattr(Cases, 'case_id'), String)
+                field_expr = cast(Cases.case_id, String)
             elif field_id == 'outcome':
-                field_expr = getattr(Cases, 'closing_note')
+                field_expr = Cases.closing_note
             elif field_id == 'open_date':
-                field_expr = cast(getattr(Cases, 'open_date'), String)
+                field_expr = cast(Cases.open_date, String)
             elif field_id == 'classification':
-                field_expr = cast(getattr(Cases, 'classification_id'), String)
+                field_expr = cast(Cases.classification_id, String)
             elif field_id == 'customer':
                 if not joined_client:
                     query = query.join(Client, Cases.client_id == Client.client_id)
                     joined_client = True
-                field_expr = getattr(Client, 'name')
+                field_expr = Client.name
             elif field_id == 'state':
                 if not joined_state:
                     query = query.join(CaseState, Cases.state_id == CaseState.state_id)
                     joined_state = True
-                field_expr = getattr(CaseState, 'state_name')
+                field_expr = CaseState.state_name
             elif field_id == 'owner':
                 if not joined_owner:
                     query = query.join(User, Cases.owner_id == User.id)
                     joined_owner = True
-                field_expr = getattr(User, 'user')
+                field_expr = User.user
 
             if field_expr is None:
                 continue
