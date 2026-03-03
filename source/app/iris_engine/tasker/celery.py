@@ -25,6 +25,27 @@ from kombu.serialization import register
 from app.configuration import CeleryConfig
 
 
+def _patch_celery_cert_loading():
+    """Patch Celery's Certificate class to work with newer cryptography library."""
+    from celery.security import certificate
+    from cryptography import x509
+    
+    _original_init = certificate.Certificate.__init__
+    
+    def _patched_init(self, *args, **kwargs):
+        try:
+            _original_init(self, *args, **kwargs)
+        except Exception as e:
+            if 'MalformedFraming' in str(e):
+                cert_path = args[0] if args else kwargs.get('path', '')
+                with open(cert_path, 'rb') as f:
+                    self._cert = x509.load_pem_x509_certificate(f.read())
+            else:
+                raise
+    
+    certificate.Certificate.__init__ = _patched_init
+
+
 def _patch_celery_cert_datetime():
     from celery.security.certificate import Certificate
 
@@ -33,9 +54,16 @@ def _patch_celery_cert_datetime():
     def _patched_has_expired(self):
         try:
             return _original_has_expired(self)
-        except TypeError:
-            not_valid_after = self._cert.not_valid_after_utc
-            return datetime.now(timezone.utc) >= not_valid_after
+        except (TypeError, AttributeError):
+            try:
+                not_valid_after = self._cert.not_valid_after_utc
+                return datetime.now(timezone.utc) >= not_valid_after
+            except (AttributeError, TypeError):
+                try:
+                    not_valid_after = self._cert.not_valid_after
+                    return datetime.now(timezone.utc) >= not_valid_after.replace(tzinfo=timezone.utc)
+                except Exception:
+                    return False
 
     Certificate.has_expired = _patched_has_expired
 
@@ -83,6 +111,7 @@ def make_celery(name):
 
     if _check_certificate_files():
         _register_auth_serializer()
+        _patch_celery_cert_loading()
         _patch_celery_cert_datetime()
         setup_security(
             allowed_serializers=['auth'],
