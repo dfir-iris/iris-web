@@ -17,39 +17,14 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import os
-import json
-from datetime import datetime, date, timezone
 from celery import Celery
 from celery.security import setup_security
 from kombu.serialization import register
 from app.configuration import CeleryConfig
 
 
-def _patch_celery_cert_loading():
-    """Patch Celery's Certificate class to work with newer cryptography library."""
-    from celery.security import certificate
-    from cryptography import x509
-    
-    _original_init = certificate.Certificate.__init__
-    
-    def _patched_init(self, *args, **kwargs):
-        try:
-            _original_init(self, *args, **kwargs)
-        except Exception:
-            cert_path = args[0] if args else kwargs.get('path', '')
-            if cert_path and hasattr(self, '_cert'):
-                try:
-                    with open(cert_path, 'rb') as f:
-                        self._cert = x509.load_pem_x509_certificate(f.read())
-                except Exception:
-                    pass
-            if not hasattr(self, '_cert') or self._cert is None:
-                raise
-    
-    certificate.Certificate.__init__ = _patched_init
-
-
 def _patch_celery_cert_datetime():
+    import datetime
     from celery.security.certificate import Certificate
 
     _original_has_expired = Certificate.has_expired
@@ -57,28 +32,43 @@ def _patch_celery_cert_datetime():
     def _patched_has_expired(self):
         try:
             return _original_has_expired(self)
-        except (TypeError, AttributeError):
-            try:
-                not_valid_after = self._cert.not_valid_after_utc
-                return datetime.now(timezone.utc) >= not_valid_after
-            except (AttributeError, TypeError):
-                try:
-                    not_valid_after = self._cert.not_valid_after
-                    return datetime.now(timezone.utc) >= not_valid_after.replace(tzinfo=timezone.utc)
-                except Exception:
-                    return False
+        except TypeError:
+            not_valid_after = self._cert.not_valid_after_utc
+            return datetime.datetime.now(datetime.timezone.utc) >= not_valid_after
 
     Certificate.has_expired = _patched_has_expired
 
 
 def _register_auth_serializer():
-    """Register a minimal auth serializer before setup_security() is called.
-    The actual message signing is handled by setup_security().
-    This is needed because setup_security() tries to enable the auth serializer
-    but it must be registered first."""
-    
+    import json
+    from datetime import datetime, date
+
+    def _serialize_value(obj):
+        if obj is None:
+            return None
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, dict):
+            return {k: _serialize_value(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_serialize_value(item) for item in obj]
+        if hasattr(obj, '__dict__'):
+            result = {}
+            for key, value in obj.__dict__.items():
+                if key.startswith('_sa_'):
+                    continue
+                result[key] = _serialize_value(value)
+            return result
+        if hasattr(obj, '__iter__'):
+            return str(obj)
+        return obj
+
+    class _CeleryJsonEncoder(json.JSONEncoder):
+        def default(self, obj):
+            return _serialize_value(obj)
+
     def _encode_auth(data):
-        return json.dumps(data).encode('utf-8'), 'application/auth'
+        return json.dumps(data, cls=_CeleryJsonEncoder).encode('utf-8'), 'application/auth'
 
     def _decode_auth(data):
         if isinstance(data, bytes):
@@ -112,9 +102,9 @@ def make_celery(name):
         config_source=CeleryConfig
     )
 
+    _register_auth_serializer()
+
     if _check_certificate_files():
-        _register_auth_serializer()
-        _patch_celery_cert_loading()
         _patch_celery_cert_datetime()
         setup_security(
             allowed_serializers=['auth'],
