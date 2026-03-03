@@ -18,7 +18,7 @@
 
 import os
 import json
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from celery import Celery
 from celery.security import setup_security
 from kombu.serialization import register
@@ -35,7 +35,7 @@ def _patch_celery_cert_datetime():
             return _original_has_expired(self)
         except TypeError:
             not_valid_after = self._cert.not_valid_after_utc
-            return datetime.now(datetime.timezone.utc) >= not_valid_after
+            return datetime.now(timezone.utc) >= not_valid_after
 
     Certificate.has_expired = _patched_has_expired
 
