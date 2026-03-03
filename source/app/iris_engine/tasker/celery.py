@@ -35,12 +35,15 @@ def _patch_celery_cert_loading():
     def _patched_init(self, *args, **kwargs):
         try:
             _original_init(self, *args, **kwargs)
-        except Exception as e:
-            if 'MalformedFraming' in str(e):
-                cert_path = args[0] if args else kwargs.get('path', '')
-                with open(cert_path, 'rb') as f:
-                    self._cert = x509.load_pem_x509_certificate(f.read())
-            else:
+        except Exception:
+            cert_path = args[0] if args else kwargs.get('path', '')
+            if cert_path and hasattr(self, '_cert'):
+                try:
+                    with open(cert_path, 'rb') as f:
+                        self._cert = x509.load_pem_x509_certificate(f.read())
+                except Exception:
+                    pass
+            if not hasattr(self, '_cert') or self._cert is None:
                 raise
     
     certificate.Certificate.__init__ = _patched_init
