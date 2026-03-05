@@ -3,7 +3,7 @@ let sortOrder ;
 function renderAlertNoteMarkdown(noteText) {
     if (!noteText) return '';
     let converter = get_showdown_convert();
-    let html = converter.makeHtml(do_md_filter_xss(noteText));
+    let html = converter.makeHtml(noteText);
     return do_md_filter_xss(html);
 }
 
