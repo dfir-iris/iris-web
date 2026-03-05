@@ -1,5 +1,12 @@
 let sortOrder ;
 
+function renderAlertNoteMarkdown(noteText) {
+    if (!noteText) return '';
+    let converter = get_showdown_convert();
+    let html = converter.makeHtml(do_md_filter_xss(noteText));
+    return do_md_filter_xss(html);
+}
+
 function objectToQueryString(obj) {
   return Object.keys(obj)
     .filter(key => obj[key] !== undefined && obj[key] !== null && obj[key] !== '')
@@ -853,7 +860,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
   alert.alert_source = alert.alert_description ? filterXSS(alert.alert_source) : 'No source provided';
   alert.alert_source_link = filterXSS(alert.alert_source_link);
   alert.alert_source_ref = filterXSS(alert.alert_source_ref);
-  alert.alert_note = filterXSS(alert.alert_note);
+  alert.alert_note = alert.alert_note || '';
 
   let menuOptionsHtmlAlert = '';
   const menuOptions = modulesOptionsAlertReq;
@@ -1004,7 +1011,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                     
                     <div class="separator-solid"></div>
                     <h3 class="title mb-3"><strong>Alert note</strong></h3>
-                    <pre id=alertNote-${alert.alert_id}>${alert.alert_note}</pre>
+                    <div id="alertNote-${alert.alert_id}">${renderAlertNoteMarkdown(alert.alert_note)}</div>
                     
                     <!-- Alert Context section -->
                     ${
