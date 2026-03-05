@@ -1012,6 +1012,7 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                     <div class="separator-solid"></div>
                     <h3 class="title mb-3"><strong>Alert note</strong></h3>
                     <div id="alertNote-${alert.alert_id}">${renderAlertNoteMarkdown(alert.alert_note)}</div>
+                    <pre id="alertNoteRaw-${alert.alert_id}" class="d-none">${filterXSS(alert.alert_note)}</pre>
                     
                     <!-- Alert Context section -->
                     ${
@@ -1567,7 +1568,7 @@ async function editAlert(alert_id, close=false) {
 
     alertTag.val($(`#alertTags-${alert_id}`).text())
     set_suggest_tags(`editAlertTags`);
-    $('#editAlertNote').val($(`#alertNote-${alert_id}`).text());
+    $('#editAlertNote').val($(`#alertNoteRaw-${alert_id}`).text());
 
     let alert_resolution = getAlertResolutionName(alert_id);
     if (alert_resolution === '') {
