@@ -3,7 +3,7 @@ let sortOrder ;
 function renderAlertNoteMarkdown(noteText) {
     if (!noteText) return '';
     let converter = get_showdown_convert();
-    let html = converter.makeHtml(noteText);
+    let html = converter.makeHtml(do_md_filter_xss(noteText));
     return do_md_filter_xss(html);
 }
 
@@ -1012,7 +1012,6 @@ function renderAlert(alert, expanded=false, modulesOptionsAlertReq,
                     <div class="separator-solid"></div>
                     <h3 class="title mb-3"><strong>Alert note</strong></h3>
                     <div id="alertNote-${alert.alert_id}">${renderAlertNoteMarkdown(alert.alert_note)}</div>
-                    <pre id="alertNoteRaw-${alert.alert_id}" class="d-none">${filterXSS(alert.alert_note)}</pre>
                     
                     <!-- Alert Context section -->
                     ${
@@ -1568,7 +1567,9 @@ async function editAlert(alert_id, close=false) {
 
     alertTag.val($(`#alertTags-${alert_id}`).text())
     set_suggest_tags(`editAlertTags`);
-    $('#editAlertNote').val($(`#alertNoteRaw-${alert_id}`).text());
+
+    let alertData = await fetchAlert(alert_id);
+    $('#editAlertNote').val(alertData.data.alert_note || '');
 
     let alert_resolution = getAlertResolutionName(alert_id);
     if (alert_resolution === '') {
