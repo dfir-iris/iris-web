@@ -20,25 +20,30 @@
 <div class="main-panel">
     <div class="content">
         <nav class="navbar navbar-header navbar-expand-lg bg-primary-gradient">
+            {% set group_by = request.args.get('group-by') %}
+            {% set include_children = request.args.get('include-children', 'true')|lower in ['1', 'true', 'yes', 'on'] %}
             <ul class="container-fluid mt-3 mb--2">
                 <ul class="navbar-nav">
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}">No group</a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&include-children={{ 'true' if include_children else 'false' }}">No group</a>
                     </li>
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=ioc">Group by IOC</a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=ioc&include-children={{ 'true' if include_children else 'false' }}">Group by IOC</a>
                     </li>
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=asset"><span class="text-decoration-none">Group by asset</span></a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=asset&include-children={{ 'true' if include_children else 'false' }}"><span class="text-decoration-none">Group by asset</span></a>
                     </li>
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=color">Group by color</a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=color&include-children={{ 'true' if include_children else 'false' }}">Group by color</a>
                     </li>
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=tag">Group by tag</a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=tag&include-children={{ 'true' if include_children else 'false' }}">Group by tag</a>
                     </li>
                     <li class="nav-item hidden-caret">
-                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=category">Group by category</a>
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=category&include-children={{ 'true' if include_children else 'false' }}">Group by category</a>
+                    </li>
+                    <li class="nav-item hidden-caret">
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}{% if group_by %}&group-by={{ group_by }}{% endif %}&include-children={{ 'false' if include_children else 'true' }}">Toggle children ({{ 'On' if include_children else 'Off' }})</a>
                     </li>
                  </ul>
                 <ul class="navbar-nav topbar-nav ml-md-auto align-items-center page-navigation page-navigation-style-2 page-navigation-secondary">

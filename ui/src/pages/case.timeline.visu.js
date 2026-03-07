@@ -4,6 +4,7 @@ var g_event_id = null;
 var g_event_desc_editor = null;
 var current_timeline = [];
 var current_visualization_group = null;
+var current_visualization_include_children = true;
 
 function get_visualization_state_key() {
     return `timeline.visualization.state:${get_caseid()}`;
@@ -32,12 +33,21 @@ function save_visualization_state() {
         const state = {
             start: window_data.start.toISOString(),
             end: window_data.end.toISOString(),
-            group: current_visualization_group
+            group: current_visualization_group,
+            include_children: current_visualization_include_children
         };
         localStorage.setItem(get_visualization_state_key(), JSON.stringify(state));
     } catch (error) {
         // Ignore storage failures (private mode/quota), timeline still works without persistence.
     }
+}
+
+function query_bool(value, default_value) {
+    if (value === null || value === undefined) {
+        return default_value;
+    }
+
+    return ['1', 'true', 'yes', 'on'].includes(String(value).toLowerCase());
 }
 
 function clear_visualization_state() {
@@ -311,8 +321,9 @@ function setup_visualization_range_handler() {
     });
 }
 
-function visualizeTimeline(group) {
+function visualizeTimeline(group, include_children) {
     current_visualization_group = group || null;
+    current_visualization_include_children = include_children !== false;
     const groupedModes = ['ioc', 'asset', 'color', 'tag', 'category'];
     const groupToEndpoint = {
         ioc: '/case/timeline/visualize/data/by-ioc',
@@ -321,9 +332,12 @@ function visualizeTimeline(group) {
         tag: '/case/timeline/visualize/data/by-tag',
         category: '/case/timeline/visualize/data/by-category'
     };
-    const src = groupToEndpoint[group] || groupToEndpoint.category;
+    const src_path = groupToEndpoint[group] || groupToEndpoint.category;
+    const src = `${src_path}?include-children=${current_visualization_include_children ? 'true' : 'false'}`;
+    const separator = src.includes('?') ? '&' : '?';
+    const src_with_case = `${src}${separator}cid=${encodeURIComponent(get_caseid())}`;
 
-    get_request_api(src)
+    get_raw_request_api(src_with_case)
     .done((data) => {
         if (data.status == 'success') {
               var items = new vis.DataSet();
@@ -388,10 +402,11 @@ function visualizeTimeline(group) {
 
 function refresh_timeline_graph(){
     show_loader();
-    queryString = window.location.search;
-    urlParams = new URLSearchParams(queryString);
-    group = urlParams.get('group-by');
-    visualizeTimeline(group);
+    const queryString = window.location.search;
+    const urlParams = new URLSearchParams(queryString);
+    const group = urlParams.get('group-by');
+    const include_children = query_bool(urlParams.get('include-children'), true);
+    visualizeTimeline(group, include_children);
 }
 
 function reset_timeline_graph() {
@@ -399,6 +414,7 @@ function reset_timeline_graph() {
 
     const url = new URL(window.location.href);
     url.searchParams.delete('group-by');
+    url.searchParams.delete('include-children');
     url.hash = '';
 
     const query_string = url.searchParams.toString();

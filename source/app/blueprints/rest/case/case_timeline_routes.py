@@ -232,11 +232,33 @@ def _get_event_color_group_name(event_color):
     return event_color_map.get(event_color.lower(), event_color)
 
 
+def _is_include_children():
+    include_children = request.args.get('include-children')
+    if include_children is None:
+        return True
+
+    normalized_value = str(include_children).strip().lower()
+    if '?' in normalized_value:
+        normalized_value = normalized_value.split('?', maxsplit=1)[0]
+    if '&' in normalized_value:
+        normalized_value = normalized_value.split('&', maxsplit=1)[0]
+
+    return normalized_value in ('1', 'true', 'yes', 'on')
+
+
+def _get_visualization_timeline(caseid):
+    timeline = get_events_by_case(caseid)
+    if _is_include_children():
+        return timeline
+
+    return [row for row in timeline if row.parent_event_id is None]
+
+
 @case_timeline_rest_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_getgraph_assets(caseid):
-    timeline = get_events_by_case(caseid)
+    timeline = _get_visualization_timeline(caseid)
     assets_cache = get_assets_by_case(caseid)
     events_assets = _build_events_groups(assets_cache, 'asset_name')
 
@@ -253,7 +275,7 @@ def case_getgraph_assets(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_getgraph_iocs(caseid):
-    timeline = get_events_by_case(caseid)
+    timeline = _get_visualization_timeline(caseid)
     iocs_cache = CaseEventsIoc.query.with_entities(
         CaseEventsIoc.event_id,
         Ioc.ioc_value
@@ -277,7 +299,7 @@ def case_getgraph_iocs(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_getgraph(caseid):
-    timeline = get_events_by_case(caseid)
+    timeline = _get_visualization_timeline(caseid)
     events_categories = {}
     for row in timeline:
         group_name = row.category[0].name if row.category else 'Uncategorized'
@@ -296,7 +318,7 @@ def case_getgraph(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_getgraph_tags(caseid):
-    timeline = get_events_by_case(caseid)
+    timeline = _get_visualization_timeline(caseid)
     events_tags = {}
     for row in timeline:
         tags = [tag.strip() for tag in (row.event_tags or '').split(',') if tag.strip()]
@@ -315,7 +337,7 @@ def case_getgraph_tags(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_getgraph_colors(caseid):
-    timeline = get_events_by_case(caseid)
+    timeline = _get_visualization_timeline(caseid)
     events_colors = {}
     for row in timeline:
         color_name = _get_event_color_group_name(row.event_color)
