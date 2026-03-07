@@ -67,6 +67,18 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal shadow-lg" tabindex="-1" id="modal_add_event" data-backdrop="static">
+            <div class="modal-xl modal-dialog" role="document">
+                <div class="modal-content" id="modal_add_event_content"></div>
+            </div>
+        </div>
+
+        <div class="modal" role="dialog" tabindex="-1" id="modal_comment" data-backdrop="false">
+            <div class="modal-lg modal-dialog modal-comment" role="document">
+                <div class="modal-content shadow-xl" id="modal_comment_content"></div>
+            </div>
+        </div>
     </div>
         {% include 'includes/footer.html' %}
 </div>
@@ -82,6 +94,7 @@
 <script src="/static/assets/js/plugin/select/bootstrap-select.min.js"></script>
 
 <script src="/static/assets/js/iris/case.common.js"></script>
+<script src="/static/assets/js/iris/comments.js"></script>
 <script src="/static/assets/js/iris/case.timeline.visu.js"></script>
 <script src="/static/assets/js/plugin/vis/vis.graph.js"></script>
 <script>
