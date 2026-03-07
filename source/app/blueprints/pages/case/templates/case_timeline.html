@@ -53,9 +53,9 @@
                             </button>
                         </li>
                          <li class="nav-item hidden-caret">
-                            <button class="btn btn-dark btn-sm" onclick="toggle_tree_view();">
-                                <span class="menu-title">Toggle view</span>
-                            </button>
+                            <a class="btn btn-dark btn-sm" href="timeline/visualize?cid={{session['current_case'].case_id}}">
+                                <span class="menu-title">Visualize</span>
+                            </a>
                         </li>
                         <li class="nav-item">
                             <div class="dropdown">
@@ -67,7 +67,10 @@
                                   <a class="dropdown-item" href="javascript:void(0);" onclick="toggle_compact_view();"> Toggle compact view</a>
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}"> Visualize</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=ioc"> Visualize by IOC</a>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=asset"> Visualize by asset</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=color"> Visualize by color</a>
+                                  <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=tag"> Visualize by tag</a>
                                   <a class="dropdown-item" href="timeline/visualize?cid={{session['current_case'].case_id}}&group-by=category">Visualize by category</a>
                                   <div class="dropdown-divider"></div>
                                   <a class="dropdown-item" href="#" onclick="timelineToCsv();"><small class="fa fa-download mr-2"></small> Download as CSV</a>
