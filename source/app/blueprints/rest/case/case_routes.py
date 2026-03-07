@@ -271,10 +271,21 @@ def case_update_status(caseid):
     if status not in case_status:
         return response_error('Invalid status')
 
+    status_display_names = {
+        CaseStatus.unknown: 'Unknown',
+        CaseStatus.false_positive: 'False Positive',
+        CaseStatus.true_positive_with_impact: 'True Positive with impact',
+        CaseStatus.true_positive_without_impact: 'True Positive without impact',
+        CaseStatus.legitimate: 'Legitimate',
+        CaseStatus.not_applicable: 'Not applicable',
+    }
+    status_display = status_display_names[CaseStatus(status)]
+
     case.status_id = status
-    add_obj_history_entry(case, f'status updated to {CaseStatus(status).name}')
+    add_obj_history_entry(case, f'status updated to {status_display}')
 
     db.session.commit()
+    track_activity(f'case status updated to {status_display}', caseid)
 
     return response_success('Case status updated', data=case.status_id)
 
