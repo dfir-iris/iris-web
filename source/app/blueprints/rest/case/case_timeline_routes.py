@@ -646,6 +646,10 @@ def event_flag(cur_id, caseid):
 
     event.event_is_flagged = not event.event_is_flagged
     db.session.commit()
+    track_activity(
+        f'event "{event.event_title}" {"flagged" if event.event_is_flagged else "unflagged"}',
+        caseid=caseid
+    )
 
     collab_notify(caseid, 'events', 'flagged' if event.event_is_flagged else "un-flagged", cur_id)
 
