@@ -3,6 +3,50 @@ var timeline_items = null;
 var g_event_id = null;
 var g_event_desc_editor = null;
 var current_timeline = [];
+var current_visualization_group = null;
+
+function get_visualization_state_key() {
+    return `timeline.visualization.state:${get_caseid()}`;
+}
+
+function get_visualization_state() {
+    try {
+        const raw_state = localStorage.getItem(get_visualization_state_key());
+        if (!raw_state) {
+            return null;
+        }
+
+        return JSON.parse(raw_state);
+    } catch (error) {
+        return null;
+    }
+}
+
+function save_visualization_state() {
+    if (!timeline) {
+        return;
+    }
+
+    try {
+        const window_data = timeline.getWindow();
+        const state = {
+            start: window_data.start.toISOString(),
+            end: window_data.end.toISOString(),
+            group: current_visualization_group
+        };
+        localStorage.setItem(get_visualization_state_key(), JSON.stringify(state));
+    } catch (error) {
+        // Ignore storage failures (private mode/quota), timeline still works without persistence.
+    }
+}
+
+function clear_visualization_state() {
+    try {
+        localStorage.removeItem(get_visualization_state_key());
+    } catch (error) {
+        // Ignore storage failures.
+    }
+}
 
 function get_timeline_events_cache(callback) {
     get_request_api('/case/timeline/events/list')
@@ -241,7 +285,6 @@ function setup_visualization_click_handler() {
         return;
     }
 
-    timeline.off('select');
     timeline.on('select', function(properties) {
         if (!properties.items || properties.items.length === 0) {
             return;
@@ -256,7 +299,20 @@ function setup_visualization_click_handler() {
     });
 }
 
+function setup_visualization_range_handler() {
+    if (!timeline) {
+        return;
+    }
+
+    timeline.on('rangechanged', function(properties) {
+        if (properties.byUser) {
+            save_visualization_state();
+        }
+    });
+}
+
 function visualizeTimeline(group) {
+    current_visualization_group = group || null;
     const groupedModes = ['ioc', 'asset', 'color', 'tag', 'category'];
     const groupToEndpoint = {
         ioc: '/case/timeline/visualize/data/by-ioc',
@@ -302,12 +358,13 @@ function visualizeTimeline(group) {
                 }
 
               // specify options
+              const state = get_visualization_state();
               var options = {
                 stack: true,
                 minHeight: '400px',
                 maxHeight: $(window).height() - 250,
-                start: data.data.events[0].date,
-                end: data.data.events[data.data.events.length - 1].date,
+                start: state && state.start ? state.start : data.data.events[0].date,
+                end: state && state.end ? state.end : data.data.events[data.data.events.length - 1].date,
               };
 
               // create a Timeline
@@ -322,6 +379,7 @@ function visualizeTimeline(group) {
               timeline.setItems(items);
               timeline_items = items;
               setup_visualization_click_handler();
+              setup_visualization_range_handler();
               hide_loader();
 
         }
@@ -334,6 +392,17 @@ function refresh_timeline_graph(){
     urlParams = new URLSearchParams(queryString);
     group = urlParams.get('group-by');
     visualizeTimeline(group);
+}
+
+function reset_timeline_graph() {
+    clear_visualization_state();
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete('group-by');
+    url.hash = '';
+
+    const query_string = url.searchParams.toString();
+    window.location.href = query_string ? `${url.pathname}?${query_string}` : url.pathname;
 }
 
 $(document).ready(function() {
