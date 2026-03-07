@@ -1,10 +1,13 @@
 function visualizeTimeline(group) {
-    ggr = ['asset', 'category']
-    if (group == 'asset') {
-        src = '/case/timeline/visualize/data/by-asset';
-    } else {
-        src = '/case/timeline/visualize/data/by-category';
-    }
+    const groupedModes = ['ioc', 'asset', 'color', 'tag', 'category'];
+    const groupToEndpoint = {
+        ioc: '/case/timeline/visualize/data/by-ioc',
+        asset: '/case/timeline/visualize/data/by-asset',
+        color: '/case/timeline/visualize/data/by-color',
+        tag: '/case/timeline/visualize/data/by-tag',
+        category: '/case/timeline/visualize/data/by-category'
+    };
+    const src = groupToEndpoint[group] || groupToEndpoint.category;
 
     get_request_api(src)
     .done((data) => {
@@ -54,7 +57,7 @@ function visualizeTimeline(group) {
               container.innerHTML = '';
               $('#card_main_load').show();
               timeline = new vis.Timeline(container, null, options);
-              if (ggr.includes(group)) {
+              if (groupedModes.includes(group)) {
                 timeline.setGroups(groups);
               }
               timeline.setItems(items);
