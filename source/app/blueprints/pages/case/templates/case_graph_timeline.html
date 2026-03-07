@@ -26,7 +26,16 @@
                         <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}">No group</a>
                     </li>
                     <li class="nav-item hidden-caret">
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=ioc">Group by IOC</a>
+                    </li>
+                    <li class="nav-item hidden-caret">
                         <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=asset"><span class="text-decoration-none">Group by asset</span></a>
+                    </li>
+                    <li class="nav-item hidden-caret">
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=color">Group by color</a>
+                    </li>
+                    <li class="nav-item hidden-caret">
+                        <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=tag">Group by tag</a>
                     </li>
                     <li class="nav-item hidden-caret">
                         <a class="menu-title btn btn-dark btn-sm" href="visualize?cid={{session['current_case'].case_id}}&group-by=category">Group by category</a>
