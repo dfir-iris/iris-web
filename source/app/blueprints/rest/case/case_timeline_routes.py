@@ -176,6 +176,16 @@ def case_get_timeline_state(caseid):
 
 def _get_visualization_event(row, group_name):
     content = row.event_content.replace('\n', '<br/>') if row.event_content else ''
+    styles = []
+
+    if row.event_color:
+        styles.append(f'background-color: {row.event_color};')
+
+    # Highlight child events in visualization with a dashed outline.
+    if row.parent_event_id is not None:
+        styles.append('border: 1px dashed #6c757d;')
+        styles.append('box-sizing: border-box;')
+
     visualized_event = {
         'date': row.event_date,
         'group': group_name,
@@ -184,8 +194,8 @@ def _get_visualization_event(row, group_name):
         'unique_id': row.event_id
     }
 
-    if row.event_color:
-        visualized_event['style'] = f'background-color: {row.event_color};'
+    if styles:
+        visualized_event['style'] = ' '.join(styles)
 
     return visualized_event
 
