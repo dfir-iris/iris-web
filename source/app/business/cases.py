@@ -55,6 +55,9 @@ from app.datamgmt.reporter.report_db import export_case_comments_json
 from app.datamgmt.reporter.report_db import export_case_notes_json
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.datamgmt.case.case_db import get_first_case_with_customer
+from app.models.authorization import User
+from app.models.cases import CaseProtagonist
+from app.models.cases import CaseStatus
 from app.models.cases import Cases
 from app.models.cases import ReviewStatusList
 from app.models.customers import Client
@@ -163,24 +166,91 @@ def cases_delete(case_identifier):
 
 def cases_update(case: Cases, updated_case, protagonists, tags) -> Cases:
     try:
-        closed_state_id = get_case_state_by_name('Closed').state_id
-        previous_case_state = case.state_id
-        case_previous_reviewer_id = case.reviewer_id
-        db.session.commit()
+        with db.session.no_autoflush:
+            previous_case = Cases.query.with_entities(
+                Cases.name,
+                Cases.soc_id,
+                Cases.client_id,
+                Cases.owner_id,
+                Cases.severity_id,
+                Cases.classification_id,
+                Cases.status_id,
+                Cases.state_id,
+                Cases.reviewer_id,
+            ).filter(
+                Cases.case_id == case.case_id
+            ).first()
 
-        if previous_case_state != updated_case.state_id:
-            if updated_case.state_id == closed_state_id:
-                track_activity('case closed', caseid=case.case_id)
+            previous_protagonists = CaseProtagonist.query.with_entities(
+                CaseProtagonist.name,
+                CaseProtagonist.role
+            ).filter(
+                CaseProtagonist.case_id == case.case_id
+            ).all()
+
+        if previous_case is None:
+            raise BusinessProcessingError('Tried to update a non-existing case')
+
+        previous_case_name = previous_case.name
+        previous_case_soc_id = previous_case.soc_id
+        previous_case_customer_id = previous_case.client_id
+        previous_case_owner_id = previous_case.owner_id
+        previous_case_severity_id = previous_case.severity_id
+        previous_case_classification_id = previous_case.classification_id
+        previous_case_status_id = previous_case.status_id
+        previous_case_state = previous_case.state_id
+        previous_case_reviewer_id = previous_case.reviewer_id
+
+        previous_protagonist_values = sorted([(p.name, p.role) for p in previous_protagonists if p.name])
+        previous_tag_values = sorted([tag.tag_title for tag in case.tags])
+
+        closed_state_id = get_case_state_by_name('Closed').state_id
+        db.session.commit()
+        activity_logged = False
+
+        def log_case_activity(message):
+            nonlocal activity_logged
+            track_activity(message, caseid=case.case_id)
+            activity_logged = True
+
+        def get_user_name(user_id, default='Unassigned'):
+            if user_id is None:
+                return default
+            user = User.query.filter(User.id == user_id).first()
+            if not user:
+                return default
+            return user.name if user.name else user.user
+
+        def get_case_status_name(status_id):
+            status_display_names = {
+                CaseStatus.unknown: 'Unknown',
+                CaseStatus.false_positive: 'False Positive',
+                CaseStatus.true_positive_with_impact: 'True Positive with impact',
+                CaseStatus.true_positive_without_impact: 'True Positive without impact',
+                CaseStatus.legitimate: 'Legitimate',
+                CaseStatus.not_applicable: 'Not applicable',
+            }
+            try:
+                return status_display_names[CaseStatus(status_id)]
+            except ValueError:
+                return str(status_id)
+
+        if previous_case_state != case.state_id:
+            state_name = case.state.state_name if case.state else str(case.state_id)
+            log_case_activity(f'case state changed to "{state_name}"')
+
+            if case.state_id == closed_state_id:
+                log_case_activity('case closed')
                 res = close_case(case.case_id)
                 if not res:
                     raise BusinessProcessingError('Tried to close an non-existing case')
 
                 # Close the related alerts
-                if updated_case.alerts:
+                if case.alerts:
                     close_status = get_alert_status_by_name('Closed')
-                    case_status_id_mapped = map_alert_resolution_to_case_status(updated_case.status_id)
+                    case_status_id_mapped = map_alert_resolution_to_case_status(case.status_id)
 
-                    for alert in updated_case.alerts:
+                    for alert in case.alerts:
                         if alert.alert_status_id != close_status.status_id:
                             alert.alert_status_id = close_status.status_id
                             alert = call_modules_hook('on_postload_alert_update', alert, caseid=case.case_id)
@@ -190,34 +260,86 @@ def cases_update(case: Cases, updated_case, protagonists, tags) -> Cases:
                             alert = call_modules_hook('on_postload_alert_resolution_update', alert,
                                                       caseid=case.case_id)
 
-                            track_activity(
+                            log_case_activity(
                                 f'closing alert ID {alert.alert_id} due to case #{case.case_id} being closed',
-                                caseid=case.case_id, ctx_less=False)
+                            )
 
                             db.session.add(alert)
 
-            elif previous_case_state == closed_state_id and updated_case.state_id != closed_state_id:
-                track_activity('case re-opened', caseid=case.case_id)
+            elif previous_case_state == closed_state_id and case.state_id != closed_state_id:
+                log_case_activity('case re-opened')
                 res = reopen_case(case.case_id)
                 if not res:
                     raise BusinessProcessingError('Tried to re-open an non-existing case')
 
-        if case_previous_reviewer_id != updated_case.reviewer_id:
-            if updated_case.reviewer_id is None:
-                track_activity('case reviewer removed', caseid=case.case_id)
-                updated_case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
+        if previous_case_customer_id != case.client_id:
+            customer_name = case.client.name if case.client else str(case.client_id)
+            log_case_activity(f'case customer updated to "{customer_name}"')
+
+        if previous_case_name != case.name:
+            if case.name:
+                log_case_activity(f'case name updated to "{case.name}"')
             else:
-                track_activity('case reviewer changed', caseid=case.case_id)
+                log_case_activity('case name cleared')
 
-        register_case_protagonists(updated_case.case_id, protagonists)
+        if previous_case_soc_id != case.soc_id:
+            if case.soc_id:
+                log_case_activity(f'case SOC ticket updated to "{case.soc_id}"')
+            else:
+                log_case_activity('case SOC ticket cleared')
+
+        if previous_case_owner_id != case.owner_id:
+            owner_name = get_user_name(case.owner_id)
+            log_case_activity(f'case owner updated to "{owner_name}"')
+
+        if previous_case_severity_id != case.severity_id:
+            severity_name = case.severity.severity_name if case.severity else str(case.severity_id)
+            log_case_activity(f'case severity updated to "{severity_name}"')
+
+        if previous_case_classification_id != case.classification_id:
+            classification_name = case.classification.name if case.classification else str(case.classification_id)
+            log_case_activity(f'case classification updated to "{classification_name}"')
+
+        if previous_case_status_id != case.status_id:
+            status_name = get_case_status_name(case.status_id)
+            log_case_activity(f'case status updated to "{status_name}"')
+
+        if previous_case_reviewer_id != case.reviewer_id:
+            if case.reviewer_id is None:
+                log_case_activity('case reviewer removed')
+                case.review_status_id = get_review_id_from_name(ReviewStatusList.not_reviewed)
+            else:
+                reviewer_name = get_user_name(case.reviewer_id)
+                log_case_activity(f'case reviewer updated to "{reviewer_name}"')
+
+        register_case_protagonists(case.case_id, protagonists)
+        if protagonists is not None:
+            updated_protagonists = CaseProtagonist.query.with_entities(
+                CaseProtagonist.name,
+                CaseProtagonist.role
+            ).filter(
+                CaseProtagonist.case_id == case.case_id
+            ).all()
+            updated_protagonist_values = sorted([(p.name, p.role) for p in updated_protagonists if p.name])
+            if updated_protagonist_values != previous_protagonist_values:
+                log_case_activity('case protagonists updated')
+
         save_case_tags(tags, case)
+        if tags is not None:
+            updated_tag_values = sorted([tag.tag_title for tag in case.tags])
+            if updated_tag_values != previous_tag_values:
+                if updated_tag_values:
+                    log_case_activity(f'case tags updated to: {", ".join(updated_tag_values)}')
+                else:
+                    log_case_activity('case tags cleared')
 
-        updated_case = call_modules_hook('on_postload_case_update', data=updated_case, caseid=case.case_id)
+        case = call_modules_hook('on_postload_case_update', data=case, caseid=case.case_id)
 
         add_obj_history_entry(case, 'case info updated')
-        track_activity(f'case updated "{updated_case.name}"', caseid=case.case_id)
+        if not activity_logged:
+            track_activity(f'case updated "{case.name}"', caseid=case.case_id)
 
-        return updated_case
+        return case
 
     except BusinessProcessingError as e:
         raise e
