@@ -278,6 +278,7 @@ def update_case_info(identifier):
     case_schema = CaseSchema()
     try:
         case = cases_get_by_identifier(identifier)
+        previous_state_id = case.state_id
 
         request_data = request.get_json()
         # If user tries to update the customer, check if the user has access to the new customer
@@ -296,7 +297,7 @@ def update_case_info(identifier):
 
         protagonists = request_data.get('protagonists')
         tags = request_data.get('case_tags')
-        case = cases_update(case, updated_case, protagonists, tags)
+        case = cases_update(case, updated_case, protagonists, tags, previous_state_id=previous_state_id)
         return response_success('Updated', data=case_schema.dump(case))
     except ValidationError as e:
         return response_error('Data error', e.messages)
