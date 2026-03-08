@@ -161,10 +161,10 @@ def cases_delete(case_identifier):
         raise BusinessProcessingError('Cannot delete the case. Please check server logs for additional informations')
 
 
-def cases_update(case: Cases, updated_case, protagonists, tags) -> Cases:
+def cases_update(case: Cases, updated_case, protagonists, tags, previous_state_id=None) -> Cases:
     try:
         closed_state_id = get_case_state_by_name('Closed').state_id
-        previous_case_state = case.state_id
+        previous_case_state = case.state_id if previous_state_id is None else previous_state_id
         case_previous_reviewer_id = case.reviewer_id
         db.session.commit()
 
@@ -198,7 +198,7 @@ def cases_update(case: Cases, updated_case, protagonists, tags) -> Cases:
 
             elif previous_case_state == closed_state_id and updated_case.state_id != closed_state_id:
                 track_activity('case re-opened', caseid=case.case_id)
-                res = reopen_case(case.case_id)
+                res = reopen_case(case.case_id, updated_case.state_id)
                 if not res:
                     raise BusinessProcessingError('Tried to re-open an non-existing case')
 
