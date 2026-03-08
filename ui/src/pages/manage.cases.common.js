@@ -107,6 +107,7 @@ function remove_case(id) {
 function edit_case_info() {
     $('#case_gen_info_content').hide();
     $('#case_gen_info_edit').show();
+    $('.case-info-readonly-action').hide();
     $('#cancel_case_info').show();
     $('#save_case_info').show();
     $('#case_info').hide();
@@ -115,6 +116,7 @@ function edit_case_info() {
 function cancel_case_edit() {
     $('#case_gen_info_content').show();
     $('#case_gen_info_edit').hide();
+    $('.case-info-readonly-action').show();
     $('#cancel_case_info').hide();
     $('#save_case_info').hide();
     $('#case_info').show();
