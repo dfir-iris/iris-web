@@ -56,6 +56,28 @@ class TestsRestMiscellaneous(TestCase):
         response = self._subject.get('/case/timeline/state', query_parameters={'cid': 1})
         self.assertEqual(200, response.status_code)
 
+    def test_legacy_timeline_event_update_should_return_400_for_validation_error(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'event_title': 'title', 'event_category_id': 1,
+                'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
+                'event_assets': [], 'event_iocs': []}
+        event = self._subject.create(f'/api/v2/cases/{case_identifier}/events', body).json()
+
+        invalid_update_payload = {'event_title': 'title',
+                                  'event_category_id': None,
+                                  'event_date': '2025-03-26T00:00:00.000',
+                                  'event_tz': '+00:00',
+                                  'event_assets': [],
+                                  'event_iocs': []}
+
+        response = self._subject.create(
+            f'/case/timeline/events/update/{event["event_id"]}',
+            invalid_update_payload,
+            query_parameters={'cid': case_identifier}
+        )
+
+        self.assertEqual(400, response.status_code)
+
     # TODO should probably move this in a test suite related to modules?
     # TODO skipping this tests, because it randomly triggers exceptions in the iriswebappp_worker
     #      (psycopg2.errors.NotNullViolation) null value in column "client_id" violates not-null constraint
