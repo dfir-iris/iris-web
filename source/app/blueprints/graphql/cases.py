@@ -181,6 +181,7 @@ class CaseUpdate(Mutation):
         permissions_check_current_user_has_some_case_access(case_id, [CaseAccessLevel.full_access])
 
         case = cases_get_by_identifier(case_id)
+        previous_state_id = case.state_id
 
         # If user tries to update the customer, check if the user has access to the new customer
         if request.get('case_customer') and request.get('case_customer') != case.client_id:
@@ -197,5 +198,5 @@ class CaseUpdate(Mutation):
         updated_case = add_case_schema.load(request, instance=case, partial=True)
         protagonists = request.get('protagonists')
         tags = request.get('case_tags')
-        case = cases_update(case, updated_case, protagonists, tags)
+        case = cases_update(case, updated_case, protagonists, tags, previous_state_id=previous_state_id)
         return CaseUpdate(case=case)
