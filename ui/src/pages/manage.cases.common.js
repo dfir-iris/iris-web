@@ -107,6 +107,9 @@ function remove_case(id) {
 function edit_case_info() {
     $('#case_gen_info_content').hide();
     $('#case_gen_info_edit').show();
+    if ($('#case_state').attr('data-initial-state-id') === undefined) {
+        $('#case_state').attr('data-initial-state-id', $('#case_state').val());
+    }
     $('.case-info-readonly-action').hide();
     $('#cancel_case_info').show();
     $('#save_case_info').show();
@@ -122,8 +125,56 @@ function cancel_case_edit() {
     $('#case_info').show();
 }
 
-function save_case_edit(case_id) {
+function get_closed_case_state_identifier() {
+    var closed_state_option = $('#case_state option').filter(function () {
+        return $(this).text().trim().toLowerCase() === 'closed';
+    }).first();
 
+    if (closed_state_option.length === 0) {
+        return NaN;
+    }
+
+    return parseInt(closed_state_option.val(), 10);
+}
+
+function save_case_edit(case_id) {
+    var previous_state_identifier = parseInt($('#case_state').attr('data-initial-state-id'), 10);
+    var selected_state_identifier = parseInt($('#case_state').val(), 10);
+    var closed_state_identifier = get_closed_case_state_identifier();
+
+    if (!Number.isNaN(previous_state_identifier) &&
+        !Number.isNaN(selected_state_identifier) &&
+        !Number.isNaN(closed_state_identifier)) {
+        var is_closing_case = previous_state_identifier !== closed_state_identifier &&
+            selected_state_identifier === closed_state_identifier;
+        var is_reopening_case = previous_state_identifier === closed_state_identifier &&
+            selected_state_identifier !== closed_state_identifier;
+
+        if (is_closing_case || is_reopening_case) {
+            var case_action = is_closing_case ? 'close' : 'reopen';
+            swal({
+                title: "Are you sure?",
+                text: `Saving this change will ${case_action} the case`,
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33'
+            })
+            .then((willApplyStateTransition) => {
+                if (willApplyStateTransition) {
+                    submit_case_edit(case_id);
+                }
+            });
+
+            return;
+        }
+    }
+
+    submit_case_edit(case_id);
+}
+
+function submit_case_edit(case_id) {
     var data_sent = $('form#form_update_case').serializeObject();
     var map_protagonists = Object();
 
