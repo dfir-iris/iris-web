@@ -35,11 +35,54 @@ from app.iris_engine.utils.collab import collab_notify
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 
 
+def _validate_event_parent_relationship(event: CasesEvent):
+    """Validate that parent assignment stays inside case and does not create cycles."""
+    parent_event_id = event.parent_event_id
+    if parent_event_id is None:
+        return
+
+    if parent_event_id == event.event_id:
+        raise BusinessProcessingError('An event cannot be its own parent')
+
+    visited_parent_ids = set()
+    guard = 0
+    max_depth = 10000
+
+    while parent_event_id is not None and guard < max_depth:
+        if parent_event_id in visited_parent_ids:
+            raise BusinessProcessingError('Invalid parent event hierarchy')
+        visited_parent_ids.add(parent_event_id)
+
+        parent_event = CasesEvent.query.with_entities(
+            CasesEvent.event_id,
+            CasesEvent.case_id,
+            CasesEvent.parent_event_id
+        ).filter(
+            CasesEvent.event_id == parent_event_id
+        ).first()
+        if not parent_event:
+            raise BusinessProcessingError('Invalid parent event ID')
+
+        if parent_event.case_id != event.case_id:
+            raise BusinessProcessingError('Parent event must belong to the same case')
+
+        if parent_event.event_id == event.event_id:
+            raise BusinessProcessingError('Parent event assignment would create a cycle')
+
+        parent_event_id = parent_event.parent_event_id
+        guard += 1
+
+    if guard >= max_depth:
+        raise BusinessProcessingError('Parent event hierarchy is too deep')
+
+
 def events_create(case_identifier, event: CasesEvent, event_category_id, event_assets, event_iocs, sync_iocs_assets) -> CasesEvent:
 
     event.case_id = case_identifier
     event.event_added = datetime.utcnow()
     event.user_id = iris_current_user.id
+
+    _validate_event_parent_relationship(event)
 
     add_obj_history_entry(event, 'created')
 
@@ -75,6 +118,8 @@ def events_get(identifier) -> CasesEvent:
 
 
 def events_update(event: CasesEvent, event_category_id, event_assets, event_iocs, event_sync_iocs_assets) -> CasesEvent:
+    _validate_event_parent_relationship(event)
+
     add_obj_history_entry(event, 'updated')
 
     update_timeline_state(event.case_id)
