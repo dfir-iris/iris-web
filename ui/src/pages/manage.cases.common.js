@@ -24,7 +24,7 @@ function case_detail(id) {
 }
 
 /* Close case function */
-function close_case(id) {
+function confirm_close_case(id, on_confirm) {
     swal({
         title: "Are you sure?",
         text: "Case ID " + id + " will be closed and will not appear in contexts anymore",
@@ -36,15 +36,21 @@ function close_case(id) {
         confirmButtonText: 'Yes, close it!'
     })
     .then((willClose) => {
-        if (willClose) {
-            post_request_api(`/manage/cases/close/${id}`)
-            .done((data) => {
-                if (!refresh_case_table()) {
-                    window.location.reload();
-                }
-                $('#modal_case_detail').modal('hide');
-            });
+        if (willClose && on_confirm) {
+            on_confirm();
         }
+    });
+}
+
+function close_case(id) {
+    confirm_close_case(id, function () {
+        post_request_api(`/manage/cases/close/${id}`)
+        .done((data) => {
+            if (!refresh_case_table()) {
+                window.location.reload();
+            }
+            $('#modal_case_detail').modal('hide');
+        });
     });
 }
 
@@ -150,23 +156,15 @@ function save_case_edit(case_id) {
         var is_reopening_case = previous_state_identifier === closed_state_identifier &&
             selected_state_identifier !== closed_state_identifier;
 
-        if (is_closing_case || is_reopening_case) {
-            var case_action = is_closing_case ? 'close' : 'reopen';
-            swal({
-                title: "Are you sure?",
-                text: `Saving this change will ${case_action} the case`,
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33'
-            })
-            .then((willApplyStateTransition) => {
-                if (willApplyStateTransition) {
-                    submit_case_edit(case_id);
-                }
+        if (is_closing_case) {
+            confirm_close_case(case_id, function () {
+                submit_case_edit(case_id);
             });
+            return;
+        }
 
+        if (is_reopening_case) {
+            submit_case_edit(case_id);
             return;
         }
     }
