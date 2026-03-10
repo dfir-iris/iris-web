@@ -16,10 +16,13 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+
+import os
 from celery import Celery
 from celery.security import setup_security
 from kombu.serialization import register
 from app.configuration import CeleryConfig
+
 
 def _patch_celery_cert_datetime():
     import datetime
@@ -39,25 +42,70 @@ def _patch_celery_cert_datetime():
 
 def _register_auth_serializer():
     import json
+    from datetime import datetime, date
+
+    def _serialize_value(obj):
+        if obj is None:
+            return None
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        if isinstance(obj, dict):
+            return {k: _serialize_value(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_serialize_value(item) for item in obj]
+        if hasattr(obj, '__dict__'):
+            result = {}
+            for key, value in obj.__dict__.items():
+                if key.startswith('_sa_'):
+                    continue
+                result[key] = _serialize_value(value)
+            return result
+        if hasattr(obj, '__iter__'):
+            return str(obj)
+        return obj
+
+    class _CeleryJsonEncoder(json.JSONEncoder):
+        def default(self, obj):
+            return _serialize_value(obj)
 
     def _encode_auth(data):
-        return json.dumps(data), 'application/auth'
+        return json.dumps(data, cls=_CeleryJsonEncoder).encode('utf-8'), 'application/auth'
 
     def _decode_auth(data):
+        if isinstance(data, bytes):
+            data = data.decode('utf-8')
         return json.loads(data)
 
     register('auth', _encode_auth, _decode_auth, content_type='application/auth')
 
 
-def make_celery(name):
-    _register_auth_serializer()
+def _check_certificate_files():
+    key_path = CeleryConfig.security_key
+    cert_path = CeleryConfig.security_certificate
+    store_path = CeleryConfig.security_cert_store
+    
+    if not key_path or not cert_path or not store_path:
+        return False
+    
+    if not os.path.exists(key_path):
+        return False
+    if not os.path.exists(cert_path):
+        return False
+    if not os.path.exists(store_path):
+        return False
+    
+    return True
 
+
+def make_celery(name):
     celery_app = Celery(
         name,
         config_source=CeleryConfig
     )
 
-    if CeleryConfig.security_key and CeleryConfig.security_certificate:
+    _register_auth_serializer()
+
+    if _check_certificate_files():
         _patch_celery_cert_datetime()
         setup_security(
             allowed_serializers=['auth'],

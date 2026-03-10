@@ -79,8 +79,18 @@ def add_obj_history_entry(obj, action, commit=False):
     return obj
 
 
+
 def hmac_sign(data):
-    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
+    import os
+    key = os.environ.get("SECRET_KEY")
+    if not key:
+        try:
+            key = current_app.config.get("SECRET_KEY")
+        except:
+            pass
+    if not key:
+        raise ValueError("SECRET_KEY not available")
+    key = bytes(key, "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
     signature = base64.b64encode(h.finalize())
@@ -89,8 +99,17 @@ def hmac_sign(data):
 
 
 def hmac_verify(signature_enc, data):
+    import os
     signature = base64.b64decode(signature_enc)
-    key = bytes(current_app.config.get("SECRET_KEY"), "utf-8")
+    key = os.environ.get("SECRET_KEY")
+    if not key:
+        try:
+            key = current_app.config.get("SECRET_KEY")
+        except:
+            pass
+    if not key:
+        return False
+    key = bytes(key, "utf-8")
     h = hmac.HMAC(key, hashes.SHA256())
     h.update(data)
 

@@ -32,7 +32,10 @@ from iris_interface.IrisModuleInterface import IrisPipelineTypes
 
 @task_prerun.connect
 def on_task_init(*args, **kwargs):
-    db.engine.dispose()
+    try:
+        db.engine.dispose()
+    except Exception:
+        pass
 
 
 def task_case_update(module, pipeline, pipeline_args, caseid):
