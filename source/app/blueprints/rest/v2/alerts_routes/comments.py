@@ -51,7 +51,7 @@ class CommentsOperations:
     def search(self, alert_identifier):
         pagination_parameters = parse_pagination_parameters(request)
         try:
-            comments = comments_get_filtered_by_alert(iris_current_user, session['permissions'], alert_identifier, pagination_parameters)
+            comments = comments_get_filtered_by_alert(iris_current_user, (session.get('permissions') or 0), alert_identifier, pagination_parameters)
             return response_api_paginated(self._schema, comments)
         except ObjectNotFoundError:
             return response_api_not_found()
@@ -59,7 +59,7 @@ class CommentsOperations:
     def create(self, alert_identifier):
         try:
             comment = self._schema.load(request.get_json())
-            comments_create_for_alert(iris_current_user, session['permissions'], comment, alert_identifier)
+            comments_create_for_alert(iris_current_user, (session.get('permissions') or 0), comment, alert_identifier)
             result = self._schema.dump(comment)
             return response_api_created(result)
         except ValidationError as e:
@@ -69,7 +69,7 @@ class CommentsOperations:
 
     def read(self, alert_identifier, identifier):
         try:
-            alert = alerts_get(iris_current_user, session['permissions'], alert_identifier)
+            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), alert_identifier)
             comment = comments_get_for_alert(alert, identifier)
             result = self._schema.dump(comment)
             return response_api_success(result)
@@ -79,13 +79,13 @@ class CommentsOperations:
             return response_api_not_found()
 
     def update(self, alert_identifier, identifier):
-        if not alerts_exists(iris_current_user, session['permissions'], alert_identifier):
+        if not alerts_exists(iris_current_user, (session.get('permissions') or 0), alert_identifier):
             return response_api_not_found()
         return case_comment_update(identifier, 'events', None)
 
     def delete(self, alert_identifier, identifier):
         try:
-            alert = alerts_get(iris_current_user, session['permissions'], alert_identifier)
+            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), alert_identifier)
             comment = comments_get_for_alert(alert, identifier)
             if comment.comment_user_id != iris_current_user.id:
                 return ac_api_return_access_denied()
