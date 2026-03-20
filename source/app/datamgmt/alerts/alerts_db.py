@@ -1122,13 +1122,10 @@ def _get_open_alerts_status_identifiers():
 
 
 def _get_alerts_status_identifiers(status_names):
-    open_alert_status_ids = AlertStatus.query.with_entities(
+    alert_status_ids = AlertStatus.query.with_entities(
         AlertStatus.status_id
     ).filter(AlertStatus.status_name.in_(status_names)).all()
-    result = []
-    for status_id in open_alert_status_ids:
-        result.append(status_id)
-    return result
+    return [status_id for status_id, in alert_status_ids]
 
 
 def get_alert_comments(alert_id: int) -> List[Comments]:
