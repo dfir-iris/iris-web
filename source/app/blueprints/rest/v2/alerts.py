@@ -178,9 +178,18 @@ class AlertsOperations:
             alert = alerts_get(iris_current_user, (session.get('permissions') or 0), identifier)
 
             open_alerts = request.args.get('open-alerts', 'false').lower() == 'true'
-            open_cases = request.args.get('open-cases', 'false').lower() == 'true'
-            closed_cases = request.args.get('closed-cases', 'false').lower() == 'true'
             closed_alerts = request.args.get('closed-alerts', 'false').lower() == 'true'
+
+            open_cases_arg = request.args.get('open-cases')
+            closed_cases_arg = request.args.get('closed-cases')
+
+            if open_cases_arg is None and closed_cases_arg is None:
+                open_cases = True
+                closed_cases = True
+            else:
+                open_cases = (open_cases_arg or 'false').lower() == 'true'
+                closed_cases = (closed_cases_arg or 'false').lower() == 'true'
+
             days_back = request.args.get('days-back', 180, type=int)
             number_of_results = request.args.get('number-of-nodes', 100, type=int)
 
@@ -189,8 +198,17 @@ class AlertsOperations:
             if days_back < 0:
                 days_back = 180
 
-            similar_alerts = alerts_get_related(iris_current_user, alert, open_alerts, closed_alerts, open_cases,
-                                                closed_cases, days_back, number_of_results)
+            similar_alerts = alerts_get_related(
+                iris_current_user,
+                alert,
+                open_alerts,
+                closed_alerts,
+                open_cases,
+                closed_cases,
+                days_back,
+                number_of_results
+            )
+
             return response_api_success(similar_alerts)
 
         except ObjectNotFoundError:
