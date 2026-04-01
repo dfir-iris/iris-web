@@ -58,6 +58,7 @@ from app.blueprints.access_controls import ac_api_return_access_denied
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.module_handler.module_handler import call_deprecated_on_preload_modules_hook
+from app.db import db
 
 
 class CasesOperations:
@@ -240,7 +241,7 @@ class CasesOperations:
     def create(self):
         try:
             request_data = call_deprecated_on_preload_modules_hook('case_create', request.get_json())
-            case = self._schema.load(request_data)
+            case = self._schema.load(request_data, session=db.session)
             case_template_id = request_data.pop('case_template_id', None)
             case = cases_create(iris_current_user, case, case_template_id)
             result = self._schema.dump(case)
@@ -284,8 +285,14 @@ class CasesOperations:
             reviewer_identifier = request_data.get('reviewer_id')
             if reviewer_identifier == '':
                 request_data['reviewer_id'] = None
+            request_data.pop('review_status', None)
 
-            updated_case = self._schema.load(request_data, instance=case, partial=True)
+            updated_case = self._schema.load(
+                request_data,
+                instance=case,
+                partial=True,
+                session=db.session
+            )
 
             protagonists = request_data.get('protagonists')
             tags = request_data.get('case_tags')
