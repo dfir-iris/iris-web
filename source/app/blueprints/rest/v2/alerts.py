@@ -166,7 +166,12 @@ class AlertsOperations:
     def read(self, identifier):
 
         try:
-            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             return response_api_success(self._schema.dump(alert))
 
         except ObjectNotFoundError:
@@ -175,7 +180,12 @@ class AlertsOperations:
     def get_related_alerts(self, identifier):
 
         try:
-            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
 
             open_alerts = request.args.get('open-alerts', 'false').lower() == 'true'
             closed_alerts = request.args.get('closed-alerts', 'false').lower() == 'true'
@@ -250,7 +260,12 @@ class AlertsOperations:
 
     def delete(self, identifier):
         try:
-            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             alerts_delete(alert)
             return response_api_deleted()
 
