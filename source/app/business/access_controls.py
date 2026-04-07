@@ -106,11 +106,4 @@ def access_controls_user_has_customer_access(user, permissions, customer_identif
     if user_has_client_access(user_id, customer_identifier):
         return True
 
-    if hasattr(user, 'is_authenticated') or hasattr(user, 'user'):
-        try:
-            from app.blueprints.access_controls import ac_current_user_has_customer_access
-            return ac_current_user_has_customer_access(customer_identifier)
-        except Exception:
-            return False
-
     return False

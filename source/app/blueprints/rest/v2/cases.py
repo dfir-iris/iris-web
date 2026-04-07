@@ -50,7 +50,6 @@ from app.models.errors import BusinessProcessingError, ObjectNotFoundError
 from app.business.cases import cases_filter
 from app.schema.marshables import CaseSchemaForAPIV2
 from app.schema.marshables import CaseDetailsSchema
-from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.access_controls import ac_current_user_has_customer_access
 from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
@@ -204,23 +203,23 @@ class CasesOperations:
         if type(draw) is not int:
             draw = 1
 
-        filtered_cases = get_filtered_cases(
-            iris_current_user.id,
+        filtered_cases = cases_filter(
+            iris_current_user,
             pagination_parameters,
-            case_ids=case_ids_str,
-            case_customer_id=case_customer_id,
             case_name=case_name,
-            case_description=case_description,
-            case_classification_id=case_classification_id,
-            case_owner_id=case_owner_id,
-            case_opening_user_id=case_opening_user_id,
-            case_severity_id=case_severity_id,
-            case_state_id=case_state_id,
-            case_soc_id=case_soc_id,
+            case_identifiers=case_ids_str,
+            customer_identifier=case_customer_id,
+            description=case_description,
+            classification_identifier=case_classification_id,
+            owner_identifier=case_owner_id,
+            opening_user_identifier=case_opening_user_id,
+            severity_identifier=case_severity_id,
+            status_identifier=case_state_id,
+            soc_identifier=case_soc_id,
             start_open_date=start_open_date,
             end_open_date=end_open_date,
-            search_value=search_value,
             is_open=is_open,
+            search_value=search_value,
             advanced_filters=advanced_filters,
             advanced_logic=logic
         )
