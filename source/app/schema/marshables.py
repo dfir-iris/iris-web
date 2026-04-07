@@ -2263,7 +2263,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     iocs = ma.Nested(IocSchema, many=True)
     assets = ma.Nested(CaseAssetsSchema, many=True, exclude=['alerts'])
     resolution_status = ma.Nested(AlertResolutionSchema)
-    cases = fields.Pluck('AlertCaseSchema', 'case_id', many=True, required=False)
+    cases = fields.Pluck(AlertCaseSchema, 'case_id', many=True, required=False)
 
     class Meta:
         model = Alert
