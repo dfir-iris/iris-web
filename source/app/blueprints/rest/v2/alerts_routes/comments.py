@@ -22,6 +22,7 @@ from flask import request
 from marshmallow.exceptions import ValidationError
 
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_current_user_has_customer_access
 from app.models.authorization import Permissions
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_success
@@ -51,7 +52,13 @@ class CommentsOperations:
     def search(self, alert_identifier):
         pagination_parameters = parse_pagination_parameters(request)
         try:
-            comments = comments_get_filtered_by_alert(iris_current_user, (session.get('permissions') or 0), alert_identifier, pagination_parameters)
+            comments = comments_get_filtered_by_alert(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                alert_identifier,
+                pagination_parameters,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             return response_api_paginated(self._schema, comments)
         except ObjectNotFoundError:
             return response_api_not_found()
@@ -59,7 +66,13 @@ class CommentsOperations:
     def create(self, alert_identifier):
         try:
             comment = self._schema.load(request.get_json())
-            comments_create_for_alert(iris_current_user, (session.get('permissions') or 0), comment, alert_identifier)
+            comments_create_for_alert(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                comment,
+                alert_identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             result = self._schema.dump(comment)
             return response_api_created(result)
         except ValidationError as e:
@@ -69,7 +82,12 @@ class CommentsOperations:
 
     def read(self, alert_identifier, identifier):
         try:
-            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), alert_identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                alert_identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             comment = comments_get_for_alert(alert, identifier)
             result = self._schema.dump(comment)
             return response_api_success(result)
@@ -85,7 +103,12 @@ class CommentsOperations:
 
     def delete(self, alert_identifier, identifier):
         try:
-            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), alert_identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                alert_identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             comment = comments_get_for_alert(alert, identifier)
             if comment.comment_user_id != iris_current_user.id:
                 return ac_api_return_access_denied()

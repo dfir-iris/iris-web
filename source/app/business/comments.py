@@ -67,8 +67,8 @@ from app.datamgmt.alerts.alerts_db import get_alert_comment
 from app.models.alerts import Alert
 
 
-def comments_get_filtered_by_alert(current_user, permissions, alert_identifier: int, pagination_parameters: PaginationParameters) -> Pagination:
-    if not alerts_exists(current_user, permissions, alert_identifier):
+def comments_get_filtered_by_alert(current_user, permissions, alert_identifier: int, pagination_parameters: PaginationParameters, fallback_customer_access=None) -> Pagination:
+    if not alerts_exists(current_user, permissions, alert_identifier, fallback_customer_access):
         raise ObjectNotFoundError()
 
     return get_filtered_alert_comments(alert_identifier, pagination_parameters)
@@ -121,8 +121,8 @@ def comments_update_for_case(current_user, comment_text, comment_id, object_type
     return comment
 
 
-def comments_create_for_alert(current_user, permissions, comment: Comments, alert_identifier: int):
-    alert = alerts_get(current_user, permissions, alert_identifier)
+def comments_create_for_alert(current_user, permissions, comment: Comments, alert_identifier: int, fallback_customer_access=None):
+    alert = alerts_get(current_user, permissions, alert_identifier, fallback_customer_access)
     comment.comment_alert_id = alert_identifier
     comment.comment_user_id = current_user.id
     comment.comment_date = datetime.now()
