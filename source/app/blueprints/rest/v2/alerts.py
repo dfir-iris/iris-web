@@ -226,7 +226,12 @@ class AlertsOperations:
 
     def update(self, identifier):
         try:
-            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             request_data = request.get_json()
             updated_alert = self._schema.load(request_data, instance=alert, partial=True)
             activity_data = []
