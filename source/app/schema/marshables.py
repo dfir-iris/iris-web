@@ -2240,6 +2240,14 @@ class EventCategorySchema(ma.SQLAlchemyAutoSchema):
         unknown = EXCLUDE
 
 
+class AlertCaseSchema(ma.Schema):
+    case_id: int = fields.Integer(required=True)
+
+    @post_load
+    def make_case(self, data: Dict[str, Any], **kwargs: Any) -> Cases:
+        return Cases.query.filter(Cases.case_id == data.get('case_id')).first()
+
+
 class AlertSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing Alert objects.
 
@@ -2255,6 +2263,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     iocs = ma.Nested(IocSchema, many=True)
     assets = ma.Nested(CaseAssetsSchema, many=True, exclude=['alerts'])
     resolution_status = ma.Nested(AlertResolutionSchema)
+    cases = fields.Pluck(AlertCaseSchema, 'case_id', many=True, required=False)
 
     class Meta:
         model = Alert

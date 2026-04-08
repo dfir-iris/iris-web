@@ -17,13 +17,22 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from app.db import db
-from app.datamgmt.filters.filters_db import get_filter_by_id
+from app.datamgmt.filters.filters_db import get_filters, get_filter_by_id
 from app.models.errors import ObjectNotFoundError
 
 
 def alert_filter_add(new_saved_filter):
     db.session.add(new_saved_filter)
     db.session.commit()
+
+
+def alert_filter_list(user, filter_type="alerts", include_public=True):
+    filters = get_filters(
+        user_id=user.id,
+        filter_type=filter_type,
+        include_public=include_public
+    )
+    return filters
 
 
 def alert_filter_get(user, identifier):

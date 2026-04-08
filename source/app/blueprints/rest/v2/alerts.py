@@ -166,7 +166,12 @@ class AlertsOperations:
     def read(self, identifier):
 
         try:
-            alert = alerts_get(iris_current_user, session['permissions'], identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             return response_api_success(self._schema.dump(alert))
 
         except ObjectNotFoundError:
@@ -175,12 +180,26 @@ class AlertsOperations:
     def get_related_alerts(self, identifier):
 
         try:
-            alert = alerts_get(iris_current_user, session['permissions'], identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
 
             open_alerts = request.args.get('open-alerts', 'false').lower() == 'true'
-            open_cases = request.args.get('open-cases', 'false').lower() == 'true'
-            closed_cases = request.args.get('closed-cases', 'false').lower() == 'true'
             closed_alerts = request.args.get('closed-alerts', 'false').lower() == 'true'
+
+            open_cases_arg = request.args.get('open-cases')
+            closed_cases_arg = request.args.get('closed-cases')
+
+            if open_cases_arg is None and closed_cases_arg is None:
+                open_cases = True
+                closed_cases = True
+            else:
+                open_cases = (open_cases_arg or 'false').lower() == 'true'
+                closed_cases = (closed_cases_arg or 'false').lower() == 'true'
+
             days_back = request.args.get('days-back', 180, type=int)
             number_of_results = request.args.get('number-of-nodes', 100, type=int)
 
@@ -189,8 +208,17 @@ class AlertsOperations:
             if days_back < 0:
                 days_back = 180
 
-            similar_alerts = alerts_get_related(iris_current_user, alert, open_alerts, closed_alerts, open_cases,
-                                                closed_cases, days_back, number_of_results)
+            similar_alerts = alerts_get_related(
+                iris_current_user,
+                alert,
+                open_alerts,
+                closed_alerts,
+                open_cases,
+                closed_cases,
+                days_back,
+                number_of_results
+            )
+
             return response_api_success(similar_alerts)
 
         except ObjectNotFoundError:
@@ -198,7 +226,7 @@ class AlertsOperations:
 
     def update(self, identifier):
         try:
-            alert = alerts_get(iris_current_user, session['permissions'], identifier)
+            alert = alerts_get(iris_current_user, (session.get('permissions') or 0), identifier)
             request_data = request.get_json()
             updated_alert = self._schema.load(request_data, instance=alert, partial=True)
             activity_data = []
@@ -232,7 +260,12 @@ class AlertsOperations:
 
     def delete(self, identifier):
         try:
-            alert = alerts_get(iris_current_user, session['permissions'], identifier)
+            alert = alerts_get(
+                iris_current_user,
+                (session.get('permissions') or 0),
+                identifier,
+                fallback_customer_access=ac_current_user_has_customer_access
+            )
             alerts_delete(alert)
             return response_api_deleted()
 
@@ -276,7 +309,7 @@ def delete_alert(identifier):
     return alerts_operations.delete(identifier)
 
 
-@alerts_blueprint.get('<int:identifier>/related-alerts')
+@alerts_blueprint.get('/<int:identifier>/related-alerts')
 @ac_api_requires(Permissions.alerts_read)
 def get_related_alerts(identifier):
     return alerts_operations.get_related_alerts(identifier)

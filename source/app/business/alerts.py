@@ -98,17 +98,22 @@ def alerts_create(alert: Alert, iocs: list[Ioc], assets: list[CaseAssets]) -> Al
     return alert
 
 
-def _get(user, permissions, identifier) -> Optional[Alert]:
+def _get(user, permissions, identifier, fallback_customer_access=None) -> Optional[Alert]:
     alert = get_alert_by_id(identifier)
     if not alert:
         return None
-    if not access_controls_user_has_customer_access(user, permissions, alert.alert_customer_id):
+    if not access_controls_user_has_customer_access(
+        user,
+        permissions,
+        alert.alert_customer_id,
+        fallback_customer_access=fallback_customer_access
+    ):
         return None
     return alert
 
 
-def alerts_get(user, permissions, identifier) -> Alert:
-    alert = _get(user, permissions, identifier)
+def alerts_get(user, permissions, identifier, fallback_customer_access=None) -> Alert:
+    alert = _get(user, permissions, identifier, fallback_customer_access=fallback_customer_access)
     if not alert:
         raise ObjectNotFoundError()
     return alert
@@ -290,14 +295,14 @@ def alerts_get_related(user, alert, open_alerts, closed_alerts, open_cases, clos
             'edges': []
         }
 
-    in_dark_mode = user.in_dark_mode
+    in_dark_mode = getattr(user, 'in_dark_mode', False)
     alerts_dict = get_related_alerts_details(alert.alert_customer_id, assets, iocs, open_alerts, closed_alerts,
                                              days_back, number_of_results)
     return _build_related_alerts_graph(alerts_dict, open_cases, closed_cases, alert.alert_customer_id, in_dark_mode)
 
 
-def alerts_exists(user, permissions, identifier) -> bool:
-    alert = _get(user, permissions, identifier)
+def alerts_exists(user, permissions, identifier, fallback_customer_access=None) -> bool:
+    alert = _get(user, permissions, identifier, fallback_customer_access=fallback_customer_access)
 
     return alert is not None
 

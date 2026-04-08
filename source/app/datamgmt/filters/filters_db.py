@@ -39,21 +39,18 @@ def get_filter_by_id(user_identifier, filter_id):
     return saved_filter
 
 
-def list_filters_by_type(user_identifier, filter_type):
+def list_filters_by_type(user_identifier, filter_type, include_public=True):
     """
     List filters by type
 
     args:
+        user_identifier: user id
         filter_type: the type of filter to list
+        include_public: whether to include non-private filters
 
     returns:
         List of SavedFilter objects
     """
-    public_filters = SavedFilter.query.filter(
-        SavedFilter.filter_is_private == False,
-        SavedFilter.filter_type == filter_type
-    )
-
     private_filters_for_user = SavedFilter.query.filter(
         and_(
             SavedFilter.filter_is_private == True,
@@ -62,6 +59,18 @@ def list_filters_by_type(user_identifier, filter_type):
         )
     )
 
+    if not include_public:
+        return private_filters_for_user.all()
+
+    public_filters = SavedFilter.query.filter(
+        SavedFilter.filter_is_private == False,
+        SavedFilter.filter_type == filter_type
+    )
+
     all_filters = public_filters.union_all(private_filters_for_user).all()
 
     return all_filters
+
+
+def get_filters(user_id, filter_type="alerts", include_public=True):
+    return list_filters_by_type(user_id, filter_type, include_public)

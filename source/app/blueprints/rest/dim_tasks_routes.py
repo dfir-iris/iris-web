@@ -43,8 +43,8 @@ dim_tasks_rest_blueprint = Blueprint('dim_tasks_rest', __name__)
 
 
 @dim_tasks_rest_blueprint.route('/dim/hooks/call', methods=['POST'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
 def dim_hooks_call(caseid):
     logs = []
     js_data = request.json

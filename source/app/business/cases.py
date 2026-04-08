@@ -60,11 +60,14 @@ from app.models.cases import ReviewStatusList
 from app.models.customers import Client
 
 
-def cases_filter(current_user, pagination_parameters, name, case_identifiers, customer_identifier,
-                 description, classification_identifier, owner_identifier, opening_user_identifier,
-                 severity_identifier, status_identifier, soc_identifier,
-                 start_open_date, end_open_date, is_open):
-    return get_filtered_cases(current_user.id, pagination_parameters,
+def cases_filter(current_user, pagination_parameters, name=None, case_identifiers=None, customer_identifier=None,
+                 description=None, classification_identifier=None, owner_identifier=None, opening_user_identifier=None,
+                 severity_identifier=None, status_identifier=None, soc_identifier=None,
+                 start_open_date=None, end_open_date=None, is_open=None, search_value='',
+                 advanced_filters=None, advanced_logic='and'):
+    return get_filtered_cases(
+            current_user.id,
+            pagination_parameters,
             start_open_date,
             end_open_date,
             customer_identifier,
@@ -77,8 +80,10 @@ def cases_filter(current_user, pagination_parameters, name, case_identifiers, cu
             severity_identifier,
             status_identifier,
             soc_identifier,
-            search_value='',
-            is_open=is_open)
+            search_value=search_value,
+            is_open=is_open,
+            advanced_filters=advanced_filters,
+            advanced_logic=advanced_logic)
 
 
 def cases_filter_by_user(user, show_all: bool):
