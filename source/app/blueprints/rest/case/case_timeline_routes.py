@@ -856,7 +856,6 @@ def case_events_upload_csv(caseid):
         'event_sync_iocs_assets') else False
     event_in_summary = csv_options.get('event_in_summary') if csv_options.get('event_in_summary') else False
     event_in_graph = csv_options.get('event_in_graph') if csv_options.get('event_in_graph') else True
-    event_source = csv_options.get('event_source') if csv_options.get('event_source') else ''
 
     csv_data = list(csv.DictReader(csv_lines, delimiter=','))
     missing_fields = []
@@ -934,7 +933,6 @@ def case_events_upload_csv(caseid):
 
             row['event_in_summary'] = event_in_summary
             row['event_in_graph'] = event_in_graph
-            row['event_source'] = event_source
 
             csv_lines.append(row)
     except Exception as e:
