@@ -57,12 +57,6 @@ from app.business.permissions import check_current_user_has_some_case_access
 from app.business.permissions import check_current_user_has_some_permission
 
 
-def get_case_by_identifier(case_identifier):
-    check_current_user_has_some_case_access(case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access])
-
-    return get_case(case_identifier)
-
-
 def _load(request_data, **kwargs):
     try:
         add_case_schema = CaseSchema()

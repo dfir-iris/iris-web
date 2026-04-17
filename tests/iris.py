@@ -22,7 +22,6 @@ import time
 from docker_compose import DockerCompose
 from rest_api import RestApi
 from server_timeout_error import ServerTimeoutError
-from user import User
 
 API_URL = 'http://127.0.0.1:8000'
 _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
@@ -35,7 +34,6 @@ class Iris:
     def __init__(self):
         self._docker_compose = DockerCompose(_IRIS_PATH, 'docker-compose.dev.yml')
         self._api = RestApi(API_URL, _API_KEY)
-        self._administrator = User(API_URL, _API_KEY)
 
     def _wait(self, condition, attempts, sleep_duration=1):
         count = 0
@@ -86,16 +84,6 @@ class Iris:
         }
         return self._api.post('/case/assets/add', body)
 
-    def create_user(self, user_name):
-        body = {
-            'user_name': user_name,
-            'user_login': user_name,
-            'user_email': f'{user_name}@aa.eu',
-            'user_password': 'aA.1234567890'
-        }
-        user = self._api.post('/manage/users/add', body)
-        return User(API_URL, user['data']['user_api_key'])
-
     def create_case(self):
         body = {
             'case_name': 'case name',
@@ -114,6 +102,3 @@ class Iris:
 
     def get_cases_filter(self):
         return self._api.get('/manage/cases/filter')
-
-    def execute_graphql_query(self, payload):
-        return self._administrator.execute_graphql_query(payload)
