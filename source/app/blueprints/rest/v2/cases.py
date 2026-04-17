@@ -206,7 +206,7 @@ class CasesOperations:
         filtered_cases = cases_filter(
             iris_current_user,
             pagination_parameters,
-            case_name=case_name,
+            name=case_name,
             case_identifiers=case_ids_str,
             customer_identifier=case_customer_id,
             description=case_description,
