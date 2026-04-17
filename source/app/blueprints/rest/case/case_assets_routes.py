@@ -31,6 +31,7 @@ from app.business.assets import assets_get
 from app.business.assets import assets_update
 from app.blueprints.iris_user import iris_current_user
 from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.datamgmt.case.case_assets_db import get_raw_assets
 from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
@@ -285,6 +286,8 @@ def deprecated_asset_view(cur_id, caseid):
     try:
 
         asset = assets_get(cur_id)
+        if asset.case_id != caseid:
+            return response_error('Invalid asset ID for this case')
         # TODO this is a code smell: shouldn't have schemas in the business layer + the CaseAssetsSchema is instantiated twice
         case_assets_schema = CaseAssetsSchema()
         data = case_assets_schema.dump(asset)
@@ -292,6 +295,8 @@ def deprecated_asset_view(cur_id, caseid):
         data['linked_ioc'] = [row._asdict() for row in asset_iocs]
         return response_success(msg='Asset added', data=data)
 
+    except ObjectNotFoundError:
+        return response_error('Invalid asset ID for this case')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
@@ -303,7 +308,7 @@ def deprecated_asset_view(cur_id, caseid):
 def asset_update(cur_id, caseid):
     try:
         asset = get_asset(cur_id)
-        if not asset:
+        if not asset or asset.case_id != caseid:
             return response_error("Invalid asset ID for this case")
 
         request_data = call_modules_hook('on_preload_asset_update', request.get_json(), caseid=caseid)
@@ -341,6 +346,10 @@ def deprecated_asset_delete(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_asset_list(cur_id, caseid):
+    asset = get_asset(cur_id)
+    if not asset or asset.case_id != caseid:
+        return response_error('Invalid asset ID')
+
     asset_comments = get_case_asset_comments(cur_id)
     if asset_comments is None:
         return response_error('Invalid asset ID')
@@ -355,7 +364,7 @@ def case_comment_asset_list(cur_id, caseid):
 def case_comment_asset_add(cur_id, caseid):
     try:
         asset = get_asset(cur_id)
-        if not asset:
+        if not asset or asset.case_id != caseid:
             return response_error('Invalid asset ID')
 
         comment_schema = CommentSchema()
@@ -390,6 +399,10 @@ def case_comment_asset_add(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_asset_get(cur_id, com_id, caseid):
+    asset = get_asset(cur_id)
+    if not asset or asset.case_id != caseid:
+        return response_error("Invalid comment ID")
+
     comment = get_case_asset_comment(cur_id, com_id)
     if not comment:
         return response_error("Invalid comment ID")
