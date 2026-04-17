@@ -423,7 +423,7 @@ function show_case_view(row_index) {
     let desc_body = $('<div/>').addClass('card-body');
     desc_body.append($('<h2/>').addClass('card-title mb-3').text('Summary'));
     let converter = get_showdown_convert();
-    let html = converter.makeHtml(case_data.description);
+    let html = converter.makeHtml(do_md_filter_xss(case_data.description));
     desc_body.append($('<div/>').addClass('card-text').html(html));
 
     desc_card.append(desc_body);
