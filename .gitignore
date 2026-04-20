@@ -30,3 +30,4 @@ source/app/static/assets/img/graph/*
 run_nv_test.py
 !certificates/web_certificates/iris_dev_*
 certificates/web_certificates/*.pem
+ui/
