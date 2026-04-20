@@ -11,7 +11,7 @@ function renew_api() {
     })
         .then((willDelete) => {
             if (willDelete) {
-                get_request_api('/user/token/renew')
+                post_request_api('/user/token/renew')
                 .done((data) => {
                     if(notify_auto_api(data)) {
                         location.reload(true);

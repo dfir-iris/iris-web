@@ -63,10 +63,9 @@ def user_settings(caseid, url_redir):
     return render_template('profile.html', mfa_enabled=app.config['SERVER_SETTINGS']['enforce_mfa'])
 
 
-@profile_blueprint.route('/user/token/renew', methods=['GET'])
+@profile_blueprint.route('/user/token/renew', methods=['POST'])
 @ac_api_requires()
 def user_renew_api():
-
     user = get_user(current_user.id)
     user.api_key = secrets.token_urlsafe(nbytes=64)
 
