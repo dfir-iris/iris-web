@@ -14,6 +14,15 @@ var AmsifySuggestags;
 }
 (function($, window, document, undefined) {
 
+	function _escapeHTML(str) {
+		return String(str == null ? '' : str)
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;')
+			.replace(/'/g, '&#39;');
+	}
+
 	AmsifySuggestags = function(selector) {
 		this.selector = selector;
 		this.settings = {
@@ -113,7 +122,7 @@ var AmsifySuggestags;
 			var labelHTML             = '<div class="'+this.classes.inputArea.substring(1)+'"></div>';
 			this.selectors.inputArea  = $(labelHTML).appendTo(this.selectors.sTagsArea);
 			this.defaultLabel         = ($(this.selector).attr('placeholder') !== undefined)? $(this.selector).attr('placeholder'): this.defaultLabel;
-			var sTagsInput            = '<input type="text" class="'+this.classes.sTagsInput.substring(1)+'" placeholder="'+this.defaultLabel+'">';
+			var sTagsInput            = '<input type="text" class="'+this.classes.sTagsInput.substring(1)+'" placeholder="'+_escapeHTML(this.defaultLabel)+'">';
 			this.selectors.sTagsInput = $(sTagsInput).appendTo(this.selectors.inputArea).attr('autocomplete', 'off');
 			if($(this.selector).attr('required')) {
 				$(this.selector).removeAttr('required');
@@ -511,7 +520,7 @@ var AmsifySuggestags;
 					value = item;
 					tag   = item;
 				}
-				listHTML += '<li class="'+_self.classes.listItem.substring(1)+'" data-val="'+value+'">'+tag+'</li>';
+				listHTML += '<li class="'+_self.classes.listItem.substring(1)+'" data-val="'+_escapeHTML(value)+'">'+_escapeHTML(tag)+'</li>';
 			});
 			if(_self.settings.noSuggestionMsg) {
 				listHTML += '<li class="'+_self.classes.noSuggestion.substring(1)+'">'+_self.settings.noSuggestionMsg+'</li>';
@@ -539,7 +548,7 @@ var AmsifySuggestags;
 				value = value.replace(/\s+/g, '-');
 			}
 
-			var html = '<span class="'+this.classes.tagItem.substring(1)+'" data-val="'+value+'">'+this.getTag(value)+' '+this.setIcon()+'</span>';
+			var html = '<span class="'+this.classes.tagItem.substring(1)+'" data-val="'+_escapeHTML(value)+'">'+_escapeHTML(this.getTag(value))+' '+this.setIcon()+'</span>';
 			$item    = $(html).insertBefore($(this.selectors.sTagsInput));
 			if(this.settings.defaultTagClass) {
 				$item.addClass(this.settings.defaultTagClass);
@@ -649,7 +658,9 @@ var AmsifySuggestags;
 
 		removeTag: function(value, animate=true) {
 			var _self = this;
-			$findTags = $(this.selectors.inputArea).find('[data-val="'+value+'"]');
+			$findTags = $(this.selectors.inputArea).find(this.classes.tagItem).filter(function(){
+				return $(this).attr('data-val') === String(value);
+			});
 			if($findTags.length) {
 				$findTags.each(function(){
 					_self.removeTagByItem(this, animate);
