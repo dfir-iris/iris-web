@@ -36,6 +36,7 @@ pyotp==2.9.0
 qrcode[pil]==7.4.2
 dictdiffer==0.2.0
 oic==1.7.0
+bleach==6.1.0
 
 dependencies/docx_generator-0.8.0-py3-none-any.whl
 dependencies/iris_interface-1.2.0-py3-none-any.whl

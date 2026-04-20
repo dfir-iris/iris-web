@@ -320,7 +320,14 @@ def datastore_view_file(cur_id: int, caseid: int):
         return response_error(f'File {dsf.file_local_name} does not exists on the server. '
                               f'Update or delete virtual entry')
 
-    resp = send_file(dsf.file_local_name, as_attachment=False,
+    # Keep inline display only for file types the browser cannot execute as
+    # script. SVG in particular can embed <script>, and HTML/XML can also
+    # execute JS in the application's origin, so force them to download.
+    safe_inline_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
+    file_extension = Path(destination_name).suffix.lower().lstrip('.')
+    serve_as_attachment = file_extension not in safe_inline_extensions
+
+    resp = send_file(dsf.file_local_name, as_attachment=serve_as_attachment,
                      download_name=destination_name)
 
     track_activity(f"File \"{destination_name}\" downloaded", caseid=caseid, display_in_ui=False)
