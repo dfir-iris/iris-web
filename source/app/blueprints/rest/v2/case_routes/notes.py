@@ -35,6 +35,7 @@ from app.business.notes import notes_create
 from app.business.notes import notes_get
 from app.business.notes import notes_update
 from app.business.notes import notes_delete
+from app.business.notes import notes_search
 from app.business.cases import cases_exists
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -57,6 +58,68 @@ class NotesOperations:
     def _check_note_and_case_identifier_match(note: Notes, case_identifier):
         if note.note_case_id != case_identifier:
             raise ObjectNotFoundError
+
+    @staticmethod
+    def _check_case_access(case_identifier, access_levels):
+        if not cases_exists(case_identifier):
+            return response_api_not_found()
+
+        if not ac_fast_check_current_user_has_case_access(case_identifier, access_levels):
+            return ac_api_return_access_denied(caseid=case_identifier)
+
+        return None
+
+    def list(self, case_identifier):
+        access_error = self._check_case_access(
+            case_identifier,
+            [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+        )
+        if access_error:
+            return access_error
+
+        try:
+            notes = (
+                Notes.query
+                .filter(Notes.note_case_id == case_identifier)
+                .order_by(Notes.note_id.asc())
+                .all()
+            )
+
+            result = self._schema.dump(notes, many=True)
+            return response_api_success(result)
+
+        except ValidationError as e:
+            return response_api_error('Data error', e.messages)
+
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def search(self, case_identifier):
+        access_error = self._check_case_access(
+            case_identifier,
+            [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+        )
+        if access_error:
+            return access_error
+
+        try:
+            search_input = request.args.get('search_input')
+            if search_input is None or not search_input.strip():
+                return response_api_error(
+                    'Data error',
+                    data={'search_input': ['Missing or blank search_input query parameter']}
+                )
+
+            notes = notes_search(case_identifier, search_input.strip())
+
+            result = self._schema.dump(notes, many=True)
+            return response_api_success(result)
+
+        except ValidationError as e:
+            return response_api_error('Data error', e.messages)
+
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
 
     def create(self, case_identifier):
         if not cases_exists(case_identifier):
@@ -146,6 +209,18 @@ case_notes_blueprint = Blueprint('case_notes',
                                  url_prefix='/<int:case_identifier>/notes')
 
 
+@case_notes_blueprint.get('')
+@ac_api_requires()
+def list_notes(case_identifier):
+    return notes_operations.list(case_identifier)
+
+
+@case_notes_blueprint.get('/search')
+@ac_api_requires()
+def search_notes(case_identifier):
+    return notes_operations.search(case_identifier)
+
+
 @case_notes_blueprint.post('')
 @ac_api_requires()
 def create_note(case_identifier):
@@ -158,13 +233,13 @@ def get_note(case_identifier, identifier):
     return notes_operations.get(case_identifier, identifier)
 
 
-@case_notes_blueprint.put('<int:identifier>')
+@case_notes_blueprint.put('/<int:identifier>')
 @ac_api_requires()
 def update_note(case_identifier, identifier):
     return notes_operations.update(case_identifier, identifier)
 
 
-@case_notes_blueprint.delete('<int:identifier>')
+@case_notes_blueprint.delete('/<int:identifier>')
 @ac_api_requires()
 def delete_note(case_identifier, identifier):
     return notes_operations.delete(case_identifier, identifier)
