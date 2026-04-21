@@ -523,7 +523,7 @@ var AmsifySuggestags;
 				listHTML += '<li class="'+_self.classes.listItem.substring(1)+'" data-val="'+_escapeHTML(value)+'">'+_escapeHTML(tag)+'</li>';
 			});
 			if(_self.settings.noSuggestionMsg) {
-				listHTML += '<li class="'+_self.classes.noSuggestion.substring(1)+'">'+_self.settings.noSuggestionMsg+'</li>';
+				listHTML += '<li class="'+_self.classes.noSuggestion.substring(1)+'">'+_escapeHTML(_self.settings.noSuggestionMsg)+'</li>';
 			}
 			return listHTML;
 		},

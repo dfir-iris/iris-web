@@ -53,7 +53,11 @@ function refreshStatsTooltips() {
     return;
   }
 
-  tooltipElements.tooltip('dispose');
+  tooltipElements.each(function () {
+    if ($(this).data('bs.tooltip')) {
+      $(this).tooltip('dispose');
+    }
+  });
   tooltipElements.tooltip({
     container: 'body',
     trigger: 'hover focus'
