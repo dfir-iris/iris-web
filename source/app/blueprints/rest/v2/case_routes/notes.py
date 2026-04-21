@@ -104,8 +104,13 @@ class NotesOperations:
 
         try:
             search_input = request.args.get('search_input')
+            if search_input is None or not search_input.strip():
+                return response_api_error(
+                    'Data error',
+                    data={'search_input': ['Missing or blank search_input query parameter']}
+                )
 
-            notes = notes_search(case_identifier, search_input)
+            notes = notes_search(case_identifier, search_input.strip())
 
             result = self._schema.dump(notes, many=True)
             return response_api_success(result)
