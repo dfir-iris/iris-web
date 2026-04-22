@@ -72,6 +72,9 @@ function ellipsis_field( data, cutoff, wordbreak ) {
 }
 
 function ret_obj_dt_description(data) {
+    if (data == null || data === '') {
+        return '';
+    }
     let anchor = $('<span>');
     let dataContent = typeof data === 'object' ? JSON.stringify(data) : data;
     anchor.attr('data-toggle', 'popover')
@@ -79,8 +82,12 @@ function ret_obj_dt_description(data) {
         .attr('title', 'Description')
         .attr('data-content', dataContent)
         .attr('href', '#')
-        .css('cursor', 'pointer')
-        .text(ellipsis_field_raw(data, 64));
+        .css('cursor', 'pointer');
+
+    let truncated = ellipsis_field_raw(data, 64);
+    let converter = get_showdown_convert();
+    let html = do_md_filter_xss(converter.makeHtml(truncated));
+    anchor.html(html);
 
     return anchor.prop('outerHTML');
 }
