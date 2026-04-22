@@ -242,7 +242,7 @@ def add_gtask(caseid):
 @ac_requires_case_identifier()
 def edit_gtask(cur_id, caseid):
     form = CaseGlobalTaskForm()
-    task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
+    task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).filter(or_(GlobalTasks.task_userid_open == current_user.id, GlobalTasks.task_assignee_id == current_user.id)).first()
     form.task_assignee_id.choices = [(user.id, user.name) for user in User.query.filter(
         User.active == True).order_by(User.name).all()]
     form.task_status_id.choices = [(a.id, a.status_name)
@@ -285,11 +285,11 @@ def gtask_delete(cur_id, caseid):
     if not cur_id:
         return response_error("Missing parameter")
 
-    data = GlobalTasks.query.filter(GlobalTasks.id == cur_id).first()
+    data = GlobalTasks.query.filter(GlobalTasks.id == cur_id).filter(or_(GlobalTasks.task_userid_open == current_user.id, GlobalTasks.task_assignee_id == current_user.id)).first()
     if not data:
         return response_error("Invalid global task ID")
 
-    GlobalTasks.query.filter(GlobalTasks.id == cur_id).delete()
+    GlobalTasks.query.filter(GlobalTasks.id == cur_id).filter(or_(GlobalTasks.task_userid_open == current_user.id, GlobalTasks.task_assignee_id == current_user.id)).delete()
     db.session.commit()
 
     call_modules_hook('on_postload_global_task_delete',
