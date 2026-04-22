@@ -71,6 +71,49 @@ login_blueprint = Blueprint(
 log = app.logger
 
 
+def _safe_next_url(raw_next, ctx_case):
+    """Return a safe post-login redirect target, or None.
+
+    The previous check (`urlsplit(next_url).netloc != ''`) failed to reject
+    payloads like `attacker.com?cid=1`: urlsplit treats that as a path with an
+    empty netloc, but browsers/HTTP clients resolving a `Location: attacker.com`
+    header can route the user to the attacker's host — an Open Redirect
+    (CVE-2026-xxxxx / SBA-ADV-20260126-02, CWE-601).
+
+    A safe redirect target here is a *relative* path on this application. Reject
+    anything that could escape the origin:
+
+      - empty or non-string input
+      - control characters or backslashes (some browsers normalize `\\` -> `/`,
+        turning `/\\evil.com` into `//evil.com`)
+      - anything not starting with a single `/`
+      - protocol-relative URLs starting with `//` or `/\\`
+      - absolute URLs (any scheme)
+    """
+    if not raw_next or not isinstance(raw_next, str):
+        return None
+
+    # Reject control chars (incl. tab/newline) and backslashes outright.
+    if any(ord(c) < 0x20 or c == '\\' for c in raw_next):
+        return None
+
+    # Must be a site-relative path: starts with '/' but not '//'.
+    if not raw_next.startswith('/') or raw_next.startswith('//'):
+        return None
+
+    # Defense in depth: urlsplit must confirm no scheme and no netloc.
+    parts = urlsplit(raw_next)
+    if parts.scheme or parts.netloc:
+        return None
+
+    # Preserve the legacy behaviour of appending the user's current case id
+    # when the caller didn't provide one.
+    if 'cid=' in raw_next:
+        return raw_next
+    separator = '&' if parts.query else '?'
+    return raw_next + separator + 'cid=' + str(ctx_case)
+
+
 # filter User out of database through username
 def _retrieve_user_by_username(username):
     user = get_active_user_by_login(username)
@@ -315,11 +358,8 @@ def wrap_login_user(user, is_oidc=False):
 
     track_activity("user '{}' successfully logged-in".format(user.user), ctx_less=True, display_in_ui=False)
 
-    next_url = None
-    if request.args.get('next'):
-        next_url = request.args.get('next') if 'cid=' in request.args.get('next') else request.args.get('next') + '?cid=' + str(user.ctx_case)
-
-    if not next_url or urlsplit(next_url).netloc != '':
+    next_url = _safe_next_url(request.args.get('next'), user.ctx_case)
+    if next_url is None:
         next_url = url_for('index.index', cid=user.ctx_case)
 
     return redirect(next_url)
