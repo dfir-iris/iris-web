@@ -84,7 +84,8 @@ function ret_obj_dt_description(data) {
         .attr('href', '#')
         .css('cursor', 'pointer');
 
-    let truncated = ellipsis_field_raw(data, 64);
+    let lines = data.split('\n').slice(0, 2).join('\n');
+    let truncated = ellipsis_field_raw(lines, 64);
     let converter = get_showdown_convert();
     converter.setOption('openLinksInNewWindow', true);
     let html = do_md_filter_xss(converter.makeHtml(truncated));
