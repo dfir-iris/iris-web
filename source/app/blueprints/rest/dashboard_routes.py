@@ -17,6 +17,7 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import marshmallow
+from sqlalchemy import or_
 from datetime import datetime
 from datetime import timedelta
 from oic.oauth2.exception import GrantError
@@ -157,7 +158,7 @@ def get_gtasks():
 @dashboard_rest_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
 @ac_api_requires()
 def view_gtask(cur_id):
-    task = get_global_task(task_id=cur_id)
+    task = GlobalTasks.query.filter(GlobalTasks.id == cur_id).filter(or_(GlobalTasks.task_userid_open == current_user.id, GlobalTasks.task_assignee_id == current_user.id)).first()
     if not task:
         return response_error(f'Global task ID {cur_id} not found')
 
