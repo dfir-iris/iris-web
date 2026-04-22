@@ -30,14 +30,14 @@ from app.models.authorization import CaseAccessLevel
 def socket_change_note(data):
 
     data['last_change'] = iris_current_user.user
-    emit('change-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
+    emit('change-note', data, to=data['channel'], skip_sid=request.sid)
 
 
 @ac_socket_requires(CaseAccessLevel.full_access)
 def socket_save_note(data):
 
     data['last_saved'] = iris_current_user.user
-    emit('save-note', data, to=data['channel'], skip_sid=request.sid, room=data['channel'])
+    emit('save-note', data, to=data['channel'], skip_sid=request.sid)
 
 
 @ac_socket_requires(CaseAccessLevel.full_access)
