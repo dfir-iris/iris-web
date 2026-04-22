@@ -86,6 +86,7 @@ function ret_obj_dt_description(data) {
 
     let truncated = ellipsis_field_raw(data, 64);
     let converter = get_showdown_convert();
+    converter.setOption('openLinksInNewWindow', true);
     let html = do_md_filter_xss(converter.makeHtml(truncated));
     anchor.html(html);
 
