@@ -125,14 +125,22 @@ def update_user_view():
         if not user:
             return response_error("Invalid user ID for this case")
 
-        # validate before saving
-        user_schema = UserSchema()
-        jsdata = request.get_json()
-        jsdata['user_id'] = current_user.id
+        # Self-service settings expose only a password change in the GUI, so
+        # the request body must be restricted to that one field before the
+        # schema sees it. Any other attribute a client attempts to sneak in
+        # (user_login, uuid, active, is_service_account, mfa_secrets,
+        # mfa_setup_complete, ...) would otherwise flow through the schema and
+        # overwrite the user's own row — the mass-assignment vector reported
+        # as SBA-ADV-20260128-01 / CWE-915.
+        raw = request.get_json()
+        if not isinstance(raw, dict):
+            raw = {}
+        jsdata = {'user_password': raw.get('user_password'),
+                  'user_id': current_user.id}
         puo = get_user_primary_org(current_user.id)
-
         jsdata['user_primary_organisation_id'] = puo.org_id
 
+        user_schema = UserSchema()
         cuser = user_schema.load(jsdata, instance=user, partial=True)
         update_user(password=jsdata.get('user_password'),
                     user=user)
