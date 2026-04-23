@@ -224,7 +224,11 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_name: str = auto_field('name', required=True, validate=Length(min=2))
     user_login: str = auto_field('user', required=True, validate=Length(min=2))
     user_email: str = auto_field('email', required=True, validate=Length(min=2))
-    user_password: Optional[str] = auto_field('password', required=False)
+    # load_only: the password hash must be accepted on input but never included
+    # in serialised responses (CWE-201, SBA-ADV-20260126-04). update_user()
+    # reads the plaintext password directly from request.get_json(), so dropping
+    # this from dumps does not break the update flow.
+    user_password: Optional[str] = auto_field('password', required=False, load_only=True)
     user_isadmin: bool = fields.Boolean(required=True)
     user_id: Optional[int] = fields.Integer(required=False)
     user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
@@ -234,7 +238,10 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
+        # mfa_secrets, webauthn_credentials, api_key must never leak to API
+        # responses — they let an attacker bypass MFA / impersonate the user.
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email',
+                   'is_service_account', 'mfa_secrets', 'webauthn_credentials']
         unknown = EXCLUDE
 
     @pre_load()
@@ -1053,7 +1060,11 @@ class UserFullSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['password', 'ctx_case', 'ctx_human_case']
+        # api_key is intentionally serialised — the only caller of this schema
+        # is /manage/users/renew-api-key, which needs to return the new key.
+        # mfa_secrets/webauthn_credentials must still never leak.
+        exclude = ['password', 'ctx_case', 'ctx_human_case',
+                   'mfa_secrets', 'webauthn_credentials']
         unknown = EXCLUDE
 
 
@@ -1238,6 +1249,10 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
     file_original_name: str = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
     file_description: str = auto_field('file_description', allow_none=False)
     file_content: Optional[bytes] = fields.Raw(required=False)
+    # load_only: the on-disk path is assigned during load() but must never be
+    # serialised back to the client. Leaking it gives an attacker information
+    # about the server's directory layout (CWE-201, SBA-ADV-20260126-04).
+    file_local_name: Optional[str] = auto_field('file_local_name', required=False, load_only=True)
 
     class Meta:
         model = DataStoreFile
@@ -2102,7 +2117,7 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
-                   'id', 'name', 'email', 'user', 'uuid']
+                   'id', 'name', 'email', 'user', 'uuid', 'mfa_secrets', 'webauthn_credentials']
         unknown = EXCLUDE
 
 
