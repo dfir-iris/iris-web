@@ -270,8 +270,10 @@ def _percentage(numerator, denominator):
     return (numerator / denominator) * 100
 
 
-# Logout user
-@dashboard_blueprint.route('/logout')
+# Logout user — POST-only to prevent CSRF. A plain <img src="/logout"> on a
+# third-party page would otherwise log the user out of IRIS without consent
+# (RFC 7231 §4.2.1: GET must be safe; CWE-650; SBA-ADV-20260128-03).
+@dashboard_blueprint.route('/logout', methods=['POST'])
 def logout():
     """
     Logout function. Erase its session and redirect to index i.e login

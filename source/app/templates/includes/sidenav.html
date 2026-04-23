@@ -29,7 +29,9 @@
 										</a>
 									</li>
 									<li>
-										<a href={{ url_for('index.logout') }}>
+										<!-- Logout must be POST-only to prevent CSRF (e.g. <img src="/logout"> in a crafted page). -->
+										<form id="logout-form" method="POST" action="{{ url_for('index.logout') }}" style="display: none;"></form>
+										<a href="#" onclick="document.getElementById('logout-form').submit(); return false;">
 											<span class="link-collapse">Logout</span>
 										</a>
 									</li>
