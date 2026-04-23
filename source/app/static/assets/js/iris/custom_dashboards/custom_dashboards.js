@@ -78,7 +78,23 @@
         owner_id: 'Owner ID',
         creator_id: 'Creator ID',
         reviewer_id: 'Reviewer ID',
-        review_status_id: 'Review Status ID'
+        review_status_id: 'Review Status ID',
+        state_id: 'State ID',
+        status_id: 'Status ID',
+        severity_id: 'Severity ID',
+        classification_id: 'Classification ID',
+        client_id: 'Client ID',
+        open_date: 'Open Date',
+        close_date: 'Close Date',
+        initial_date: 'Initial Date'
+      }
+    },
+    case_state: {
+      label: 'Case State',
+      columns: {
+        state_id: 'State ID',
+        state_name: 'State Name',
+        state_description: 'State Description'
       }
     },
     alert_owner: {

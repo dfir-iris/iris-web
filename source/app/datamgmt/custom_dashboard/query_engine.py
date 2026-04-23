@@ -15,7 +15,7 @@ from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
 from app.iris_engine.access_control.utils import ac_current_user_has_permission, ac_get_fast_user_cases_access
 from app.models.alerts import Alert, AlertResolutionStatus, AlertStatus, Severity
 from app.models.alerts import AlertCaseAssociation
-from app.models.cases import Cases, CaseTags, CasesEvent
+from app.models.cases import Cases, CaseTags, CaseState, CasesEvent
 from app.models.authorization import Permissions, User
 from app.models.models import (
     CaseClassification,
@@ -267,6 +267,10 @@ def _join_tags_table(query):
     return query.outerjoin(Tags, Tags.id == CaseTags.tag_id)
 
 
+def _join_case_state(query):
+    return query.outerjoin(CaseState, CaseState.state_id == Cases.state_id)
+
+
 def _join_alert_assets(query):
     return query.outerjoin(AlertAsset, Alert.assets)
 
@@ -458,9 +462,26 @@ class WidgetQueryExecutor:
                 'owner_id': Cases.owner_id,
                 'creator_id': Cases.user_id,
                 'reviewer_id': Cases.reviewer_id,
-                'review_status_id': Cases.review_status_id
+                'review_status_id': Cases.review_status_id,
+                'state_id': Cases.state_id,
+                'status_id': Cases.status_id,
+                'severity_id': Cases.severity_id,
+                'classification_id': Cases.classification_id,
+                'client_id': Cases.client_id,
+                'open_date': Cases.open_date,
+                'close_date': Cases.close_date,
+                'initial_date': Cases.initial_date
             },
             'join': _join_cases
+        },
+        'case_state': {
+            'model': CaseState,
+            'columns': {
+                'state_id': CaseState.state_id,
+                'state_name': CaseState.state_name,
+                'state_description': CaseState.state_description
+            },
+            'join': _join_case_state
         },
         'case_tags': {
             'model': CaseTags,
@@ -708,6 +729,7 @@ class WidgetQueryExecutor:
         raw_time_bucket = self.definition.get('time_bucket')
         self.time_bucket = raw_time_bucket.strip().lower() if isinstance(raw_time_bucket, str) else ''
         self._time_bucket_label = ''
+        self._projection_tables: Set[str] = self._collect_projection_tables()
 
     def execute(self, timeframe: Tuple[Optional[datetime], Optional[datetime]]) -> WidgetQueryResult:
         widgets_fields = self.definition.get('fields') or []
@@ -760,7 +782,7 @@ class WidgetQueryExecutor:
         column = columns.get(column_name)
         if column is None:
             raise QueryExecutionError(f"Column '{column_name}' is not allowed for table '{table_name}'.")
-        if table_name in {'case_owner', 'case_creator', 'case_reviewer', 'case_tags', 'tags', 'case_assets', 'case_asset_types', 'case_iocs', 'case_ioc_types', 'case_events', 'case_notes', 'case_tasks', 'review_status'}:
+        if table_name in {'case_owner', 'case_creator', 'case_reviewer', 'case_tags', 'tags', 'case_assets', 'case_asset_types', 'case_iocs', 'case_ioc_types', 'case_events', 'case_notes', 'case_tasks', 'review_status', 'case_state'}:
             self.builder.add_join('cases')
         if table_name == 'tags':
             self.builder.add_join('case_tags')
@@ -814,8 +836,61 @@ class WidgetQueryExecutor:
             self.builder.add_select(column, alias, aggregated=False)
 
     def _apply_filter(self, filter_definition: Dict[str, Any]):
-        expression = self._build_filter_expression(filter_definition)
+        table_name = (filter_definition or {}).get('table')
+        if table_name in {'tags', 'case_tags'} and table_name not in self._projection_tables:
+            expression = self._build_case_scoped_tag_filter(filter_definition)
+        else:
+            expression = self._build_filter_expression(filter_definition)
         self.builder.filters.append(expression)
+
+    def _collect_projection_tables(self) -> Set[str]:
+        tables: Set[str] = set()
+        for field in self.definition.get('fields') or []:
+            if isinstance(field, dict) and field.get('table'):
+                tables.add(field['table'])
+        for group_entry in self.definition.get('group_by') or []:
+            if isinstance(group_entry, str) and '.' in group_entry:
+                tables.add(group_entry.split('.', 1)[0].strip())
+        return tables
+
+    def _build_case_scoped_tag_filter(self, filter_definition: Dict[str, Any]):
+        # Many-to-many joins on tags inflate counts; route tag-only filters through
+        # a Cases.case_id IN (subquery) so the main query stays flat.
+        if not isinstance(filter_definition, dict):
+            raise QueryExecutionError('Invalid filter definition supplied.')
+
+        table_name = filter_definition.get('table')
+        column_name = filter_definition.get('column')
+        operator = (filter_definition.get('operator') or '').lower()
+        value = filter_definition.get('value')
+
+        if not table_name or not column_name or not operator:
+            raise QueryExecutionError('Filters must define table, column, and operator.')
+
+        table = self._get_table(table_name)
+        column = table.get('columns', {}).get(column_name)
+        if column is None:
+            raise QueryExecutionError(f"Column '{column_name}' is not allowed for table '{table_name}'.")
+
+        operator_fn = _OPERATORS.get(operator)
+        if operator_fn is None:
+            raise QueryExecutionError(f"Operator '{operator}' is not supported.")
+
+        condition = operator_fn(column, value)
+        if condition is None:
+            raise QueryExecutionError(f"Operator '{operator}' expects a different value format.")
+
+        if table_name == 'tags':
+            subquery = (
+                select(CaseTags.case_id)
+                .join(Tags, Tags.id == CaseTags.tag_id)
+                .where(condition)
+            )
+        else:
+            subquery = select(CaseTags.case_id).where(condition)
+
+        self.builder.add_join('cases')
+        return Cases.case_id.in_(subquery)
 
     def _apply_timeframe(self, start: Optional[datetime], end: Optional[datetime]):
         table_name, column_name = self._parse_table_column(self.time_column_spec)
