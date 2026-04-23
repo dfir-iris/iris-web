@@ -7512,26 +7512,47 @@ body .badge-danger {
    from the shim above (because .btn-default is in the :not() chain and has its
    own dark navy rule that doesn't apply in BS 4.6.2's cascade). Give the
    selectpicker trigger the same lifted-card look as sibling buttons. */
+/* Selectpickers across the app are initialised with style:"btn-outline-white"
+   (see case.summary.js, manage.cases.js, common.js, etc.). Bootstrap 4.6.2
+   sets `.btn { background-color: transparent }`, leaving the trigger looking
+   like bare text on the form background. Give .btn-outline-white a concrete
+   grey field look so selectpickers read as filled inputs again (pre-78fd22eb
+   appearance). Also cover .btn-default / .btn-light so any selectpicker
+   without an explicit style still gets styled. */
+.bootstrap-select > .dropdown-toggle.btn-outline-white,
+.bootstrap-select > .dropdown-toggle.btn-light,
 .bootstrap-select > .dropdown-toggle.btn-default,
+.bootstrap-select > .dropdown-toggle.btn-outline-white.bs-placeholder,
+.bootstrap-select > .dropdown-toggle.btn-light.bs-placeholder,
 .bootstrap-select > .dropdown-toggle.btn-default.bs-placeholder {
-    background-color: #ffffff !important;
-    border-color: transparent !important;
+    background-color: #f8f9fa !important;
+    border-color: #f8f9fa !important;
     color: #212529 !important;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+    box-shadow: none !important;
 }
 
+.bootstrap-select > .dropdown-toggle.btn-outline-white.bs-placeholder,
+.bootstrap-select > .dropdown-toggle.btn-light.bs-placeholder,
 .bootstrap-select > .dropdown-toggle.btn-default.bs-placeholder {
     color: #999 !important;
 }
 
+.bootstrap-select > .dropdown-toggle.btn-outline-white:hover,
+.bootstrap-select > .dropdown-toggle.btn-outline-white:focus,
+.bootstrap-select > .dropdown-toggle.btn-outline-white:active,
+.bootstrap-select.show > .dropdown-toggle.btn-outline-white,
+.bootstrap-select > .dropdown-toggle.btn-light:hover,
+.bootstrap-select > .dropdown-toggle.btn-light:focus,
+.bootstrap-select > .dropdown-toggle.btn-light:active,
+.bootstrap-select.show > .dropdown-toggle.btn-light,
 .bootstrap-select > .dropdown-toggle.btn-default:hover,
 .bootstrap-select > .dropdown-toggle.btn-default:focus,
 .bootstrap-select > .dropdown-toggle.btn-default:active,
 .bootstrap-select.show > .dropdown-toggle.btn-default {
-    background-color: #ffffff !important;
-    border-color: transparent !important;
+    background-color: #e2e6ea !important;
+    border-color: #dae0e5 !important;
     color: #212529 !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: none !important;
 }
 
 

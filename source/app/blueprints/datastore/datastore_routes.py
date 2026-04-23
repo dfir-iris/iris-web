@@ -320,15 +320,31 @@ def datastore_view_file(cur_id: int, caseid: int):
         return response_error(f'File {dsf.file_local_name} does not exists on the server. '
                               f'Update or delete virtual entry')
 
-    # Keep inline display only for file types the browser cannot execute as
-    # script. SVG in particular can embed <script>, and HTML/XML can also
-    # execute JS in the application's origin, so force them to download.
+    # The datastore is a forensic repository — analysts must be able to upload
+    # any file (eicar samples, phishing HTML, malware, etc.). We cannot refuse
+    # uploads based on type. Instead we refuse to *render* them inline: only
+    # non-scriptable image formats are served inline; everything else is forced
+    # to download with an opaque Content-Type so the browser can never treat
+    # the response as same-origin active content (CWE-434, SBA-ADV-20260126-03).
+    #
+    # SVG is deliberately NOT in the inline list — it can embed <script> and
+    # execute in the application's origin.
     safe_inline_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
     file_extension = Path(destination_name).suffix.lower().lstrip('.')
     serve_as_attachment = file_extension not in safe_inline_extensions
 
-    resp = send_file(dsf.file_local_name, as_attachment=serve_as_attachment,
-                     download_name=destination_name)
+    if serve_as_attachment:
+        # Force download and neutralise Content-Type so this response can never
+        # be interpreted as HTML/JS/SVG even if nosniff is stripped upstream
+        # or if the file is opened from disk after download.
+        resp = send_file(dsf.file_local_name, as_attachment=True,
+                         download_name=destination_name,
+                         mimetype='application/octet-stream')
+        resp.headers['X-Content-Type-Options'] = 'nosniff'
+    else:
+        resp = send_file(dsf.file_local_name, as_attachment=False,
+                         download_name=destination_name)
+        resp.headers['X-Content-Type-Options'] = 'nosniff'
 
     track_activity(f"File \"{destination_name}\" downloaded", caseid=caseid, display_in_ui=False)
     return resp
