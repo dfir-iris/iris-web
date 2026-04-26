@@ -8,6 +8,52 @@ $('#search_value').keypress(function(event){
     }
 });
 
+Table_case_summary = $("#case_summary_table").DataTable({
+    dom: 'Bfrtip',
+    aaData: [],
+    aoColumns: [
+	{
+	    "data": "case_name",
+	    "render": function (data, type, row, meta) {
+		if (type === 'display') {
+		    let a_anchor = $('<a/>');
+		    a_anchor.attr('href', 'case?cid=' + row["case_id"]);
+		    a_anchor.attr('target', '_blank');
+		    a_anchor.text(data);
+		    return a_anchor[0].outerHTML;
+		}
+		return data;
+	    }
+	},
+	{
+	    "data": "case_description",
+	    "render": function (data, type, row, meta) {
+		if (type === 'display') {
+		    return data ? ret_obj_dt_description(data) : "No summary available";
+		}
+		return data;
+	    }
+	},
+	{
+	    "data": "customer_name",
+	    "render": function (data, type, row, meta) {
+		if (type === 'display') { data = sanitizeHTML(data || ""); }
+		return data;
+             }
+	}
+    ],
+    filter: true,
+    info: true,
+    ordering: true,
+    processing: true,
+    retrieve: true,
+    buttons: [
+	{ "extend": 'csvHtml5', "text": 'Export', "className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+	{ "extend": 'copyHtml5', "text": 'Copy', "className": 'btn btn-primary btn-border btn-round btn-sm float-left mr-4 mt-2' },
+    ]
+});
+$("#case_summary_table").css("font-size", 12);
+
 
 Table_1 = $("#file_search_table_1").DataTable({
     dom: 'Bfrtip',
@@ -157,6 +203,12 @@ function search() {
                         $(e.target).popover('toggle');
                 });
             }
+	    else if (val == "case_summary") {
+	      Table_case_summary.clear();
+	      Table_case_summary.rows.add(data.data);
+	      Table_case_summary.columns.adjust().draw();
+	      $('#search_table_wrapper_4').show();
+	    }
             else if (val == "notes") {
                 for (e in data.data) {
                     let li_anchor = $('<i>');

@@ -56,6 +56,27 @@ def search_file_post():
 
     track_activity("started a global search for {} on {}".format(search_value, search_type))
 
+    if search_type == "case_summary":
+        search_value = "%{}%".format(search_value)
+        cs = Cases.query.filter(
+            and_(
+                Cases.description.like(search_value),
+                Cases.client_id == Client.client_id,
+                search_condition
+            )
+        ).with_entities(
+            Cases.name.label('case_name'),
+            Cases.case_id,
+            Cases.description.label('case_description'),
+            Client.name.label('customer_name')
+        ).join(
+            Cases.client
+        ).order_by(
+            Client.name
+        ).all()
+        files = [row._asdict() for row in cs]
+
+
     if search_type == "ioc":
         res = Ioc.query.with_entities(
                             Ioc.ioc_value.label('ioc_name'),
