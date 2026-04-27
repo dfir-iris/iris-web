@@ -56,7 +56,19 @@ class ImageHandler(PictureGlobals):
                 raise RenderingError(self._logger, f'File {dsf.file_local_name} does not exists on the server. Update or delete virtual entry')
 
             file_ext = os.path.splitext(dsf.file_original_name)[1]
+            if not file_ext:
+                file_ext = self._sniff_image_extension(dsf.file_local_name)
             file_name = os.path.join(self._output_path, str(uuid.uuid4())) + file_ext
             return_value = shutil.copy(dsf.file_local_name, file_name)
             return return_value
         return super()._process_remote(image_path)
+
+    @staticmethod
+    def _sniff_image_extension(file_path: str) -> str:
+        try:
+            from PIL import Image
+            with Image.open(file_path) as im:
+                fmt = (im.format or 'PNG').lower()
+            return '.jpg' if fmt == 'jpeg' else f'.{fmt}'
+        except Exception:
+            return '.png'
