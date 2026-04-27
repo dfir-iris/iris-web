@@ -1036,3 +1036,47 @@ table.dataTable.order-column.stripe tbody>tr.odd.selected>.sorting_1 {
 .timeline-t>.timeline-child>.timeline-odd-t {
     background-color: #353535;
 }
+
+body .bootstrap-select > .dropdown-toggle {
+    background-color: #1a2035 !important;
+    color: #cac7c7 !important;
+    border-color: #2f374b !important;
+}
+
+body .btn-outline-success {
+    background: rgba(185, 185, 185, 0.08);
+    color: #31ce36;
+}
+
+body .btn-outline-success:hover {
+    background: #1a2035;
+    color: #31ce36;
+}
+
+body .pagination-dropdown-container select,
+body select#alertsPerPage {
+    background-color: #1a2035 !important;
+    color: #cac7c7 !important;
+    border-color: #2f374b !important;
+}
+
+body .page-item.active .page-link {
+    background: #1572e8 !important;
+    color: #fff;
+}
+
+body .page-item.disabled .page-link {
+    background: rgba(185, 185, 185, 0.08) !important;
+    color: #6b7084;
+}
+
+body button.btn:not([class*="btn-primary"]):not([class*="btn-secondary"]):not([class*="btn-success"]):not([class*="btn-danger"]):not([class*="btn-warning"]):not([class*="btn-info"]):not([class*="btn-light"]):not([class*="btn-outline"]):not([class*="btn-alert-"]):not(.dropdown-toggle) {
+    background: rgba(185, 185, 185, 0.18);
+    color: #cac7c7;
+    border-color: transparent;
+}
+
+body button.btn:not([class*="btn-primary"]):not([class*="btn-secondary"]):not([class*="btn-success"]):not([class*="btn-danger"]):not([class*="btn-warning"]):not([class*="btn-info"]):not([class*="btn-light"]):not([class*="btn-outline"]):not([class*="btn-alert-"]):not(.dropdown-toggle):hover {
+    background: #1a2035;
+    color: #cac7c7;
+}
