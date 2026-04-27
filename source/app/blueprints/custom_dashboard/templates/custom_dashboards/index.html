@@ -3,7 +3,7 @@
 
 {% block stylesheets %}
   <link rel="stylesheet" href="/static/assets/css/select2.css">
-  <link rel="stylesheet" href="/static/assets/css/custom_dashboards.css">
+  <link rel="stylesheet" href="/static/assets/css/custom_dashboards.css?v=2026042701">
 {% endblock stylesheets %}
 
 {% block content %}
@@ -140,16 +140,43 @@
           </div>
 
           <div id="dashboardBuilderPanel" class="dashboard-builder-panel">
-            <p class="text-muted small mb-3" id="dashboardBuilderEmptyHint">Add sections to organise widgets. Sections can display a title and optional divider bar to visually separate groups of widgets.</p>
-            <div id="dashboardSectionsContainer" class="dashboard-builder-sections"></div>
-            <div class="d-flex justify-content-between align-items-center mt-3">
-              <div>
-                <small class="text-muted">Sections help recreate analytic layouts.</small>
-              </div>
-              <div>
-                <button type="button" class="btn btn-outline-primary btn-sm" id="addSectionBtn"><i class="fas fa-layer-group mr-1"></i>Add section</button>
-              </div>
+            <div class="dashboard-builder-layout">
+              <aside class="dashboard-builder-rail" id="dashboardBuilderRail">
+                <div class="dashboard-builder-rail-header">
+                  <span class="dashboard-builder-rail-title">Layout</span>
+                  <button type="button" class="btn btn-primary btn-sm" id="addSectionBtn" title="Add section">
+                    <i class="fas fa-plus"></i>
+                  </button>
+                </div>
+                <div class="dashboard-builder-rail-list" id="dashboardBuilderRailList"></div>
+                <div class="dashboard-builder-rail-empty d-none" id="dashboardBuilderRailEmpty">
+                  <p class="small text-muted mb-2">No sections yet.</p>
+                  <button type="button" class="btn btn-outline-primary btn-sm" id="dashboardBuilderRailEmptyAddBtn">
+                    <i class="fas fa-plus mr-1"></i>Add a section
+                  </button>
+                </div>
+              </aside>
+
+              <section class="dashboard-builder-editor" id="dashboardBuilderEditor">
+                <div class="dashboard-builder-editor-empty" id="dashboardBuilderEditorEmpty">
+                  <div class="dashboard-builder-editor-empty-inner">
+                    <i class="fas fa-th-large dashboard-builder-editor-empty-icon"></i>
+                    <h6 class="mb-1">Pick a section or widget to edit</h6>
+                    <p class="small text-muted mb-3">
+                      Use the panel on the left to navigate. Each widget pulls data from a table,
+                      optionally aggregates and filters it, then renders as the chart of your choice.
+                    </p>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="dashboardBuilderEditorEmptyAddBtn">
+                      <i class="fas fa-plus mr-1"></i>Add a section
+                    </button>
+                  </div>
+                </div>
+                <div class="dashboard-builder-editor-content" id="dashboardBuilderEditorContent"></div>
+              </section>
             </div>
+
+            <div class="d-none" id="dashboardBuilderEmptyHint"></div>
+            <div class="d-none" id="dashboardSectionsContainer"></div>
           </div>
 
           <div id="dashboardJsonPanel" class="dashboard-json-panel d-none">
@@ -189,6 +216,16 @@
             <option value="cases.creator_id">
             <option value="cases.reviewer_id">
             <option value="cases.review_status_id">
+            <option value="cases.state_id">
+            <option value="cases.status_id">
+            <option value="cases.severity_id">
+            <option value="cases.classification_id">
+            <option value="cases.client_id">
+            <option value="cases.open_date">
+            <option value="cases.close_date">
+            <option value="cases.initial_date">
+            <option value="case_state.state_id">
+            <option value="case_state.state_name">
             <option value="case_reviewer.id">
             <option value="case_reviewer.username">
             <option value="case_reviewer.name">
@@ -265,6 +302,28 @@
                 </tr>
               </thead>
               <tbody id="dashboardHelpOperatorBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="dashboard-help-section">
+          <h6 class="dashboard-help-heading">Case outcomes</h6>
+          <p class="mb-2">Use <code>cases.status_id</code> to filter by case outcome. The visual builder shows a dropdown automatically; if you edit JSON directly, use the integer values below.</p>
+          <div class="table-responsive mb-3">
+            <table class="table table-sm table-striped mb-0">
+              <thead>
+                <tr>
+                  <th style="width: 100px;">Value</th>
+                  <th>Outcome</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td><code>0</code></td><td>Unknown</td></tr>
+                <tr><td><code>1</code></td><td>False positive</td></tr>
+                <tr><td><code>2</code></td><td>True positive with impact</td></tr>
+                <tr><td><code>3</code></td><td>Not applicable</td></tr>
+                <tr><td><code>4</code></td><td>True positive without impact</td></tr>
+                <tr><td><code>5</code></td><td>Legitimate</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -430,5 +489,5 @@
   <script src="/static/assets/js/plugin/ace/src-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
   <script src="/static/assets/js/plugin/ace/src-noconflict/ext-language_tools.js" type="text/javascript" charset="utf-8"></script>
   <script src="/static/assets/js/core/charts.js"></script>
-  <script src="/static/assets/js/iris/custom_dashboards/custom_dashboards.js"></script>
+  <script src="/static/assets/js/iris/custom_dashboards/custom_dashboards.js?v=2026042701"></script>
 {% endblock javascripts %}

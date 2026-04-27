@@ -52,189 +52,415 @@
   margin: 1.5rem 0;
 }
 
-#dashboardEditorModal .dashboard-builder-panel {
-  background-color: #f8f9fc;
-  border: 1px solid #e9ecef;
-  border-radius: 0.5rem;
-  padding: 1rem;
+/* ============================================================
+   Dashboard editor modal — two-pane layout
+   ============================================================ */
+
+#dashboardEditorModal .modal-content {
+  background-color: #fcfcfd;
 }
 
-#dashboardEditorModal .dashboard-builder-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+#dashboardEditorModal .modal-body {
+  padding: 1.25rem 1.5rem 1.5rem;
 }
 
-#dashboardEditorModal .dashboard-builder-section {
-  background-color: #ffffff;
-  border: 1px solid #dde2eb;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 2px rgba(18, 38, 63, 0.05);
-}
-
-#dashboardEditorModal .dashboard-builder-section-header {
-  border-bottom: 1px solid #e9ecef;
-  padding: 0.75rem 1rem;
-  background-color: #f1f3f7;
-}
-
-#dashboardEditorModal .dashboard-builder-section-body {
-  padding: 1rem;
-}
-
-#dashboardEditorModal .dashboard-builder-section-footer {
-  border-top: 1px solid #e9ecef;
-  padding: 0.5rem 1rem;
-  background-color: #f8f9fc;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-#dashboardEditorModal .dashboard-builder-widgets {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-#dashboardEditorModal .dashboard-builder-widget {
-  border: 1px solid #e1e6ef;
-  border-radius: 0.5rem;
-  background-color: #ffffff;
-  box-shadow: inset 0 0 0 1px rgba(18, 38, 63, 0.03);
-}
-
-#dashboardEditorModal .dashboard-builder-widget.collapsed .dashboard-builder-widget-body,
-#dashboardEditorModal .dashboard-builder-widget.collapsed .dashboard-builder-widget-footer {
-  display: none;
-}
-
-#dashboardEditorModal .dashboard-builder-widget.collapsed .dashboard-builder-widget-header {
-  border-bottom: none;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-header {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #edf2fb;
-  background-color: #fdfdff;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-body {
-  padding: 1rem;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-body .dashboard-builder-widget-section {
-  border: 1px solid #dbe2f1;
-  border-radius: 0.5rem;
-  background-color: #f8faff;
-  margin-bottom: 1.25rem;
-  box-shadow: inset 0 0 0 1px rgba(78, 115, 223, 0.03);
-  overflow: hidden;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-body .dashboard-builder-widget-section:last-of-type {
-  margin-bottom: 0;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-section-header {
-  padding: 0.65rem 1rem;
-  background-color: #eef2fb;
-  border-bottom: 1px solid #dbe2f1;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-section.collapsed .dashboard-builder-widget-section-header {
-  border-bottom: none;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-section-body {
-  padding: 1rem 1rem 1.1rem;
-  background-color: #ffffff;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-section.collapsed .dashboard-builder-widget-section-body {
-  display: none;
-}
-
-#dashboardEditorModal .builder-widget-section-title {
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* Top-level form labels (Name, Description, Share with team) */
+#dashboardEditorModal .modal-body > form > .form-group > label,
+#dashboardEditorModal #dashboardEditorModeControls h6 {
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: #2f3b52;
 }
 
-#dashboardEditorModal .builder-widget-section-icon {
+#dashboardEditorModal #dashboardEditorModeControls {
+  background-color: #f8fafc !important;
+  border: 1px solid #e6eaf2 !important;
+}
+
+#dashboardEditorModal #dashboardEditorModeControls h6 {
+  margin-bottom: 0.15rem;
+}
+
+/* Builder panel wraps the two-pane layout */
+#dashboardEditorModal .dashboard-builder-panel {
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* ----- Two-pane layout ----- */
+#dashboardEditorModal .dashboard-builder-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1rem;
+  min-height: 540px;
+  align-items: stretch;
+}
+
+@media (max-width: 991px) {
+  #dashboardEditorModal .dashboard-builder-layout {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+}
+
+/* ----- Left rail ----- */
+#dashboardEditorModal .dashboard-builder-rail {
+  background-color: #ffffff;
+  border: 1px solid #e6eaf2;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+#dashboardEditorModal .dashboard-builder-rail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid #eef1f6;
+  background-color: #fafbfd;
+}
+
+#dashboardEditorModal .dashboard-builder-rail-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+#dashboardEditorModal .dashboard-builder-rail-header .btn {
+  padding: 0.2rem 0.5rem;
+  line-height: 1;
+}
+
+#dashboardEditorModal .dashboard-builder-rail-list {
+  overflow-y: auto;
+  padding: 0.4rem;
+  flex: 1;
+}
+
+#dashboardEditorModal .dashboard-builder-rail-empty {
+  padding: 1rem;
+  text-align: center;
+}
+
+#dashboardEditorModal .dashboard-rail-section + .dashboard-rail-section {
+  margin-top: 0.25rem;
+}
+
+#dashboardEditorModal .dashboard-rail-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.35rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease;
+}
+
+#dashboardEditorModal .dashboard-rail-section-header:hover {
+  background-color: #f4f7fb;
+}
+
+#dashboardEditorModal .dashboard-rail-section-header.active {
+  background-color: #eaf0fd;
+}
+
+#dashboardEditorModal .dashboard-rail-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #2f3b52;
+  flex: 1;
+  min-width: 0;
+}
+
+#dashboardEditorModal .dashboard-rail-section-title > span:first-of-type {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#dashboardEditorModal .dashboard-rail-section-icon {
+  color: #4e73df;
+  font-size: 0.85rem;
+}
+
+#dashboardEditorModal .dashboard-rail-count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background-color: rgba(78, 115, 223, 0.12);
+  min-width: 1.4rem;
+  height: 1.2rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background-color: #e6eaf2;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 0.25rem;
+}
+
+#dashboardEditorModal .dashboard-rail-section-header.active .dashboard-rail-count {
+  background-color: #c6d4f7;
+  color: #1c3bb0;
+}
+
+#dashboardEditorModal .dashboard-rail-section-actions .btn {
+  padding: 0.15rem 0.4rem;
+  color: #94a3b8;
+  line-height: 1;
+}
+
+#dashboardEditorModal .dashboard-rail-section-actions .btn:hover {
   color: #4e73df;
-  font-size: 0.75rem;
-}
-
-#dashboardEditorModal .builder-toggle-widget-section {
-  color: #4a5568;
-}
-
-#dashboardEditorModal .builder-toggle-widget-section:hover {
-  color: #1a202c;
+  background-color: #fff;
+  border-radius: 0.25rem;
   text-decoration: none;
 }
 
-#dashboardEditorModal .builder-toggle-widget-section:focus {
-  outline: none;
-  box-shadow: none;
+#dashboardEditorModal .dashboard-rail-widgets {
+  margin-left: 1.4rem;
+  margin-top: 0.15rem;
+  padding-left: 0.4rem;
+  border-left: 1px solid #eef1f6;
 }
 
-#dashboardEditorModal .dashboard-builder-widget-section-body .form-row + .form-row {
-  margin-top: 0.75rem;
-}
-
-#dashboardEditorModal .dashboard-builder-widget-footer {
-  border-top: 1px solid #edf2fb;
-  padding: 0.5rem 1rem;
-  background-color: #fbfcfe;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-#dashboardEditorModal .dashboard-builder-section-body .form-check,
-#dashboardEditorModal .dashboard-builder-widget-body .form-check {
-  padding-left: 1.5rem;
-  min-height: 1.5rem;
-}
-
-#dashboardEditorModal .dashboard-builder-section-body .form-check-input,
-#dashboardEditorModal .dashboard-builder-widget-body .form-check-input {
-  width: 1rem;
-  height: 1rem;
-  margin-top: 0.25rem;
-  margin-left: -1.5rem;
-}
-
-#dashboardEditorModal .dashboard-builder-section-body .form-check-label,
-#dashboardEditorModal .dashboard-builder-widget-body .form-check-label {
-  font-size: 0.875rem;
-  color: #364152;
-}
-
-#dashboardEditorModal .dashboard-builder-field-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.75rem;
-}
-
-#dashboardEditorModal .dashboard-builder-inline-actions {
+#dashboardEditorModal .dashboard-rail-widget {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  padding: 0.35rem 0.5rem;
+  margin: 0.1rem 0;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.83rem;
+  color: #364152;
+  transition: background-color 0.12s ease;
+  position: relative;
+}
+
+#dashboardEditorModal .dashboard-rail-widget:hover {
+  background-color: #f4f7fb;
+}
+
+#dashboardEditorModal .dashboard-rail-widget.active {
+  background-color: #4e73df;
+  color: #ffffff;
+}
+
+#dashboardEditorModal .dashboard-rail-widget.active .dashboard-rail-widget-icon,
+#dashboardEditorModal .dashboard-rail-widget.active .dashboard-rail-widget-type {
+  color: #ffffff;
+  opacity: 0.92;
+}
+
+#dashboardEditorModal .dashboard-rail-widget-icon {
+  color: #4e73df;
+  font-size: 0.8rem;
+  width: 1rem;
+  text-align: center;
+}
+
+#dashboardEditorModal .dashboard-rail-widget-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#dashboardEditorModal .dashboard-rail-widget-type {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: lowercase;
+}
+
+#dashboardEditorModal .dashboard-rail-widget-empty {
+  padding: 0.35rem 0.5rem;
+  font-style: italic;
+}
+
+/* ----- Right pane: editor ----- */
+#dashboardEditorModal .dashboard-builder-editor {
+  background-color: #ffffff;
+  border: 1px solid #e6eaf2;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 540px;
+  max-height: 70vh;
+  overflow: hidden;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  text-align: center;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-empty-inner {
+  max-width: 360px;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-empty-icon {
+  font-size: 2.4rem;
+  color: #cbd5e1;
+  margin-bottom: 0.85rem;
+  display: block;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-content > .dashboard-builder-section,
+#dashboardEditorModal .dashboard-builder-editor-content > .dashboard-builder-widget {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  margin: 0;
+}
+
+/* Sticky editor header (breadcrumb + actions) */
+#dashboardEditorModal .dashboard-builder-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem;
+  border-bottom: 1px solid #eef1f6;
+  background-color: #fafbfd;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-title strong {
+  font-size: 1rem;
+  color: #233044;
+  font-weight: 600;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-title .badge {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 0.3em 0.6em;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-title .builder-rail-section-jump {
+  color: #4e73df;
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-title .builder-rail-section-jump:hover {
+  text-decoration: underline;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-actions .btn-link {
+  color: #94a3b8;
+  padding: 0.3rem 0.5rem;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-actions .btn-link:hover {
+  color: #1a202c;
+  background-color: #f4f7fb;
+  border-radius: 0.25rem;
+  text-decoration: none;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-actions .btn-link.text-danger {
+  color: #cbd5e1;
+}
+
+#dashboardEditorModal .dashboard-builder-editor-header-actions .btn-link.text-danger:hover {
+  color: #dc3545;
+  background-color: #fdecee;
+}
+
+/* Section editor body */
+#dashboardEditorModal .dashboard-builder-section-body {
+  padding: 1.1rem 1.25rem 1.25rem;
+}
+
+#dashboardEditorModal .dashboard-builder-subheading {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475569;
+}
+
+#dashboardEditorModal .dashboard-builder-section-widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.5rem;
+}
+
+#dashboardEditorModal .dashboard-builder-section-widget-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #e6eaf2;
+  border-radius: 0.4rem;
+  font-size: 0.88rem;
+  color: #2f3b52;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+#dashboardEditorModal .dashboard-builder-section-widget-row:hover {
+  background-color: #f4f7fb;
+  border-color: #c6d4f7;
+}
+
+#dashboardEditorModal .dashboard-builder-section-widget-row i {
+  color: #4e73df;
 }
 
 #dashboardEditorModal .dashboard-builder-empty-state {
-  padding: 1rem;
+  padding: 1.1rem;
   border: 1px dashed #cfd6e4;
   border-radius: 0.5rem;
   text-align: center;
@@ -242,17 +468,234 @@
   background-color: rgba(248, 249, 252, 0.7);
 }
 
+#dashboardEditorModal .dashboard-builder-empty-state-soft {
+  padding: 0.6rem 0.85rem;
+  border: 1px dashed #e1e6ef;
+  border-radius: 0.35rem;
+  background-color: #fafbfd;
+  color: #64748b;
+  font-size: 0.83rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Widget editor */
+#dashboardEditorModal .dashboard-builder-widget-essentials {
+  padding: 1rem 1.25rem 0.4rem;
+  background-color: #ffffff;
+}
+
+#dashboardEditorModal .dashboard-builder-widget-essentials .form-row > [class*="col-"] {
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+
+#dashboardEditorModal .dashboard-builder-widget-essentials .form-row {
+  margin-left: -0.4rem;
+  margin-right: -0.4rem;
+}
+
+/* Tabs */
+#dashboardEditorModal .dashboard-builder-tabs {
+  background-color: #ffffff;
+  padding: 0 1.25rem;
+  margin: 0;
+  border-bottom: 1px solid #eef1f6;
+  flex-wrap: nowrap;
+}
+
+#dashboardEditorModal .dashboard-builder-tabs .nav-link {
+  border: none;
+  border-radius: 0;
+  color: #64748b;
+  padding: 0.65rem 0.95rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+#dashboardEditorModal .dashboard-builder-tabs .nav-link:hover {
+  color: #4e73df;
+  background-color: transparent;
+}
+
+#dashboardEditorModal .dashboard-builder-tabs .nav-link.active {
+  color: #4e73df;
+  border-bottom-color: #4e73df;
+  background-color: transparent;
+}
+
+#dashboardEditorModal .dashboard-builder-tab-panes {
+  flex: 1;
+  background-color: #fbfcfe;
+}
+
+#dashboardEditorModal .dashboard-builder-tab-pane {
+  padding: 1rem 1.25rem 1.5rem;
+}
+
+/* Blocks inside a tab pane (Fields, Grouping, Filters, etc.) */
+#dashboardEditorModal .dashboard-builder-block {
+  background-color: #ffffff;
+  border: 1px solid #eef1f6;
+  border-radius: 0.5rem;
+  padding: 0.95rem 1rem 1.1rem;
+  margin-bottom: 0.85rem;
+}
+
+#dashboardEditorModal .dashboard-builder-block:last-child {
+  margin-bottom: 0;
+}
+
+#dashboardEditorModal .dashboard-builder-block-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #233044;
+  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+}
+
+#dashboardEditorModal .dashboard-builder-block-hint {
+  margin-bottom: 0.6rem;
+  line-height: 1.4;
+}
+
+/* Form-row tightening inside blocks */
+#dashboardEditorModal .dashboard-builder-block .form-row {
+  margin-left: -0.4rem;
+  margin-right: -0.4rem;
+}
+
+#dashboardEditorModal .dashboard-builder-block .form-row > [class*="col-"] {
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}
+
+#dashboardEditorModal .dashboard-builder-block .form-row + .form-row {
+  margin-top: 0.4rem;
+}
+
+/* Calmer field labels everywhere inside the editor */
+#dashboardEditorModal label.text-uppercase,
+#dashboardEditorModal .dashboard-builder-block label,
+#dashboardEditorModal .dashboard-builder-section-body label {
+  text-transform: none !important;
+  letter-spacing: normal;
+  font-size: 0.78rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+
+#dashboardEditorModal .dashboard-builder-block .form-control,
+#dashboardEditorModal .dashboard-builder-block .custom-select,
+#dashboardEditorModal .dashboard-builder-section-body .form-control {
+  font-size: 0.85rem;
+  border-color: #dde3ee;
+  background-color: #ffffff;
+}
+
+#dashboardEditorModal .dashboard-builder-block .form-control:focus,
+#dashboardEditorModal .dashboard-builder-section-body .form-control:focus {
+  border-color: #4e73df;
+  box-shadow: 0 0 0 0.15rem rgba(78, 115, 223, 0.15);
+}
+
+/* Filter / field rows */
+#dashboardEditorModal .dashboard-builder-filter-row,
+#dashboardEditorModal .dashboard-builder-field-row,
+#dashboardEditorModal .dashboard-builder-group-row,
+#dashboardEditorModal .dashboard-builder-threshold-row,
+#dashboardEditorModal .dashboard-builder-custom-option-row {
+  padding: 0.5rem;
+  border-radius: 0.35rem;
+  transition: background-color 0.15s ease;
+}
+
+#dashboardEditorModal .dashboard-builder-filter-row + .dashboard-builder-filter-row,
+#dashboardEditorModal .dashboard-builder-field-row + .dashboard-builder-field-row,
+#dashboardEditorModal .dashboard-builder-group-row + .dashboard-builder-group-row,
+#dashboardEditorModal .dashboard-builder-threshold-row + .dashboard-builder-threshold-row,
+#dashboardEditorModal .dashboard-builder-custom-option-row + .dashboard-builder-custom-option-row {
+  margin-top: 0.35rem;
+  border-top: 1px dashed #eef1f6;
+  padding-top: 0.75rem;
+}
+
+#dashboardEditorModal .dashboard-builder-filter-row:hover,
+#dashboardEditorModal .dashboard-builder-field-row:hover,
+#dashboardEditorModal .dashboard-builder-group-row:hover,
+#dashboardEditorModal .dashboard-builder-threshold-row:hover,
+#dashboardEditorModal .dashboard-builder-custom-option-row:hover {
+  background-color: #fafbfd;
+}
+
+#dashboardEditorModal .builder-remove-filter,
+#dashboardEditorModal .builder-remove-field,
+#dashboardEditorModal .builder-remove-group,
+#dashboardEditorModal .builder-remove-threshold,
+#dashboardEditorModal .builder-remove-custom-option {
+  opacity: 0.55;
+  transition: opacity 0.15s ease;
+}
+
+#dashboardEditorModal .dashboard-builder-filter-row:hover .builder-remove-filter,
+#dashboardEditorModal .dashboard-builder-field-row:hover .builder-remove-field,
+#dashboardEditorModal .dashboard-builder-group-row:hover .builder-remove-group,
+#dashboardEditorModal .dashboard-builder-threshold-row:hover .builder-remove-threshold,
+#dashboardEditorModal .dashboard-builder-custom-option-row:hover .builder-remove-custom-option {
+  opacity: 1;
+}
+
+/* Form-check inside blocks */
+#dashboardEditorModal .dashboard-builder-section-body .form-check,
+#dashboardEditorModal .dashboard-builder-block .form-check {
+  padding-left: 1.5rem;
+  min-height: 1.5rem;
+}
+
+#dashboardEditorModal .dashboard-builder-section-body .form-check-input,
+#dashboardEditorModal .dashboard-builder-block .form-check-input {
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.25rem;
+  margin-left: -1.5rem;
+}
+
+#dashboardEditorModal .dashboard-builder-section-body .form-check-label,
+#dashboardEditorModal .dashboard-builder-block .form-check-label {
+  font-size: 0.875rem;
+  color: #364152;
+  text-transform: none !important;
+}
+
+/* JSON panel */
 #dashboardEditorModal .dashboard-json-panel {
   background-color: #f8f9fc;
-  border: 1px solid #e9ecef;
+  border: 1px solid #e6eaf2;
   border-radius: 0.5rem;
   padding: 1rem;
 }
 
-#dashboardEditorModal .dashboard-builder-section-divider-preview {
-  border-bottom: 2px solid #dee2e6;
-  margin: 0.75rem 0;
+/* Modal footer */
+#dashboardEditorModal .modal-footer {
+  background-color: #fafbfd;
+  border-top: 1px solid #eef1f6;
+  padding: 0.85rem 1.5rem;
 }
+
+/* Color picker swatches */
+#dashboardEditorModal .builder-color-picker-container input[type="color"] {
+  height: calc(1.8125rem + 2px);
+  border: 1px solid #dde3ee;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+/* ============================================================
+   Help modal
+   ============================================================ */
 
 #dashboardHelpModal .dashboard-help-section + .dashboard-help-section {
   margin-top: 1.5rem;
