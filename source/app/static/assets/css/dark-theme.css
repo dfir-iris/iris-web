@@ -1080,3 +1080,105 @@ body button.btn:not([class*="btn-primary"]):not([class*="btn-secondary"]):not([c
     background: #1a2035;
     color: #cac7c7;
 }
+
+/* ----------------------------------------------------------------
+   Bootstrap 4.6.2 upgrade fixes
+   BS 4.6.2 sets `.table { color: var(--bs-body-color) }` (#212529),
+   which renders as dark text on the dark card background. Restore
+   readable colors for tables, table-light cells, and the .btn shim
+   from atlantis.css that defaults to a white background + dark text.
+   ---------------------------------------------------------------- */
+body .table,
+body .table thead th,
+body .table tbody td,
+body .table tbody th,
+body table.dataTable,
+body table.dataTable thead th,
+body table.dataTable tbody td,
+body table.dataTable tbody th {
+    color: #cac7c7;
+}
+
+body .table thead th {
+    border-bottom-color: rgba(181, 181, 181, 0.15);
+}
+
+/* The Bootstrap "light" variants on rows/cells assume a white page;
+   on the dark theme they print white-on-white. Tone them down. */
+body .table .table-light,
+body .table .thead-light th,
+body .table-light,
+body .table-light > th,
+body .table-light > td {
+    background-color: #1a2035 !important;
+    color: #cac7c7 !important;
+    border-color: rgba(181, 181, 181, 0.1) !important;
+}
+
+body .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: #ffffff;
+}
+
+body .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+body .table-bordered,
+body .table-bordered th,
+body .table-bordered td {
+    border-color: rgba(181, 181, 181, 0.12);
+}
+
+/* Atlantis added a light "lifted card" .btn shim for BS 4.6.2 (white
+   background, dark text). Re-skin those bare buttons for the dark theme
+   so they read against #202940 cards. The selector mirrors the one in
+   atlantis.css so specificity matches. */
+body .btn:not(.btn-primary):not(.btn-secondary):not(.btn-success):not(.btn-info):not(.btn-warning):not(.btn-danger):not(.btn-light):not(.btn-dark):not(.btn-link):not(.btn-white):not(.btn-default):not(.btn-simple):not(.btn-toggle):not(.btn-border):not(.btn-round):not(.btn-full):not(.btn-icon):not(.btn-search):not(.btn-option):not([class*="btn-outline-"]):not([class*="btn-alert-"]):not([class*="btn-conditional"]):not(.bg-transparent) {
+    background-color: #1a2035;
+    color: #cac7c7;
+    box-shadow: none;
+}
+
+body .btn:not(.btn-primary):not(.btn-secondary):not(.btn-success):not(.btn-info):not(.btn-warning):not(.btn-danger):not(.btn-light):not(.btn-dark):not(.btn-link):not(.btn-white):not(.btn-default):not(.btn-simple):not(.btn-toggle):not(.btn-border):not(.btn-round):not(.btn-full):not(.btn-icon):not(.btn-search):not(.btn-option):not([class*="btn-outline-"]):not([class*="btn-alert-"]):not([class*="btn-conditional"]):not(.bg-transparent):hover,
+body .btn:not(.btn-primary):not(.btn-secondary):not(.btn-success):not(.btn-info):not(.btn-warning):not(.btn-danger):not(.btn-light):not(.btn-dark):not(.btn-link):not(.btn-white):not(.btn-default):not(.btn-simple):not(.btn-toggle):not(.btn-border):not(.btn-round):not(.btn-full):not(.btn-icon):not(.btn-search):not(.btn-option):not([class*="btn-outline-"]):not([class*="btn-alert-"]):not([class*="btn-conditional"]):not(.bg-transparent):focus {
+    background-color: #232b45;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+/* bootstrap-select trigger (atlantis.css gives it a light grey field).
+   Override to the dark navy used by other inputs. */
+body .bootstrap-select > .dropdown-toggle.btn-outline-white,
+body .bootstrap-select > .dropdown-toggle.btn-light,
+body .bootstrap-select > .dropdown-toggle.btn-default,
+body .bootstrap-select > .dropdown-toggle.btn-outline-white.bs-placeholder,
+body .bootstrap-select > .dropdown-toggle.btn-light.bs-placeholder,
+body .bootstrap-select > .dropdown-toggle.btn-default.bs-placeholder {
+    background-color: #1a2035 !important;
+    border-color: #2f374b !important;
+    color: #cac7c7 !important;
+}
+
+body .bootstrap-select > .dropdown-toggle.btn-outline-white.bs-placeholder,
+body .bootstrap-select > .dropdown-toggle.btn-light.bs-placeholder,
+body .bootstrap-select > .dropdown-toggle.btn-default.bs-placeholder {
+    color: #6b7084 !important;
+}
+
+body .bootstrap-select > .dropdown-toggle.btn-outline-white:hover,
+body .bootstrap-select > .dropdown-toggle.btn-outline-white:focus,
+body .bootstrap-select > .dropdown-toggle.btn-outline-white:active,
+body .bootstrap-select.show > .dropdown-toggle.btn-outline-white,
+body .bootstrap-select > .dropdown-toggle.btn-light:hover,
+body .bootstrap-select > .dropdown-toggle.btn-light:focus,
+body .bootstrap-select > .dropdown-toggle.btn-light:active,
+body .bootstrap-select.show > .dropdown-toggle.btn-light,
+body .bootstrap-select > .dropdown-toggle.btn-default:hover,
+body .bootstrap-select > .dropdown-toggle.btn-default:focus,
+body .bootstrap-select > .dropdown-toggle.btn-default:active,
+body .bootstrap-select.show > .dropdown-toggle.btn-default {
+    background-color: #232b45 !important;
+    border-color: #3a4361 !important;
+    color: #ffffff !important;
+}
