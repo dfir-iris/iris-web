@@ -8,7 +8,7 @@ Create Date: 2026-04-30
 from alembic import op
 
 revision = 'f0e1d2c3b4a5'
-down_revision = '79a9a54e8f9d'
+down_revision = 'afcff5ebcf7c'
 branch_labels = None
 depends_on = None
 
