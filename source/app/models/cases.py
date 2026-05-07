@@ -42,6 +42,8 @@ from app.datamgmt.states import update_assets_state
 from app.datamgmt.states import update_evidences_state
 from app.datamgmt.states import update_ioc_state
 from app.datamgmt.states import update_notes_state
+from sqlalchemy import Index
+
 from app.datamgmt.states import update_tasks_state
 from app.datamgmt.states import update_timeline_state
 from app.models.models import Client
@@ -49,6 +51,11 @@ from app.models.models import Client
 
 class Cases(db.Model):
     __tablename__ = 'cases'
+
+    __table_args__ = (
+        Index('idx_cases_user_id', 'user_id'),
+        Index('idx_cases_state_id', 'state_id'),
+    )
 
     case_id = Column(BigInteger, primary_key=True)
     soc_id = Column(String(256))

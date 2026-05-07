@@ -24,6 +24,7 @@ from sqlalchemy import BigInteger, JSON
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
+from sqlalchemy import Index
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy import Text
@@ -152,6 +153,11 @@ class UserCaseEffectiveAccess(db.Model):
     case = relationship('Cases')
 
     UniqueConstraint('case_id', 'user_id')
+
+    __table_args__ = (
+        Index('idx_user_case_effective_access_user_id', 'user_id'),
+        Index('idx_user_case_effective_access_case_id', 'case_id'),
+    )
 
 
 class UserOrganisation(db.Model):
