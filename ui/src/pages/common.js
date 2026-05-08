@@ -1834,7 +1834,7 @@ $(document).ready(function(){
             $('#modal_switch_context').modal('hide');
             return;
     }
-    post_request_api(`/context/set?cid=${data_sent.ctx}`, data_sent)
+    post_request_api('/context/set', data_sent, false, undefined, data_sent.ctx)
     .done((data) => {
             if (api_request_failed(data)) {
                 return true;
