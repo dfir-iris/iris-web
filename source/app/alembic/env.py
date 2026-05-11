@@ -16,7 +16,9 @@ fileConfig(config.config_file_name)
 
 os.environ["ALEMBIC"] = "1"
 
-config.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_ADMIN_URI + PG_DB_)
+url = config.get_main_option('sqlalchemy.url')
+if not url or url == 'driver://user:pass@localhost/dbname':
+    config.set_main_option('sqlalchemy.url', SQLALCHEMY_BASE_ADMIN_URI + PG_DB_)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
