@@ -16,12 +16,28 @@ depends_on = None
 
 def upgrade():
     op.execute(text("""
-        CREATE INDEX IF NOT EXISTS idx_cases_user_id
-        ON cases (user_id)
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_indexes
+                WHERE tablename = 'cases'
+                AND indexname = 'idx_cases_user_id'
+            ) THEN
+                CREATE INDEX idx_cases_user_id ON cases (user_id);
+            END IF;
+        END $$;
     """))
     op.execute(text("""
-        CREATE INDEX IF NOT EXISTS idx_cases_state_id
-        ON cases (state_id)
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_indexes
+                WHERE tablename = 'cases'
+                AND indexname = 'idx_cases_state_id'
+            ) THEN
+                CREATE INDEX idx_cases_state_id ON cases (state_id);
+            END IF;
+        END $$;
     """))
 
 

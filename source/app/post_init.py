@@ -1575,10 +1575,68 @@ class PostInit:
             conn.close()
             self._logger.info("Database privileges granted successfully")
 
+            self._ensure_indexes_exist()
+
         except psycopg2.Error as e:
             self._logger.warning(f"Failed to grant database privileges: {e}")
         except Exception as e:
             self._logger.warning(f"Unexpected error during privilege grant: {e}")
+
+    def _ensure_indexes_exist(self):
+        required_indexes = [
+            ('user_case_effective_access', 'idx_user_case_effective_access_user_id', 'user_id'),
+            ('user_case_effective_access', 'idx_user_case_effective_access_case_id', 'case_id'),
+            ('cases', 'idx_cases_user_id', 'user_id'),
+            ('cases', 'idx_cases_state_id', 'state_id'),
+        ]
+
+        try:
+            admin_user = os.environ.get('POSTGRES_ADMIN_USER')
+            admin_password = os.environ.get('POSTGRES_ADMIN_PASSWORD')
+            db_host = os.environ.get('POSTGRES_SERVER')
+            db_port = os.environ.get('POSTGRES_PORT', '5432')
+            db_name = self._configuration.get('PG_DB_', 'iris_db')
+
+            if not all([admin_user, admin_password, db_host]):
+                self._logger.warning("PostgreSQL admin credentials not available, skipping index check")
+                return
+
+            conn = psycopg2.connect(
+                host=db_host,
+                port=db_port,
+                user=admin_user,
+                password=admin_password,
+                database=db_name
+            )
+            conn.autocommit = True
+            cursor = conn.cursor()
+
+            for table, index_name, column in required_indexes:
+                cursor.execute(
+                    "SELECT 1 FROM pg_indexes WHERE tablename = %s AND indexname = %s",
+                    (table, index_name)
+                )
+                if not cursor.fetchone():
+                    self._logger.info(f"Creating missing index {index_name} on {table}({column})")
+                    cursor.execute(
+                        sql.SQL("CREATE INDEX {} ON {} ({})").format(
+                            sql.Identifier(index_name),
+                            sql.Identifier(table),
+                            sql.Identifier(column)
+                        )
+                    )
+                    self._logger.info(f"Index {index_name} created successfully")
+                else:
+                    self._logger.info(f"Index {index_name} already exists")
+
+            cursor.close()
+            conn.close()
+            self._logger.info("Index check completed")
+
+        except psycopg2.Error as e:
+            self._logger.warning(f"Failed to ensure indexes exist: {e}")
+        except Exception as e:
+            self._logger.warning(f"Unexpected error during index check: {e}")
 
     def _create_directories(self):
         self._logger.info('Attempting to create data directories')
