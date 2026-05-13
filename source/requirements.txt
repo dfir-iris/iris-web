@@ -1,28 +1,28 @@
-azure-identity==1.10.0
-azure-keyvault-secrets==4.5.1
-celery==5.4.0
-Flask==3.1.0
+azure-identity==1.25.3
+azure-keyvault-secrets==4.11.0
+celery==5.6.3
+Flask==3.1.3
 Flask-Bcrypt==1.0.1
 Flask-Login==0.6.3
 Flask-SQLAlchemy==3.1.1
-Flask-WTF==1.2.2
-flask-marshmallow==1.2.1
-Flask-Caching==2.3.0
-flask-cors==5.0.0
-marshmallow==3.23.1
-marshmallow-sqlalchemy==1.1.0
-gunicorn==23.0.0
-psycopg2-binary==2.9.10
-pyunpack==0.2.2
-packaging==21.3
+Flask-WTF==1.3.0
+flask-marshmallow==1.5.0
+Flask-Caching==2.4.0
+flask-cors==6.0.2
+marshmallow==4.3.0
+marshmallow-sqlalchemy==1.5.0
+gunicorn==26.0.0
+psycopg2-binary==2.9.12
+pyunpack==0.3
+packaging==26.2
 requests==2.31.0
-SQLAlchemy==2.0.36
+SQLAlchemy==2.0.49
 SQLAlchemy-ImageAttach==1.1.0
-SQLAlchemy-Utils==0.41.2
-urllib3==1.26.18
-Werkzeug==3.1.3
-WTForms==3.2.1
-Flask-SocketIO==5.4.1
+SQLAlchemy-Utils==0.42.1
+urllib3==2.7.0
+Werkzeug==3.1.8
+WTForms==3.2.2
+Flask-SocketIO==5.6.1
 # Server-side Yjs/CRDT bindings (Rust `yrs` core via Python) — powers
 # the collaborative markdown editor. We hold the authoritative Y.Doc
 # server-side, apply every client update through it, and render the
@@ -36,18 +36,18 @@ pycrdt>=0.14,<0.15
 # server markdown → source column) doesn't lose information at the
 # parser boundary.
 markdown-it-py>=3.0,<4
-alembic==1.7.5
-setuptools~=70.3.0
-python-dateutil==2.8.2
-python-gnupg==0.4.8
-pyminizip~=0.2.6
-PyJWT==2.4.0
-cryptography>=39.0.1
+alembic==1.18.4
+setuptools==81.0.0
+python-dateutil==2.9.0.post0
+python-gnupg==0.5.6
+pyzipper==0.3.6
+PyJWT==2.12.1
+cryptography==48.0.0
 ldap3==2.9.1
-pyintelowl>=4.4.0
+pyintelowl==5.1.0
 pyotp==2.9.0
-qrcode[pil]==7.4.2
-dictdiffer==0.2.0
+qrcode[pil]==8.2
+dictdiffer==0.9.0
 oic==1.7.0
 bleach==6.1.0
 imap-tools==1.5.0
