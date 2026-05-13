@@ -74,7 +74,7 @@ export default defineConfig(({ mode }) => {
                     {
                         src: 'node_modules/jquery/dist/jquery.min.js',
                         dest: 'assets/js/core',
-                        rename: 'jquery.3.2.1.min.js',
+                        rename: 'jquery.min.js',
                     },
                     {
                         src: 'node_modules/jquery-validation/dist/jquery.validate.min.js',
@@ -125,14 +125,7 @@ export default defineConfig(({ mode }) => {
                         src: 'node_modules/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js',
                         dest: 'assets/js/plugin/jquery-ui-touch-punch/',
                     },
-                    {
-                        src: 'node_modules/jqvmap/dist/jquery.vmap.min.js',
-                        dest: 'assets/js/plugin/jqvmap/',
-                    },
-                    {
-                        src: 'node_modules/jqvmap/dist/maps',
-                        dest: 'assets/js/plugin/jqvmap/',
-                    },
+
                     {
                         src: 'node_modules/showdown/dist/showdown.min.js',
                         dest: 'assets/js/plugin/showdown/',
