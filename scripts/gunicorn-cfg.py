@@ -27,4 +27,3 @@ timeout = 3000
 
 def worker_exit(server, worker):
     sys.exit(4)
-

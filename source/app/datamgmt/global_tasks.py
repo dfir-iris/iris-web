@@ -1,6 +1,6 @@
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) ${current_year} - DFIR-IRIS
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -15,17 +15,31 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-from sqlalchemy import and_
-from sqlalchemy import desc
 
-from app import db
-from app.models.models import CaseTasks
-from app.models.models import TaskAssignee
-from app.models.models import ReviewStatus
-from app.models.cases import Cases
+from sqlalchemy import desc
+from flask_sqlalchemy.pagination import Pagination
+
+from app.db import db
+from app.models.authorization import User
 from app.models.models import GlobalTasks
 from app.models.models import TaskStatus
-from app.models.authorization import User
+from app.models.pagination_parameters import PaginationParameters
+from app.datamgmt.filtering import paginate
+
+
+def delete_global_task(task: GlobalTasks):
+    GlobalTasks.query.filter(GlobalTasks.id == task.id).delete()
+    db.session.commit()
+
+
+def update_global_task():
+    db.session.commit()
+
+
+def filter_global_tasks(pagination_parameters: PaginationParameters) -> Pagination:
+    query = GlobalTasks.query
+
+    return paginate(GlobalTasks, pagination_parameters, query)
 
 
 def list_global_tasks():
@@ -78,54 +92,10 @@ def get_global_task(task_id):
     return ct
 
 
-def get_tasks_status():
-    return TaskStatus.query.all()
-
-
-def list_user_reviews(user_identifier):
-    ct = Cases.query.with_entities(
-        Cases.case_id,
-        Cases.name,
-        ReviewStatus.status_name,
-        ReviewStatus.id.label('status_id')
-    ).join(
-        Cases.review_status
-    ).filter(
-        Cases.reviewer_id == user_identifier,
-        ReviewStatus.status_name != 'Reviewed',
-        ReviewStatus.status_name != 'Not reviewed'
-    ).all()
-
-    return ct
-
-
-def list_user_tasks(user_identifier):
-    ct = CaseTasks.query.with_entities(
-        CaseTasks.id.label("task_id"),
-        CaseTasks.task_title,
-        CaseTasks.task_description,
-        CaseTasks.task_last_update,
-        CaseTasks.task_tags,
-        Cases.name.label('task_case'),
-        CaseTasks.task_case_id.label('case_id'),
-        CaseTasks.task_status_id,
-        TaskStatus.status_name,
-        TaskStatus.status_bscolor
-    ).join(
-        CaseTasks.case
-    ).order_by(
-        desc(TaskStatus.status_name)
-    ).filter(and_(
-        TaskStatus.status_name != 'Done',
-        TaskStatus.status_name != 'Canceled'
-    )).join(
-        CaseTasks.status,
-    ).filter(and_(
-        TaskAssignee.task_id == CaseTasks.id,
-        TaskAssignee.user_id == user_identifier
-    )).all()
-
-    return ct
+def get_global_task_by_identifier(identifier):
+    return GlobalTasks.query.filter(
+        GlobalTasks.id == identifier
+    ).first()
 
 
 def update_gtask_status(task_id, status):
@@ -142,44 +112,3 @@ def update_gtask_status(task_id, status):
             pass
 
     return None
-
-
-def update_utask_status(task_id, status, case_id):
-    if task_id != 0:
-        task = CaseTasks.query.filter(
-                CaseTasks.id == task_id,
-                CaseTasks.task_case_id == case_id
-        ).first()
-        if task:
-            try:
-                task.task_status_id = status
-
-                db.session.commit()
-                return True
-
-            except:
-                pass
-
-    return False
-
-
-def get_task_status(task_status_id):
-    ret = TaskStatus.query.filter(
-        TaskStatus.id == task_status_id
-    ).first()
-
-    return ret
-
-
-def list_user_cases(user_identifier, show_all=False):
-    if show_all:
-        return Cases.query.filter(
-            Cases.owner_id == user_identifier
-        ).all()
-
-    return Cases.query.filter(
-        Cases.owner_id == user_identifier,
-        Cases.close_date == None
-    ).all()
-
-

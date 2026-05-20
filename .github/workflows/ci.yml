@@ -31,12 +31,14 @@ jobs:
         uses: astral-sh/ruff-action@v3
         with:
           args: check --output-format=github
-      - name: Check dependencies with import-linter
+      - name: Check import dependencies with import-linter
         run: |
-          python -m venv venv
-          source venv/bin/activate
           pip install import-linter
           PYTHONPATH=source lint-imports
+      - name: Looking for dead code with vulture
+        run: |
+          pip install vulture
+          vulture
 
   build-docker-db:
     name: Build docker db
@@ -131,10 +133,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Start development server
         run: |
-          # Even though, we use --env-file option when running docker compose, this is still necessary, because the compose has a env_file attribute :(
-          # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
-          cp tests/data/basic.env .env
-          docker compose --file docker-compose.dev.yml --env-file tests/data/basic.env up --detach --wait
+          cp .env.tests.model .env
+          docker compose --file docker-compose.dev.yml up --detach --wait
       - name: Generate GraphQL documentation
         run: |
           npx spectaql@^3.0.2 source/spectaql/config.yml
@@ -168,11 +168,19 @@ jobs:
           docker load --input ${{ runner.temp }}/iriswebapp_app.tar
       - name: Check out iris
         uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - name: Build ui to be mounted in development docker
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
       - name: Start development server
         run: |
-          # Even though, we use --env-file option when running docker compose, this is still necessary, because the compose has a env_file attribute :(
-          # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
-          cp tests/data/basic.env .env
+          cp .env.tests.model .env
           docker compose --file docker-compose.dev.yml up --detach --wait
       - name: Inspect development server start failure
         if: ${{ failure() || cancelled() }}
@@ -226,8 +234,7 @@ jobs:
       - name: Check out iris
         uses: actions/checkout@v4
       - name: Set up .env file
-        # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env?
-        run: cp tests/data/basic.env .env
+        run: cp .env.tests.model .env
       - name: Run tests
         working-directory: tests_database_migration
         run: |
@@ -277,8 +284,7 @@ jobs:
         run: npx playwright install chromium firefox
       - name: Start development server
         run: |
-          # TODO should move basic.env file, which is in directory tests, up. It's used in several places. Maybe, rename it into dev.env
-          cp tests/data/basic.env .env
+          cp .env.tests.model .env
           docker compose --file docker-compose.dev.yml up --detach --wait
       - name: Run end to end tests
         working-directory: e2e

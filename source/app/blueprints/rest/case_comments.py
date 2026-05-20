@@ -24,7 +24,7 @@ from app.schema.marshables import CommentSchema
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
 from app.business.comments import comments_update_for_case
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.blueprints.iris_user import iris_current_user
 
 

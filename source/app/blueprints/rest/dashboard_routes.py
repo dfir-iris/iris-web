@@ -27,18 +27,18 @@ from flask import request
 from flask import redirect
 from flask_login import logout_user
 
-from app import db
+from app.db import db
 from app import app
 from app import oidc_client
 
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.iris_user import iris_current_user
-from app.datamgmt.dashboard.dashboard_db import get_global_task
-from app.datamgmt.dashboard.dashboard_db import list_user_cases
-from app.datamgmt.dashboard.dashboard_db import list_user_reviews
-from app.datamgmt.dashboard.dashboard_db import get_tasks_status
-from app.datamgmt.dashboard.dashboard_db import list_global_tasks
-from app.datamgmt.dashboard.dashboard_db import list_user_tasks
+from app.datamgmt.case.case_db import list_user_reviews
+from app.datamgmt.case.case_db import list_user_cases
+from app.datamgmt.case.case_tasks_db import get_tasks_status
+from app.datamgmt.global_tasks import list_global_tasks
+from app.datamgmt.global_tasks import get_global_task
+from app.datamgmt.case.case_tasks_db import list_user_tasks
 from app.forms import CaseGlobalTaskForm
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
@@ -135,6 +135,7 @@ def get_cases_charts():
 
 
 @dashboard_rest_blueprint.route('/global/tasks/list', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/global-tasks')
 @ac_api_requires()
 def get_gtasks():
     tasks_list = list_global_tasks()
@@ -153,13 +154,14 @@ def get_gtasks():
 
 
 @dashboard_rest_blueprint.route('/global/tasks/<int:cur_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/global-tasks/{identifier}')
 @ac_api_requires()
 def view_gtask(cur_id):
-    task = get_global_task(task_id=cur_id)
+    task = get_global_task(cur_id)
     if not task:
         return response_error(f'Global task ID {cur_id} not found')
 
-    return response_success("", data=task._asdict())
+    return response_success('', data=task._asdict())
 
 
 @dashboard_rest_blueprint.route('/user/tasks/status/update', methods=['POST'])
@@ -200,6 +202,7 @@ def utask_statusupdate(caseid):
 
 
 @dashboard_rest_blueprint.route('/global/tasks/add', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/global-tasks')
 @ac_api_requires()
 @ac_requires_case_identifier()
 def add_gtask(caseid):
@@ -207,8 +210,7 @@ def add_gtask(caseid):
 
         gtask_schema = GlobalTasksSchema()
 
-        request_data = call_modules_hook(
-            'on_preload_global_task_create', data=request.get_json(), caseid=caseid)
+        request_data = call_modules_hook('on_preload_global_task_create', request.get_json(), caseid=caseid)
 
         gtask = gtask_schema.load(request_data)
 
@@ -228,14 +230,14 @@ def add_gtask(caseid):
     except Exception as e:
         return response_error(msg="Data error", data=e.__str__())
 
-    gtask = call_modules_hook(
-        'on_postload_global_task_create', data=gtask, caseid=caseid)
+    gtask = call_modules_hook('on_postload_global_task_create', gtask, caseid=caseid)
     track_activity(f"created new global task \'{gtask.task_title}\'", caseid=caseid)
 
     return response_success('Task added', data=gtask_schema.dump(gtask))
 
 
 @dashboard_rest_blueprint.route('/global/tasks/update/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/global-tasks/{identifier}')
 @ac_api_requires()
 @ac_requires_case_identifier()
 def edit_gtask(cur_id, caseid):
@@ -252,8 +254,7 @@ def edit_gtask(cur_id, caseid):
     try:
         gtask_schema = GlobalTasksSchema()
 
-        request_data = call_modules_hook('on_preload_global_task_update', data=request.get_json(),
-                                         caseid=caseid)
+        request_data = call_modules_hook('on_preload_global_task_update', request.get_json(), caseid=caseid)
 
         gtask = gtask_schema.load(request_data, instance=task)
         gtask.task_userid_update = iris_current_user.id
@@ -273,11 +274,11 @@ def edit_gtask(cur_id, caseid):
 
 
 @dashboard_rest_blueprint.route('/global/tasks/delete/<int:cur_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/global-tasks/{identifier}')
 @ac_api_requires()
 @ac_requires_case_identifier()
 def gtask_delete(cur_id, caseid):
-    call_modules_hook('on_preload_global_task_delete',
-                      data=cur_id, caseid=caseid)
+    call_modules_hook('on_preload_global_task_delete', cur_id, caseid=caseid)
 
     if not cur_id:
         return response_error("Missing parameter")
@@ -289,8 +290,7 @@ def gtask_delete(cur_id, caseid):
     GlobalTasks.query.filter(GlobalTasks.id == cur_id).delete()
     db.session.commit()
 
-    call_modules_hook('on_postload_global_task_delete',
-                      data=request.get_json(), caseid=caseid)
+    call_modules_hook('on_postload_global_task_delete', request.get_json(), caseid=caseid)
     track_activity(f"deleted global task ID {cur_id}", caseid=caseid)
 
     return response_success("Task deleted")

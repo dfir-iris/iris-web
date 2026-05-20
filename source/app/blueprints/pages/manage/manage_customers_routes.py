@@ -22,7 +22,7 @@ from flask import render_template
 from flask import url_for
 from flask_wtf import FlaskForm
 
-from app.datamgmt.client.client_db import get_client
+from app.datamgmt.client.client_db import get_customer
 from app.datamgmt.client.client_db import get_client_api
 from app.datamgmt.client.client_db import get_client_contact
 from app.datamgmt.client.client_db import get_client_contacts
@@ -92,7 +92,7 @@ def customer_edit_contact_modal(client_id, contact_id, caseid, url_redir):
     if url_redir:
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
 
-    contact = get_client_contact(client_id, contact_id)
+    contact = get_client_contact(contact_id)
     if not contact:
         return response_error(f"Invalid Contact ID {contact_id}")
 
@@ -115,7 +115,7 @@ def view_customer_modal(client_id, caseid, url_redir):
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
 
     form = AddCustomerForm()
-    customer = get_client(client_id)
+    customer = get_customer(client_id)
     if not customer:
         return response_error("Invalid Customer ID")
 

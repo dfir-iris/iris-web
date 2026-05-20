@@ -1,13 +1,13 @@
 from sqlalchemy import and_
 from functools import reduce
 
-import app
+from app.logger import logger
 from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.cases import Cases
-from app.models.models import CaseAssets
-from app.models.models import Client
+from app.models.assets import CaseAssets
+from app.models.customers import Client
 
 
 def get_filtered_assets(case_id=None,
@@ -82,7 +82,7 @@ def get_filtered_assets(case_id=None,
         filtered_assets = data.paginate(page=page, per_page=per_page)
 
     except Exception as e:
-        app.logger.exception(f"Failed to get filtered assets: {e}")
+        logger.exception(f"Failed to get filtered assets: {e}")
         raise e
 
     return filtered_assets

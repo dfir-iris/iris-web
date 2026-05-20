@@ -16,10 +16,9 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-import collections
-import json
 import os
-from flask import Flask, g
+from flask import Flask
+from flask import g
 from flask import session
 from flask_bcrypt import Bcrypt
 from flask_caching import Cache
@@ -27,9 +26,8 @@ from flask_cors import CORS
 
 from flask_login import LoginManager
 from flask_marshmallow import Marshmallow
-from flask_socketio import SocketIO, Namespace
-from flask_sqlalchemy import SQLAlchemy
-from functools import partial
+from flask_socketio import SocketIO
+from flask_socketio import Namespace
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -39,6 +37,8 @@ from app.iris_engine.tasker.celery import make_celery
 from app.iris_engine.tasker.celery import set_celery_flask_context
 from app.iris_engine.access_control.oidc_handler import get_oidc_client
 from app.jinja_filters import register_jinja_filters
+from app.models.authorization import ac_flag_match_mask
+from app.db import db
 
 
 class ReverseProxied(object):
@@ -59,12 +59,6 @@ class AlertsNamespace(Namespace):
 APP_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATE_PATH = os.path.join(APP_PATH, 'templates/')
 
-SQLALCHEMY_ENGINE_OPTIONS = {
-    "json_deserializer": partial(json.loads, object_pairs_hook=collections.OrderedDict),
-    "pool_pre_ping": True
-}
-
-db = SQLAlchemy(engine_options=SQLALCHEMY_ENGINE_OPTIONS)  # flask-sqlalchemy
 bc = Bcrypt()  # flask-bcrypt
 ma = Marshmallow()
 celery = make_celery(__name__)
@@ -75,10 +69,13 @@ def ac_current_user_has_permission(*permissions):
     """
     Return True if current user has permission
     """
+    if 'permissions' not in session:
+        return False
+
+    current_user_permissions = session['permissions']
     for permission in permissions:
 
-        if ('permissions' in session and
-                session['permissions'] & permission.value == permission.value):
+        if ac_flag_match_mask(current_user_permissions, permission.value):
             return True
 
     return False
@@ -129,7 +126,7 @@ CORS(app,
      ]}})
 
 
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 #app.wsgi_app = store.wsgi_middleware(app.wsgi_app)
 
 socket_io = SocketIO(app, cors_allowed_origins="*")

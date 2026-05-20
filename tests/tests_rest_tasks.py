@@ -177,7 +177,7 @@ class TestsRestTasks(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task3'}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', { 'per_page': 2 }).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', {'per_page': 2}).json()
         self.assertEqual(2, len(response['data']))
 
     def test_get_tasks_should_return_current_page(self):
@@ -188,7 +188,7 @@ class TestsRestTasks(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
         body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'task3'}
         self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', { 'page': 2, 'per_page': 2 }).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks', {'page': 2, 'per_page': 2}).json()
         self.assertEqual(2, response['current_page'])
 
     def test_get_tasks_should_return_correct_task_uuid(self):

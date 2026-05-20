@@ -38,9 +38,7 @@ class TestsRestReports(TestCase):
     def test_generate_docx_report__in_safe_mode_should_return_200(self):
         data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
                 'report_name_format': 'report_name_format'}
-        response = self._subject.post_multipart_encoded_file('/manage/templates/add', data,
-                                                             'data/report_templates/empty.docx').json()
-        report_identifier = response['data']['report_id']
+        report_identifier = self._subject.create_report(data, 'empty.docx')
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
@@ -49,9 +47,7 @@ class TestsRestReports(TestCase):
     def test_generate_docx_report_should_render_variable_case_for_customer(self):
         data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
                 'report_name_format': 'report_name_format'}
-        response = self._subject.post_multipart_encoded_file('/manage/templates/add', data,
-                                                          'data/report_templates/variable_case_for_customer.docx').json()
-        report_identifier = response['data']['report_id']
+        report_identifier = self._subject.create_report(data, 'variable_case_for_customer.docx')
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
@@ -62,9 +58,7 @@ class TestsRestReports(TestCase):
     def test_generate_md_report_should_render_variable_case_name(self):
         data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
                 'report_name_format': 'report_name_format'}
-        response = self._subject.post_multipart_encoded_file('/manage/templates/add', data,
-                                                          'data/report_templates/variable_case_name.md').json()
-        report_identifier = response['data']['report_id']
+        report_identifier = self._subject.create_report(data, 'variable_case_name.md')
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
@@ -73,9 +67,7 @@ class TestsRestReports(TestCase):
     def test_generate_md_report_should_render_variable_case_for_customer(self):
         data = {'report_name': 'name', 'report_type': 1, 'report_language': 1, 'report_description': 'description',
                 'report_name_format': 'report_name_format'}
-        response = self._subject.post_multipart_encoded_file('/manage/templates/add', data,
-                                                          'data/report_templates/variable_case_for_customer.md').json()
-        report_identifier = response['data']['report_id']
+        report_identifier = self._subject.create_report(data, 'variable_case_for_customer.md')
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/case/report/generate-investigation/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})
@@ -84,9 +76,7 @@ class TestsRestReports(TestCase):
     def test_generate_md_activities_report_should_render_variable_case_for_customer_when(self):
         data = {'report_name': 'name', 'report_type': 2, 'report_language': 1, 'report_description': 'description',
                 'report_name_format': 'report_name_format'}
-        response = self._subject.post_multipart_encoded_file('/manage/templates/add', data,
-                                                          'data/report_templates/variable_case_for_customer.md').json()
-        report_identifier = response['data']['report_id']
+        report_identifier = self._subject.create_report(data, 'variable_case_for_customer.md')
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.get(f'/case/report/generate-activities/{report_identifier}',
                                      {'cid': case_identifier, 'safe': True})

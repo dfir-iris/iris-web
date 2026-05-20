@@ -10,7 +10,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 from app.alembic.alembic_utils import _table_has_column
-from app.models.models import CompromiseStatus
+from app.models.assets import CompromiseStatus
 
 revision = '4ecdfcb34f7c'
 down_revision = 'a929ef458490'

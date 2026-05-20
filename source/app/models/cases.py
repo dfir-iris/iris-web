@@ -15,10 +15,13 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import uuid
 
+import enum
+import uuid
 from datetime import datetime
+
 from sqlalchemy import BigInteger
+from sqlalchemy import func
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Boolean
 from sqlalchemy import Column
@@ -36,15 +39,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import backref
 
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
-from app.datamgmt.states import update_assets_state
-from app.datamgmt.states import update_evidences_state
-from app.datamgmt.states import update_ioc_state
-from app.datamgmt.states import update_notes_state
-from app.datamgmt.states import update_tasks_state
-from app.datamgmt.states import update_timeline_state
-from app.models.models import Client
 
 
 class Cases(db.Model):
@@ -116,48 +112,6 @@ class Cases(db.Model):
         self.classification_id = classification_id
         self.state_id = state_id,
         self.severity_id = severity_id
-
-    def save(self):
-        """
-        Save the current case in database
-        :return:
-        """
-        # Inject self into db
-        db.session.add(self)
-
-        # Commit the changes
-        db.session.commit()
-
-        # Rename case with the ID
-        self.name = f'#{self.case_id} - {self.name}'
-
-        # Create the states
-        update_timeline_state(caseid=self.case_id, userid=self.user_id)
-        update_tasks_state(caseid=self.case_id, userid=self.user_id)
-        update_evidences_state(caseid=self.case_id, userid=self.user_id)
-        update_ioc_state(caseid=self.case_id, userid=self.user_id)
-        update_assets_state(caseid=self.case_id, userid=self.user_id)
-        update_notes_state(caseid=self.case_id, userid=self.user_id)
-
-        db.session.commit()
-
-        return self
-
-    def validate_on_build(self):
-        """
-        Execute an autocheck of the case metadata and validate it
-        :return: True if valid else false; Tuple with errors
-        """
-        # TODO : Check if case name already exists
-
-        res = Client.query\
-            .with_entities(Client.client_id)\
-            .filter(Client.client_id == self.client_id)\
-            .first()
-
-        self.client_id = res[0]
-
-        return True, []
 
 
 class CaseTags(db.Model):
@@ -231,3 +185,33 @@ class CaseProtagonist(db.Model):
 
     case = relationship('Cases')
     user = relationship('User')
+
+
+class CaseStatus(enum.Enum):
+    unknown = 0x0
+    false_positive = 0x1
+    true_positive_with_impact = 0x2
+    not_applicable = 0x3
+    true_positive_without_impact = 0x4
+    legitimate = 0x5
+
+
+class ReviewStatusList:
+    no_review_required = "No review required"
+    not_reviewed = "Not reviewed"
+    pending_review = "Pending review"
+    review_in_progress = "Review in progress"
+    reviewed = "Reviewed"
+
+
+class CaseClassification(db.Model):
+    __tablename__ = 'case_classification'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(Text)
+    name_expanded = Column(Text)
+    description = Column(Text)
+    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
+    created_by_id = Column(ForeignKey('user.id'), nullable=True)
+
+    created_by = relationship('User')

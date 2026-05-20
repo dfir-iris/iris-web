@@ -30,9 +30,8 @@ from app.datamgmt.manage.manage_users_db import get_user_details
 from app.datamgmt.manage.manage_users_db import get_user_effective_permissions
 from app.forms import AddUserForm
 from app.iris_engine.access_control.utils import ac_get_all_access_level
-from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.models.authorization import Permissions
-from app.blueprints.access_controls import ac_requires
+from app.blueprints.access_controls import ac_requires, ac_current_user_has_permission
 from app.blueprints.responses import response_error
 
 manage_users_blueprint = Blueprint('manage_users', __name__, template_folder='templates')
@@ -103,8 +102,7 @@ def manage_user_customers_modal(cur_id, caseid, url_redir):
         return response_error("Invalid user ID")
 
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
-    groups = get_client_list(current_user_id=iris_current_user.id,
-                             is_server_administrator=user_is_server_administrator)
+    groups = get_client_list(iris_current_user.id, user_is_server_administrator)
 
     return render_template("modal_manage_user_customers.html", groups=groups, user=user)
 

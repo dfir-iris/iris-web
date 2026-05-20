@@ -16,7 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from app.models.models import AssetsType
+from app.models.assets import AssetsType
 
 from app.datamgmt.case.assets_type import add_asset_type
 from app.datamgmt.case.assets_type import exists_asset_type_with_name

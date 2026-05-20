@@ -82,7 +82,7 @@ class IrisConfig(configparser.ConfigParser):
 
     def _load_azure_key_vault(self, section, option):
         if not (hasattr(self, 'key_vault_name') and self.key_vault_name):
-            return
+            return None
 
         key = f"{section}-{option}".replace('_', '-')
 

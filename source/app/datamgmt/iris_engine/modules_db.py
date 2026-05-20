@@ -18,14 +18,14 @@
 import base64
 import datetime
 
-from app import db, app
+from app.datamgmt.db_operations import db_create
+from app.db import db
+from app.logger import logger
 from app.blueprints.iris_user import iris_current_user
 from app.models.models import IrisHook
 from app.models.models import IrisModule
 from app.models.models import IrisModuleHook
 from app.models.authorization import User
-
-log = app.logger
 
 
 def iris_module_exists(module_name):
@@ -56,8 +56,7 @@ def iris_module_add(module_name, module_human_name, module_description,
     im.module_type = module_type
 
     try:
-        db.session.add(im)
-        db.session.commit()
+        db_create(im)
     except Exception:
         return None
 
@@ -177,8 +176,7 @@ def get_module_config_from_hname(module_name):
 
     if data:
         return data[0]
-    else:
-        return None
+    return None
 
 
 def get_pipelines_args_from_name(module_name):
@@ -243,7 +241,7 @@ def parse_module_parameter(module_parameter):
         param_name = param.split('##')[1]
 
     except Exception as e:
-        log.exception(e)
+        logger.exception(e)
         return None, None, None, None
 
     mod_config, mod_name, mod_iname = get_module_config_from_id(mod_id)
@@ -258,3 +256,13 @@ def parse_module_parameter(module_parameter):
         return None, None, None, None
 
     return mod_config, mod_id, mod_name, mod_iname, parameter
+
+
+def deregister_module_from_hook(module_id: int, iris_hook_name: str):
+    hooks = IrisModuleHook.query.filter(
+        IrisModuleHook.module_id == module_id,
+        IrisHook.hook_name == iris_hook_name,
+        IrisModuleHook.hook_id == IrisHook.id
+    ).all()
+    for hook in hooks:
+        db.session.delete(hook)

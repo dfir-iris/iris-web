@@ -20,7 +20,8 @@ from flask import Blueprint
 from flask import request
 from marshmallow.exceptions import ValidationError
 
-from app.blueprints.access_controls import ac_api_requires, ac_fast_check_current_user_has_case_access
+from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
 from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_deleted
@@ -33,12 +34,13 @@ from app.business.events import events_update
 from app.business.events import events_delete
 from app.models.cases import CasesEvent
 from app.schema.marshables import EventSchema
-from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.business.cases import cases_exists
 from app.iris_engine.utils.collab import notify
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.module_handler.module_handler import call_deprecated_on_preload_modules_hook
+from app.blueprints.iris_user import iris_current_user
 
 
 class Events:
@@ -82,7 +84,7 @@ class Events:
         except ValidationError as e:
             return response_api_error('Data error', data=e.normalized_messages())
 
-    def get(self, case_identifier, identifier):
+    def read(self, case_identifier, identifier):
         if not cases_exists(case_identifier):
             return response_api_not_found()
 
@@ -141,7 +143,7 @@ class Events:
                 return ac_api_return_access_denied(caseid=event.case_id)
             self._check_event_and_case_identifier_match(event, case_identifier)
 
-            events_delete(event)
+            events_delete(iris_current_user, event)
 
             return response_api_deleted()
         except ObjectNotFoundError:
@@ -163,7 +165,7 @@ def create_event(case_identifier):
 @case_events_blueprint.get('/<int:identifier>')
 @ac_api_requires()
 def get_event(case_identifier, identifier):
-    return events.get(case_identifier, identifier)
+    return events.read(case_identifier, identifier)
 
 
 @case_events_blueprint.put('/<int:identifier>')

@@ -1,0 +1,28 @@
+{{- if .Values.ingress.traefik.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ .Values.ingress.name }}
+  {{- with .Values.ingress.customAnnotations }}
+  annotations:
+  {{- range $k, $v := . }}
+    {{- if not (hasPrefix "nginx.ingress.kubernetes.io" $k) }}
+    {{ $k }}: {{ $v }}
+    {{- end }}
+  {{- end }}
+  {{- end }}
+spec:
+  entryPoints:
+    - {{ .Values.ingress.traefik.entryPoint | default "web" }}
+  routes:
+  {{- range $host := .Values.ingress.hosts }}
+    {{- range $path := $host.paths }}
+    - kind: Rule
+      match: >
+        Host(`{{ $host.host }}`) && PathPrefix(`{{ $path.path }}`)
+      services:
+        - name: {{ $.Values.irisapp.name }}
+          port: {{ $.Values.irisapp.service.port }}
+    {{- end }}
+  {{- end }}
+{{- end }}

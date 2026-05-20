@@ -1,7 +1,11 @@
 [tool.ruff.lint]
 preview = true
-select = ["E101", "E225", "E23", "E24", "E3", "E4", "E7", "E9", "F", "PLR0402", "RET506", "TID252", "UP032", "W29"]
+select = ["ARG003", "ARG005", "B00", "E101", "E20", "E211", "E221", "E225", "E226", "E272", "E23", "E24", "E3", "E4", "E7", "E9", "F", "FURB142", "FURB145", "FURB148", "PLR0402", "RET501", "RET505", "RET506", "RUF029", "RUF100", "TID252", "UP032", "W29", "W391"]
 ignore = ["E402", "E711", "E712", "E721", "E722"]
+
+[tool.vulture]
+paths = ["source/app", ".vulture.ignore"]
+ignore_decorators = ["@*.route", "@app.*", "@*.post", "@*.get", "@*.put", "@*.delete", "@pre_load", "@post_load"]
 
 [tool.importlinter]
 root_package = "app"
@@ -24,8 +28,8 @@ allow_indirect_imports = true
 [[tool.importlinter.contracts]]
 name = "Do not import API layer from the business layer"
 type = "forbidden"
-source_modules = ["app.business.access_controls", "app.business.assets"]
-forbidden_modules = "app.blueprints.iris_user"
+source_modules = ["app.business.access_controls", "app.business.assets", "app.business.cases", "app.business.alerts"]
+forbidden_modules = "app.blueprints"
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
@@ -36,9 +40,44 @@ forbidden_modules = "sqlalchemy"
 allow_indirect_imports = true
 
 [[tool.importlinter.contracts]]
-name = "Do not import API layer from the persistence layer"
+name = "Do not import API layer from the persistence layer (access_controls)"
 type = "forbidden"
-source_modules = "app.datamgmt.dashboard"
+source_modules = "app.datamgmt"
+forbidden_modules = "app.blueprints.access_controls"
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Do not import API layer from the persistence layer (iris_user)"
+type = "forbidden"
+source_modules = ["app.datamgmt.case", "app.datamgmt.datastore", "app.datamgmt.filters"]
 forbidden_modules = "app.blueprints.iris_user"
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Do not import marshables from the persistence layer"
+type = "forbidden"
+source_modules = ["app.datamgmt.manage.manage_case_state_db", "app.datamgmt.manage.manage_groups_db"]
+forbidden_modules = "app.schema.marshables"
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Do not import marshmallow from the persistence layer"
+type = "forbidden"
+source_modules = "app.datamgmt.client"
+forbidden_modules = "marshmallow"
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Do not import the engine from the persistence layer"
+type = "forbidden"
+source_modules = "app.datamgmt.case"
+forbidden_modules = "app.iris_engine"
+allow_indirect_imports = true
+
+[[tool.importlinter.contracts]]
+name = "Do not import the persistence layer from the models"
+type = "forbidden"
+source_modules = "app.models.cases"
+forbidden_modules = "app.datamgmt"
 allow_indirect_imports = true
 

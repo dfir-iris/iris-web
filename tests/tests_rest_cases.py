@@ -196,33 +196,33 @@ class TestsRestCases(TestCase):
 
     def test_update_case_should_return_200(self):
         identifier = self._subject.create_dummy_case()
-        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'case_name': 'new name' })
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'case_name': 'new name'})
         self.assertEqual(200, response.status_code)
 
     def test_update_case_should_allow_to_update_severity(self):
         identifier = self._subject.create_dummy_case()
-        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'severity_id': 5 }).json()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'severity_id': 5}).json()
         self.assertEqual(5, response['severity_id'])
 
     def test_update_case_should_allow_to_update_classification(self):
         identifier = self._subject.create_dummy_case()
-        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'classification_id': 3 }).json()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'classification_id': 3}).json()
         self.assertEqual(3, response['classification_id'])
 
     def test_update_case_should_allow_to_update_owner(self):
         user = self._subject.create_dummy_user()
         identifier = self._subject.create_dummy_case()
-        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'owner_id': user.get_identifier() }).json()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'owner_id': user.get_identifier()}).json()
         self.assertEqual(user.get_identifier(), response['owner']['id'])
 
     def test_update_case_should_allow_to_update_state(self):
         identifier = self._subject.create_dummy_case()
-        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'state_id': 2 }).json()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'state_id': 2}).json()
         self.assertEqual(2, response['state']['state_id'])
 
     def test_update_case_should_allow_to_update_status(self):
         identifier = self._subject.create_dummy_case()
-        response = self._subject.update(f'/api/v2/cases/{identifier}', { 'status_id': 2 }).json()
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'status_id': 2}).json()
         self.assertEqual(2, response['status_id'])
 
     def test_update_case_should_allow_to_update_customer(self):

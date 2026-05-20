@@ -16,10 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from app import db
+from app.db import db
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import NoteDirectory
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import ObjectNotFoundError
 from app.datamgmt.case.case_notes_db import get_directory
 from app.datamgmt.case.case_notes_db import delete_directory
 from app.datamgmt.case.case_notes_db import paginate_notes_directories

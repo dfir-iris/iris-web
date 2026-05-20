@@ -22,21 +22,22 @@ from marshmallow import ValidationError
 from flask import Blueprint
 from flask import request
 
-from app import db
+from app.db import db
 from app import app
 from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.manage.manage_groups_db import add_all_cases_access_to_group
+from app.datamgmt.manage.manage_groups_db import get_groups_list
+from app.datamgmt.manage.manage_groups_db import get_users_by_group_identifiers
 from app.datamgmt.manage.manage_groups_db import add_case_access_to_group
 from app.datamgmt.manage.manage_groups_db import delete_group
 from app.datamgmt.manage.manage_groups_db import get_group
 from app.datamgmt.manage.manage_groups_db import get_group_details
 from app.datamgmt.manage.manage_groups_db import get_group_with_members
-from app.datamgmt.manage.manage_groups_db import get_groups_list_hr_perms
 from app.datamgmt.manage.manage_groups_db import remove_cases_access_from_group
 from app.datamgmt.manage.manage_groups_db import remove_user_from_group
 from app.datamgmt.manage.manage_groups_db import update_group_members
 from app.datamgmt.manage.manage_users_db import get_user
-from app.iris_engine.access_control.utils import ac_ldp_group_removal
+from app.iris_engine.access_control.utils import ac_ldp_group_removal, ac_permission_to_list
 from app.iris_engine.access_control.utils import ac_ldp_group_update
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac_from_users_list
 from app.models.authorization import Permissions, ac_flag_match_mask
@@ -59,7 +60,12 @@ log = app.logger
 @manage_groups_rest_blueprint.route('/manage/groups/list', methods=['GET'])
 @ac_api_requires(Permissions.server_administrator)
 def manage_groups_index():
-    groups = get_groups_list_hr_perms()
+    groups = get_groups_list()
+    groups = AuthorizationGroupSchema().dump(groups, many=True)
+    group_to_users = get_users_by_group_identifiers()
+    for group in groups:
+        group['group_permissions_list'] = ac_permission_to_list(group['group_permissions'])
+        group['group_members'] = group_to_users.get(group['group_id'], [])
 
     return response_success('', data=groups)
 
@@ -212,6 +218,17 @@ def manage_groups_members_delete(cur_id, cur_id_2):
     group = get_group_with_members(cur_id)
 
     return response_success('Member deleted from group', data=group)
+
+
+@manage_groups_rest_blueprint.route('/manage/groups/<int:cur_id>/cases-access', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def manage_groups_cac_list_cases(cur_id):
+
+    group = get_group_details(cur_id)
+    if not group:
+        return response_error("Invalid group ID")
+
+    return response_success(data=group)
 
 
 @manage_groups_rest_blueprint.route('/manage/groups/<int:cur_id>/cases-access/update', methods=['POST'])

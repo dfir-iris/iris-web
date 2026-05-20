@@ -18,13 +18,14 @@
 
 from flask import Blueprint
 
-from app.blueprints.rest.v2.manage_routes.groups import create_groups_blueprint
+from app.blueprints.rest.v2.manage_routes.groups import groups_blueprint
 from app.blueprints.rest.v2.manage_routes.users import users_blueprint
 from app.blueprints.rest.v2.manage_routes.customers import customers_blueprint
+from app.blueprints.rest.v2.manage_routes.server import server_blueprint
 
-manage_v2_blueprint = Blueprint('manage', __name__, url_prefix='/manage')
+manage_v2_blueprint = Blueprint("manage", __name__, url_prefix="/manage")
 
-groups_blueprint = create_groups_blueprint()
 manage_v2_blueprint.register_blueprint(groups_blueprint)
 manage_v2_blueprint.register_blueprint(users_blueprint)
 manage_v2_blueprint.register_blueprint(customers_blueprint)
+manage_v2_blueprint.register_blueprint(server_blueprint)

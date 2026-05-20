@@ -17,7 +17,7 @@
 from sqlalchemy import and_
 
 from app import ac_current_user_has_permission
-from app import db
+from app.db import db
 from app.models.cases import Cases
 from app.models.authorization import Group
 from app.models.authorization import UserClient
@@ -167,9 +167,6 @@ def user_has_client_access(user_id: int, client_id: int) -> bool:
     Returns:
         bool: True if the user has access to the client
     """
-    if ac_current_user_has_permission(Permissions.server_administrator):
-        return True
-
     result = UserClient.query.filter(
         UserClient.user_id == user_id,
         UserClient.client_id == client_id
@@ -193,12 +190,34 @@ def remove_duplicate_user_case_effective_accesses(user_id, case_id):
     return True
 
 
-def set_user_case_effective_access(access_level, case_id, user_id):
+def add_user_case_effective_access(user_identifier, case_identifier, access_level):
     uac = UserCaseEffectiveAccess.query.where(and_(
-        UserCaseEffectiveAccess.user_id == user_id,
-        UserCaseEffectiveAccess.case_id == case_id
+        UserCaseEffectiveAccess.user_id == user_identifier,
+        UserCaseEffectiveAccess.case_id == case_identifier
     )).first()
     if uac:
         uac = uac[0]
         uac.access_level = access_level
+    db.session.commit()
+
+
+def add_several_user_effective_access(user_identifiers, case_identifier, access_level):
+    """
+    Directly add a set of effective user access
+    """
+
+    UserCaseEffectiveAccess.query.filter(
+        UserCaseEffectiveAccess.case_id == case_identifier,
+        UserCaseEffectiveAccess.user_id.in_(user_identifiers)
+    ).delete()
+
+    access_to_add = []
+    for user_id in user_identifiers:
+        ucea = UserCaseEffectiveAccess()
+        ucea.user_id = user_id
+        ucea.case_id = case_identifier
+        ucea.access_level = access_level
+        access_to_add.append(ucea)
+
+    db.session.add_all(access_to_add)
     db.session.commit()

@@ -61,4 +61,3 @@ def downgrade():
 
     # Drop AlertSimilarity table
     op.drop_table('alert_similarity')
-

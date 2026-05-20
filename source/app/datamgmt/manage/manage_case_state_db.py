@@ -17,7 +17,6 @@
 from typing import List
 
 from app.models.cases import CaseState
-from app.schema.marshables import CaseStateSchema
 
 
 def get_case_states_list() -> List[dict]:
@@ -26,9 +25,7 @@ def get_case_states_list() -> List[dict]:
     Returns:
         List[dict]: List of case state
     """
-    case_state = CaseState.query.all()
-
-    return CaseStateSchema(many=True).dump(case_state)
+    return CaseState.query.all()
 
 
 def get_case_state_by_id(cur_id: int) -> CaseState:

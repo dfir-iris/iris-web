@@ -20,7 +20,7 @@ import os
 import urllib.parse
 from celery.signals import task_prerun
 
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.case.case_db import get_case
 from app.iris_engine.module_handler.module_handler import pipeline_dispatcher
@@ -82,11 +82,10 @@ def task_case_update(module, pipeline, pipeline_args, caseid):
 
         return IStatus.I2UnexpectedResult("Unable to build path")
 
-    else:
-        # The user do not have any context so we cannot update
-        # Return an error
-        errors.append('Current user does not have a valid case in context')
-        return IStatus.I2UnexpectedResult("Invalid context")
+    # The user do not have any context so we cannot update
+    # Return an error
+    errors.append('Current user does not have a valid case in context')
+    return IStatus.I2UnexpectedResult("Invalid context")
 
 
 def chunks(lst, n):

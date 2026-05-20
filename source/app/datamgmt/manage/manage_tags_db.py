@@ -21,7 +21,7 @@ from functools import reduce
 from sqlalchemy import and_
 from flask_sqlalchemy.pagination import Pagination
 
-from app import db
+from app.db import db
 from app.logger import logger
 from app.models.models import Tags
 from app.datamgmt.conversions import convert_sort_direction
@@ -89,4 +89,3 @@ def add_db_tag(tag_title, tag_namespace=None):
         raise e
 
     return tag
-

@@ -26,7 +26,7 @@ from flask_login import login_user
 
 from app import bc
 from app import app
-from app import db
+from app.db import db
 from app.business.cases import cases_get_by_identifier
 from app.business.cases import cases_get_first
 from app.logger import logger
@@ -153,7 +153,16 @@ def update_session_current_case(user: User):
     }
 
 
-def generate_auth_tokens(user):
+def _mfa_required_for_user(user) -> bool:
+    if 'SERVER_SETTINGS' not in app.config:
+        app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
+
+    enforce_mfa = bool(app.config['SERVER_SETTINGS'].get('enforce_mfa'))
+    user_has_mfa = bool(getattr(user, 'mfa_setup_complete', False)) and bool(getattr(user, 'mfa_secrets', None))
+    return enforce_mfa and user_has_mfa
+
+
+def generate_auth_tokens(user, mfa_verified: bool = False):
     """
     Generate access and refresh tokens with essential user data
 
@@ -168,12 +177,18 @@ def generate_auth_tokens(user):
         days=app.config.get('REFRESH_TOKEN_EXPIRES_DAYS', 14)
     )
 
+    mfa_required = _mfa_required_for_user(user)
+    effective_mfa_verified = True if not mfa_required else bool(mfa_verified)
+
     # Generate access token with user data
     access_token_payload = {
         'user_id': user.id,
         'user_name': user.name,
         'user_email': user.email,
         'user_login': user.user,
+        'type': 'access',
+        'mfa_required': mfa_required,
+        'mfa_verified': effective_mfa_verified,
         'exp': access_token_expiry
     }
     access_token = jwt.encode(
@@ -214,11 +229,17 @@ def validate_auth_token(token):
     """
     try:
         payload = jwt.decode(token, app.config.get('SECRET_KEY'), algorithms=['HS256'])
+
+        if payload.get('type') != 'access':
+            return None
+
         return {
             'user_id': payload.get('user_id'),
             'user_login': payload.get('user_login'),
-            'user_name': payload.get('username'),
+            'user_name': payload.get('user_name'),
             'user_email': payload.get('user_email'),
+            'mfa_required': payload.get('mfa_required', False),
+            'mfa_verified': payload.get('mfa_verified', False),
         }
     except jwt.ExpiredSignatureError:
         return None

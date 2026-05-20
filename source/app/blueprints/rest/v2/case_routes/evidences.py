@@ -23,8 +23,8 @@ from marshmallow import ValidationError
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
 from app.models.authorization import CaseAccessLevel
-from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.rest.endpoints import response_api_created
@@ -159,7 +159,7 @@ case_evidences_blueprint = Blueprint('case_evidences_rest_v2', __name__, url_pre
 
 @case_evidences_blueprint.get('')
 @ac_api_requires()
-def get_evidences(case_identifier):
+def search_evidences(case_identifier):
     return evidences_operations.search(case_identifier)
 
 

@@ -33,8 +33,7 @@ def _get_engine_name(task):
 def _get_success(task_result: IIStatus):
     if task_result.is_success():
         return 'Success'
-    else:
-        return 'Failure'
+    return 'Failure'
 
 
 def _dim_tasks_is_legacy(task):

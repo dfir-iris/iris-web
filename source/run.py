@@ -28,4 +28,3 @@ if __name__ != '__main__':
 
 if __name__ == "__main__":
     socket_io.run(app, host='127.0.0.1', port=8000, debug=True)
-

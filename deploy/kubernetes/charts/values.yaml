@@ -224,6 +224,9 @@ ingress:
   enabled: true
   name: iris-ingress
   className: nginx
+  traefik:
+    enabled: false
+    entryPoint: web
   enableTls: false
   sslRedirect: false
   customAnnotations:

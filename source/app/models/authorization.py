@@ -20,7 +20,8 @@ import enum
 import secrets
 import uuid
 from flask_login import UserMixin
-from sqlalchemy import BigInteger, JSON
+from sqlalchemy import BigInteger
+from sqlalchemy import JSON
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
@@ -32,7 +33,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app import db
+from app.db import db
 
 
 class CaseAccessLevel(enum.Enum):
@@ -257,3 +258,18 @@ class User(UserMixin, db.Model):
 
 def ac_flag_match_mask(flag, mask):
     return (flag & mask) == mask
+
+
+def ac_has_permission_server_administrator(permissions):
+    return ac_flag_match_mask(permissions, Permissions.server_administrator.value)
+
+
+def ac_access_level_mask_from_val_list(access_levels) -> int:
+    """
+    Return an access level mask from a list of access levels
+    """
+    am = 0
+    for acc in access_levels:
+        am |= int(acc)
+
+    return am

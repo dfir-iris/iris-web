@@ -29,4 +29,3 @@ class SlicedResult:
 
     def __len__(self) -> int:
         return self._total
-

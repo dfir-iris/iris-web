@@ -23,7 +23,7 @@ from flask import Blueprint
 from flask import request
 
 from app import app
-from app import db
+from app.db import db
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.iris_user import iris_current_user
@@ -205,6 +205,21 @@ def manage_user_customers_(cur_id):
     track_activity(f"customers membership of user {cur_id} updated", ctx_less=True)
 
     return response_success("User customers updated", data=user)
+
+
+@manage_users_rest_blueprint.route('/manage/users/<int:cur_id>/cases-access', methods=['GET'])
+@ac_api_requires(Permissions.server_administrator)
+def manage_user_cac_list_cases(cur_id):
+
+    user = get_user_details(user_id=cur_id)
+
+    if not user:
+        return response_error("Invalid user ID")
+
+    # get_user_details returns user_cases_access (API v2 schema) but keep fallback for older payloads
+    cases_access = user.get('user_cases_access', user.get('cases_access', []))
+
+    return response_success(data=cases_access)
 
 
 @manage_users_rest_blueprint.route('/manage/users/<int:cur_id>/cases-access/update', methods=['POST'])

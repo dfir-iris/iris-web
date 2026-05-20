@@ -22,11 +22,11 @@ from marshmallow import ValidationError
 from flask import Blueprint
 from flask import request
 
-from app import db
+from app.db import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.iris_user import iris_current_user
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_create
 from app.business.tasks import tasks_get
@@ -230,7 +230,7 @@ def case_comment_task_add(cur_id: int, caseid: int):
             "comment": comment_schema.dump(comment),
             "task": CaseTaskSchema().dump(task)
         }
-        call_modules_hook('on_postload_task_commented', data=hook_data, caseid=caseid)
+        call_modules_hook('on_postload_task_commented', hook_data, caseid=caseid)
 
         track_activity(f"task \"{task.task_title}\" commented", caseid=caseid)
         return response_success("Task commented", data=comment_schema.dump(comment))
@@ -266,11 +266,11 @@ def case_comment_task_edit(cur_id: int, com_id: int, caseid: int):
 @ac_api_requires()
 def case_comment_task_delete(cur_id: int, com_id: int, caseid: int):
 
-    success, msg = delete_task_comment(task_id=cur_id, comment_id=com_id)
+    success, msg = delete_task_comment(iris_current_user.id, cur_id, com_id)
     if not success:
         return response_error(msg)
 
-    call_modules_hook('on_postload_task_comment_delete', data=com_id, caseid=caseid)
+    call_modules_hook('on_postload_task_comment_delete', com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on task {cur_id} deleted", caseid=caseid)
     return response_success(msg)

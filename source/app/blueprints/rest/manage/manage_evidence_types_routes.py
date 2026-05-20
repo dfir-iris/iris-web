@@ -22,7 +22,7 @@ from flask import Blueprint
 from flask import Response
 from flask import request
 
-from app import db
+from app.db import db
 from app.datamgmt.manage.manage_evidence_types_db import get_evidence_types_list
 from app.datamgmt.manage.manage_evidence_types_db import get_evidence_type_by_id
 from app.datamgmt.manage.manage_evidence_types_db import verify_evidence_type_in_use

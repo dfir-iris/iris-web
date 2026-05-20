@@ -22,7 +22,7 @@ from flask import render_template
 from flask import url_for
 
 from app.business.iocs import iocs_get
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import ObjectNotFoundError
 from app.datamgmt.case.assets_type import get_assets_types
 from app.datamgmt.case.case_db import get_case
 from app.datamgmt.case.case_iocs_db import get_case_iocs_comments_count

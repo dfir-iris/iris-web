@@ -1,6 +1,6 @@
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2023 - DFIR-IRIS
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -16,21 +16,24 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-
 from unittest import TestCase
+from iris import Iris
 
-from app import app
-from tests.test_helper import TestHelper
-
-app.testing = True
+_FIRST_ASSET_TYPE_IDENTIFIER = 1
 
 
-class TestCaseTasksRoutes(TestCase):
+class TestsRestAssetTypes(TestCase):
+
     def setUp(self) -> None:
-        self._test_helper = TestHelper()
+        self._subject = Iris()
 
-    def test_case_get_tasks_should_redirect_to_cid_1_if_no_cid_is_provided(self):
-        self._test_helper.verify_path_without_cid_redirects_correctly(
-            'case_tasks.case_tasks',
-            'You should be redirected automatically to target URL: <a href="/case/tasks?cid=1">/case/tasks?cid=1</a>'
-        )
+    def tearDown(self):
+        self._subject.clear_database()
+
+    def test_update_asset_type_should_return_200(self):
+        url = f'/manage/asset-type/update/{_FIRST_ASSET_TYPE_IDENTIFIER}'
+        data = {'asset_name': 'Account', 'asset_description': 'Generic Account'}
+        with open('data/img/desktop.png', 'rb') as file_not_compromised:
+            files = {'asset_icon_not_compromised': file_not_compromised, 'asset_icon_compromised': ('', '')}
+            response = self._subject.post_multipart_encoded_files(url, data, files)
+            self.assertEqual(200, response.status_code)

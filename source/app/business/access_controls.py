@@ -16,15 +16,16 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from app import db
+from app.db import db
 
 from app.datamgmt.manage.manage_access_control_db import get_case_effective_access
 from app.datamgmt.manage.manage_access_control_db import remove_duplicate_user_case_effective_accesses
-from app.datamgmt.manage.manage_access_control_db import set_user_case_effective_access
+from app.datamgmt.manage.manage_access_control_db import add_user_case_effective_access
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.logger import logger
 from app.models.authorization import UserCaseAccess
+from app.models.authorization import ac_has_permission_server_administrator
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import ac_flag_match_mask
 
@@ -64,7 +65,7 @@ def set_case_effective_access_for_user(user_id, case_id, access_level: int):
     if remove_duplicate_user_case_effective_accesses(user_id, case_id):
         logger.error(f'Multiple access found for user {user_id} and case {case_id}')
 
-    set_user_case_effective_access(access_level, case_id, user_id)
+    add_user_case_effective_access(user_id, case_id, access_level)
 
 
 def ac_fast_check_user_has_case_access(user_id, cid, expected_access_levels: list[CaseAccessLevel]):
@@ -94,5 +95,26 @@ def ac_fast_check_user_has_case_access(user_id, cid, expected_access_levels: lis
     return None
 
 
-def access_controls_user_has_customer_access(user, customer_identifier):
-    return user_has_client_access(user.id, customer_identifier)
+def access_controls_user_has_customer_access(
+    user,
+    permissions,
+    customer_identifier,
+    fallback_customer_access=None
+):
+    if ac_has_permission_server_administrator(permissions):
+        return True
+
+    user_id = getattr(user, 'id', None)
+    if user_id is None:
+        return False
+
+    if user_has_client_access(user_id, customer_identifier):
+        return True
+
+    if fallback_customer_access and (hasattr(user, 'is_authenticated') or hasattr(user, 'user')):
+        try:
+            return fallback_customer_access(customer_identifier)
+        except Exception:
+            return False
+
+    return False

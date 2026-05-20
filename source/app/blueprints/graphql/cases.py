@@ -27,6 +27,7 @@ from graphene import Int
 from graphene import Float
 from graphene import String
 
+from app.blueprints.access_controls import ac_current_user_has_customer_access
 from app.models.cases import Cases
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
@@ -36,14 +37,12 @@ from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.business.cases import cases_update
 from app.business.cases import cases_get_by_identifier
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_permission
 from app.blueprints.graphql.permissions import permissions_check_current_user_has_some_case_access
 from app.iris_engine.module_handler.module_handler import call_deprecated_on_preload_modules_hook
 from app.schema.marshables import CaseSchema
 from app.blueprints.iris_user import iris_current_user
-from app.datamgmt.manage.manage_access_control_db import user_has_client_access
-
 from app.blueprints.graphql.iocs import IOCConnection
 
 
@@ -111,11 +110,11 @@ class CaseCreate(Mutation):
         if classification_id:
             request['classification_id'] = classification_id
 
-        request_data = call_deprecated_on_preload_modules_hook('case_create', request, None)
+        request_data = call_deprecated_on_preload_modules_hook('case_create', request)
         schema = CaseSchema()
         case = schema.load(request_data)
         case_template_id = request_data.pop('case_template_id', None)
-        result = cases_create(case, case_template_id)
+        result = cases_create(iris_current_user, case, case_template_id)
         return CaseCreate(case=result)
 
 
@@ -185,7 +184,7 @@ class CaseUpdate(Mutation):
 
         # If user tries to update the customer, check if the user has access to the new customer
         if request.get('case_customer') and request.get('case_customer') != case.client_id:
-            if not user_has_client_access(iris_current_user.id, request.get('case_customer')):
+            if not ac_current_user_has_customer_access(request.get('case_customer')):
                 raise BusinessProcessingError('Invalid customer ID. Permission denied.')
 
         if 'case_name' in request:

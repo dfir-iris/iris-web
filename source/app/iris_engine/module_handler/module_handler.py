@@ -17,8 +17,8 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-import traceback
 
+import traceback
 import base64
 import importlib
 from packaging import version
@@ -30,8 +30,9 @@ from app import app
 from app.blueprints.iris_user import iris_current_user
 from app.logger import logger
 from app import celery
-from app import db
+from app.db import db
 from app.datamgmt.iris_engine.modules_db import get_module_config_from_hname
+from app.datamgmt.iris_engine.modules_db import deregister_module_from_hook
 from app.datamgmt.iris_engine.modules_db import iris_module_add
 from app.datamgmt.iris_engine.modules_db import iris_module_exists
 from app.datamgmt.iris_engine.modules_db import modules_list_pipelines
@@ -384,8 +385,7 @@ def register_hook(module_id: int, iris_hook_name: str, manual_hook_name: str = N
 
         return True, [f"Hook {iris_hook_name} registered"]
 
-    else:
-        return True, [f"Hook {iris_hook_name} already registered"]
+    return True, [f"Hook {iris_hook_name} already registered"]
 
 
 def deregister_from_hook(module_id: int, iris_hook_name: str):
@@ -398,15 +398,8 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
     :return: IrisInterfaceStatus object
     """
     logger.info(f'Deregistering module #{module_id} from {iris_hook_name}')
-    hooks = IrisModuleHook.query.filter(
-        IrisModuleHook.module_id == module_id,
-        IrisHook.hook_name == iris_hook_name,
-        IrisModuleHook.hook_id == IrisHook.id
-    ).all()
-    if hooks:
-        for hook in hooks:
-            logger.info(f'Deregistered module #{module_id} from {iris_hook_name}')
-            db.session.delete(hook)
+    deregister_module_from_hook(module_id, iris_hook_name)
+    logger.info(f'Deregistered module #{module_id} from {iris_hook_name}')
 
     return True, ['Hook deregistered']
 
@@ -415,6 +408,11 @@ def deregister_from_hook(module_id: int, iris_hook_name: str):
 def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_user, caseid):
     """
     Wrap a hook call into a Celery task to run asynchronously
+
+    note: even if the caseid parameter does not seem very useful, it is used when tasks are retrieved to display the
+          table of "DFIR-IRIS Module Tasks".
+          see endpoint /dim/tasks/list
+          see tests_rest_module_tasks.TestsRestModuleTasks.test_get_module_tasks_should_return_case_identifier
 
     :param self: Task instance
     :param module_name: Module name to instanciate and call
@@ -581,7 +579,7 @@ def call_modules_hook(hook_name: str, data: any, caseid: int = None, hook_ui_nam
     return data
 
 
-def call_deprecated_on_preload_modules_hook(hook_name: str, data: any, case_identifier) -> any:
+def call_deprecated_on_preload_modules_hook(hook_name: str, data: any, case_identifier=None) -> any:
     hook_name = f'on_preload_{hook_name}'
     logger.warning(f'DEPRECATION WARNING: Hook {hook_name} has been deprecated and will be removed in a future version')
     return call_modules_hook(hook_name, data, caseid=case_identifier)

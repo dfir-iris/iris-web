@@ -26,11 +26,13 @@ from app.blueprints.rest.v2.notes import notes_blueprint
 from app.blueprints.rest.v2.auth import auth_blueprint
 from app.blueprints.rest.v2.cases import cases_blueprint
 from app.blueprints.rest.v2.dashboard import dashboard_blueprint
+from app.blueprints.rest.v2.global_tasks import global_tasks_blueprint
 from app.blueprints.rest.v2.iocs import iocs_blueprint
 from app.blueprints.rest.v2.manage import manage_v2_blueprint
 from app.blueprints.rest.v2.tags import tags_blueprint
 from app.blueprints.rest.v2.tasks import tasks_blueprint
 from app.blueprints.rest.v2.profile import profile_blueprint
+from app.blueprints.rest.v2.alerts_filters import alerts_filters_blueprint
 
 
 # Create root /api/v2 blueprint
@@ -40,6 +42,7 @@ rest_v2_blueprint = Blueprint('rest_v2', __name__, url_prefix='/api/v2')
 rest_v2_blueprint.register_blueprint(cases_blueprint)
 rest_v2_blueprint.register_blueprint(auth_blueprint)
 rest_v2_blueprint.register_blueprint(tasks_blueprint)
+rest_v2_blueprint.register_blueprint(global_tasks_blueprint)
 rest_v2_blueprint.register_blueprint(iocs_blueprint)
 rest_v2_blueprint.register_blueprint(assets_blueprint)
 rest_v2_blueprint.register_blueprint(events_blueprint)
@@ -50,3 +53,4 @@ rest_v2_blueprint.register_blueprint(dashboard_blueprint)
 rest_v2_blueprint.register_blueprint(manage_v2_blueprint)
 rest_v2_blueprint.register_blueprint(tags_blueprint)
 rest_v2_blueprint.register_blueprint(profile_blueprint)
+rest_v2_blueprint.register_blueprint(alerts_filters_blueprint)

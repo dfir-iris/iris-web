@@ -18,13 +18,13 @@
 
 from datetime import datetime
 
-from app import db
+from app.db import db
 from app.datamgmt.persistence_error import PersistenceError
 from app.blueprints.iris_user import iris_current_user
 from app.logger import logger
-from app.business.errors import BusinessProcessingError
-from app.business.errors import UnhandledBusinessError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import UnhandledBusinessError
+from app.models.errors import ObjectNotFoundError
 from app.datamgmt.case.case_notes_db import search_notes_in_case
 from app.datamgmt.case.case_notes_db import get_note
 from app.datamgmt.case.case_notes_db import update_note_revision
@@ -62,7 +62,7 @@ def notes_create(note: Notes, case_identifier):
         db.session.add(note_revision)
 
         add_obj_history_entry(note, 'created note', commit=True)
-        note = call_modules_hook('on_postload_note_create', data=note, caseid=case_identifier)
+        note = call_modules_hook('on_postload_note_create', note, caseid=case_identifier)
 
         track_activity(f'created note "{note.note_title}"', caseid=case_identifier)
 
@@ -80,16 +80,16 @@ def notes_get(identifier) -> Notes:
     return note
 
 
-def notes_update(note: Notes):
+def notes_update(user, note: Notes):
     try:
-        if not update_note_revision(note):
+        if not update_note_revision(user.id, note):
             logger.debug(f'Note {note.note_id} has not changed, skipping versioning')
 
         note.update_date = datetime.utcnow()
         note.user_id = iris_current_user.id
 
         add_obj_history_entry(note, 'updated note', commit=True)
-        note = call_modules_hook('on_postload_note_update', data=note, caseid=note.note_case_id)
+        note = call_modules_hook('on_postload_note_update', note, caseid=note.note_case_id)
 
         track_activity(f'updated note "{note.note_title}"', caseid=note.note_case_id)
 
@@ -104,9 +104,9 @@ def notes_update(note: Notes):
 
 
 def notes_delete(note: Notes):
-    call_modules_hook('on_preload_note_delete', data=note.note_id, caseid=note.note_case_id)
+    call_modules_hook('on_preload_note_delete', note.note_id, caseid=note.note_case_id)
     delete_note(note.note_id, note.note_case_id)
-    call_modules_hook('on_postload_note_delete', data=note.note_id, caseid=note.note_case_id)
+    call_modules_hook('on_postload_note_delete', note.note_id, caseid=note.note_case_id)
 
     track_activity(f'deleted note "{note.note_title}"', caseid=note.note_case_id)
 

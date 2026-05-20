@@ -30,8 +30,8 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.access_controls import ac_api_return_access_denied
-from app.business.errors import ObjectNotFoundError
-from app.business.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
 from app.schema.marshables import CaseNoteDirectorySchema
 from app.schema.marshables import SearchCaseNoteDirectorySchema
 from app.business.notes_directories import notes_directories_create
