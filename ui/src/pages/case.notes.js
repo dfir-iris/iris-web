@@ -522,7 +522,7 @@ function save_note() {
     let currentNoteTitle = $('#currentNoteTitle').text() ? $('#currentNoteTitle').text() : $('#currentNoteTitleInput').val();
     data_sent['note_title'] = currentNoteTitle;
     data_sent['csrf_token'] = $('#csrf_token').val();
-    data_sent['note_content'] = $('#note_content').val();
+    data_sent['note_content'] = note_editor ? note_editor.getValue() : "not found";
     let ret = get_custom_attributes_fields();
     let has_error = ret[0].length > 0;
     let attributes = ret[1];

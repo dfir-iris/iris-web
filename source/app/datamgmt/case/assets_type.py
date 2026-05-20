@@ -18,7 +18,7 @@
 
 from sqlalchemy import func
 
-from app.models.models import AssetsType
+from app.models.assets import AssetsType
 
 
 def get_assets_types():

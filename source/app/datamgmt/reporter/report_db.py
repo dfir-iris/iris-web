@@ -22,14 +22,11 @@ from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
 from app.datamgmt.case.case_notes_db import get_case_note_comments
-from app.models.models import AnalysisStatus
-from app.models.models import CompromiseStatus
+from app.models.assets import CompromiseStatus, AssetsType, CaseAssets, AnalysisStatus
 from app.models.models import TaskAssignee
-from app.models.models import AssetsType
-from app.models.models import CaseAssets
 from app.models.models import CaseEventsAssets
 from app.models.models import CaseEventsIoc
-from app.models.models import CaseReceivedFile
+from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
@@ -179,8 +176,7 @@ def export_case_evidences_json(case_id):
 
         return [row._asdict() for row in evidences]
 
-    else:
-        return []
+    return []
 
 
 def export_case_notes_json(case_id):

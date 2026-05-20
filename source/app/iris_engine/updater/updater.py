@@ -32,7 +32,7 @@ from pathlib import Path
 from app import app
 from app import cache
 from app import celery
-from app import db
+from app.db import db
 from app import socket_io
 from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_dict
 from app.iris_engine.backup.backup import backup_iris_db
@@ -149,10 +149,9 @@ def is_updates_available():
         db.session.commit()
         return True, f'# New version {release_version} available\n\n{release.get("body")}', release
 
-    else:
-        srv_settings.has_updates_available = False
-        db.session.commit()
-        return False, f'**Current server is up-to-date with {release_version}**', None
+    srv_settings.has_updates_available = False
+    db.session.commit()
+    return False, f'**Current server is up-to-date with {release_version}**', None
 
 
 def init_server_update(release_config):
@@ -324,7 +323,7 @@ def call_ext_updater(update_archive, scope, need_reboot):
                           '1' if need_reboot else '0',                      # Do we need to restart the app
                           '&'])
 
-    except Exception as e :
+    except Exception as e:
         log.error(str(e))
         return False
 

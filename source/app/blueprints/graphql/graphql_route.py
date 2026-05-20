@@ -107,7 +107,7 @@ def _check_authentication_wrapper(f):
                 form = FlaskForm()
                 if not form.validate():
                     return response_error('Invalid CSRF token')
-                elif request.is_json:
+                if request.is_json:
                     request.json.pop('csrf_token')
 
         if not is_user_authenticated(request):

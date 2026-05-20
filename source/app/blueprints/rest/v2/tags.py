@@ -23,7 +23,7 @@ from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.parsing import parse_fields_parameters
 from app.blueprints.rest.parsing import parse_pagination_parameters
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.business.tags import tags_filter
 from app.schema.marshables import TagsSchema
 from app.blueprints.access_controls import ac_api_requires

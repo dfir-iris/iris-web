@@ -22,7 +22,7 @@ from flask import Blueprint
 from flask import Response
 from flask import request
 
-from app import db
+from app.db import db
 from app.datamgmt.manage.manage_case_state_db import get_case_states_list
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_id
 from app.datamgmt.manage.manage_case_state_db import get_cases_using_state
@@ -45,7 +45,8 @@ def list_case_state() -> Response:
         Flask Response object
 
     """
-    l_cl = get_case_states_list()
+    case_states = get_case_states_list()
+    l_cl = CaseStateSchema(many=True).dump(case_states)
 
     return response_success("", data=l_cl)
 

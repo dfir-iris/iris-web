@@ -1,12 +1,12 @@
-from flask import session
 from sqlalchemy import and_
 
-from app import db
+from app.db import db
 from app.business.access_controls import set_case_effective_access_for_user
+from app.datamgmt.manage.manage_access_control_db import add_several_user_effective_access
 from app.logger import logger
 from app.blueprints.iris_user import iris_current_user
 from app.models.cases import Cases
-from app.models.models import Client
+from app.models.customers import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import ac_flag_match_mask
 from app.models.authorization import UserClient
@@ -320,31 +320,9 @@ def ac_add_users_multi_effective_access(users_list, cases_list, access_level):
     Add multiple users to multiple cases with a specific access level
     """
     for case_id in cases_list:
-        ac_add_user_effective_access(users_list, case_id=case_id, access_level=access_level)
+        add_several_user_effective_access(users_list, case_identifier=case_id, access_level=access_level)
 
     return
-
-
-def ac_add_user_effective_access(users_list, case_id, access_level):
-    """
-    Directly add a set of effective user access
-    """
-
-    UserCaseEffectiveAccess.query.filter(
-        UserCaseEffectiveAccess.case_id == case_id,
-        UserCaseEffectiveAccess.user_id.in_(users_list)
-    ).delete()
-
-    access_to_add = []
-    for user_id in users_list:
-        ucea = UserCaseEffectiveAccess()
-        ucea.user_id = user_id
-        ucea.case_id = case_id
-        ucea.access_level = access_level
-        access_to_add.append(ucea)
-
-    db.session.add_all(access_to_add)
-    db.session.commit()
 
 
 def ac_add_user_effective_access_from_map(users_map, case_id):
@@ -368,46 +346,57 @@ def ac_add_user_effective_access_from_map(users_map, case_id):
     db.session.commit()
 
 
-def ac_set_new_case_access(org_members, case_id, customer_id = None):
+def ac_set_new_case_access(user, case_id, customer_id):
     """
     Set a new case access
     """
 
     users = ac_apply_autofollow_groups_access(case_id)
-    if iris_current_user.id in users:
-        del users[iris_current_user.id]
+    if user.id in users:
+        del users[user.id]
 
     users_full = User.query.with_entities(User.id).all()
     users_full_access = list(set([u.id for u in users_full]) - set(users.keys()))
 
     # Default users case access - Full access
-    ac_add_user_effective_access(users_full_access, case_id, CaseAccessLevel.deny_all.value)
+    add_several_user_effective_access(users_full_access, case_id, CaseAccessLevel.deny_all.value)
 
+    set_user_case_access(user, case_id)
+
+    add_several_user_effective_access([user.id], case_id, CaseAccessLevel.full_access.value)
+
+    # Add customer permissions for all users belonging to the customer
+    if customer_id:
+        users_client = get_user_access_levels_by_customer(customer_id)
+        users_map = {u.user_id: u.access_level for u in users_client}
+        ac_add_user_effective_access_from_map(users_map, case_id)
+
+
+# TODO move down into app.datamgmt.manage.manage_access_control_db
+def get_user_access_levels_by_customer(customer_id):
+    users_client = UserClient.query.filter(
+        UserClient.client_id == customer_id
+    ).with_entities(
+        UserClient.user_id,
+        UserClient.access_level
+    ).all()
+    return users_client
+
+
+# TODO try to move down into app.datamgmt.manage.manage_users_db
+def set_user_case_access(user, case_id):
     # Add specific right for the user creating the case
     UserCaseAccess.query.filter(
         UserCaseAccess.case_id == case_id,
-        UserCaseAccess.user_id == iris_current_user.id
+        UserCaseAccess.user_id == user.id
     ).delete()
     db.session.commit()
     uca = UserCaseAccess()
     uca.case_id = case_id
-    uca.user_id = iris_current_user.id
+    uca.user_id = user.id
     uca.access_level = CaseAccessLevel.full_access.value
     db.session.add(uca)
     db.session.commit()
-
-    ac_add_user_effective_access([iris_current_user.id], case_id, CaseAccessLevel.full_access.value)
-
-    # Add customer permissions for all users belonging to the customer
-    if customer_id:
-        users_client = UserClient.query.filter(
-            UserClient.client_id == customer_id
-        ).with_entities(
-            UserClient.user_id,
-            UserClient.access_level
-        ).all()
-        users_map = { u.user_id: u.access_level for u in users_client }
-        ac_add_user_effective_access_from_map(users_map, case_id)
 
 
 def ac_apply_autofollow_groups_access(case_id):
@@ -845,28 +834,3 @@ def ac_access_level_to_list(access_level):
             })
 
     return access_levels
-
-
-def ac_access_level_mask_from_val_list(access_levels):
-    """
-    Return an access level mask from a list of access levels
-    """
-    am = 0
-    for acc in access_levels:
-        am |= int(acc)
-
-    return am
-
-
-def ac_user_has_permission(user, permission):
-    """
-    Return True if user has permission
-    """
-    return ac_flag_match_mask(ac_get_effective_permissions_of_user(user), permission.value)
-
-
-def ac_current_user_has_permission(permission):
-    """
-    Return True if current user has permission
-    """
-    return ac_flag_match_mask(session['permissions'], permission.value)

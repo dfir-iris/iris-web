@@ -18,15 +18,15 @@
 
 from datetime import datetime
 
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.models.cases import CasesEvent
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import ObjectNotFoundError
 from app.util import add_obj_history_entry
 from app.datamgmt.states import update_timeline_state
 from app.datamgmt.case.case_events_db import save_event_category
 from app.datamgmt.case.case_events_db import update_event_assets
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.datamgmt.case.case_events_db import update_event_iocs
 from app.datamgmt.case.case_events_db import get_case_event
 from app.datamgmt.case.case_events_db import delete_event
@@ -44,7 +44,7 @@ def events_create(case_identifier, event: CasesEvent, event_category_id, event_a
     add_obj_history_entry(event, 'created')
 
     db.session.add(event)
-    update_timeline_state(caseid=case_identifier)
+    update_timeline_state(case_identifier)
     db.session.commit()
 
     save_event_category(event.event_id, event_category_id)
@@ -77,7 +77,7 @@ def events_get(identifier) -> CasesEvent:
 def events_update(event: CasesEvent, event_category_id, event_assets, event_iocs, event_sync_iocs_assets) -> CasesEvent:
     add_obj_history_entry(event, 'updated')
 
-    update_timeline_state(caseid=event.case_id)
+    update_timeline_state(event.case_id)
     db.session.commit()
 
     save_event_category(event.event_id, event_category_id)
@@ -98,8 +98,8 @@ def events_update(event: CasesEvent, event_category_id, event_assets, event_iocs
     return event
 
 
-def events_delete(event: CasesEvent):
-    delete_event(event)
+def events_delete(user, event: CasesEvent):
+    delete_event(user.id, event)
 
     call_modules_hook('on_postload_event_delete', event.event_id, caseid=event.case_id)
     collab_notify(event.case_id, 'events', 'deletion', event.event_id)

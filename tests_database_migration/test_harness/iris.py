@@ -98,4 +98,3 @@ class Iris:
             identifier = user['user_id']
             self.get(f'/manage/users/deactivate/{identifier}')
             self.create(f'/manage/users/delete/{identifier}', {})
-

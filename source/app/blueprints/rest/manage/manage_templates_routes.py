@@ -28,7 +28,7 @@ from flask import send_file
 from werkzeug.utils import secure_filename
 
 from app import app
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions

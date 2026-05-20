@@ -22,7 +22,7 @@ from marshmallow import ValidationError
 from flask import Blueprint
 from flask import request
 
-from app import db
+from app.db import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.iris_user import iris_current_user
@@ -45,7 +45,7 @@ from app.blueprints.responses import response_success
 from app.business.evidences import evidences_create
 from app.business.evidences import evidences_delete
 from app.business.evidences import evidences_update
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.iris_engine.module_handler.module_handler import call_deprecated_on_preload_modules_hook
 
 
@@ -189,7 +189,7 @@ def case_comment_evidence_add(cur_id, caseid):
             "comment": comment_schema.dump(comment),
             "evidence": CaseEvidenceSchema().dump(evidence)
         }
-        call_modules_hook('on_postload_evidence_commented', data=hook_data, caseid=caseid)
+        call_modules_hook('on_postload_evidence_commented', hook_data, caseid=caseid)
 
         track_activity(f"evidence \"{evidence.filename}\" commented", caseid=caseid)
         return response_success("Evidence commented", data=comment_schema.dump(comment))
@@ -221,11 +221,11 @@ def case_comment_evidence_edit(cur_id, com_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_evidence_delete(cur_id, com_id, caseid):
-    success, msg = delete_evidence_comment(cur_id, com_id)
+    success, msg = delete_evidence_comment(iris_current_user.id, cur_id, com_id)
     if not success:
         return response_error(msg)
 
-    call_modules_hook('on_postload_evidence_comment_delete', data=com_id, caseid=caseid)
+    call_modules_hook('on_postload_evidence_comment_delete', com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on evidence {cur_id} deleted", caseid=caseid)
     return response_success(msg)

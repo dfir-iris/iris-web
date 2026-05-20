@@ -17,23 +17,28 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import jwt
+import pyotp
+
 from flask import Blueprint
 from flask import session
 from flask import redirect
 from flask import url_for
 from flask import request
+from flask import g
 from flask_login import logout_user
 from oic.oauth2.exception import GrantError
 
 from app import app
-from app import db
+from app import bc
+from app.db import db
 from app import oidc_client
 from app.blueprints.iris_user import iris_current_user
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import ObjectNotFoundError
 from app.logger import logger
 from app.blueprints.access_controls import is_authentication_ldap
 from app.blueprints.access_controls import is_authentication_oidc
 from app.blueprints.access_controls import not_authenticated_redirection_url
+from app.blueprints.rest.api_auth import api_auth
 from app.blueprints.rest.endpoints import response_api_error, response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.business.auth import validate_ldap_login
@@ -62,8 +67,9 @@ def login():
     if is_authentication_oidc() and app.config.get('AUTHENTICATION_LOCAL_FALLBACK') is False:
         return redirect(url_for('login.oidc_login'))
 
-    username = request.json.get('username')
-    password = request.json.get('password')
+    data = request.get_json(silent=True) or {}
+    username = data.get('username')
+    password = data.get('password')
 
     if is_authentication_ldap() is True:
         authed_user = validate_ldap_login(username, password, app.config.get('AUTHENTICATION_LOCAL_FALLBACK'))
@@ -86,14 +92,166 @@ def login():
     return response_api_success(data=user_data)
 
 
+@auth_blueprint.post('/mfa-setup')
+def mfa_setup():
+    """
+    Persist user's MFA secret after validating:
+      - refresh_token is valid (used to identify user_id)
+      - provided TOTP token matches provided secret
+      - provided password matches user (LDAP or local)
+    """
+    data = request.get_json(silent=True) or {}
+
+    refresh_token = data.get('refresh_token')
+    token = data.get('token')
+    mfa_secret = data.get('mfa_secret')
+    user_password = data.get('user_password') or data.get('password')
+
+    if not refresh_token or not token or not mfa_secret or not user_password:
+        return response_api_error('Missing required fields: refresh_token, token, mfa_secret, password')
+
+    try:
+        payload = jwt.decode(refresh_token, app.config.get('SECRET_KEY'), algorithms=['HS256'])
+
+        if payload.get('type') != 'refresh':
+            return response_api_error('Invalid token type')
+
+        user_id = payload.get('user_id')
+        user = users_get_active(user_id)
+
+        totp = pyotp.TOTP(mfa_secret)
+        if not totp.verify(str(token)):
+            track_activity(
+                f"Failed MFA setup for user {user.user}. Invalid token.",
+                ctx_less=True,
+                display_in_ui=False,
+            )
+            return response_api_error('Invalid token')
+
+        has_valid_password = False
+
+        if is_authentication_ldap() is True:
+            if validate_ldap_login(
+                user.user,
+                user_password,
+                local_fallback=app.config.get("AUTHENTICATION_LOCAL_FALLBACK"),
+            ):
+                has_valid_password = True
+        else:
+            if bc.check_password_hash(user.password, user_password):
+                has_valid_password = True
+
+        if not has_valid_password:
+            track_activity(
+                f"Failed MFA setup for user {user.user}. Invalid password.",
+                ctx_less=True,
+                display_in_ui=False,
+            )
+            return response_api_error('Invalid password')
+
+        user.mfa_secrets = mfa_secret
+        user.mfa_setup_complete = True
+        db.session.commit()
+
+        track_activity(
+            f"MFA setup successful for user {user.user}",
+            ctx_less=True,
+            display_in_ui=False,
+        )
+
+        return response_api_success({'mfa_setup_complete': True})
+
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except jwt.ExpiredSignatureError:
+        return response_api_error('Refresh token has expired')
+    except jwt.InvalidTokenError:
+        return response_api_error('Invalid refresh token')
+
+
+@auth_blueprint.post('/mfa-verify')
+def mfa_verify():
+    """
+    Verify a TOTP token against the saved MFA secret.
+    Uses refresh_token to identify the user (no reliance on iris_current_user).
+    """
+    data = request.get_json(silent=True) or {}
+
+    refresh_token = data.get('refresh_token')
+    token = data.get('token')
+
+    if not refresh_token or not token:
+        return response_api_error('Missing required fields: refresh_token, token')
+
+    try:
+        payload = jwt.decode(refresh_token, app.config.get('SECRET_KEY'), algorithms=['HS256'])
+
+        if payload.get('type') != 'refresh':
+            return response_api_error('Invalid token type')
+
+        user_id = payload.get('user_id')
+        user = users_get_active(user_id)
+
+        if not user.mfa_secrets or not user.mfa_setup_complete:
+            return response_api_error('MFA setup required')
+
+        totp = pyotp.TOTP(user.mfa_secrets)
+        if not totp.verify(str(token), valid_window=1):
+            track_activity(
+                f"Failed MFA verification for user {user.user}. Invalid token.",
+                ctx_less=True,
+                display_in_ui=False,
+            )
+            return response_api_error('Invalid token')
+
+        track_activity(
+            f"MFA verification successful for user {user.user}",
+            ctx_less=True,
+            display_in_ui=False,
+        )
+
+        tokens = generate_auth_tokens(user, mfa_verified=True)
+
+        return response_api_success({'mfa_verified': True, 'tokens': tokens})
+
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except jwt.ExpiredSignatureError:
+        return response_api_error('Refresh token has expired')
+    except jwt.InvalidTokenError:
+        return response_api_error('Invalid refresh token')
+
+
+@auth_blueprint.get('/whoami')
+@api_auth()
+def whoami():
+    """
+    Returns current authenticated user info (based on the existing session) and API tokens.
+    Output shape matches the frontend's existing local-login handler:
+      { responseData, tokenInfo, redirectTo }
+    """
+    user = g.api_user
+
+    response_data = UserSchema(
+        exclude=['user_password', 'mfa_secrets', 'webauthn_credentials']
+    ).dump(user)
+
+    return response_api_success(data={
+        'responseData': response_data,
+        'tokenInfo': None,
+        'redirectTo': '/'
+    })
+
+
 @auth_blueprint.post('/logout')
+@api_auth()
 def logout():
     """
     Logout function. Erase its session and redirect to index i.e login
     :return: Page
     """
 
-    if session['current_case']:
+    if session.get('current_case'):
         iris_current_user.ctx_case = session['current_case']['case_id']
         db.session.commit()
 
@@ -129,7 +287,8 @@ def refresh_token_endpoint():
     """
     Refresh authentication tokens using a valid refresh token
     """
-    refresh_token = request.json.get('refresh_token')
+    data = request.get_json(silent=True) or {}
+    refresh_token = data.get('refresh_token')
     if not refresh_token:
         return response_api_error('Refresh token is required')
 

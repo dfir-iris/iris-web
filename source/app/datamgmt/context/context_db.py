@@ -22,7 +22,7 @@ from sqlalchemy import asc
 from sqlalchemy import desc
 
 from app.models.cases import Cases
-from app.models.models import Client
+from app.models.customers import Client
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import UserCaseEffectiveAccess
 from app.datamgmt.authorization import has_deny_all_access_level

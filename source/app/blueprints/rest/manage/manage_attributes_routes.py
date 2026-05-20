@@ -19,7 +19,7 @@
 from flask import Blueprint
 from flask import request
 
-from app import db
+from app.db import db
 from app.datamgmt.manage.manage_attribute_db import update_all_attributes
 from app.datamgmt.manage.manage_attribute_db import validate_attribute
 from app.models.authorization import Permissions

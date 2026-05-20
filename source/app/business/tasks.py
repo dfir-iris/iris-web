@@ -20,29 +20,29 @@ from datetime import datetime
 
 from flask_sqlalchemy.pagination import Pagination
 
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.case.case_tasks_db import delete_task
+from app.datamgmt.case.case_tasks_db import list_user_tasks
 from app.datamgmt.case.case_tasks_db import add_task
 from app.datamgmt.case.case_tasks_db import update_task_assignees
 from app.datamgmt.case.case_tasks_db import get_task
 from app.datamgmt.case.case_tasks_db import get_filtered_tasks
 from app.datamgmt.states import update_tasks_state
-from app.datamgmt.dashboard.dashboard_db import list_user_tasks
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.models import CaseTasks
 from app.models.pagination_parameters import PaginationParameters
-from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 
 
 def tasks_delete(task: CaseTasks):
-    call_modules_hook('on_preload_task_delete', data=task.id)
+    call_modules_hook('on_preload_task_delete', task.id)
 
     delete_task(task.id)
     update_tasks_state(caseid=task.task_case_id)
-    call_modules_hook('on_postload_task_delete', data=task.id, caseid=task.task_case_id)
+    call_modules_hook('on_postload_task_delete', task.id, caseid=task.task_case_id)
     track_activity(f'deleted task "{task.task_title}"')
 
 
@@ -54,7 +54,7 @@ def tasks_create(task: CaseTasks, task_assignee_list) -> CaseTasks:
                      caseid=task.task_case_id
                      )
 
-    ctask = call_modules_hook('on_postload_task_create', data=ctask, caseid=task.task_case_id)
+    ctask = call_modules_hook('on_postload_task_create', ctask, caseid=task.task_case_id)
     if not ctask:
         raise BusinessProcessingError('Unable to create task for internal reasons')
 
@@ -86,7 +86,7 @@ def tasks_update(task: CaseTasks, task_assignee_list):
 
     db.session.commit()
 
-    task = call_modules_hook('on_postload_task_update', data=task, caseid=task.task_case_id)
+    task = call_modules_hook('on_postload_task_update', task, caseid=task.task_case_id)
     if not task:
         raise BusinessProcessingError('Unable to update task for internal reasons')
 

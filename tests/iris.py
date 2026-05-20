@@ -31,7 +31,7 @@ _IRIS_PATH = Path('..')
 _ADMINISTRATOR_USER_LOGIN = 'administrator'
 ADMINISTRATOR_USER_IDENTIFIER = 1
 _INITIAL_DEMO_CASE_IDENTIFIER = 1
-_IRIS_INITIAL_CUSTOMER_IDENTIFIER = 1
+IRIS_INITIAL_CUSTOMER_IDENTIFIER = 1
 
 IRIS_PERMISSION_SERVER_ADMINISTRATOR = 0x2
 IRIS_PERMISSION_ALERTS_READ = 0x4
@@ -69,8 +69,15 @@ class Iris:
     def delete(self, path):
         return self._api.delete(path)
 
-    def post_multipart_encoded_file(self, path, data, file_path):
-        return self._api.post_multipart_encoded_file(path, data, file_path)
+    def create_report(self, data, template_name):
+        file_path = f'data/report_templates/{template_name}'
+        with open(file_path, 'rb') as file:
+            files = {'file': file}
+            response = self._api.post_multipart_encoded_files('/manage/templates/add', data, files).json()
+            return response['data']['report_id']
+
+    def post_multipart_encoded_files(self, path, data, files):
+        return self._api.post_multipart_encoded_files(path, data, files)
 
     def create_user(self, user_name, user_password):
         body = {
@@ -104,11 +111,11 @@ class Iris:
         response = self.create('/manage/customers/add', {'customer_name': f'customer{uuid4()}'}).json()
         return response['data']['customer_id']
 
-    def create_dummy_case(self):
+    def create_dummy_case(self, customer_identifier=IRIS_INITIAL_CUSTOMER_IDENTIFIER):
         body = {
             'case_name': 'case name',
             'case_description': 'description',
-            'case_customer_id': 1,
+            'case_customer_id': customer_identifier,
             'case_soc_id': ''
         }
         response = self._api.post('/api/v2/cases', body).json()
@@ -134,12 +141,16 @@ class Iris:
         for alert in response['data']:
             identifier = alert['alert_id']
             self.delete(f'/api/v2/alerts/{identifier}')
+        response = self.get('/global/tasks/list').json()
+        for global_task in response['data']['tasks']:
+            identifier = global_task['task_id']
+            self.create(f'/global/tasks/delete/{identifier}', {})
         users = self.get('/manage/users/list').json()
         for user in users['data']:
             identifier = user['user_id']
             self.get(f'/manage/users/deactivate/{identifier}')
             self.delete(f'/api/v2/manage/users/{identifier}')
-        body = {'customers_membership': [_IRIS_INITIAL_CUSTOMER_IDENTIFIER]}
+        body = {'customers_membership': [IRIS_INITIAL_CUSTOMER_IDENTIFIER]}
         self.create(f'/manage/users/{ADMINISTRATOR_USER_IDENTIFIER}/customers/update', body)
         customers = self.get('/manage/customers/list').json()
         for customer in customers['data']:

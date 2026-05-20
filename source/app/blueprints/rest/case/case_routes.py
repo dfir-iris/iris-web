@@ -24,7 +24,7 @@ from flask import Blueprint
 from flask import request
 
 from app import app
-from app import db
+from app.db import db
 from app import socket_io
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.iris_user import iris_current_user
@@ -41,8 +41,7 @@ from app.business.activity import activity_search_in_case
 from app.business.cases import cases_export_to_json
 from app.iris_engine.access_control.utils import ac_set_case_access_for_users
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import CaseStatus
-from app.models.models import ReviewStatusList
+from app.models.cases import CaseStatus, ReviewStatusList
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import TaskLogSchema
 from app.schema.marshables import CaseSchema

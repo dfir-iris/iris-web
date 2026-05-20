@@ -19,11 +19,11 @@
 from flask_sqlalchemy.pagination import Pagination
 
 from app.blueprints.iris_user import iris_current_user
-from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import CaseReceivedFile
+from app.models.evidences import CaseReceivedFile
 from app.models.pagination_parameters import PaginationParameters
 from app.datamgmt.case.case_rfiles_db import add_rfile
 from app.datamgmt.case.case_rfiles_db import delete_rfile
@@ -35,7 +35,7 @@ from app.datamgmt.case.case_rfiles_db import update_rfile
 def evidences_create(case_identifier, evidence: CaseReceivedFile) -> CaseReceivedFile:
     crf = add_rfile(evidence, case_identifier, iris_current_user.id)
 
-    crf = call_modules_hook('on_postload_evidence_create', data=crf, caseid=case_identifier)
+    crf = call_modules_hook('on_postload_evidence_create', crf, caseid=case_identifier)
     if not crf:
         raise BusinessProcessingError('Unable to create evidence for internal reasons')
 
@@ -52,7 +52,7 @@ def evidences_get(identifier) -> CaseReceivedFile:
 
 def evidences_update(evidence: CaseReceivedFile) -> CaseReceivedFile:
     evidence = update_rfile(evidence=evidence, user_id=iris_current_user.id, caseid=evidence.case_id)
-    evidence = call_modules_hook('on_postload_evidence_update', data=evidence, caseid=evidence.case_id)
+    evidence = call_modules_hook('on_postload_evidence_update', evidence, caseid=evidence.case_id)
     if not evidence:
         raise BusinessProcessingError('Unable to update task for internal reasons')
     track_activity(f'updated evidence "{evidence.filename}"', caseid=evidence.case_id)
@@ -67,7 +67,7 @@ def evidences_filter(case_identifier, pagination_parameters: PaginationParameter
 
 
 def evidences_delete(evidence: CaseReceivedFile):
-    call_modules_hook('on_preload_evidence_delete', data=evidence.id, caseid=evidence.case_id)
+    call_modules_hook('on_preload_evidence_delete', evidence.id, caseid=evidence.case_id)
     delete_rfile(evidence)
-    call_modules_hook('on_postload_evidence_delete', data=evidence.id, caseid=evidence.case_id)
+    call_modules_hook('on_postload_evidence_delete', evidence.id, caseid=evidence.case_id)
     track_activity(f'deleted evidence "{evidence.filename}" from registry', evidence.case_id)

@@ -20,14 +20,14 @@ import json
 import logging as logger
 from sqlalchemy.orm.attributes import flag_modified
 
-from app import db
+from app.db import db
 from app import app
-from app.models.models import CaseAssets
-from app.models.models import CaseReceivedFile
+from app.models.assets import CaseAssets
+from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.models import Client
+from app.models.customers import Client
 from app.models.models import CustomAttribute
 from app.models.iocs import Ioc
 from app.models.models import Notes
@@ -128,10 +128,9 @@ def add_tab_attribute(obj, tab_name):
     if tab_name in attribute:
         return True
 
-    else:
-        attribute[tab_name] = {}
-        flag_modified(obj, "custom_attributes")
-        db.session.commit()
+    attribute[tab_name] = {}
+    flag_modified(obj, "custom_attributes")
+    db.session.commit()
 
     return True
 
@@ -214,21 +213,20 @@ def merge_custom_attributes(data, obj_id, object_type, overwrite=False):
         db.session.commit()
         return obj.custom_attributes
 
-    else:
-        default_attr = get_default_custom_attributes(object_type)
-        for tab in data:
-            if default_attr.get(tab) is None:
-                app.logger.info(f'Missing tab {tab} in {object_type} default attribute')
-                continue
+    default_attr = get_default_custom_attributes(object_type)
+    for tab in data:
+        if default_attr.get(tab) is None:
+            app.logger.info(f'Missing tab {tab} in {object_type} default attribute')
+            continue
 
-            for field in data[tab]:
-                if field not in default_attr[tab]:
-                    app.logger.info(f'Missing field {field} in {object_type} default attribute')
+        for field in data[tab]:
+            if field not in default_attr[tab]:
+                app.logger.info(f'Missing field {field} in {object_type} default attribute')
 
-                else:
-                    default_attr[tab][field]['value'] = data[tab][field]
+            else:
+                default_attr[tab][field]['value'] = data[tab][field]
 
-        return default_attr
+    return default_attr
 
 
 def validate_attribute(attribute):

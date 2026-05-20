@@ -537,7 +537,7 @@ class TestsRestComments(TestCase):
         response = self._subject.get(f'/api/v2/iocs/{object_identifier}/comments/{identifier}', {})
         self.assertEqual(200, response.status_code)
 
-    def test_get_notes_comment_should_return_200(self):
+    def test_get_notes_comments_should_return_200_when_there_is_a_comment(self):
         case_identifier = self._subject.create_dummy_case()
         response = self._subject.create(f'/api/v2/cases/{case_identifier}/notes-directories',
                                         {'name': 'directory_name'}).json()

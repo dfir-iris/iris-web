@@ -20,7 +20,7 @@ import json
 from sqlalchemy import String, Text, inspect, or_, not_, and_
 
 from app import app
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.datamgmt.conversions import convert_sort_direction
 from app.models.pagination_parameters import PaginationParameters
 from app.datamgmt.authorization import RESTRICTED_USER_FIELDS
@@ -63,28 +63,24 @@ def build_condition(column, operator, value):
                 fk_col = fk_cols[0]
                 if operator == 'in':
                     return fk_col.in_(value)
-                else:
-                    return ~fk_col.in_(value)
-            else:
-                raise NotImplementedError(
-                    "in_() on a relationship with multiple FK columns not supported. Specify a direct column."
-                )
-        else:
-            raise ValueError(
-                "Non-in operators on relationships require specifying a related model column, e.g., owner.id or assets.asset_name."
+                return ~fk_col.in_(value)
+            raise NotImplementedError(
+                "in_() on a relationship with multiple FK columns not supported. Specify a direct column."
             )
+        raise ValueError(
+            "Non-in operators on relationships require specifying a related model column, e.g., owner.id or assets.asset_name."
+        )
     if operator == 'not':
         return column != value
-    elif operator == 'in':
+    if operator == 'in':
         return column.in_(value)
-    elif operator == 'not_in':
+    if operator == 'not_in':
         return ~column.in_(value)
-    elif operator == 'eq':
+    if operator == 'eq':
         return column == value
-    elif operator == 'like':
+    if operator == 'like':
         return column.ilike(f"%{value}%")
-    else:
-        raise ValueError(f"Unsupported operator: {operator}")
+    raise ValueError(f"Unsupported operator: {operator}")
 
 
 def combine_conditions(conditions, logical_operator):
@@ -95,14 +91,13 @@ def combine_conditions(conditions, logical_operator):
     if len(conditions) > 1:
         if logical_operator == 'or':
             return or_(*conditions)
-        elif logical_operator == 'not':
+        if logical_operator == 'not':
             return not_(and_(*conditions))
-        else:  # Default to 'and'
-            return and_(*conditions)
-    elif conditions:
+        # Default to 'and'
+        return and_(*conditions)
+    if conditions:
         return conditions[0]
-    else:
-        return None
+    return None
 
 
 def apply_custom_conditions(query, model, custom_conditions, relationship_model_map=None):

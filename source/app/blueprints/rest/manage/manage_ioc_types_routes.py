@@ -20,7 +20,7 @@ import marshmallow
 from flask import Blueprint
 from flask import request
 
-from app import db
+from app.db import db
 from app.datamgmt.case.case_iocs_db import get_ioc_types_list
 from app.datamgmt.manage.manage_case_objs import search_ioc_type_by_name
 from app.iris_engine.utils.tracker import track_activity

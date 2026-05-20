@@ -21,6 +21,7 @@ from unittest import TestCase
 from iris import Iris
 from iris import IRIS_PERMISSION_SERVER_ADMINISTRATOR
 from iris import ADMINISTRATOR_USER_IDENTIFIER
+from iris import GROUP_ANALYSTS_IDENTIFIER
 
 _IDENTIFIER_FOR_NONEXISTENT_OBJECT = 123456789
 
@@ -77,6 +78,10 @@ class TestsRestGroups(TestCase):
         response = self._subject.get(f'/api/v2/manage/groups/{identifier}')
         self.assertEqual(200, response.status_code)
 
+    def test_get_group_analysts_should_return_field_autofollow_to_false(self):
+        group_analysts = self._subject.get(f'/api/v2/manage/groups/{GROUP_ANALYSTS_IDENTIFIER}').json()
+        self.assertFalse(group_analysts['group_auto_follow'])
+
     def test_get_group_should_return_group_name(self):
         body = {'group_name': 'name', 'group_description': 'description'}
         response = self._subject.create('/api/v2/manage/groups', body).json()
@@ -118,7 +123,7 @@ class TestsRestGroups(TestCase):
         body = {'group_name': 'name', 'group_description': 'description'}
         response = self._subject.create('/api/v2/manage/groups', body).json()
         identifier = response['group_id']
-        body = {'group_name': 'new_name', 'group_description': 'new_description', 'group_permissions': 1, 'group_auto_follow' : True}
+        body = {'group_name': 'new_name', 'group_description': 'new_description', 'group_permissions': 1, 'group_auto_follow': True}
         response = self._subject.update(f'/api/v2/manage/groups/{identifier}', body).json()
         self.assertEqual(True, response['group_auto_follow'])
 

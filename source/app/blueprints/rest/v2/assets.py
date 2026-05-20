@@ -26,8 +26,8 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.v2.assets_routes.comments import assets_comments_blueprint
 from app.business.assets import assets_delete
 from app.business.assets import assets_get
-from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 from app.blueprints.access_controls import ac_api_return_access_denied

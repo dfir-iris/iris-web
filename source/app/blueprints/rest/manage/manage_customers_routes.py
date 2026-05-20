@@ -25,19 +25,20 @@ from marshmallow import ValidationError
 from app import ac_current_user_has_permission
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.iris_user import iris_current_user
-from app.datamgmt.client.client_db import create_client
-from app.datamgmt.client.client_db import create_contact
+from app.business.customers import customers_get, customers_update
+from app.business.customers_contacts import customers_contacts_get
+from app.datamgmt.db_operations import db_create
+from app.models.errors import ObjectNotFoundError
+from app.models.errors import ElementInUseError
 from app.datamgmt.client.client_db import delete_client
 from app.datamgmt.client.client_db import delete_contact
-from app.datamgmt.client.client_db import get_client
+from app.datamgmt.client.client_db import get_customer
 from app.datamgmt.client.client_db import get_client_api
 from app.datamgmt.client.client_db import get_client_cases
 from app.datamgmt.client.client_db import get_client_contacts
 from app.datamgmt.client.client_db import get_client_list
-from app.datamgmt.client.client_db import update_client
+from app.datamgmt.client.client_db import get_client_contact
 from app.datamgmt.client.client_db import update_contact
-from app.datamgmt.exceptions.ElementExceptions import ElementInUseException
-from app.datamgmt.exceptions.ElementExceptions import ElementNotFoundException
 from app.datamgmt.manage.manage_users_db import add_user_to_customer
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
@@ -47,21 +48,23 @@ from app.blueprints.access_controls import ac_api_requires_client_access
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
 from app.blueprints.rest.endpoints import endpoint_deprecated
+from app.business.customers import customers_exists_another_with_same_name
 
 manage_customers_rest_blueprint = Blueprint('manage_customers_rest', __name__)
 
 
 @manage_customers_rest_blueprint.route('/manage/customers/list', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/manage/customers')
 @ac_api_requires(Permissions.customers_read)
 def list_customers():
     user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
-    client_list = get_client_list(current_user_id=iris_current_user.id,
-                                  is_server_administrator=user_is_server_administrator)
+    client_list = get_client_list(iris_current_user.id, user_is_server_administrator)
 
     return response_success("", data=client_list)
 
 
 @manage_customers_rest_blueprint.route('/manage/customers/<int:client_id>', methods=['GET'])
+@endpoint_deprecated('GET', '/api/v2/manage/customers/{identifier}')
 @ac_api_requires(Permissions.customers_read)
 @ac_api_requires_client_access()
 def view_customer(client_id):
@@ -79,14 +82,19 @@ def view_customer(client_id):
 def customer_update_contact(client_id, contact_id):
 
     if not request.is_json:
-        return response_error("Invalid request")
+        return response_error('Invalid request')
 
-    if not get_client(client_id):
-        return response_error(f"Invalid Customer ID {client_id}")
+    if not get_customer(client_id):
+        return response_error(f'Invalid Customer ID {client_id}')
 
     try:
+        data = request.json
+        contact = get_client_contact(contact_id)
+        data['client_id'] = client_id
+        contact_schema = ContactSchema()
+        contact_schema.load(data, instance=contact)
 
-        contact = update_contact(request.json, contact_id, client_id)
+        update_contact()
 
     except ValidationError as e:
         return response_error(msg='Error update contact', data=e.messages)
@@ -95,11 +103,11 @@ def customer_update_contact(client_id, contact_id):
         print(traceback.format_exc())
         return response_error(f'An error occurred during contact update. {e}')
 
-    track_activity(f"Updated contact {contact.contact_name}", ctx_less=True)
+    track_activity(f'Updated contact {contact.contact_name}', ctx_less=True)
 
     # Return the customer
     contact_schema = ContactSchema()
-    return response_success("Added successfully", data=contact_schema.dump(contact))
+    return response_success('Added successfully', data=contact_schema.dump(contact))
 
 
 @manage_customers_rest_blueprint.route('/manage/customers/<int:client_id>/contacts/add', methods=['POST'])
@@ -110,12 +118,16 @@ def customer_add_contact(client_id):
     if not request.is_json:
         return response_error("Invalid request")
 
-    if not get_client(client_id):
+    if not get_customer(client_id):
         return response_error(f"Invalid Customer ID {client_id}")
+    contact_schema = ContactSchema()
 
     try:
+        data = request.json
+        data['client_id'] = client_id
+        contact = contact_schema.load(data)
 
-        contact = create_contact(request.json, client_id)
+        db_create(contact)
 
     except ValidationError as e:
         return response_error(msg='Error adding contact', data=e.messages)
@@ -127,7 +139,6 @@ def customer_add_contact(client_id):
     track_activity(f"Added contact {contact.contact_name}", ctx_less=True)
 
     # Return the customer
-    contact_schema = ContactSchema()
     return response_success("Added successfully", data=contact_schema.dump(contact))
 
 
@@ -190,7 +201,7 @@ def get_customer_case_stats(client_id):
             st = cases_stats['cases_last_year']
             et = cases_stats['cases_current_year']
 
-        cases_stats['ratio_year'] = ((et - st)/(st)) * 100
+        cases_stats['ratio_year'] = ((et - st) / (st)) * 100
 
         if cases_stats['cases_last_month'] == 0:
             st = 1
@@ -199,7 +210,7 @@ def get_customer_case_stats(client_id):
             st = cases_stats['cases_last_month']
             et = cases_stats['cases_current_month']
 
-        cases_stats['ratio_month'] = ((et - st)/(st)) * 100
+        cases_stats['ratio_month'] = ((et - st) / (st)) * 100
 
         if (case.close_date is not None) and (case.open_date is not None):
             cases_stats['average_case_duration'] += (case.close_date - case.open_date).days
@@ -216,27 +227,33 @@ def get_customer_case_stats(client_id):
 
 
 @manage_customers_rest_blueprint.route('/manage/customers/update/<int:client_id>', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/manage/customers/{identifier}')
 @ac_api_requires(Permissions.customers_write)
 @ac_api_requires_client_access()
 def view_customers(client_id):
     if not request.is_json:
         return response_error("Invalid request")
 
+    client_schema = CustomerSchema()
     try:
-        client = update_client(client_id, request.json)
+        customer = get_customer(client_id)
+        if not customer:
+            raise response_error('Invalid Customer ID')
 
-    except ElementNotFoundException:
-        return response_error('Invalid Customer ID')
+        data = request.json
+        if customers_exists_another_with_same_name(client_id, data.get('customer_name')):
+            raise ValidationError('Customer already exists', field_name='customer_name')
+        client_schema.load(data, instance=customer)
+        customers_update()
 
     except ValidationError as e:
-        return response_error("", data=e.messages)
+        return response_error('', data=e.messages)
 
     except Exception as e:
         print(traceback.format_exc())
         return response_error(f'An error occurred during Customer update. {e}')
 
-    client_schema = CustomerSchema()
-    return response_success("Customer updated", client_schema.dump(client))
+    return response_success('Customer updated', client_schema.dump(customer))
 
 
 @manage_customers_rest_blueprint.route('/manage/customers/add', methods=['POST'])
@@ -250,7 +267,7 @@ def add_customers():
     try:
         customer = customer_schema.load(request.json)
 
-        create_client(customer)
+        db_create(customer)
     except ValidationError as e:
         return response_error(msg='Error adding customer', data=e.messages)
     except Exception as e:
@@ -267,17 +284,17 @@ def add_customers():
 
 
 @manage_customers_rest_blueprint.route('/manage/customers/delete/<int:client_id>', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/manage/customers/{identifier}')
 @ac_api_requires(Permissions.customers_write)
 @ac_api_requires_client_access()
 def delete_customers(client_id):
     try:
-
-        delete_client(client_id)
-
-    except ElementNotFoundException:
+        customer = customers_get(client_id)
+        delete_client(customer)
+    except ObjectNotFoundError:
         return response_error('Invalid Customer ID')
 
-    except ElementInUseException:
+    except ElementInUseError:
         return response_error('Cannot delete a referenced customer')
 
     except Exception:
@@ -293,13 +310,14 @@ def delete_customers(client_id):
 @ac_api_requires_client_access()
 def delete_contact_route(client_id, contact_id):
     try:
+        contact = customers_contacts_get(contact_id)
 
-        delete_contact(contact_id)
+        delete_contact(contact)
 
-    except ElementNotFoundException:
+    except ObjectNotFoundError:
         return response_error('Invalid contact ID')
 
-    except ElementInUseException:
+    except ElementInUseError:
         return response_error('Cannot delete a referenced contact')
 
     except Exception:

@@ -17,9 +17,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 from sqlalchemy import func
 
-from app.models.models import AnalysisStatus
 from app.models.models import IocType
-from app.models.models import AssetsType
+from app.models.assets import AssetsType, AnalysisStatus
 from app.models.models import EventCategory
 
 

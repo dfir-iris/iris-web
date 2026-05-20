@@ -22,7 +22,7 @@ from flask import Blueprint
 from flask import request
 from marshmallow import ValidationError
 
-from app import db
+from app.db import db
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.business.assets import assets_delete
@@ -30,7 +30,8 @@ from app.business.assets import assets_create
 from app.business.assets import assets_get
 from app.business.assets import assets_update
 from app.blueprints.iris_user import iris_current_user
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.datamgmt.case.case_assets_db import get_raw_assets
 from app.datamgmt.case.case_assets_db import get_linked_iocs_finfo_from_asset
 from app.datamgmt.case.case_assets_db import add_comment_to_asset
@@ -44,12 +45,13 @@ from app.datamgmt.case.case_assets_db import get_case_asset_comment
 from app.datamgmt.case.case_assets_db import get_case_asset_comments
 from app.datamgmt.case.case_assets_db import get_similar_assets
 from app.datamgmt.case.case_db import get_case_client_id
+from app.datamgmt.comments import get_comment
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.datamgmt.states import get_assets_state
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import AnalysisStatus
+from app.models.assets import AnalysisStatus
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseAssetsSchema
 from app.schema.marshables import CommentSchema
@@ -166,7 +168,7 @@ def case_assets_state(caseid):
 def deprecated_add_asset(caseid):
     asset_schema = CaseAssetsSchema()
     try:
-        request_data = call_modules_hook('on_preload_asset_create', data=request.get_json(), caseid=caseid)
+        request_data = call_modules_hook('on_preload_asset_create', request.get_json(), caseid=caseid)
         ioc_links = request_data.get('ioc_links')
         asset = asset_schema.load(request_data)
         created_asset = assets_create(iris_current_user, caseid, asset, ioc_links)
@@ -243,7 +245,7 @@ def case_upload_asset(caseid):
 
             row['analysis_status_id'] = analysis_status_id
 
-            request_data = call_modules_hook('on_preload_asset_create', data=row, caseid=caseid)
+            request_data = call_modules_hook('on_preload_asset_create', row, caseid=caseid)
 
             add_asset_schema.is_unique_for_cid(caseid, request_data)
             asset_sc = add_asset_schema.load(request_data)
@@ -253,7 +255,7 @@ def case_upload_asset(caseid):
                                  user_id=iris_current_user.id
                                  )
 
-            asset = call_modules_hook('on_postload_asset_create', data=asset, caseid=caseid)
+            asset = call_modules_hook('on_postload_asset_create', asset, caseid=caseid)
 
             if not asset:
                 errors.append('Unable to add asset for internal reason')
@@ -284,6 +286,8 @@ def deprecated_asset_view(cur_id, caseid):
     try:
 
         asset = assets_get(cur_id)
+        if asset.case_id != caseid:
+            return response_error('Invalid asset ID for this case')
         # TODO this is a code smell: shouldn't have schemas in the business layer + the CaseAssetsSchema is instantiated twice
         case_assets_schema = CaseAssetsSchema()
         data = case_assets_schema.dump(asset)
@@ -291,6 +295,8 @@ def deprecated_asset_view(cur_id, caseid):
         data['linked_ioc'] = [row._asdict() for row in asset_iocs]
         return response_success(msg='Asset added', data=data)
 
+    except ObjectNotFoundError:
+        return response_error('Invalid asset ID for this case')
     except BusinessProcessingError as e:
         return response_error(e.get_message())
 
@@ -302,10 +308,10 @@ def deprecated_asset_view(cur_id, caseid):
 def asset_update(cur_id, caseid):
     try:
         asset = get_asset(cur_id)
-        if not asset:
+        if not asset or asset.case_id != caseid:
             return response_error("Invalid asset ID for this case")
 
-        request_data = call_modules_hook('on_preload_asset_update', data=request.get_json(), caseid=caseid)
+        request_data = call_modules_hook('on_preload_asset_update', request.get_json(), caseid=caseid)
         request_data['asset_id'] = asset.asset_id
         schema = CaseAssetsSchema()
         updated_asset = schema.load(request_data, instance=asset, partial=True)
@@ -340,6 +346,10 @@ def deprecated_asset_delete(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_asset_list(cur_id, caseid):
+    asset = get_asset(cur_id)
+    if not asset or asset.case_id != caseid:
+        return response_error('Invalid asset ID')
+
     asset_comments = get_case_asset_comments(cur_id)
     if asset_comments is None:
         return response_error('Invalid asset ID')
@@ -354,7 +364,7 @@ def case_comment_asset_list(cur_id, caseid):
 def case_comment_asset_add(cur_id, caseid):
     try:
         asset = get_asset(cur_id)
-        if not asset:
+        if not asset or asset.case_id != caseid:
             return response_error('Invalid asset ID')
 
         comment_schema = CommentSchema()
@@ -375,7 +385,7 @@ def case_comment_asset_add(cur_id, caseid):
             "comment": comment_schema.dump(comment),
             "asset": CaseAssetsSchema().dump(asset)
         }
-        call_modules_hook('on_postload_asset_commented', data=hook_data, caseid=caseid)
+        call_modules_hook('on_postload_asset_commented', hook_data, caseid=caseid)
 
         track_activity(f"asset \"{asset.asset_name}\" commented", caseid=caseid)
         return response_success("Asset commented", data=comment_schema.dump(comment))
@@ -389,6 +399,10 @@ def case_comment_asset_add(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_asset_get(cur_id, com_id, caseid):
+    asset = get_asset(cur_id)
+    if not asset or asset.case_id != caseid:
+        return response_error("Invalid comment ID")
+
     comment = get_case_asset_comment(cur_id, com_id)
     if not comment:
         return response_error("Invalid comment ID")
@@ -407,11 +421,13 @@ def case_comment_asset_edit(cur_id, com_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_asset_delete(cur_id, com_id, caseid):
-    success, msg = delete_asset_comment(cur_id, com_id)
-    if not success:
-        return response_error(msg)
+    comment = get_comment(iris_current_user, com_id)
+    if not comment:
+        return response_error('You are not allowed to delete this comment')
 
-    call_modules_hook('on_postload_asset_comment_delete', data=com_id, caseid=caseid)
+    delete_asset_comment(cur_id, comment)
+
+    call_modules_hook('on_postload_asset_comment_delete', com_id, caseid=caseid)
 
     track_activity(f'comment {com_id} on asset {cur_id} deleted', caseid=caseid)
-    return response_success(msg)
+    return response_success('Comment deleted')

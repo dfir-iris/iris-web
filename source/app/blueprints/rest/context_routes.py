@@ -22,12 +22,12 @@ from flask import request
 
 from app import app
 from app import cache
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.context.context_db import ctx_search_user_cases
 from app.models.authorization import Permissions
 from app.models.cases import Cases
-from app.models.models import Client
+from app.models.customers import Client
 from app.blueprints.access_controls import ac_api_requires, not_authenticated_redirection_url
 from app.blueprints.responses import response_success
 from app.blueprints.rest.endpoints import endpoint_deprecated

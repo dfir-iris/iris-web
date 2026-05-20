@@ -16,32 +16,36 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-from app.logger import logger
+from app.db import db
+from app.datamgmt.filters.filters_db import get_filters, get_filter_by_id
+from app.models.errors import ObjectNotFoundError
 
 
-class BusinessProcessingError(Exception):
-
-    def __init__(self, message, data=None):
-        self._message = message
-        self._data = data
-
-    def get_message(self):
-        return self._message
-
-    def get_data(self):
-        return self._data
+def alert_filter_add(new_saved_filter):
+    db.session.add(new_saved_filter)
+    db.session.commit()
 
 
-class ObjectNotFoundError(BusinessProcessingError):
+def alert_filter_list(user, filter_type="alerts", include_public=True):
+    filters = get_filters(
+        user_id=user.id,
+        filter_type=filter_type,
+        include_public=include_public
+    )
+    return filters
 
-    def __init__(self):
-        super().__init__('Object not found')
+
+def alert_filter_get(user, identifier):
+    alert_filter = get_filter_by_id(user.id, identifier)
+    if not alert_filter:
+        raise ObjectNotFoundError()
+    return alert_filter
 
 
-class UnhandledBusinessError(BusinessProcessingError):
+def alert_filter_update():
+    db.session.commit()
 
-    def __init__(self, message, data=None):
-        self._message = message
-        self._data = data
-        logger.exception(message)
-        logger.exception(data)
+
+def alert_filter_delete(saved_filter):
+    db.session.delete(saved_filter)
+    db.session.commit()

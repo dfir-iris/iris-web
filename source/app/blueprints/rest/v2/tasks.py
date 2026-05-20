@@ -27,8 +27,8 @@ from app.blueprints.access_controls import ac_fast_check_current_user_has_case_a
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.business.tasks import tasks_delete
 from app.business.tasks import tasks_get
-from app.business.errors import ObjectNotFoundError
-from app.business.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import CaseTaskSchema
 from app.blueprints.rest.v2.tasks_routes.comments import tasks_comments_blueprint

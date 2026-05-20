@@ -22,12 +22,11 @@ from flask import Blueprint
 from flask import request
 from flask import session
 
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.manage.manage_users_db import get_user
 from app.datamgmt.manage.manage_users_db import get_user_primary_org
 from app.datamgmt.manage.manage_users_db import update_user
-from app.iris_engine.access_control.utils import ac_current_user_has_permission
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
 from app.iris_engine.utils.tracker import track_activity
@@ -36,6 +35,7 @@ from app.models.models import ServerSettings
 from app.schema.marshables import UserSchema
 from app.schema.marshables import BasicUserSchema
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_current_user_has_permission
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
 from app.blueprints.rest.endpoints import endpoint_removed

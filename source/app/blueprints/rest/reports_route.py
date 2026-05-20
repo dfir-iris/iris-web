@@ -22,8 +22,8 @@ from flask import Blueprint
 from flask import request
 from flask import send_file
 
-from app.business.errors import ObjectNotFoundError
-from app.business.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
 from app.business.reports.reports import generate_investigation_report, generate_activities_report
 
 from app.models.authorization import CaseAccessLevel

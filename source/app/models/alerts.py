@@ -31,8 +31,8 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
-from app import db
-from app.models.models import alert_assets_association
+from app.db import db
+from app.models.assets import alert_assets_association
 from app.models.iocs import alert_iocs_association
 
 

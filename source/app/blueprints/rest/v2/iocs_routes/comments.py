@@ -35,7 +35,7 @@ from app.business.comments import comments_create_for_ioc
 from app.business.comments import comments_get_for_ioc
 from app.business.comments import comments_delete_for_ioc
 from app.business.iocs import iocs_get
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import ObjectNotFoundError
 from app.schema.marshables import CommentSchema
 from app.models.authorization import CaseAccessLevel
 from app.blueprints.rest.case_comments import case_comment_update
@@ -102,7 +102,7 @@ class CommentsOperations:
             if comment.comment_user_id != iris_current_user.id:
                 return ac_api_return_access_denied()
 
-            comments_delete_for_ioc(ioc, comment)
+            comments_delete_for_ioc(iris_current_user, ioc, comment)
             return response_api_deleted()
         except ObjectNotFoundError:
             return response_api_not_found()

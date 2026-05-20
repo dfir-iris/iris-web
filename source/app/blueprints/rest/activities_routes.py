@@ -27,7 +27,7 @@ from app.blueprints.responses import response_success
 activities_rest_blueprint = Blueprint('activities_rest', __name__)
 
 
-@activities_rest_blueprint.route('/activities/list', methods=['GET'])
+@activities_rest_blueprint.get('/activities/list')
 @ac_api_requires(Permissions.activities_read, Permissions.all_activities_read)
 def list_activities():
     # Get User activities from database

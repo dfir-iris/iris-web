@@ -26,7 +26,7 @@ from flask import Blueprint
 from flask import request
 from sqlalchemy import and_
 
-from app import db
+from app.db import db
 from app import app
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
@@ -56,12 +56,10 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.collab import collab_notify
 from app.iris_engine.utils.common import parse_bf_date_format
 from app.iris_engine.utils.tracker import track_activity
-from app.models.models import CompromiseStatus
+from app.models.assets import CompromiseStatus, AssetsType, CaseAssets
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.cases import CasesEvent
-from app.models.models import AssetsType
-from app.models.models import CaseAssets
 from app.models.models import CaseEventsAssets
 from app.models.models import CaseEventsIoc
 from app.models.models import EventCategory
@@ -73,7 +71,7 @@ from app.blueprints.access_controls import ac_api_requires
 from app.util import add_obj_history_entry
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.business.events import events_create
 from app.business.events import events_update
 from app.business.events import events_delete
@@ -98,11 +96,11 @@ def case_comments_get(cur_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_delete(cur_id, com_id, caseid):
-    success, msg = delete_event_comment(cur_id, com_id)
+    success, msg = delete_event_comment(iris_current_user, cur_id, com_id)
     if not success:
         return response_error(msg)
 
-    call_modules_hook('on_postload_event_comment_delete', data=com_id, caseid=caseid)
+    call_modules_hook('on_postload_event_comment_delete', com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on event {cur_id} deleted", caseid=caseid)
     return response_success(msg)
@@ -157,7 +155,7 @@ def case_comment_add(cur_id, caseid):
             "comment": comment_schema.dump(comment),
             "event": EventSchema().dump(event)
         }
-        call_modules_hook('on_postload_event_commented', data=hook_data, caseid=caseid)
+        call_modules_hook('on_postload_event_commented', hook_data, caseid=caseid)
 
         track_activity(f"event \"{event.event_title}\" commented", caseid=caseid)
         return response_success("Event commented", data=comment_schema.dump(comment))
@@ -627,13 +625,13 @@ def _extract_timeline(assets: str | None, assets_id: str | None, caseid, categor
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_delete_event(cur_id, caseid):
-    call_modules_hook('on_preload_event_delete', data=cur_id, caseid=caseid)
+    call_modules_hook('on_preload_event_delete', cur_id, caseid=caseid)
 
     event = get_case_event(cur_id)
     if not event:
         return response_error('Not a valid event ID for this case')
 
-    events_delete(event)
+    events_delete(iris_current_user, event)
 
     return response_success(f'Event ID {cur_id} deleted')
 
@@ -750,7 +748,7 @@ def case_add_event(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_duplicate_event(cur_id, caseid):
-    call_modules_hook('on_preload_event_duplicate', data=cur_id, caseid=caseid)
+    call_modules_hook('on_preload_event_duplicate', cur_id, caseid=caseid)
 
     try:
         event_schema = EventSchema()
@@ -775,7 +773,7 @@ def case_duplicate_event(cur_id, caseid):
             event.event_title = f"[DUPLICATED] - {event.event_title}"
 
         db.session.add(event)
-        update_timeline_state(caseid=caseid)
+        update_timeline_state(caseid)
         db.session.commit()
 
         # Update category
@@ -795,7 +793,7 @@ def case_duplicate_event(cur_id, caseid):
         if not success:
             return response_error('Error while saving linked iocs', data=log)
 
-        event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
+        event = call_modules_hook('on_postload_event_create', event, caseid=caseid)
 
         track_activity(f"added event \"{event.event_title}\"", caseid=caseid)
         return response_success("Event duplicated", data=event_schema.dump(event))
@@ -950,7 +948,7 @@ def case_events_upload_csv(caseid):
                 continue
             line += 1
 
-            request_data = call_modules_hook('on_preload_event_create', data=row, caseid=caseid)
+            request_data = call_modules_hook('on_preload_event_create', row, caseid=caseid)
             event = event_schema.load(request_data)
             event.event_date, event.event_date_wtz = event_schema.validate_date(request_data.get(u'event_date'),
                                                                                 request_data.get(u'event_tz'))
@@ -961,7 +959,7 @@ def case_events_upload_csv(caseid):
             add_obj_history_entry(event, 'created')
 
             db.session.add(event)
-            update_timeline_state(caseid=caseid)
+            update_timeline_state(caseid)
 
             save_event_category(event.event_id, request_data.get('event_category_id'))
 
@@ -978,7 +976,7 @@ def case_events_upload_csv(caseid):
 
             setattr(event, 'event_category_id', request_data.get('event_category_id'))
 
-            event = call_modules_hook('on_postload_event_create', data=event, caseid=caseid)
+            event = call_modules_hook('on_postload_event_create', event, caseid=caseid)
 
             track_activity(f"added event {event.event_id}", caseid=caseid)
 

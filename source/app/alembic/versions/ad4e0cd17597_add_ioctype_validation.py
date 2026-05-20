@@ -93,4 +93,3 @@ def upgrade():
 def downgrade():
     op.drop_column('ioc_type', 'type_validation_regex')
     op.drop_column('ioc_type', 'type_validation_expect')
-

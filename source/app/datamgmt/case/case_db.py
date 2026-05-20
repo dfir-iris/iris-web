@@ -24,19 +24,34 @@ from sqlalchemy import and_
 from sqlalchemy import exists
 from sqlalchemy import select
 
-from app import db
-from app.datamgmt.manage.manage_tags_db import add_db_tag
+from app.db import db
 from app.models.authorization import User
 from app.models.cases import CaseProtagonist
 from app.models.cases import Cases
-from app.models.models import CaseTemplateReport, ReviewStatus
-from app.models.models import Client
+from app.models.models import CaseTemplateReport
+from app.models.models import ReviewStatus
+from app.models.customers import Client
 from app.models.models import Languages
 from app.models.models import ReportType
+from app.datamgmt.manage.manage_tags_db import add_db_tag
+from app.datamgmt.db_operations import db_create
+from app.datamgmt.states import update_assets_state
+from app.datamgmt.states import update_evidences_state
+from app.datamgmt.states import update_ioc_state
+from app.datamgmt.states import update_notes_state
+from app.datamgmt.states import update_tasks_state
+from app.datamgmt.states import update_timeline_state
 
 
-def get_first_case() -> Cases:
+def get_first_case() -> Optional[Cases]:
     return Cases.query.order_by(Cases.case_id).first()
+
+
+def get_first_case_with_customer(customer_identifier: int) -> Optional[Cases]:
+    case = Cases.query.filter(
+        Cases.client_id == customer_identifier
+    ).first()
+    return case
 
 
 def get_case_summary(caseid):
@@ -215,3 +230,49 @@ def get_review_id_from_name(review_name):
         return status.id
 
     return None
+
+
+def case_db_save(case: Cases):
+    db_create(case)
+
+    # Rename case with the ID
+    case.name = f'#{case.case_id} - {case.name}'
+
+    # Create the states
+    update_timeline_state(case.case_id, case.user_id)
+    update_tasks_state(case.case_id, case.user_id)
+    update_evidences_state(case.case_id, case.user_id)
+    update_ioc_state(case.case_id, case.user_id)
+    update_assets_state(case.case_id, case.user_id)
+    update_notes_state(case.case_id, case.user_id)
+
+    db.session.commit()
+
+
+def list_user_reviews(user_identifier):
+    ct = Cases.query.with_entities(
+        Cases.case_id,
+        Cases.name,
+        ReviewStatus.status_name,
+        ReviewStatus.id.label('status_id')
+    ).join(
+        Cases.review_status
+    ).filter(
+        Cases.reviewer_id == user_identifier,
+        ReviewStatus.status_name != 'Reviewed',
+        ReviewStatus.status_name != 'Not reviewed'
+    ).all()
+
+    return ct
+
+
+def list_user_cases(user_identifier, show_all=False):
+    if show_all:
+        return Cases.query.filter(
+            Cases.owner_id == user_identifier
+        ).all()
+
+    return Cases.query.filter(
+        Cases.owner_id == user_identifier,
+        Cases.close_date == None
+    ).all()

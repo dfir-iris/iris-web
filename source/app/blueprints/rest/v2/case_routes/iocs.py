@@ -31,8 +31,8 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.parsing import parse_pagination_parameters
 from app.blueprints.rest.parsing import parse_fields_parameters
-from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.business.iocs import iocs_create
 from app.business.iocs import iocs_get
 from app.business.iocs import iocs_delete

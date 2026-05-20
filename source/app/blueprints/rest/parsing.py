@@ -51,4 +51,3 @@ def parse_pagination_parameters(request: Request, default_order_by=None, default
     direction = arguments.get('sort_dir', default_direction, type=str)
 
     return PaginationParameters(page, per_page, order_by, direction)
-

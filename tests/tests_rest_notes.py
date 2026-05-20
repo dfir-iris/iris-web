@@ -263,4 +263,3 @@ class TestsRestNotes(TestCase):
             socket_io_client.emit('join-notes-overview', f'case-{case_identifier}-notes')
             message = socket_io_client.receive()
             self.assertEqual('administrator', message['user'])
-

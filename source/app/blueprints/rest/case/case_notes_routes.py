@@ -21,12 +21,12 @@ from datetime import datetime
 from flask import Blueprint
 from flask import request
 
-from app import db
+from app.db import db
 from app import app
 from app.blueprints.rest.case_comments import case_comment_update
 from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.iris_user import iris_current_user
-from app.business.errors import BusinessProcessingError
+from app.models.errors import BusinessProcessingError
 from app.business.notes import notes_create
 from app.business.notes import notes_list_revisions
 from app.business.notes import notes_get_revision
@@ -138,11 +138,11 @@ def case_note_save(cur_id, caseid):
 
     try:
         note = notes_get(cur_id)
-        request_data = call_modules_hook('on_preload_note_update', data=request.get_json(), caseid=note.note_case_id)
+        request_data = call_modules_hook('on_preload_note_update', request.get_json(), caseid=note.note_case_id)
 
         request_data['note_id'] = note.note_id
         addnote_schema.load(request_data, partial=True, instance=note)
-        note = notes_update(note)
+        note = notes_update(iris_current_user, note)
 
         return response_success(f"Note ID {cur_id} saved", data=addnote_schema.dump(note))
 
@@ -207,7 +207,7 @@ def case_note_add(caseid):
 
     try:
 
-        request_data = call_modules_hook('on_preload_note_create', data=request.get_json(), caseid=caseid)
+        request_data = call_modules_hook('on_preload_note_create', request.get_json(), caseid=caseid)
         note_schema = CaseNoteSchema()
         note_schema.verify_directory_id(request_data, caseid=caseid)
 
@@ -426,7 +426,7 @@ def case_comment_note_add(cur_id, caseid):
             "comment": comment_schema.dump(comment),
             "note": CaseNoteSchema().dump(note)
         }
-        call_modules_hook('on_postload_note_commented', data=hook_data, caseid=caseid)
+        call_modules_hook('on_postload_note_commented', hook_data, caseid=caseid)
 
         track_activity(f"note \"{note.note_title}\" commented", caseid=caseid)
         return response_success("Note commented", data=comment_schema.dump(comment))
@@ -458,11 +458,11 @@ def case_comment_note_edit(cur_id, com_id, caseid):
 @ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_comment_note_delete(cur_id, com_id, caseid):
-    success, msg = delete_note_comment(cur_id, com_id)
+    success, msg = delete_note_comment(iris_current_user.id, cur_id, com_id)
     if not success:
         return response_error(msg)
 
-    call_modules_hook('on_postload_note_comment_delete', data=com_id, caseid=caseid)
+    call_modules_hook('on_postload_note_comment_delete', com_id, caseid=caseid)
 
     track_activity(f"comment {com_id} on note {cur_id} deleted", caseid=caseid)
     return response_success(msg)

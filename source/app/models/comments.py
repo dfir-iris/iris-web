@@ -27,7 +27,7 @@ from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from app import db
+from app.db import db
 
 
 class Comments(db.Model):

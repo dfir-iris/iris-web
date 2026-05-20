@@ -34,9 +34,9 @@ from app.business.comments import comments_get_filtered_by_evidence
 from app.business.comments import comments_create_for_evidence
 from app.business.comments import comments_get_for_evidence
 from app.business.comments import comments_delete_for_evidence
-from app.models.models import CaseReceivedFile
+from app.models.evidences import CaseReceivedFile
 from app.business.evidences import evidences_get
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import ObjectNotFoundError
 from app.schema.marshables import CommentSchema
 from app.models.authorization import CaseAccessLevel
 from app.blueprints.rest.case_comments import case_comment_update
@@ -104,7 +104,7 @@ class CommentsOperations:
             if comment.comment_user_id != iris_current_user.id:
                 return ac_api_return_access_denied()
 
-            comments_delete_for_evidence(evidence, comment)
+            comments_delete_for_evidence(iris_current_user, evidence, comment)
             return response_api_deleted()
         except ObjectNotFoundError:
             return response_api_not_found()

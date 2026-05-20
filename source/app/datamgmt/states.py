@@ -19,12 +19,12 @@
 from datetime import datetime
 from sqlalchemy import and_
 
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.models.models import ObjectState
 
 
-def _update_object_state(object_name, caseid, userid=None) -> ObjectState:
+def _update_object_state(object_name, caseid, userid) -> ObjectState:
     """
     Expects a db commit soon after
 
@@ -36,9 +36,6 @@ def _update_object_state(object_name, caseid, userid=None) -> ObjectState:
     Returns:
         ObjectState object
     """
-    if not userid:
-        userid = iris_current_user.id
-
     os = ObjectState.query.filter(and_(
         ObjectState.object_name == object_name,
         ObjectState.object_case_id == caseid
@@ -73,8 +70,7 @@ def get_object_state(object_name, caseid):
 
     if os:
         return os._asdict()
-    else:
-        return None
+    return None
 
 
 def delete_case_states(caseid):
@@ -84,7 +80,9 @@ def delete_case_states(caseid):
 
 
 def update_timeline_state(caseid, userid=None):
-    return _update_object_state('timeline', caseid=caseid, userid=userid)
+    if not userid:
+        userid = iris_current_user.id
+    return _update_object_state('timeline', caseid, userid)
 
 
 def get_timeline_state(caseid):
@@ -92,7 +90,9 @@ def get_timeline_state(caseid):
 
 
 def update_tasks_state(caseid, userid=None):
-    return _update_object_state('tasks', caseid=caseid, userid=userid)
+    if not userid:
+        userid = iris_current_user.id
+    return _update_object_state('tasks', caseid, userid)
 
 
 def get_tasks_state(caseid):
@@ -100,7 +100,9 @@ def get_tasks_state(caseid):
 
 
 def update_evidences_state(caseid, userid=None):
-    return _update_object_state('evidences', caseid=caseid, userid=userid)
+    if not userid:
+        userid = iris_current_user.id
+    return _update_object_state('evidences', caseid, userid)
 
 
 def get_evidences_state(caseid):
@@ -108,7 +110,9 @@ def get_evidences_state(caseid):
 
 
 def update_ioc_state(caseid, userid=None):
-    return _update_object_state('ioc', caseid, userid=userid)
+    if not userid:
+        userid = iris_current_user.id
+    return _update_object_state('ioc', caseid, userid)
 
 
 def get_ioc_state(caseid):
@@ -116,7 +120,9 @@ def get_ioc_state(caseid):
 
 
 def update_assets_state(caseid, userid=None):
-    return _update_object_state('assets', caseid=caseid, userid=userid)
+    if not userid:
+        userid = iris_current_user.id
+    return _update_object_state('assets', caseid, userid)
 
 
 def get_assets_state(caseid):
@@ -124,7 +130,9 @@ def get_assets_state(caseid):
 
 
 def update_notes_state(caseid, userid=None):
-    return _update_object_state('notes', caseid=caseid, userid=userid)
+    if not userid:
+        userid = iris_current_user.id
+    return _update_object_state('notes', caseid, userid)
 
 
 def get_notes_state(caseid):

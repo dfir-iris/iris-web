@@ -58,10 +58,10 @@ spec:
             {{- end }}
           {{- end }}
 
-          - name:  IRIS_SECRET_KEY 
+          - name:  IRIS_SECRET_KEY
             value: {{ .Values.irisapp.IRIS_SECRET_KEY | quote }}
 
-          - name:  IRIS_SECURITY_PASSWORD_SALT 
+          - name:  IRIS_SECURITY_PASSWORD_SALT
             value: {{ .Values.irisapp.IRIS_SECURITY_PASSWORD_SALT | quote }}
 
           - name:  DB_RETRY_COUNT
@@ -78,8 +78,12 @@ spec:
 
           - name:  IRIS_ADM_PASSWORD
             value: {{ .Values.irisapp.IRIS_ADM_PASSWORD | quote }}
-          
+
           {{- if eq .Values.irisapp.IRIS_AUTHENTICATION_TYPE "oidc" }}
+
+          - name: IRIS_AUTHENTICATION_TYPE:
+            value: {{ .Values.irisapp.IRIS_AUTHENTICATION_TYPE | quote }}
+
           - name: OIDC_ISSUER_URL
             value: {{ .Values.irisapp.OIDC_ISSUER_URL | quote }}
 
@@ -104,13 +108,13 @@ spec:
           - name: OIDC_MAPPING_ROLES
             value: {{ .Values.irisapp.OIDC_MAPPING_ROLES | quote }}
           {{- end }}
-          
+
           ports:
             - containerPort: 8000
 
           volumeMounts:
             - mountPath: /home/iris/downloads
-              name: iris-downloads  
+              name: iris-downloads
             - mountPath: /home/iris/user_templates
               name: user-templates
             - mountPath: /home/iris/server_data

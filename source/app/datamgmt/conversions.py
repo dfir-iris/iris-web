@@ -23,5 +23,4 @@ from sqlalchemy import desc
 def convert_sort_direction(sort_direction):
     if sort_direction == 'desc':
         return desc
-    else:
-        return asc
+    return asc

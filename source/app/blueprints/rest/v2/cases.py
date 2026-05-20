@@ -16,6 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import json
+import urllib.parse
+from typing import Any
+
 from flask import Blueprint
 from flask import request
 from marshmallow import ValidationError
@@ -37,21 +41,24 @@ from app.blueprints.rest.v2.case_routes.notes_directories import case_notes_dire
 from app.blueprints.rest.v2.case_routes.tasks import case_tasks_blueprint
 from app.blueprints.rest.v2.case_routes.evidences import case_evidences_blueprint
 from app.blueprints.rest.v2.case_routes.events import case_events_blueprint
+from app.blueprints.rest.v2.case_routes.datastore import case_datastore_blueprint
 from app.blueprints.iris_user import iris_current_user
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
 from app.business.cases import cases_get_by_identifier
 from app.business.cases import cases_update
-from app.business.errors import BusinessProcessingError, ObjectNotFoundError
+from app.models.errors import BusinessProcessingError, ObjectNotFoundError
 from app.business.cases import cases_filter
 from app.schema.marshables import CaseSchemaForAPIV2
+from app.schema.marshables import CaseDetailsSchema
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_current_user_has_customer_access
 from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.models.authorization import Permissions
 from app.models.authorization import CaseAccessLevel
 from app.iris_engine.module_handler.module_handler import call_deprecated_on_preload_modules_hook
-from app.business.access_controls import access_controls_user_has_customer_access
+from app.db import db
 
 
 class CasesOperations:
@@ -99,12 +106,144 @@ class CasesOperations:
 
         return response_api_paginated(self._schema, filtered_cases)
 
+    def filter(self) -> Response:
+        pagination_parameters = parse_pagination_parameters(request)
+
+        logic = request.args.get('logic', 'and', type=str)
+        logic = (logic or 'and').lower()
+        if logic not in ('and', 'or'):
+            return response_api_error("Invalid logic (expected 'and' or 'or')")
+
+        raw_filters = request.args.get('filters', None, type=str)
+        advanced_filters: list[dict[str, Any]] | None = None
+
+        if raw_filters:
+            try:
+                decoded = urllib.parse.unquote(raw_filters)
+                parsed = json.loads(decoded)
+            except Exception:
+                return response_api_error('Invalid filters JSON')
+
+            if not isinstance(parsed, list):
+                return response_api_error('Invalid filters (expected a JSON array)')
+
+            advanced_filters = []
+            for i, f in enumerate(parsed):
+                if not isinstance(f, dict):
+                    return response_api_error(f'Invalid filter at index {i} (expected object)')
+
+                field_id = f.get('fieldId')
+                operation = f.get('operation')
+                value = f.get('value', '')
+
+                if not isinstance(field_id, str) or not field_id:
+                    return response_api_error(f'Invalid fieldId at index {i}')
+                if not isinstance(operation, str) or not operation:
+                    return response_api_error(f'Invalid operation at index {i}')
+                if not isinstance(value, str):
+                    return response_api_error(f'Invalid value at index {i}')
+
+                operation = operation.lower()
+
+                allowed_ops = {
+                    'equals',
+                    'not',
+                    'starts_with',
+                    'not_starts_with',
+                    'contains',
+                    'not_contains',
+                    'ends_with',
+                    'not_ends_with',
+                    'empty',
+                    'not_empty'
+                }
+                if operation not in allowed_ops:
+                    return response_api_error(f'Invalid operation at index {i}')
+
+                if operation in ('empty', 'not_empty'):
+                    value = ''
+
+                advanced_filters.append(
+                    {
+                        'fieldId': field_id,
+                        'operation': operation,
+                        'value': value
+                    }
+                )
+
+        case_ids_str = request.args.get('case_ids', None, type=str)
+        if case_ids_str:
+            try:
+                case_ids_str = parse_comma_separated_identifiers(case_ids_str)
+            except ValueError:
+                return response_api_error('Invalid case id')
+
+        case_customer_id = request.args.get('case_customer_id', None, type=str)
+        case_name = request.args.get('case_name', None, type=str)
+        case_description = request.args.get('case_description', None, type=str)
+        case_classification_id = request.args.get('case_classification_id', None, type=int)
+        case_owner_id = request.args.get('case_owner_id', None, type=int)
+        case_opening_user_id = request.args.get('case_opening_user_id', None, type=int)
+        case_severity_id = request.args.get('case_severity_id', None, type=int)
+        case_state_id = request.args.get('case_state_id', None, type=int)
+        case_soc_id = request.args.get('case_soc_id', None, type=str)
+        start_open_date = request.args.get('start_open_date', None, type=str)
+        end_open_date = request.args.get('end_open_date', None, type=str)
+        draw = request.args.get('draw', 1, type=int)
+        search_value = request.args.get('search[value]', type=str)
+
+        is_open_raw = request.args.get('is_open', None, type=str)
+        is_open = None
+        if is_open_raw is not None:
+            v = is_open_raw.strip().lower()
+            if v in ('1', 'true', 'yes', 'y', 'on'):
+                is_open = True
+            elif v in ('0', 'false', 'no', 'n', 'off'):
+                is_open = False
+
+        if type(draw) is not int:
+            draw = 1
+
+        filtered_cases = cases_filter(
+            iris_current_user,
+            pagination_parameters,
+            name=case_name,
+            case_identifiers=case_ids_str,
+            customer_identifier=case_customer_id,
+            description=case_description,
+            classification_identifier=case_classification_id,
+            owner_identifier=case_owner_id,
+            opening_user_identifier=case_opening_user_id,
+            severity_identifier=case_severity_id,
+            status_identifier=case_state_id,
+            soc_identifier=case_soc_id,
+            start_open_date=start_open_date,
+            end_open_date=end_open_date,
+            is_open=is_open,
+            search_value=search_value,
+            advanced_filters=advanced_filters,
+            advanced_logic=logic
+        )
+        if filtered_cases is None:
+            return response_api_error('Filtering error')
+
+        cases_payload = {
+            'total': filtered_cases.total,
+            'cases': CaseDetailsSchema().dump(filtered_cases.items, many=True),
+            'last_page': filtered_cases.pages,
+            'current_page': filtered_cases.page,
+            'next_page': filtered_cases.next_num if filtered_cases.has_next else None,
+            'draw': draw
+        }
+
+        return response_api_success(cases_payload)
+
     def create(self):
         try:
-            request_data = call_deprecated_on_preload_modules_hook('case_create', request.get_json(), None)
-            case = self._schema.load(request_data)
+            request_data = call_deprecated_on_preload_modules_hook('case_create', request.get_json())
+            case = self._schema.load(request_data, session=db.session)
             case_template_id = request_data.pop('case_template_id', None)
-            case = cases_create(case, case_template_id)
+            case = cases_create(iris_current_user, case, case_template_id)
             result = self._schema.dump(case)
             return response_api_created(result)
         except ValidationError as e:
@@ -135,7 +274,7 @@ class CasesOperations:
             customer_identifier = request_data.get('case_customer_id')
             # If user tries to update the customer, check if the user has access to the new customer
             if customer_identifier and customer_identifier != case.client_id:
-                if not access_controls_user_has_customer_access(iris_current_user, customer_identifier):
+                if not ac_current_user_has_customer_access(customer_identifier):
                     raise BusinessProcessingError('Invalid customer ID. Permission denied.')
 
             if 'case_name' in request_data:
@@ -146,8 +285,14 @@ class CasesOperations:
             reviewer_identifier = request_data.get('reviewer_id')
             if reviewer_identifier == '':
                 request_data['reviewer_id'] = None
+            request_data.pop('review_status', None)
 
-            updated_case = self._schema.load(request_data, instance=case, partial=True)
+            updated_case = self._schema.load(
+                request_data,
+                instance=case,
+                partial=True,
+                session=db.session
+            )
 
             protagonists = request_data.get('protagonists')
             tags = request_data.get('case_tags')
@@ -181,6 +326,7 @@ cases_blueprint.register_blueprint(case_notes_blueprint)
 cases_blueprint.register_blueprint(case_tasks_blueprint)
 cases_blueprint.register_blueprint(case_evidences_blueprint)
 cases_blueprint.register_blueprint(case_events_blueprint)
+cases_blueprint.register_blueprint(case_datastore_blueprint)
 
 cases_operations = CasesOperations()
 
@@ -189,6 +335,12 @@ cases_operations = CasesOperations()
 @ac_api_requires()
 def get_cases() -> Response:
     return cases_operations.search()
+
+
+@cases_blueprint.get('/filter')
+@ac_api_requires()
+def filter_cases() -> Response:
+    return cases_operations.filter()
 
 
 @cases_blueprint.post('')

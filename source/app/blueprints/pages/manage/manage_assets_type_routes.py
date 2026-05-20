@@ -26,7 +26,7 @@ from flask import url_for
 from app import app
 from app.forms import AddAssetForm
 from app.models.authorization import Permissions
-from app.models.models import AssetsType
+from app.models.assets import AssetsType
 from app.blueprints.access_controls import ac_requires
 from app.blueprints.responses import response_error
 

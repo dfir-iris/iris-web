@@ -89,11 +89,10 @@ class AlchemyEncoder(json.JSONEncoder):
         if isinstance(obj, uuid.UUID):
             return str(obj)
 
-        else:
-            if obj.__class__ == bytes:
-                try:
-                    return pickle.load(obj)
-                except Exception:
-                    return str(obj)
+        if obj.__class__ == bytes:
+            try:
+                return pickle.load(obj)
+            except Exception:
+                return str(obj)
 
         return json.JSONEncoder.default(self, obj)

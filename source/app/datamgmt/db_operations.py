@@ -1,6 +1,6 @@
 #  IRIS Source Code
-#  Copyright (C) 2021 - Airbus CyberSecurity (SAS)
-#  ir@cyberactionlab.net
+#  Copyright (C) 2025 - DFIR-IRIS
+#  contact@dfir-iris.org
 #
 #  This program is free software; you can redistribute it and/or
 #  modify it under the terms of the GNU Lesser General Public
@@ -16,9 +16,24 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class ElementNotFoundException(Exception):
-    pass
+from app.db import db
 
 
-class ElementInUseException(Exception):
-    pass
+def db_create(element):
+    db.session.add(element)
+    db.session.commit()
+
+
+def create_safe(session, model, **kwargs):
+    instance = session.query(model).filter_by(**kwargs).first()
+    if instance:
+        return False
+    instance = model(**kwargs)
+    session.add(instance)
+    session.commit()
+    return True
+
+
+def db_delete(element):
+    db.session.delete(element)
+    db.session.commit()

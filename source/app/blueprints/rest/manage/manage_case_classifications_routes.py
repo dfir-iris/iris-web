@@ -22,7 +22,7 @@ from flask import Blueprint
 from flask import Response
 from flask import request
 
-from app import db
+from app.db import db
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classifications_list
 from app.datamgmt.manage.manage_case_classifications_db import get_case_classification_by_id
 from app.datamgmt.manage.manage_case_classifications_db import search_classification_by_name

@@ -63,53 +63,51 @@ def parse_bf_date_format(input_str):
         date = datetime.fromtimestamp(int(date_value))
         return date
 
-    elif len(date_value) == 13 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
+    if len(date_value) == 13 and '-' not in date_value and '.' not in date_value and '/' not in date_value:
         # Assume microsecond timestamp
         date = datetime.fromtimestamp(int(date_value) / 1000)
 
         return date
 
-    else:
+    # brute force formats
+    for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
+                '%Y-%m-%d %H:%M%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S.%f%z',
+                '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z',
+                '%Y-%m-%d - %H:%M:%S.%f%z',
 
-        # brute force formats
-        for fmt in ('%Y-%m-%d', '%Y-%m-%d %H:%M', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M:%S.%f',
-                    '%Y-%m-%d %H:%M%z', '%Y-%m-%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S.%f%z',
-                    '%Y-%m-%d %H:%M %Z', '%Y-%m-%d %H:%M:%S %Z', '%Y-%m-%d %H:%M:%S.%f %Z',
-                    '%Y-%m-%d - %H:%M:%S.%f%z',
+                '%b %d %H:%M:%S', '%Y %b %d %H:%M:%S', '%b %d %H:%M:%S %Y', '%b %d %Y %H:%M:%S',
+                '%y %b %d %H:%M:%S', '%b %d %H:%M:%S %y', '%b %d %y %H:%M:%S',
 
-                    '%b %d %H:%M:%S', '%Y %b %d %H:%M:%S', '%b %d %H:%M:%S %Y', '%b %d %Y %H:%M:%S',
-                    '%y %b %d %H:%M:%S', '%b %d %H:%M:%S %y', '%b %d %y %H:%M:%S',
+                '%Y-%m-%d', '%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f',
+                '%Y-%m-%dT%H:%M%z', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z',
+                '%Y-%m-%dT%H:%M %Z', '%Y-%m-%dT%H:%M:%S %Z', '%Y-%m-%dT%H:%M:%S.%f %Z',
 
-                    '%Y-%m-%d', '%Y-%m-%dT%H:%M', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%dT%H:%M:%S.%f',
-                    '%Y-%m-%dT%H:%M%z', '%Y-%m-%dT%H:%M:%S%z', '%Y-%m-%dT%H:%M:%S.%f%z',
-                    '%Y-%m-%dT%H:%M %Z', '%Y-%m-%dT%H:%M:%S %Z', '%Y-%m-%dT%H:%M:%S.%f %Z',
+                '%Y-%d-%m', '%Y-%d-%m %H:%M', '%Y-%d-%m %H:%M:%S', '%Y-%d-%m %H:%M:%S.%f',
+                '%Y-%d-%m %H:%M%z', '%Y-%d-%m %H:%M:%S%z', '%Y-%d-%m %H:%M:%S.%f%z',
+                '%Y-%d-%m %H:%M %Z', '%Y-%d-%m %H:%M:%S %Z', '%Y-%d-%m %H:%M:%S.%f %Z',
 
-                    '%Y-%d-%m', '%Y-%d-%m %H:%M', '%Y-%d-%m %H:%M:%S', '%Y-%d-%m %H:%M:%S.%f',
-                    '%Y-%d-%m %H:%M%z', '%Y-%d-%m %H:%M:%S%z', '%Y-%d-%m %H:%M:%S.%f%z',
-                    '%Y-%d-%m %H:%M %Z', '%Y-%d-%m %H:%M:%S %Z', '%Y-%d-%m %H:%M:%S.%f %Z',
+                '%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M:%S.%f',
+                '%d.%m.%Y %H:%M', '%d.%m.%Y %H:%M:%S', '%d.%m.%Y %H:%M:%S.%f',
+                '%d-%m-%Y %H:%M', '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M:%S.%f',
 
-                    '%d/%m/%Y %H:%M', '%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M:%S.%f',
-                    '%d.%m.%Y %H:%M', '%d.%m.%Y %H:%M:%S', '%d.%m.%Y %H:%M:%S.%f',
-                    '%d-%m-%Y %H:%M', '%d-%m-%Y %H:%M:%S', '%d-%m-%Y %H:%M:%S.%f',
+                '%b %d %Y %H:%M', '%b %d %Y %H:%M:%S', '%b %d %Y %H:%M:%S',
 
-                    '%b %d %Y %H:%M', '%b %d %Y %H:%M:%S', '%b %d %Y %H:%M:%S',
+                '%a, %d %b %Y %H:%M:%S', '%a, %d %b %Y %H:%M:%S %Z', '%a, %d %b %Y %H:%M:%S.%f',
+                '%a, %d %b %y %H:%M:%S', '%a, %d %b %y %H:%M:%S %Z', '%a, %d %b %y %H:%M:%S.%f',
 
-                    '%a, %d %b %Y %H:%M:%S', '%a, %d %b %Y %H:%M:%S %Z', '%a, %d %b %Y %H:%M:%S.%f',
-                    '%a, %d %b %y %H:%M:%S', '%a, %d %b %y %H:%M:%S %Z', '%a, %d %b %y %H:%M:%S.%f',
+                '%d %b %Y %H:%M', '%d %b %Y %H:%M:%S', '%d %b %Y %H:%M:%S.%f',
+                '%d %b %y %H:%M', '%d %b %y %H:%M:%S', '%d %b %y %H:%M:%S.%f',
 
-                    '%d %b %Y %H:%M', '%d %b %Y %H:%M:%S', '%d %b %Y %H:%M:%S.%f',
-                    '%d %b %y %H:%M', '%d %b %y %H:%M:%S', '%d %b %y %H:%M:%S.%f',
+                '%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y', "%A, %B %d, %Y", "%A %B %d, %Y", "%A %B %d %Y",
+                '%d %B %Y'):
 
-                    '%Y-%m-%d', '%d.%m.%Y', '%d/%m/%Y', "%A, %B %d, %Y", "%A %B %d, %Y", "%A %B %d %Y",
-                    '%d %B %Y'):
+        try:
 
-            try:
+            date = datetime.strptime(date_value, fmt)
+            return date
 
-                date = datetime.strptime(date_value, fmt)
-                return date
-
-            except ValueError:
-                pass
+        except ValueError:
+            pass
 
     return None
 

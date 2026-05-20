@@ -1,6 +1,6 @@
 from sqlalchemy import text
 
-from app import db
+from app.db import db
 from app.models.models import ServerSettings
 from app.schema.marshables import ServerSettingsSchema
 
@@ -16,8 +16,7 @@ def get_server_settings_as_dict():
         sc = ServerSettingsSchema()
         return sc.dump(srv_settings)
 
-    else:
-        return {}
+    return {}
 
 
 def get_alembic_revision():

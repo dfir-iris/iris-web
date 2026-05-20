@@ -17,12 +17,10 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 import datetime
-import enum
 import uuid
 
 from sqlalchemy import BigInteger
 from sqlalchemy import UniqueConstraint
-from sqlalchemy import Table
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
@@ -36,7 +34,6 @@ from sqlalchemy import Text
 from sqlalchemy import create_engine
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -44,172 +41,10 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import func
 
 from app import app
-from app import db
+from app.db import db
 
 Base = declarative_base()
 metadata = Base.metadata
-
-
-class CaseStatus(enum.Enum):
-    unknown = 0x0
-    false_positive = 0x1
-    true_positive_with_impact = 0x2
-    not_applicable = 0x3
-    true_positive_without_impact = 0x4
-    legitimate = 0x5
-
-
-class ReviewStatusList:
-    no_review_required = "No review required"
-    not_reviewed = "Not reviewed"
-    pending_review = "Pending review"
-    review_in_progress = "Review in progress"
-    reviewed = "Reviewed"
-
-
-class CompromiseStatus(enum.Enum):
-    to_be_determined = 0x0
-    compromised = 0x1
-    not_compromised = 0x2
-    unknown = 0x3
-
-    @classmethod
-    def has_value(cls, value):
-        return value in cls._value2member_map_
-
-
-def create_safe(session, model, **kwargs):
-    instance = session.query(model).filter_by(**kwargs).first()
-    if instance:
-        return False
-    else:
-        instance = model(**kwargs)
-        session.add(instance)
-        session.commit()
-        return True
-
-
-def create_safe_limited(session, model, keywords_list, **kwargs):
-    kwdup = kwargs.keys()
-    for kw in list(kwdup):
-        if kw not in keywords_list:
-            kwargs.pop(kw)
-
-    instance = session.query(model).filter_by(**kwargs).first()
-    if instance:
-        return False
-    else:
-        instance = model(**kwargs)
-        session.add(instance)
-        session.commit()
-        return True
-
-
-def get_or_create(session, model, **kwargs):
-    instance = session.query(model).filter_by(**kwargs).first()
-    if instance:
-        return instance
-    else:
-        instance = model(**kwargs)
-        session.add(instance)
-        session.commit()
-        return instance
-
-
-class Client(db.Model):
-    __tablename__ = 'client'
-
-    client_id = Column(BigInteger, primary_key=True)
-    client_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
-    name = Column(Text, unique=True)
-    description = Column(Text)
-    sla = Column(Text)
-    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
-    created_by = Column(ForeignKey('user.id'), nullable=True)
-    last_update_date = Column(DateTime, server_default=func.now(), nullable=True)
-
-    custom_attributes = Column(JSON)
-
-
-class AssetsType(db.Model):
-    __tablename__ = 'assets_type'
-
-    asset_id = Column(Integer, primary_key=True)
-    asset_name = Column(String(155))
-    asset_description = Column(String(255))
-    asset_icon_not_compromised = Column(String(255))
-    asset_icon_compromised = Column(String(255))
-
-
-alert_assets_association = Table(
-    'alert_assets_association',
-    db.Model.metadata,
-    Column('alert_id', ForeignKey('alerts.alert_id'), primary_key=True),
-    Column('asset_id', ForeignKey('case_assets.asset_id'), primary_key=True)
-)
-
-
-class CaseAssets(db.Model):
-    __tablename__ = 'case_assets'
-
-    asset_id = Column(BigInteger, primary_key=True)
-    asset_uuid = Column(UUID(as_uuid=True), server_default=text("gen_random_uuid()"), nullable=False)
-    asset_name = Column(Text)
-    asset_description = Column(Text)
-    asset_domain = Column(Text)
-    asset_ip = Column(Text)
-    asset_info = Column(Text)
-    asset_compromise_status_id = Column(Integer, nullable=True)
-    asset_type_id = Column(ForeignKey('assets_type.asset_id'))
-    asset_tags = Column(Text)
-    case_id = Column(ForeignKey('cases.case_id'))
-    date_added = Column(DateTime)
-    date_update = Column(DateTime)
-    user_id = Column(ForeignKey('user.id'))
-    analysis_status_id = Column(ForeignKey('analysis_status.id'))
-    custom_attributes = Column(JSON)
-    asset_enrichment = Column(JSONB)
-    modification_history = Column(JSON)
-
-    case = relationship('Cases')
-    user = relationship('User')
-    asset_type = relationship('AssetsType')
-    analysis_status = relationship('AnalysisStatus')
-
-    alerts = relationship('Alert', secondary=alert_assets_association, back_populates='assets')
-    iocs = relationship('IocAssetLink', back_populates='asset')
-
-
-class AnalysisStatus(db.Model):
-    __tablename__ = 'analysis_status'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Text)
-
-
-class CaseClassification(db.Model):
-    __tablename__ = 'case_classification'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Text)
-    name_expanded = Column(Text)
-    description = Column(Text)
-    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
-    created_by_id = Column(ForeignKey('user.id'), nullable=True)
-
-    created_by = relationship('User')
-
-
-class EvidenceTypes(db.Model):
-    __tablename__ = 'evidence_type'
-
-    id = Column(Integer, primary_key=True)
-    name = Column(Text)
-    description = Column(Text)
-    creation_date = Column(DateTime, server_default=func.now(), nullable=True)
-    created_by_id = Column(ForeignKey('user.id'), nullable=True)
-
-    created_by = relationship('User')
 
 
 class CaseTemplate(db.Model):
@@ -546,31 +381,6 @@ class CaseKanban(db.Model):
     kanban_data = Column(Text)
 
     case = relationship('Cases')
-
-
-class CaseReceivedFile(db.Model):
-    __tablename__ = 'case_received_file'
-
-    id = Column(BigInteger, primary_key=True)
-    file_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, server_default=text("gen_random_uuid()"), nullable=False)
-    filename = Column(Text)
-    date_added = Column(DateTime)
-    acquisition_date = Column(DateTime)
-    file_hash = Column(Text)
-    file_description = Column(Text)
-    file_size = Column(BigInteger)
-    start_date = Column(DateTime)
-    end_date = Column(DateTime)
-    case_id = Column(ForeignKey('cases.case_id'))
-    user_id = Column(ForeignKey('user.id'))
-    type_id = Column(ForeignKey('evidence_type.id'))
-    custom_attributes = Column(JSON)
-    chain_of_custody = Column(JSON)
-    modification_history = Column(JSON)
-
-    case = relationship('Cases')
-    user = relationship('User')
-    type = relationship('EvidenceTypes')
 
 
 class TaskStatus(db.Model):

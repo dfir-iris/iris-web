@@ -22,7 +22,7 @@ from werkzeug import Response
 from app.datamgmt.case.case_assets_db import get_compromise_status_dict
 from app.datamgmt.case.case_assets_db import get_case_outcome_status_dict
 from app.datamgmt.manage.manage_case_objs import search_analysis_status_by_name
-from app.models.models import AnalysisStatus
+from app.models.assets import AnalysisStatus
 from app.schema.marshables import AnalysisStatusSchema
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.responses import response_error

@@ -270,7 +270,7 @@ class TestsRestAssets(TestCase):
         self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
         body = {'asset_type_id': 1, 'asset_name': 'asset1'}
         self._subject.create(f'/api/v2/cases/{case_identifier}/assets', body).json()
-        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets', { 'order_by': 'asset_name' }).json()
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/assets', {'order_by': 'asset_name'}).json()
         self.assertEqual('asset1', response['data'][0]['asset_name'])
 
     def test_get_assets_should_return_200_when_user_has_read_only_access_to_case(self):

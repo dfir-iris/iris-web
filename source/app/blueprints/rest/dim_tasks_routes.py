@@ -23,8 +23,8 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models.models import IrisHook
 from app.models.models import IrisModule
 from app.models.models import IrisModuleHook
-from app.models.models import CaseAssets
-from app.models.models import CaseReceivedFile
+from app.models.assets import CaseAssets
+from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
@@ -43,8 +43,8 @@ dim_tasks_rest_blueprint = Blueprint('dim_tasks_rest', __name__)
 
 
 @dim_tasks_rest_blueprint.route('/dim/hooks/call', methods=['POST'])
-@ac_requires_case_identifier(CaseAccessLevel.full_access)
 @ac_api_requires()
+@ac_requires_case_identifier(CaseAccessLevel.full_access)
 def dim_hooks_call(caseid):
     logs = []
     js_data = request.json
@@ -139,8 +139,7 @@ def dim_hooks_call(caseid):
         index += 1
 
     if len(obj_targets) > 0:
-        call_modules_hook(hook_name=hook_name, hook_ui_name=hook_ui_name, data=obj_targets,
-                          caseid=caseid, module_name=module_name)
+        call_modules_hook(hook_name, obj_targets, caseid=caseid, hook_ui_name=hook_ui_name, module_name=module_name)
 
     if len(logs) > 0:
         return response_error(f"Errors encountered during processing of data. Queued task with {index} objects",

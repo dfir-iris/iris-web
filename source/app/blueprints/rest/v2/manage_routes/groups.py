@@ -25,7 +25,7 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_deleted
-from app.blueprints.access_controls import wrap_with_permission_checks
+from app.blueprints.access_controls import ac_api_requires
 from app.schema.marshables import AuthorizationGroupSchema
 from app.business.groups import groups_create
 from app.business.groups import groups_get
@@ -33,8 +33,8 @@ from app.business.groups import groups_update
 from app.business.groups import groups_delete
 from app.models.authorization import Permissions
 from app.models.authorization import ac_flag_match_mask
-from app.business.errors import BusinessProcessingError
-from app.business.errors import ObjectNotFoundError
+from app.models.errors import BusinessProcessingError
+from app.models.errors import ObjectNotFoundError
 from app.blueprints.iris_user import iris_current_user
 from app.iris_engine.access_control.utils import ac_ldp_group_update
 
@@ -54,7 +54,7 @@ class Groups:
         except ValidationError as e:
             return response_api_error('Data error', data=e.messages)
 
-    def get(self, identifier):
+    def read(self, identifier):
         try:
             group = groups_get(identifier)
             result = self._schema.dump(group)
@@ -81,7 +81,7 @@ class Groups:
             return response_api_not_found()
 
     def delete(self, identifier):
-        try :
+        try:
             group = groups_get(identifier)
             groups_delete(iris_current_user, group)
             return response_api_deleted()
@@ -92,20 +92,29 @@ class Groups:
             return response_api_error(e.get_message())
 
 
-def create_groups_blueprint():
-    blueprint = Blueprint('rest_v2_groups', __name__, url_prefix='/groups')
-    groups = Groups()
+groups_blueprint = Blueprint('rest_v2_groups', __name__, url_prefix='/groups')
+groups = Groups()
 
-    create_group = wrap_with_permission_checks(groups.create, Permissions.server_administrator)
-    blueprint.add_url_rule('', view_func=create_group, methods=['POST'])
 
-    get_group = wrap_with_permission_checks(groups.get, Permissions.server_administrator)
-    blueprint.add_url_rule('/<int:identifier>', view_func=get_group, methods=['GET'])
+@groups_blueprint.post('')
+@ac_api_requires(Permissions.server_administrator)
+def create_group():
+    return groups.create()
 
-    update_group = wrap_with_permission_checks(groups.update, Permissions.server_administrator)
-    blueprint.add_url_rule('/<int:identifier>', view_func=update_group, methods=['PUT'])
 
-    delete_group = wrap_with_permission_checks(groups.delete, Permissions.server_administrator)
-    blueprint.add_url_rule('/<int:identifier>', view_func=delete_group, methods=['DELETE'])
+@groups_blueprint.get('/<int:identifier>')
+@ac_api_requires(Permissions.server_administrator)
+def read_group(identifier):
+    return groups.read(identifier)
 
-    return blueprint
+
+@groups_blueprint.put('/<int:identifier>')
+@ac_api_requires(Permissions.server_administrator)
+def update_group(identifier):
+    return groups.update(identifier)
+
+
+@groups_blueprint.delete('/<int:identifier>')
+@ac_api_requires(Permissions.server_administrator)
+def delete_group(identifier):
+    return groups.delete(identifier)

@@ -20,34 +20,32 @@ from datetime import datetime
 from datetime import date
 from datetime import timedelta
 from pathlib import Path
+from typing import Any
 
-from sqlalchemy import and_
+from sqlalchemy import and_, or_, cast, String
 from sqlalchemy.orm import aliased
 from functools import reduce
 
-from app import db
+from app.db import db
 from app.datamgmt.alerts.alerts_db import search_alert_resolution_by_name
 from app.datamgmt.case.case_db import get_case_tags
 from app.datamgmt.manage.manage_case_state_db import get_case_state_by_name
 from app.datamgmt.conversions import convert_sort_direction
 from app.datamgmt.authorization import has_deny_all_access_level
 from app.datamgmt.states import delete_case_states
-from app.models.models import CaseAssets
 from app.models.models import NoteRevisions
-from app.models.models import CaseClassification
-from app.models.models import alert_assets_association
-from app.models.models import CaseStatus
+from app.models.assets import alert_assets_association, CaseAssets
 from app.models.models import TaskAssignee
 from app.models.models import NoteDirectory
 from app.models.models import Tags
 from app.models.models import CaseEventCategory
 from app.models.models import CaseEventsAssets
 from app.models.models import CaseEventsIoc
-from app.models.models import CaseReceivedFile
+from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
-from app.models.cases import Cases
+from app.models.cases import Cases, CaseStatus, CaseClassification
 from app.models.cases import CasesEvent
-from app.models.models import Client
+from app.models.customers import Client
 from app.models.models import DataStoreFile
 from app.models.models import DataStorePath
 from app.models.models import IocAssetLink
@@ -564,27 +562,153 @@ def build_filter_case_query(current_user_id,
 
 def get_filtered_cases(current_user_id,
                        pagination_parameters: PaginationParameters,
-                       start_open_date: str = None,
-                       end_open_date: str = None,
-                       case_customer_id: int = None,
-                       case_ids: list = None,
-                       case_name: str = None,
-                       case_description: str = None,
-                       case_classification_id: int = None,
-                       case_owner_id: int = None,
-                       case_opening_user_id: int = None,
-                       case_severity_id: int = None,
-                       case_state_id: int = None,
-                       case_soc_id: str = None,
-                       case_open_since: int = None,
-                       search_value=None,
-                       is_open: bool = None
+                       start_open_date: str | None = None,
+                       end_open_date: str | None = None,
+                       case_customer_id: int | None = None,
+                       case_ids: list[int] | None = None,
+                       case_name: str | None = None,
+                       case_description: str | None = None,
+                       case_classification_id: int | None = None,
+                       case_owner_id: int | None = None,
+                       case_opening_user_id: int | None = None,
+                       case_severity_id: int | None = None,
+                       case_state_id: int | None = None,
+                       case_soc_id: str | None = None,
+                       case_open_since: int | None = None,
+                       search_value: str | None = None,
+                       is_open: bool | None = None,
+                       advanced_filters: list[dict[str, Any]] | None = None,
+                       advanced_logic: str = 'and'
                        ):
-    data = build_filter_case_query(case_classification_id=case_classification_id, case_customer_id=case_customer_id, case_description=case_description,
-                                   case_ids=case_ids, case_name=case_name, case_opening_user_id=case_opening_user_id, case_owner_id=case_owner_id,
-                                   case_severity_id=case_severity_id, case_soc_id=case_soc_id, case_open_since=case_open_since,
-                                   case_state_id=case_state_id, current_user_id=current_user_id, end_open_date=end_open_date,
-                                   search_value=search_value, start_open_date=start_open_date, is_open=is_open,
-                                   sort_by=pagination_parameters.get_order_by(), sort_dir=pagination_parameters.get_direction())
+    kwargs: dict[str, Any] = {
+        'current_user_id': current_user_id,
+        'sort_by': pagination_parameters.get_order_by(),
+        'sort_dir': pagination_parameters.get_direction()
+    }
 
-    return data.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page(), error_out=False)
+    if start_open_date is not None:
+        kwargs['start_open_date'] = start_open_date
+    if end_open_date is not None:
+        kwargs['end_open_date'] = end_open_date
+
+    if case_customer_id is not None:
+        kwargs['case_customer_id'] = case_customer_id
+
+    if case_ids is not None:
+        kwargs['case_ids'] = case_ids
+
+    if case_name is not None:
+        kwargs['case_name'] = case_name
+
+    if case_description is not None:
+        kwargs['case_description'] = case_description
+
+    if case_classification_id is not None:
+        kwargs['case_classification_id'] = case_classification_id
+
+    if case_owner_id is not None:
+        kwargs['case_owner_id'] = case_owner_id
+
+    if case_opening_user_id is not None:
+        kwargs['case_opening_user_id'] = case_opening_user_id
+
+    if case_severity_id is not None:
+        kwargs['case_severity_id'] = case_severity_id
+
+    if case_state_id is not None:
+        kwargs['case_state_id'] = case_state_id
+
+    if case_soc_id is not None:
+        kwargs['case_soc_id'] = case_soc_id
+
+    if case_open_since is not None:
+        kwargs['case_open_since'] = case_open_since
+
+    if search_value is not None:
+        kwargs['search_value'] = search_value
+
+    if is_open is not None:
+        kwargs['is_open'] = is_open
+
+    query = build_filter_case_query(**kwargs)
+
+    if advanced_filters:
+        adv_conditions = []
+        joined_client = False
+        joined_state = False
+        joined_owner = False
+
+        for f in advanced_filters:
+            field_id = f.get('fieldId')
+            operation = f.get('operation')
+            value = f.get('value', '')
+
+            if not isinstance(field_id, str) or not isinstance(operation, str) or not isinstance(value, str):
+                continue
+
+            field_expr: Any = None
+
+            if field_id == 'title':
+                field_expr = Cases.name
+            elif field_id == 'case_id':
+                field_expr = cast(Cases.case_id, String)
+            elif field_id == 'outcome':
+                field_expr = Cases.closing_note
+            elif field_id == 'open_date':
+                field_expr = cast(Cases.open_date, String)
+            elif field_id == 'classification':
+                field_expr = cast(Cases.classification_id, String)
+            elif field_id == 'customer':
+                if not joined_client:
+                    query = query.join(Client, Cases.client_id == Client.client_id)
+                    joined_client = True
+                field_expr = Client.name
+            elif field_id == 'state':
+                if not joined_state:
+                    query = query.join(CaseState, Cases.state_id == CaseState.state_id)
+                    joined_state = True
+                field_expr = CaseState.state_name
+            elif field_id == 'owner':
+                if not joined_owner:
+                    query = query.join(User, Cases.owner_id == User.id)
+                    joined_owner = True
+                field_expr = User.user
+
+            if field_expr is None:
+                continue
+
+            op = operation.lower()
+
+            if op == 'empty':
+                adv_conditions.append(or_(field_expr.is_(None), field_expr == ''))
+                continue
+            if op == 'not_empty':
+                adv_conditions.append(and_(field_expr.is_not(None), field_expr != ''))
+                continue
+
+            if op == 'equals':
+                adv_conditions.append(field_expr == value)
+            elif op == 'not':
+                adv_conditions.append(field_expr != value)
+            elif op == 'starts_with':
+                adv_conditions.append(field_expr.ilike(f'{value}%'))
+            elif op == 'not_starts_with':
+                adv_conditions.append(~field_expr.ilike(f'{value}%'))
+            elif op == 'contains':
+                adv_conditions.append(field_expr.ilike(f'%{value}%'))
+            elif op == 'not_contains':
+                adv_conditions.append(~field_expr.ilike(f'%{value}%'))
+            elif op == 'ends_with':
+                adv_conditions.append(field_expr.ilike(f'%{value}'))
+            elif op == 'not_ends_with':
+                adv_conditions.append(~field_expr.ilike(f'%{value}'))
+
+        if adv_conditions:
+            if (advanced_logic or 'and').lower() == 'or':
+                query = query.filter(or_(*adv_conditions))
+            else:
+                query = query.filter(and_(*adv_conditions))
+
+    return query.paginate(page=pagination_parameters.get_page(),
+                          per_page=pagination_parameters.get_per_page(),
+                          error_out=False)

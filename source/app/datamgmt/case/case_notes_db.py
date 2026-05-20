@@ -22,9 +22,10 @@ from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from flask_sqlalchemy.pagination import Pagination
 
-from app import db
+from app.datamgmt.db_operations import db_create
+from app.datamgmt.db_operations import db_delete
+from app.db import db
 from app.datamgmt.persistence_error import PersistenceError
-from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.manage.manage_attribute_db import get_default_custom_attributes
 from app.datamgmt.states import update_notes_state
 from app.models.comments import Comments
@@ -36,7 +37,7 @@ from app.models.models import NotesGroup
 from app.models.models import NotesGroupLink
 from app.models.authorization import User
 from app.models.cases import Cases
-from app.models.models import Client
+from app.models.customers import Client
 from app.models.pagination_parameters import PaginationParameters
 from app.datamgmt.filtering import paginate
 
@@ -66,9 +67,7 @@ def delete_directory(directory: NoteDirectory):
         for subdirectory in directory.subdirectories:
             delete_directory(subdirectory)
 
-        # Delete the directory
-        db.session.delete(directory)
-        db.session.commit()
+        db_delete(directory)
 
         return True
 
@@ -133,11 +132,10 @@ def update_note(note_content, note_title, update_date, user_id, note_id, caseid)
         db.session.commit()
         return note
 
-    else:
-        return None
+    return None
 
 
-def update_note_revision(note: Notes) -> bool:
+def update_note_revision(user_identifier, note: Notes) -> bool:
     try:
         latest_version = db.session.query(
             NoteRevisions
@@ -157,11 +155,10 @@ def update_note_revision(note: Notes) -> bool:
             revision_number=revision_number,
             note_title=note.note_title,
             note_content=note.note_content,
-            note_user=iris_current_user.id,
+            note_user=user_identifier,
             revision_timestamp=datetime.utcnow()
         )
-        db.session.add(note_version)
-        db.session.commit()
+        db_create(note_version)
 
         return True
     except IntegrityError as e:
@@ -347,8 +344,7 @@ def update_note_group(group_title, group_id, caseid):
         db.session.commit()
         return ng
 
-    else:
-        return None
+    return None
 
 
 def find_pattern_in_notes(pattern, caseid):
@@ -379,8 +375,7 @@ def add_comment_to_note(note_id, comment_id):
     ec.comment_note_id = note_id
     ec.comment_id = comment_id
 
-    db.session.add(ec)
-    db.session.commit()
+    db_create(ec)
 
 
 def get_case_notes_comments_count(notes_list):
@@ -418,10 +413,10 @@ def get_case_note_comment(note_id, comment_id):
     ).first()
 
 
-def delete_note_comment(note_id, comment_id):
+def delete_note_comment(user_identifier, note_id, comment_id):
     comment = Comments.query.filter(
         Comments.comment_id == comment_id,
-        Comments.comment_user_id == iris_current_user.id
+        Comments.comment_user_id == user_identifier
     ).first()
     if not comment:
         return False, 'You are not allowed to delete this comment'
@@ -431,8 +426,7 @@ def delete_note_comment(note_id, comment_id):
         NotesComments.comment_id == comment_id
     ).delete()
 
-    db.session.delete(comment)
-    db.session.commit()
+    db_delete(comment)
 
     return True, 'Comment deleted'
 

@@ -21,7 +21,7 @@ from flask import Blueprint
 from flask import request
 from marshmallow import ValidationError
 
-from app import db
+from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.manage.manage_case_templates_db import get_case_templates_list
 from app.datamgmt.manage.manage_case_templates_db import get_case_template_by_id
