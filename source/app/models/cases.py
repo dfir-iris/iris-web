@@ -49,7 +49,7 @@ from sqlalchemy import Index
 
 from app.datamgmt.states import update_tasks_state
 from app.datamgmt.states import update_timeline_state
-from app.models.models import Client
+from app.models.customers import Client
 
 
 class Cases(db.Model):
