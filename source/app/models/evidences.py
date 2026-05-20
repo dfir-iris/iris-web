@@ -29,7 +29,7 @@ from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import relationship
 
-from app import db
+from app.db import db
 
 
 class EvidenceTypes(db.Model):
