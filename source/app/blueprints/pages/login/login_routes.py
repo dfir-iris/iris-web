@@ -340,8 +340,11 @@ if is_authentication_oidc():
                     f'CRITICAL: No customers found in the system. User {user.id} could not be assigned to a default customer.'
                 )
 
-        if user and not user.active or (user and not user_group):
-            return response_error("User not active or has no role in IRIS", 403)
+        if user and not user.active:
+            return response_error("User not active in IRIS", 403)
+
+        if usergroup_field is not None and not user_group:
+            return response_error("Required user group information missing in OIDC response", 403)
         if user_group:
             if not userroles_mapping_field:
                 groups_list = get_groups_list()
