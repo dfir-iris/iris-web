@@ -416,6 +416,7 @@ class CaseTasks(db.Model):
     user_close = relationship('User', foreign_keys=[task_userid_close])
     user_update = relationship('User', foreign_keys=[task_userid_update])
     status = relationship('TaskStatus', foreign_keys=[task_status_id])
+    task_assignees = relationship('TaskAssignee', foreign_keys='TaskAssignee.task_id', overlaps='task', viewonly=True)
 
 
 class Tags(db.Model):
