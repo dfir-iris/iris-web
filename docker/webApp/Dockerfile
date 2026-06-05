@@ -43,10 +43,12 @@ RUN python -m venv /opt/venv
 # Make sure we use the virtualenv:
 ENV PATH="/opt/venv/bin:$PATH"
 
+RUN python -m pip install --upgrade pip wheel
+
 COPY source/dependencies /dependencies
 COPY source/requirements.txt /
 
-RUN pip3 install -r requirements.txt
+RUN python -m pip install --no-cache-dir -r /requirements.txt
 
 ###############
 # BUILD IMAGE #
