@@ -50,7 +50,7 @@
                                         <li>summary: content to prefill the summary.</li>
                                         <li>tags: A list of case tags.</li>
                                         <li>tasks: A list of dictionaries defining tasks. Tasks are defined by title (required), description, and list of tags.</li>
-                                        <li>note_directories: A list of dictionaries defining note directories. Note directories are defined by title (required), and list of notes. Notes have title (required) and content</li>
+                                        <li>note_directories: A list of dictionaries defining note directories. Each directory is defined by title (required), an optional list of notes (each with title (required) and optional content), and an optional nested <code>note_directories</code> list to create sub-directory trees of arbitrary depth.</li>
                                     </ul>
                                 </div>
                             </div>
@@ -101,6 +101,17 @@
                 {
                     "title": "Identify the compromised accounts",
                     "content": "# Observations\n\n"
+                }
+            ],
+            "note_directories": [
+                {
+                    "title": "Sub-investigation",
+                    "notes": [
+                        {
+                            "title": "Detailed findings",
+                            "content": "# Findings\n\n"
+                        }
+                    ]
                 }
             ]
         },
