@@ -1,0 +1,107 @@
+version: 2.1
+
+orbs:
+  ci-cd: djamoapp/ci-cd@1.16.1
+
+filters: &filters
+  branches:
+    only:
+      - main
+
+pr-filters: &pr-filters
+  branches:
+    ignore:
+      - main
+
+image-tag: &image-tag
+  tag: "${CIRCLE_SHA1}-${CIRCLE_WORKFLOW_ID}"
+
+common-params: &common-params
+  channel: C0B91DUGKSN
+  filters: *filters
+
+params: &params
+  <<: *common-params
+  ecr-repo: iris-web
+
+params-k8s: &params-k8s
+  <<:
+    - *common-params
+    - *image-tag
+
+jobs:
+  static-checks:
+    docker:
+      - image: cimg/python:3.12
+    steps:
+      - checkout
+      - run:
+          name: Install ruff
+          command: pip install ruff
+      - run:
+          name: Run ruff
+          command: ruff check source/
+
+  test-api:
+    machine:
+      image: ubuntu-2204:current
+    resource_class: arm.large
+    steps:
+      - checkout
+      - run:
+          name: Start development server
+          command: |
+            cp tests/data/basic.env .env
+            docker compose --file docker-compose.dev.yml up --detach
+          no_output_timeout: 10m
+      - run:
+          name: Run API tests
+          working_directory: tests
+          command: |
+            python -m venv venv
+            source venv/bin/activate
+            pip install -r requirements.txt
+            PYTHONUNBUFFERED=true python -m unittest --verbose
+          no_output_timeout: 10m
+      - run:
+          name: Stop development server
+          command: docker compose down
+          when: always
+
+workflows:
+  pr-checks:
+    jobs:
+      - static-checks:
+          filters: *pr-filters
+      - test-api:
+          filters: *pr-filters
+
+  deployment:
+    jobs:
+      - ci-cd/build-and-push-image:
+          <<:
+            - *params
+            - *image-tag
+          dockerfile: docker/webApp/Dockerfile
+          context: [aws-registry-creds, slack-secrets]
+
+      - ci-cd/k8s-deploy:
+          <<: *params-k8s
+          context: [github-creds, slack-secrets]
+          app-name: irisweb
+          repo: application-configuration
+          pipeline-number: "<<pipeline.number>>"
+          requires:
+            - ci-cd/build-and-push-image
+
+      - ci-cd/github-release:
+          context: github-creds
+          requires:
+            - ci-cd/k8s-deploy
+          filters: *filters
+
+      - ci-cd/jira-ticket-release:
+          context: jira-creds
+          filters: *filters
+          requires:
+            - ci-cd/github-release
