@@ -327,8 +327,8 @@ def case_gettimeline_api(asset_id, caseid):
 
 
 @case_timeline_rest_blueprint.route('/case/timeline/advanced-filter', methods=['GET'])
-@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 def case_filter_timeline(caseid):
     args = request.args.to_dict()
     query_filter = args.get('q')
