@@ -51,6 +51,7 @@ from app.models.errors import BusinessProcessingError, ObjectNotFoundError
 from app.business.cases import cases_filter
 from app.schema.marshables import CaseSchemaForAPIV2
 from app.schema.marshables import CaseDetailsSchema
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.access_controls import ac_current_user_has_customer_access
 from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
@@ -365,3 +366,14 @@ def rest_v2_cases_update(identifier):
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
     return cases_operations.delete(identifier)
+
+
+@cases_blueprint.get('/<int:case_identifier>/users')
+@ac_api_requires()
+def case_get_users(case_identifier):
+    if not ac_fast_check_current_user_has_case_access(case_identifier,
+                                                      [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_identifier)
+
+    users = get_users_list_restricted_from_case(case_identifier)
+    return response_api_success(users)

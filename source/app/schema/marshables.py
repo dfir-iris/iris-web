@@ -1894,6 +1894,12 @@ class TaskStatusSchema(ma.SQLAlchemyAutoSchema):
         unknown = EXCLUDE
 
 
+class TaskAssigneeForTaskSchema(ma.Schema):
+    id = fields.Integer(attribute='user.id')
+    user = fields.String(attribute='user.user')
+    name = fields.String(attribute='user.name')
+
+
 class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseTask objects.
 
@@ -1903,10 +1909,13 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
     """
     task_title: str = auto_field('task_title', required=True, validate=Length(min=2), allow_none=False)
     task_status_id: int = auto_field('task_status_id', required=True)
-    task_assignees_id: Optional[List[int]] = fields.List(fields.Integer, required=False, allow_none=True)
-    task_assignees: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
+    task_assignees_id = fields.Method('get_task_assignees_id', dump_only=True)
+    task_assignees = ma.Nested(TaskAssigneeForTaskSchema, many=True, dump_only=True)
     status = ma.Nested(TaskStatusSchema)
     case = ma.Nested(CaseSchema, only=['case_name', 'case_id'])
+
+    def get_task_assignees_id(self, obj):
+        return [ta.user_id for ta in (obj.task_assignees or [])]
 
     class Meta:
         model = CaseTasks
