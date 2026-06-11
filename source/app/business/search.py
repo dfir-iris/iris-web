@@ -20,12 +20,15 @@ from app.iris_engine.utils.tracker import track_activity
 from app.datamgmt.comments import search_comments
 from app.datamgmt.case.case_notes_db import search_notes
 from app.datamgmt.case.case_iocs_db import search_iocs
-
+from app.datamgmt.case.case_db import search_case_summary
 
 def search(search_type, search_value):
     track_activity(f'started a global search for {search_value} on {search_type}')
 
     files = []
+    if search_type == 'case_summary':
+        files = search_case_summary(search_value)
+
     if search_type == 'ioc':
         files = search_iocs(search_value)
 

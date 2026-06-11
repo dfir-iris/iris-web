@@ -20,6 +20,7 @@ from typing import Optional
 
 import binascii
 from sqlalchemy import and_
+from sqlalchemy import or_
 
 from sqlalchemy import exists
 from sqlalchemy import select
@@ -53,6 +54,31 @@ def get_first_case_with_customer(customer_identifier: int) -> Optional[Cases]:
     ).first()
     return case
 
+def search_case_summary(search_value):
+    results = Cases.query.with_entities(
+        Cases.case_id.label("case_id"),
+        Cases.name.label("case_name"),
+        Cases.description.label("case_description"),
+        Client.name.label("customer_name")
+    ).join(
+        Cases.client
+    ).filter(
+        or_(
+            Cases.name.ilike(f"%{search_value}%"),
+            Cases.description.ilike(f"%{search_value}%"),
+            Client.name.ilike(f"%{search_value}%")
+        )
+    ).all()
+
+    return [
+        {
+            "case_id": r.case_id,
+            "case_name": r.case_name,
+            "case_description": r.case_description,
+            "customer_name": r.customer_name
+        }
+        for r in results
+    ]
 
 def get_case_summary(caseid):
     case_summary = Cases.query.filter(
