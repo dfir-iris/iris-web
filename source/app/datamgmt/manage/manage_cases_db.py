@@ -223,7 +223,7 @@ def map_alert_resolution_to_case_status(case_status_id):
     return None
 
 
-def reopen_case(case_id):
+def reopen_case(case_id, state_id=None):
     res = Cases.query.filter(
         Cases.case_id == case_id
     ).first()
@@ -231,7 +231,10 @@ def reopen_case(case_id):
     if res:
         res.close_date = None
 
-        res.state_id = get_case_state_by_name('Open').state_id
+        if state_id is None:
+            state_id = get_case_state_by_name('Open').state_id
+
+        res.state_id = state_id
 
         db.session.commit()
         return res

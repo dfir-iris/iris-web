@@ -27,6 +27,32 @@ def _get_case_with_identifier(response, identifier):
     raise ValueError('Case not found')
 
 
+def _get_case_state_identifier_by_name(subject, state_name):
+    response = subject.get('/manage/case-states/list').json()
+    for case_state in response['data']:
+        if case_state['state_name'].lower() == state_name.lower():
+            return case_state['state_id']
+
+    raise ValueError(f'Case state {state_name} not found')
+
+
+def _get_non_closed_case_state_identifier(subject):
+    response = subject.get('/manage/case-states/list').json()
+    open_state_identifier = None
+
+    for case_state in response['data']:
+        state_name = case_state['state_name'].lower()
+        if state_name == 'open':
+            open_state_identifier = case_state['state_id']
+        if state_name not in ('closed', 'open'):
+            return case_state['state_id']
+
+    if open_state_identifier is not None:
+        return open_state_identifier
+
+    raise ValueError('No non-closed case state found')
+
+
 class TestsRestCases(TestCase):
 
     def setUp(self) -> None:
@@ -252,3 +278,43 @@ class TestsRestCases(TestCase):
         identifier = self._subject.create_dummy_case()
         response = self._subject.create(f'/manage/cases/close/{identifier}', {}).json()
         self.assertIsNotNone(response['data']['close_date'])
+
+    def test_update_case_state_to_closed_should_set_closing_date(self):
+        identifier = self._subject.create_dummy_case()
+        closed_state_identifier = _get_case_state_identifier_by_name(self._subject, 'Closed')
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'state_id': closed_state_identifier}).json()
+
+        self.assertEqual(closed_state_identifier, response['state']['state_id'])
+        self.assertIsNotNone(response['close_date'])
+
+    def test_manage_update_case_state_to_closed_should_set_closing_date(self):
+        identifier = self._subject.create_dummy_case()
+        closed_state_identifier = _get_case_state_identifier_by_name(self._subject, 'Closed')
+        response = self._subject.create(
+            f'/manage/cases/update/{identifier}',
+            {'state_id': closed_state_identifier}
+        ).json()
+
+        self.assertEqual(closed_state_identifier, response['data']['state_id'])
+        self.assertIsNotNone(response['data']['close_date'])
+
+    def test_update_case_state_to_non_closed_should_clear_closing_date(self):
+        identifier = self._subject.create_dummy_case()
+        reopened_state_identifier = _get_non_closed_case_state_identifier(self._subject)
+        self._subject.create(f'/manage/cases/close/{identifier}', {})
+        response = self._subject.update(f'/api/v2/cases/{identifier}', {'state_id': reopened_state_identifier}).json()
+
+        self.assertEqual(reopened_state_identifier, response['state']['state_id'])
+        self.assertIsNone(response['close_date'])
+
+    def test_manage_update_case_state_to_non_closed_should_clear_closing_date(self):
+        identifier = self._subject.create_dummy_case()
+        reopened_state_identifier = _get_non_closed_case_state_identifier(self._subject)
+        self._subject.create(f'/manage/cases/close/{identifier}', {})
+        response = self._subject.create(
+            f'/manage/cases/update/{identifier}',
+            {'state_id': reopened_state_identifier}
+        ).json()
+
+        self.assertEqual(reopened_state_identifier, response['data']['state_id'])
+        self.assertIsNone(response['data']['close_date'])

@@ -268,6 +268,7 @@ class CasesOperations:
 
         try:
             case = cases_get_by_identifier(identifier)
+            previous_state_id = case.state_id
 
             request_data = request.get_json()
 
@@ -296,7 +297,7 @@ class CasesOperations:
 
             protagonists = request_data.get('protagonists')
             tags = request_data.get('case_tags')
-            case = cases_update(case, updated_case, protagonists, tags)
+            case = cases_update(case, updated_case, protagonists, tags, previous_state_id=previous_state_id)
             result = self._schema.dump(case)
             return response_api_success(result)
         except ValidationError as e:

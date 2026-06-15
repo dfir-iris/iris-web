@@ -24,7 +24,7 @@ function case_detail(id) {
 }
 
 /* Close case function */
-function close_case(id) {
+function confirm_close_case(id, on_confirm) {
     swal({
         title: "Are you sure?",
         text: "Case ID " + id + " will be closed and will not appear in contexts anymore",
@@ -36,15 +36,21 @@ function close_case(id) {
         confirmButtonText: 'Yes, close it!'
     })
     .then((willClose) => {
-        if (willClose) {
-            post_request_api(`/manage/cases/close/${id}`)
-            .done((data) => {
-                if (!refresh_case_table()) {
-                    window.location.reload();
-                }
-                $('#modal_case_detail').modal('hide');
-            });
+        if (willClose && on_confirm) {
+            on_confirm();
         }
+    });
+}
+
+function close_case(id) {
+    confirm_close_case(id, function () {
+        post_request_api(`/manage/cases/close/${id}`)
+        .done((data) => {
+            if (!refresh_case_table()) {
+                window.location.reload();
+            }
+            $('#modal_case_detail').modal('hide');
+        });
     });
 }
 
@@ -107,6 +113,10 @@ function remove_case(id) {
 function edit_case_info() {
     $('#case_gen_info_content').hide();
     $('#case_gen_info_edit').show();
+    if ($('#case_state').attr('data-initial-state-id') === undefined) {
+        $('#case_state').attr('data-initial-state-id', $('#case_state').val());
+    }
+    $('.case-info-readonly-action').hide();
     $('#cancel_case_info').show();
     $('#save_case_info').show();
     $('#case_info').hide();
@@ -115,13 +125,54 @@ function edit_case_info() {
 function cancel_case_edit() {
     $('#case_gen_info_content').show();
     $('#case_gen_info_edit').hide();
+    $('.case-info-readonly-action').show();
     $('#cancel_case_info').hide();
     $('#save_case_info').hide();
     $('#case_info').show();
 }
 
-function save_case_edit(case_id) {
+function get_closed_case_state_identifier() {
+    var closed_state_option = $('#case_state option').filter(function () {
+        return $(this).text().trim().toLowerCase() === 'closed';
+    }).first();
 
+    if (closed_state_option.length === 0) {
+        return NaN;
+    }
+
+    return parseInt(closed_state_option.val(), 10);
+}
+
+function save_case_edit(case_id) {
+    var previous_state_identifier = parseInt($('#case_state').attr('data-initial-state-id'), 10);
+    var selected_state_identifier = parseInt($('#case_state').val(), 10);
+    var closed_state_identifier = get_closed_case_state_identifier();
+
+    if (!Number.isNaN(previous_state_identifier) &&
+        !Number.isNaN(selected_state_identifier) &&
+        !Number.isNaN(closed_state_identifier)) {
+        var is_closing_case = previous_state_identifier !== closed_state_identifier &&
+            selected_state_identifier === closed_state_identifier;
+        var is_reopening_case = previous_state_identifier === closed_state_identifier &&
+            selected_state_identifier !== closed_state_identifier;
+
+        if (is_closing_case) {
+            confirm_close_case(case_id, function () {
+                submit_case_edit(case_id);
+            });
+            return;
+        }
+
+        if (is_reopening_case) {
+            submit_case_edit(case_id);
+            return;
+        }
+    }
+
+    submit_case_edit(case_id);
+}
+
+function submit_case_edit(case_id) {
     var data_sent = $('form#form_update_case').serializeObject();
     var map_protagonists = Object();
 
