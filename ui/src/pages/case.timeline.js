@@ -107,6 +107,13 @@ function add_event(parent_event_id = null) {
         $('#modal_add_event').modal({ show: true });
         $('#event_title').focus();
 
+        let ed_event_description = $('#event_description');
+        ed_event_description.off('paste');
+        ed_event_description.on('paste', (event) => {
+            event.preventDefault();
+            handle_ed_paste(event, g_event_desc_editor);
+        });
+
     });
 }
 
