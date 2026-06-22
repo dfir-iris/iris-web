@@ -28,6 +28,7 @@ import tempfile
 from flask import current_app
 from marshmallow import EXCLUDE
 from marshmallow import fields
+from marshmallow import post_dump
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.exceptions import ValidationError
@@ -51,6 +52,7 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.datamgmt.case.case_iocs_db import get_ioc_links
+from app.datamgmt.case.case_tasks_db import get_task_assignees
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models.models import SavedFilter
 from app.models.models import DataStorePath
@@ -1978,6 +1980,29 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
         if new_attr is not None:
             data['custom_attributes'] = merge_custom_attributes(new_attr, data.get('id'), 'task')
 
+        return data
+
+    @post_dump(pass_original=True)
+    def populate_assignees(self, data: Dict[str, Any], original: Any, **kwargs: Any) -> Dict[str, Any]:
+        """Inject the assignee list for the task.
+
+        `task_assignees` and `task_assignees_id` are declared as schema
+        fields, but the `CaseTasks` model itself has no relationship to
+        `TaskAssignee` — so without this hook both fields always serialise
+        to `None`, which silently hides the assignees stored in the DB
+        and breaks the frontend assignee picker on re-edit.
+
+        We query `TaskAssignee` once per dumped task and back-fill both
+        fields. When the schema is dumped without a model instance (e.g.
+        from a dict), we leave the data untouched.
+        """
+        task_id = getattr(original, 'id', None) if original is not None else None
+        if task_id is None:
+            return data
+
+        assignees = get_task_assignees(task_id)
+        data['task_assignees'] = assignees
+        data['task_assignees_id'] = [assignee['id'] for assignee in assignees]
         return data
 
 

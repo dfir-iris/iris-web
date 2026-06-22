@@ -132,6 +132,62 @@ def get_all_users_activities():
     return user_activities
 
 
+def get_recent_activities_for_user(user_id, limit=20, offset=0, accessible_case_ids=None):
+    """Recent UI-visible UserActivity entries that the given user is allowed
+    to see, ordered newest-first.
+
+    Filters on the same `display_in_ui` flag the legacy global activity
+    feed uses, then scopes by `case_id IN (...)` so users only see entries
+    from cases they have access to (or rows authored by the user
+    themselves). Activity from *other* users on those same cases is
+    included — this is the whole point: the feed is "what's happening on
+    the cases I'm part of", not "what I'm doing".
+
+    `offset` lets callers paginate by re-querying with `offset += limit`
+    until fewer than `limit` rows come back.
+
+    Pass `accessible_case_ids` to avoid an extra lookup if the caller has
+    already computed it.
+    """
+    if accessible_case_ids is None:
+        from app.datamgmt.manage.manage_cases_db import user_list_cases_view
+        accessible_case_ids = user_list_cases_view(user_id)
+
+    case_filter = UserActivity.case_id.in_(accessible_case_ids) if accessible_case_ids else None
+
+    base = UserActivity.query.with_entities(
+        UserActivity.id,
+        Cases.name.label('case_name'),
+        UserActivity.case_id,
+        User.name.label('user_name'),
+        UserActivity.user_id,
+        UserActivity.activity_date,
+        UserActivity.activity_desc,
+        UserActivity.user_input,
+        UserActivity.is_from_api
+    ).outerjoin(
+        UserActivity.user
+    ).outerjoin(
+        UserActivity.case
+    ).filter(
+        UserActivity.display_in_ui == True
+    )
+
+    if case_filter is not None:
+        # Show activity from accessible cases plus activity authored by the
+        # user themselves on cases they no longer have access to (so users
+        # don't lose their own recent history when scopes shift).
+        base = base.filter(
+            (case_filter) | (UserActivity.user_id == user_id)
+        )
+    else:
+        base = base.filter(UserActivity.user_id == user_id)
+
+    rows = base.order_by(desc(UserActivity.activity_date)).offset(offset).limit(limit).all()
+
+    return [row._asdict() for row in rows]
+
+
 def search_users_activity_in_case(case_identifier):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,

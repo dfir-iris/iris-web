@@ -34,6 +34,7 @@ from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.parsing import parse_pagination_parameters
+from app.business.activity import activity_search_in_case
 from app.blueprints.rest.v2.case_routes.assets import case_assets_blueprint
 from app.blueprints.rest.v2.case_routes.iocs import case_iocs_blueprint
 from app.blueprints.rest.v2.case_routes.notes import case_notes_blueprint
@@ -45,8 +46,10 @@ from app.blueprints.rest.v2.case_routes.datastore import case_datastore_blueprin
 from app.blueprints.iris_user import iris_current_user
 from app.business.cases import cases_create
 from app.business.cases import cases_delete
+from app.business.cases import cases_exists
 from app.business.cases import cases_get_by_identifier
 from app.business.cases import cases_update
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.models.errors import BusinessProcessingError, ObjectNotFoundError
 from app.business.cases import cases_filter
 from app.schema.marshables import CaseSchemaForAPIV2
@@ -85,6 +88,9 @@ class CasesOperations:
         start_open_date = request.args.get('start_open_date', None, type=str)
         end_open_date = request.args.get('end_open_date', None, type=str)
         is_open = request.args.get('is_open', None, type=parse_boolean)
+        # Free-text search across case name, customer name, and (numeric) case id.
+        # Powers the context switcher's search box; an empty / whitespace value is ignored.
+        quick_search = request.args.get('quick_search', None, type=str)
 
         filtered_cases = cases_filter(
             iris_current_user,
@@ -101,7 +107,8 @@ class CasesOperations:
             case_soc_id,
             start_open_date,
             end_open_date,
-            is_open
+            is_open,
+            quick_search=quick_search
         )
 
         return response_api_paginated(self._schema, filtered_cases)
@@ -365,3 +372,46 @@ def rest_v2_cases_update(identifier):
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
     return cases_operations.delete(identifier)
+
+
+@cases_blueprint.get('/<int:identifier>/access/users')
+@ac_api_requires()
+def list_case_access_users(identifier):
+    """Return every user with effective access to this case along with
+    their access level. Used by the frontend to populate task-assignee
+    pickers and to surface who can see a given case.
+
+    Access level is the integer enum from `CaseAccessLevel` (1 = deny,
+    2 = read_only, 4 = full_access). Callers that need only assignable
+    users typically filter on full_access (4) client-side, matching the
+    legacy iris-web behaviour.
+    """
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    users = get_users_list_restricted_from_case(identifier)
+    return response_api_success(users)
+
+
+@cases_blueprint.get('/<int:identifier>/activities')
+@ac_api_requires()
+def list_case_activities(identifier):
+    """Return the recent user activity log for this case.
+
+    Mirrors the legacy `/case/activities/list` endpoint, which the frontend
+    uses to surface "people involved" on a case. Each row carries the user
+    name, the activity date, the description and whether the entry was
+    produced by an API caller.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    activities = activity_search_in_case(identifier)
+    return response_api_success(activities)

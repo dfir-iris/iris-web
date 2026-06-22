@@ -50,8 +50,33 @@ class TestsRestProfile(TestCase):
 
     def test_update_me_should_modify_user_password(self):
         user = self._subject.create_user('name', 'aA.1234567890')
-        user.update('/api/v2/me', {'user_password': 'bB.1234567890'})
+        user.update('/api/v2/me', {
+            'user_current_password': 'aA.1234567890',
+            'user_password': 'bB.1234567890'
+        })
         response = user.login('bB.1234567890')
+        self.assertEqual(200, response.status_code)
+
+    def test_update_me_should_return_400_when_changing_password_without_current_password(self):
+        user = self._subject.create_user('pwdrequired', 'aA.1234567890')
+        response = user.update('/api/v2/me', {'user_password': 'bB.1234567890'})
+        self.assertEqual(400, response.status_code)
+
+    def test_update_me_should_return_400_when_changing_password_with_wrong_current_password(self):
+        user = self._subject.create_user('pwdwrong', 'aA.1234567890')
+        response = user.update('/api/v2/me', {
+            'user_current_password': 'wrong-password',
+            'user_password': 'bB.1234567890'
+        })
+        self.assertEqual(400, response.status_code)
+
+    def test_update_me_should_not_change_password_when_current_password_is_wrong(self):
+        user = self._subject.create_user('pwdkeep', 'aA.1234567890')
+        user.update('/api/v2/me', {
+            'user_current_password': 'wrong-password',
+            'user_password': 'bB.1234567890'
+        })
+        response = user.login('aA.1234567890')
         self.assertEqual(200, response.status_code)
 
     def test_update_me_should_modify_ctx_case(self):
@@ -122,3 +147,19 @@ class TestsRestProfile(TestCase):
 
         response = user.update('/api/v2/me', {'user_name': 123})
         self.assertEqual(400, response.status_code)
+
+    def test_renew_api_key_should_return_200(self):
+        user = self._subject.create_dummy_user()
+        response = user.create('/api/v2/me/api-key/renew', {})
+        self.assertEqual(200, response.status_code)
+
+    def test_renew_api_key_should_change_api_key(self):
+        user = self._subject.create_dummy_user()
+        before = user.get('/api/v2/me').json()['user_api_key']
+        response = user.create('/api/v2/me/api-key/renew', {}).json()
+        self.assertNotEqual(before, response['user_api_key'])
+
+    def test_refresh_permissions_should_return_200(self):
+        user = self._subject.create_dummy_user()
+        response = user.create('/api/v2/me/permissions/refresh', {})
+        self.assertEqual(200, response.status_code)

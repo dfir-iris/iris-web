@@ -51,6 +51,9 @@ class User:
     def delete(self, path):
         return self._api.delete(path)
 
+    def post_multipart_encoded_files(self, path, data, files):
+        return self._api.post_multipart_encoded_files(path, data, files)
+
     def login(self, password):
         url = parse.urljoin(self._iris_url, '/api/v2/auth/login')
         return requests.post(url, json={'username': self._login, 'password': password})

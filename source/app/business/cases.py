@@ -64,7 +64,7 @@ def cases_filter(current_user, pagination_parameters, name=None, case_identifier
                  description=None, classification_identifier=None, owner_identifier=None, opening_user_identifier=None,
                  severity_identifier=None, status_identifier=None, soc_identifier=None,
                  start_open_date=None, end_open_date=None, is_open=None, search_value='',
-                 advanced_filters=None, advanced_logic='and'):
+                 advanced_filters=None, advanced_logic='and', quick_search=None):
     return get_filtered_cases(
             current_user.id,
             pagination_parameters,
@@ -83,7 +83,8 @@ def cases_filter(current_user, pagination_parameters, name=None, case_identifier
             search_value=search_value,
             is_open=is_open,
             advanced_filters=advanced_filters,
-            advanced_logic=advanced_logic)
+            advanced_logic=advanced_logic,
+            quick_search=quick_search)
 
 
 def cases_filter_by_user(user, show_all: bool):

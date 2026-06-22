@@ -25,8 +25,8 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.business.cases import cases_filter_by_user
 from app.business.cases import cases_filter_by_reviewer
 from app.business.tasks import tasks_filter_by_user
+from app.datamgmt.activities.activities_db import get_recent_activities_for_user
 from app.schema.marshables import CaseDetailsSchema
-from app.schema.marshables import CaseTaskSchema
 from app.schema.marshables import CaseSchema
 
 dashboard_blueprint = Blueprint('dashboard',
@@ -50,8 +50,53 @@ def list_own_cases():
 @dashboard_blueprint.get('/tasks/list')
 @ac_api_requires()
 def list_own_tasks():
-    ct = tasks_filter_by_user()
-    return response_api_success(data=CaseTaskSchema(many=True).dump(ct))
+    # `tasks_filter_by_user` projects flat row tuples (task_id, task_title,
+    # task_case, case_id, status_name, …), not model instances — running
+    # those through CaseTaskSchema would silently drop the nested `case`
+    # and `status` fields. Ship the rows as-is so the frontend sees the
+    # case id, case title, status name, and last update.
+    rows = tasks_filter_by_user()
+    data = []
+    for row in rows:
+        d = row._asdict() if hasattr(row, '_asdict') else dict(row)
+        if d.get('task_last_update') is not None:
+            d['task_last_update'] = d['task_last_update'].isoformat()
+        data.append(d)
+    return response_api_success(data=data)
+
+
+@dashboard_blueprint.get('/activities/recent')
+@ac_api_requires()
+def list_recent_activities():
+    """Recent UI-visible activity entries the current user is allowed to
+    see. Scoped to cases the user has access to (plus their own activity)
+    so a multi-tenant deployment doesn't leak cross-customer events.
+
+    Query params:
+      - limit: int (default 20, max 100) — page size
+      - offset: int (default 0)         — pagination cursor
+    """
+    limit = request.args.get('limit', default=20, type=int)
+    if limit < 1:
+        limit = 20
+    if limit > 100:
+        limit = 100
+
+    offset = request.args.get('offset', default=0, type=int)
+    if offset < 0:
+        offset = 0
+
+    rows = get_recent_activities_for_user(iris_current_user.id, limit=limit, offset=offset)
+    # The DB query already projected the needed columns — no marshmallow
+    # schema would add anything useful. Stamp dates as ISO strings and ship.
+    data = []
+    for row in rows:
+        d = dict(row)
+        if d.get('activity_date') is not None:
+            d['activity_date'] = d['activity_date'].isoformat()
+        data.append(d)
+
+    return response_api_success(data=data)
 
 
 # TODO this endpoint does not adhere to the conventions (verb in URL).

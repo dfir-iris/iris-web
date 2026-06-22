@@ -360,8 +360,96 @@ def case_filter_timeline(caseid):
     sources = filter_d.get('source')
     flag = filter_d.get('flag')
 
+    try:
+        page = max(1, int(args.get('page', 1)))
+    except (TypeError, ValueError):
+        page = 1
+
+    try:
+        per_page = int(args.get('per_page', 0))
+    except (TypeError, ValueError):
+        per_page = 0
+    if per_page < 0:
+        per_page = 0
+    if per_page > 500:
+        per_page = 500
+
     cache, events_list, tim = _extract_timeline(assets, assets_id, caseid, categories, descriptions, end_date, event_ids,
                                                 flag, iocs, iocs_id, raws, sources, start_date, tags, titles)
+
+    total = len(tim)
+    if per_page > 0:
+        last_page = max(1, (total + per_page - 1) // per_page)
+        if page > last_page:
+            page = last_page
+        start = (page - 1) * per_page
+        end = start + per_page
+        tim_page = tim[start:end]
+        next_page = page + 1 if page < last_page else None
+
+        # Drag in descendants that live on later pages AND ancestors that
+        # live on earlier pages, so any event on this slice ships with its
+        # full lineage. Without this:
+        #   - a child whose parent is on a later page would appear as a
+        #     spurious root until pagination catches up (the frontend
+        #     promotes events with unknown parent_event_id to roots).
+        #   - a child whose parent is on the current page but whose own
+        #     event_date falls into a later slice would be missing from
+        #     the parent's children until later.
+        # Ancestors that arrived on a previous page are already cached
+        # client-side, but re-sending them is cheap and keeps each page
+        # self-consistent if loaded out of order.
+        all_by_id: dict[int, dict] = {event['event_id']: event for event in tim}
+        children_by_parent: dict[int, list[dict]] = {}
+        for event in tim:
+            parent_id = event.get('parent_event_id')
+            if parent_id is None:
+                continue
+            children_by_parent.setdefault(parent_id, []).append(event)
+
+        page_ids = {event['event_id'] for event in tim_page}
+
+        # Descendants
+        queue = list(page_ids)
+        while queue:
+            parent_id = queue.pop()
+            for child in children_by_parent.get(parent_id, ()):
+                cid = child['event_id']
+                if cid in page_ids:
+                    continue
+                page_ids.add(cid)
+                tim_page.append(child)
+                queue.append(cid)
+
+        # Ancestors
+        queue = list(page_ids)
+        while queue:
+            event_id = queue.pop()
+            event = all_by_id.get(event_id)
+            if not event:
+                continue
+            parent_id = event.get('parent_event_id')
+            if parent_id is None or parent_id in page_ids:
+                continue
+            parent = all_by_id.get(parent_id)
+            if parent is None:
+                continue
+            page_ids.add(parent_id)
+            tim_page.append(parent)
+            queue.append(parent_id)
+    else:
+        last_page = 1
+        page = 1
+        tim_page = tim
+        next_page = None
+
+    pagination = {
+        "total": total,
+        "per_page": per_page if per_page > 0 else total,
+        "current_page": page,
+        "last_page": last_page,
+        "next_page": next_page
+    }
 
     if request.cookies.get('session'):
 
@@ -379,18 +467,20 @@ def case_filter_timeline(caseid):
             events_comments_map.setdefault(k, []).append(v)
 
         resp = {
-            "tim": tim,
+            "tim": tim_page,
             "comments_map": events_comments_map,
             "assets": cache,
             "iocs": [ioc._asdict() for ioc in iocs],
             "categories": [cat.name for cat in get_events_categories()],
-            "state": get_timeline_state(caseid=caseid)
+            "state": get_timeline_state(caseid=caseid),
+            "pagination": pagination
         }
 
     else:
         resp = {
-            "timeline": tim,
-            "state": get_timeline_state(caseid=caseid)
+            "timeline": tim_page,
+            "state": get_timeline_state(caseid=caseid),
+            "pagination": pagination
         }
 
     return response_success("ok", data=resp)
@@ -593,7 +683,10 @@ def _extract_timeline(assets: str | None, assets_id: str | None, caseid, categor
             if asset.event_id == ras['event_id']:
                 alki.append(
                     {
+                        "id": asset.asset_id,
                         "name": f"{asset.asset_name} ({asset.type})",
+                        "asset_name": asset.asset_name,
+                        "asset_type": asset.type,
                         "ip": asset.asset_ip,
                         "description": asset.asset_description,
                         "compromised": asset.asset_compromise_status_id == CompromiseStatus.compromised.value
@@ -609,7 +702,9 @@ def _extract_timeline(assets: str | None, assets_id: str | None, caseid, categor
 
                 alki.append(
                     {
+                        "id": ioc.ioc_id,
                         "name": f"{ioc.ioc_value}",
+                        "ioc_value": ioc.ioc_value,
                         "description": ioc.ioc_description
                     }
                 )

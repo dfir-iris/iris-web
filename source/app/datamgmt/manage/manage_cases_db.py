@@ -479,7 +479,8 @@ def build_filter_case_query(current_user_id,
                             search_value=None,
                             sort_by=None,
                             sort_dir='asc',
-                            is_open: bool=None
+                            is_open: bool=None,
+                            quick_search: str=None
                             ):
     """
     Get a list of cases from the database, filtered by the given parameters
@@ -521,6 +522,15 @@ def build_filter_case_query(current_user_id,
     if search_value is not None:
         conditions.append(Cases.name.like(f"%{search_value}%"))
 
+    quick_search_term = quick_search.strip() if isinstance(quick_search, str) else None
+    if quick_search_term:
+        # Case IDs are prefixed into the title at creation time (e.g. "#42 - Foo"),
+        # so an ILIKE on Cases.name already catches numeric matches via the prefix.
+        conditions.append(or_(
+            Cases.name.ilike(f"%{quick_search_term}%"),
+            Client.name.ilike(f"%{quick_search_term}%")
+        ))
+
     if case_open_since is not None:
         result = date.today() - timedelta(case_open_since)
         conditions.append(Cases.open_date == result)
@@ -535,7 +545,13 @@ def build_filter_case_query(current_user_id,
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
     conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
-    query = Cases.query.filter(*conditions)
+    base_query = Cases.query
+    # quick_search references Client.name, so make sure the table is joined
+    # before the filter is applied. Use an outer join so cases without a
+    # customer are still considered for the name/id match.
+    if quick_search_term:
+        base_query = base_query.outerjoin(Client, Cases.client_id == Client.client_id)
+    query = base_query.filter(*conditions)
 
     if case_tags is not None:
         return query.join(Tags, Tags.tag_title.ilike(f'%{case_tags}%')).filter(CaseTags.case_id == Cases.case_id)
@@ -550,7 +566,11 @@ def build_filter_case_query(current_user_id,
             query = query.join(User, Cases.user_id == User.id).order_by(order_func(User.name))
 
         elif sort_by == 'customer_name':
-            query = query.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
+            if quick_search_term:
+                # Client is already joined via the quick_search outer join; just order by it.
+                query = query.order_by(order_func(Client.name))
+            else:
+                query = query.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
 
         elif sort_by == 'state':
             query = query.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
@@ -578,7 +598,8 @@ def get_filtered_cases(current_user_id,
                        search_value: str | None = None,
                        is_open: bool | None = None,
                        advanced_filters: list[dict[str, Any]] | None = None,
-                       advanced_logic: str = 'and'
+                       advanced_logic: str = 'and',
+                       quick_search: str | None = None
                        ):
     kwargs: dict[str, Any] = {
         'current_user_id': current_user_id,
@@ -626,6 +647,9 @@ def get_filtered_cases(current_user_id,
 
     if search_value is not None:
         kwargs['search_value'] = search_value
+
+    if quick_search is not None:
+        kwargs['quick_search'] = quick_search
 
     if is_open is not None:
         kwargs['is_open'] = is_open
