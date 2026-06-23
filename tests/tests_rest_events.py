@@ -368,6 +368,32 @@ class TestsRestEvents(TestCase):
         response = self._subject.update(f'/api/v2/cases/{case_identifier}/events/{identifier}', body).json()
         self.assertEqual(parent_event_identifier, response['parent_event_id'])
 
+    def test_update_event_should_return_400_when_parent_assignment_creates_cycle(self):
+        case_identifier = self._subject.create_dummy_case()
+
+        parent_body = {'event_title': 'parent', 'event_category_id': 1,
+                       'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
+                       'event_assets': [], 'event_iocs': []}
+        parent_event = self._subject.create(f'/api/v2/cases/{case_identifier}/events', parent_body).json()
+
+        child_body = {'event_title': 'child', 'event_category_id': 1,
+                      'event_date': '2025-03-26T01:00:00.000', 'event_tz': '+00:00',
+                      'event_assets': [], 'event_iocs': [],
+                      'parent_event_id': parent_event['event_id']}
+        child_event = self._subject.create(f'/api/v2/cases/{case_identifier}/events', child_body).json()
+
+        # Try to make the parent a child of its own child: this must be rejected.
+        update_parent_body = {'event_title': 'parent', 'event_category_id': 1,
+                              'event_date': '2025-03-26T00:00:00.000', 'event_tz': '+00:00',
+                              'event_assets': [], 'event_iocs': [],
+                              'parent_event_id': child_event['event_id']}
+
+        response = self._subject.update(
+            f'/api/v2/cases/{case_identifier}/events/{parent_event["event_id"]}',
+            update_parent_body
+        )
+        self.assertEqual(400, response.status_code)
+
     def test_delete_event_should_return_204(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'event_title': 'title', 'event_category_id': 1,

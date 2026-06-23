@@ -707,7 +707,7 @@ def case_edit_event(cur_id, caseid):
         return response_success("Event updated", data=event_dump)
 
     except ValidationError as e:
-        return response_error(e.get_message(), data=e.get_data())
+        return response_error('Data error', data=e.normalized_messages())
     except BusinessProcessingError as e:
         return response_error(e.get_message(), data=e.get_data())
 

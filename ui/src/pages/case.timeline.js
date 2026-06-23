@@ -3,6 +3,7 @@ var selector_active;
 var current_timeline;
 var g_event_id = null;
 var g_event_desc_editor = null;
+var timeline_drag_reparent_in_progress = false;
 
 function edit_in_event_desc() {
     if($('#container_event_desc_content').is(':visible')) {
@@ -705,6 +706,11 @@ function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, rea
                                     <i class="fa fa-pen"></i>
                                 </span>
                             </button>
+                            <button type="button" class="btn btn-light btn-xs timeline-drag-handle" title="Drag onto a parent event to set this event as a child">
+                                <span class="btn-label">
+                                    <i class="fa-solid fa-up-down-left-right"></i>
+                                </span>
+                            </button>
                             <button type="button" class="btn btn-light btn-xs" onclick="flag_event(${evt.event_id})" title="Flag">
                                 <span class="btn-label">
                                     ${flag}
@@ -754,6 +760,11 @@ function buildEvent(event_data, compact, comments_map, tree, tesk, tmb, idx, rea
                             <button type="button" class="btn btn-light btn-xs" onclick="edit_event(${evt.event_id})" title="Edit">
                                 <span class="btn-label">
                                     <i class="fa fa-pen"></i>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-light btn-xs timeline-drag-handle" title="Drag onto a parent event to set this event as a child">
+                                <span class="btn-label">
+                                    <i class="fa-solid fa-up-down-left-right"></i>
                                 </span>
                             </button>
                             <button type="button" class="btn btn-light btn-xs" onclick="add_event(${evt.event_id})" title="Add child event">
@@ -927,7 +938,7 @@ function build_timeline(data) {
         // Add button on parent to toggle child events
         let button = $('<button>');
         button.attr('type', 'button');
-        button.attr('class', 'btn btn-light btn-xs mt-2');
+        button.attr('class', 'btn btn-light btn-xs mt-2 timeline-child-toggle');
         button.attr('onclick', `toggle_child_events_of_event(${parent_id});`);
         button.attr('title', 'Toggle child events');
         button.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
@@ -950,13 +961,15 @@ function build_timeline(data) {
             parent_date = Date.parse(parent_date);
 
             if (child_date < parent_date) {
-                child.find('.bottom-hour-i').append('<span class="ml-2"><i class="fas fa-exclamation-triangle text-warning" title="Child event datetime is earlier than parent event"></i></span>')
+                child.find('.bottom-hour-i').append('<span class="ml-2 timeline-child-date-warning"><i class="fas fa-exclamation-triangle text-warning" title="Child event datetime is earlier than parent event"></i></span>')
             }
 
             child.insertAfter(parent_event.parent());
         }
 
     }
+
+    apply_timeline_nesting_styles();
 
     //match_replace_ioc(data.data.iocs, "timeline_list");
     $('[data-toggle="popover"]').popover();
@@ -991,6 +1004,446 @@ function build_timeline(data) {
             }
         });
     }
+
+    init_timeline_drag_and_drop();
+}
+
+function get_timeline_event(event_id) {
+    for (let index in current_timeline) {
+        if (current_timeline[index].event_id === event_id) {
+            return current_timeline[index];
+        }
+    }
+    return null;
+}
+
+function set_timeline_event_parent(event_id, parent_event_id) {
+    for (let index in current_timeline) {
+        if (current_timeline[index].event_id === event_id) {
+            current_timeline[index].parent_event_id = parent_event_id;
+            return;
+        }
+    }
+}
+
+function get_timeline_event_id_from_element(element_id) {
+    return parseInt((element_id || '').replace('event_', ''), 10);
+}
+
+function would_create_timeline_cycle(event_id, new_parent_event_id) {
+    let cursor_id = new_parent_event_id;
+    let guard = 0;
+
+    while (cursor_id !== null && cursor_id !== undefined && guard < 10000) {
+        if (parseInt(cursor_id, 10) === event_id) {
+            return true;
+        }
+
+        let parent_event = get_timeline_event(parseInt(cursor_id, 10));
+        if (!parent_event) {
+            return false;
+        }
+        cursor_id = parent_event.parent_event_id;
+        guard += 1;
+    }
+
+    return false;
+}
+
+function is_timeline_descendant(event_id, ancestor_event_id) {
+    let event = get_timeline_event(event_id);
+    if (!event) {
+        return false;
+    }
+
+    let cursor_id = event.parent_event_id;
+    let guard = 0;
+
+    while (cursor_id !== null && cursor_id !== undefined && guard < 10000) {
+        if (parseInt(cursor_id, 10) === ancestor_event_id) {
+            return true;
+        }
+        let parent_event = get_timeline_event(parseInt(cursor_id, 10));
+        if (!parent_event) {
+            return false;
+        }
+        cursor_id = parent_event.parent_event_id;
+        guard += 1;
+    }
+
+    return false;
+}
+
+function get_timeline_event_depth(event_id) {
+    let depth = 0;
+    let event = get_timeline_event(event_id);
+    let guard = 0;
+
+    while (event && event.parent_event_id !== null && event.parent_event_id !== undefined && guard < 10000) {
+        depth += 1;
+        event = get_timeline_event(parseInt(event.parent_event_id, 10));
+        guard += 1;
+    }
+
+    return depth;
+}
+
+function apply_timeline_event_depth_style(event_id) {
+    let row = $('#event_' + event_id).parent();
+    if (!row.length) {
+        return;
+    }
+
+    let depth = get_timeline_event_depth(event_id);
+
+    if (depth <= 0 || is_timeline_tree_view()) {
+        row.css({
+            'margin-left': '',
+            'width': '',
+            'left': ''
+        });
+        return;
+    }
+
+    // Non-tree mode: indent each nested level progressively.
+    let indent_step = 2.5;
+    let margin_left = Math.min(depth * indent_step, 25);
+    let width = Math.max(60, 95 - ((depth - 1) * indent_step));
+
+    row.css({
+        'margin-left': `${margin_left}%`,
+        'width': `${width}%`,
+        'left': '0'
+    });
+}
+
+function apply_timeline_nesting_styles() {
+    for (let index in current_timeline) {
+        apply_timeline_event_depth_style(current_timeline[index].event_id);
+    }
+}
+
+function get_timeline_subtree_rows(root_event_id) {
+    let root_row = $('#event_' + root_event_id).parent();
+    if (!root_row.length) {
+        return $();
+    }
+
+    let rows = [root_row[0]];
+    let cursor = root_row.next();
+
+    while (cursor.length) {
+        let cursor_panel = cursor.children('div[id^="event_"]').first();
+        if (!cursor_panel.length) {
+            break;
+        }
+
+        let cursor_event_id = get_timeline_event_id_from_element(cursor_panel.attr('id'));
+        if (Number.isNaN(cursor_event_id) || !is_timeline_descendant(cursor_event_id, root_event_id)) {
+            break;
+        }
+
+        rows.push(cursor[0]);
+        cursor = cursor.next();
+    }
+
+    return $(rows);
+}
+
+function get_timeline_subtree_tail_row(root_event_id) {
+    let subtree_rows = get_timeline_subtree_rows(root_event_id);
+    if (!subtree_rows.length) {
+        return $();
+    }
+    return subtree_rows.last();
+}
+
+function ensure_timeline_parent_toggle_button(parent_event_id) {
+    let parent_event = $('#event_' + parent_event_id);
+    if (!parent_event.length) {
+        return;
+    }
+
+    if (parent_event.find('.timeline-child-toggle').length > 0) {
+        return;
+    }
+
+    let button = $('<button>');
+    button.attr('type', 'button');
+    button.attr('class', 'btn btn-light btn-xs mt-2 timeline-child-toggle');
+    button.attr('onclick', `toggle_child_events_of_event(${parent_event_id});`);
+    button.attr('title', 'Toggle child events');
+    button.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
+    parent_event.find('.timeline-body').append(button);
+}
+
+function cleanup_timeline_parent_toggle_button(parent_event_id) {
+    if (parent_event_id === null || parent_event_id === undefined) {
+        return;
+    }
+
+    if ($('.timeline-child-' + parent_event_id).length === 0) {
+        $('#event_' + parent_event_id).find('.timeline-child-toggle').remove();
+    }
+}
+
+function refresh_timeline_child_date_warning(child_event_id, parent_event_id) {
+    let child_event = $('#event_' + child_event_id);
+    let parent_event = $('#event_' + parent_event_id);
+
+    if (!child_event.length || !parent_event.length) {
+        return;
+    }
+
+    child_event.find('.timeline-child-date-warning').remove();
+
+    let child_date = Date.parse(child_event.find('.bottom-hour').find('small').text());
+    let parent_date = Date.parse(parent_event.find('.bottom-hour').find('small').text());
+
+    if (!Number.isNaN(child_date) && !Number.isNaN(parent_date) && child_date < parent_date) {
+        let warn_target = child_event.find('.bottom-hour-i');
+        if (!warn_target.length) {
+            warn_target = child_event.find('.bottom-hour').find('small').first();
+        }
+
+        warn_target.append('<span class="ml-2 timeline-child-date-warning"><i class="fas fa-exclamation-triangle text-warning" title="Child event datetime is earlier than parent event"></i></span>');
+    }
+}
+
+function reparent_timeline_event_in_ui(child_event_id, parent_event_id) {
+    let child_panel = $('#event_' + child_event_id);
+    let parent_panel = $('#event_' + parent_event_id);
+
+    if (!child_panel.length || !parent_panel.length) {
+        return;
+    }
+
+    let child_row = child_panel.parent();
+    let parent_row = parent_panel.parent();
+    let parent_row_class = parent_row.attr('class') || '';
+    let parent_panel_class = parent_panel.attr('class') || '';
+    let child_subtree_rows = get_timeline_subtree_rows(child_event_id);
+    let child_event = get_timeline_event(child_event_id);
+    let child_event_date = child_event ? new Date(child_event.event_date) : null;
+
+    child_row.attr('class', parent_row_class);
+    child_row.removeClass(function(index, class_name) {
+        return (class_name.match(/timeline-child-\d+/g) || []).join(' ');
+    });
+    child_row.addClass('timeline-child');
+    child_row.addClass('timeline-child-' + parent_event_id);
+
+    child_panel.attr('class', parent_panel_class);
+    let insertion_anchor = parent_row;
+    let sibling_rows = $('.timeline-child-' + parent_event_id).not(child_subtree_rows);
+
+    if (sibling_rows.length > 0 && child_event_date !== null) {
+        let has_insert_anchor = false;
+
+        sibling_rows.each(function() {
+            let sibling_row = $(this);
+            let sibling_panel = sibling_row.children('div[id^="event_"]').first();
+            if (!sibling_panel.length) {
+                return;
+            }
+
+            let sibling_event_id = get_timeline_event_id_from_element(sibling_panel.attr('id'));
+            let sibling_event = get_timeline_event(sibling_event_id);
+            if (!sibling_event) {
+                return;
+            }
+
+            let sibling_event_date = new Date(sibling_event.event_date);
+            if (child_event_date < sibling_event_date ||
+                (child_event_date.getTime() === sibling_event_date.getTime() && child_event_id < sibling_event_id)) {
+                let previous_row = sibling_row.prev();
+                insertion_anchor = previous_row.length ? previous_row : parent_row;
+                has_insert_anchor = true;
+                return false;
+            }
+        });
+
+        if (!has_insert_anchor) {
+            let last_sibling_row = sibling_rows.last();
+            let last_sibling_panel = last_sibling_row.children('div[id^="event_"]').first();
+            if (last_sibling_panel.length) {
+                let last_sibling_event_id = get_timeline_event_id_from_element(last_sibling_panel.attr('id'));
+                let tail = get_timeline_subtree_tail_row(last_sibling_event_id);
+                insertion_anchor = tail.length ? tail : last_sibling_row;
+            } else {
+                insertion_anchor = last_sibling_row;
+            }
+        }
+    }
+
+    child_subtree_rows.each(function() {
+        $(this).insertAfter(insertion_anchor);
+        insertion_anchor = $(this);
+    });
+
+    let parent_button = parent_panel.find('.timeline-child-toggle').first();
+    if (parent_button.length > 0 && parent_button.html().indexOf('fa-chevron-right') !== -1) {
+        child_subtree_rows.hide();
+    } else {
+        child_subtree_rows.show();
+    }
+
+    refresh_timeline_child_date_warning(child_event_id, parent_event_id);
+}
+
+function move_event_to_parent(child_event_id, parent_event_id) {
+    if (timeline_drag_reparent_in_progress) {
+        return;
+    }
+
+    let child_event = get_timeline_event(child_event_id);
+    if (!child_event) {
+        notify_error('Unable to find the dragged event in timeline');
+        return;
+    }
+
+    let old_parent_event_id = child_event.parent_event_id;
+    timeline_drag_reparent_in_progress = true;
+
+    get_request_api(`/case/timeline/events/${child_event_id}`)
+    .done((data) => {
+        if (api_request_failed(data)) {
+            timeline_drag_reparent_in_progress = false;
+            return;
+        }
+
+        let original_event = data.data;
+        let update_payload = {
+            csrf_token: $("#csrf_token").val(),
+            event_title: original_event.event_title,
+            event_category_id: original_event.event_category_id,
+            event_date: original_event.event_date,
+            event_tz: original_event.event_tz,
+            event_assets: original_event.event_assets || [],
+            event_iocs: original_event.event_iocs || [],
+            parent_event_id: parent_event_id,
+            event_sync_iocs_assets: !!original_event.event_sync_iocs_assets
+        };
+
+        // Keep editable optional fields when present, but do not post nested relationship payloads.
+        let optional_fields = [
+            'event_content',
+            'event_raw',
+            'event_source',
+            'event_in_summary',
+            'event_in_graph',
+            'event_color',
+            'event_is_flagged',
+            'event_tags'
+        ];
+        for (let index in optional_fields) {
+            let field = optional_fields[index];
+            if (Object.prototype.hasOwnProperty.call(original_event, field)) {
+                update_payload[field] = original_event[field];
+            }
+        }
+
+        post_request_api(`/case/timeline/events/update/${child_event_id}`, JSON.stringify(update_payload), true)
+        .done((update_data) => {
+            if (notify_auto_api(update_data)) {
+                set_timeline_event_parent(child_event_id, parent_event_id);
+                ensure_timeline_parent_toggle_button(parent_event_id);
+                reparent_timeline_event_in_ui(child_event_id, parent_event_id);
+                cleanup_timeline_parent_toggle_button(old_parent_event_id);
+                apply_timeline_nesting_styles();
+                window.location.hash = child_event_id;
+            }
+        })
+        .always(() => {
+            timeline_drag_reparent_in_progress = false;
+        });
+    })
+    .fail(() => {
+        timeline_drag_reparent_in_progress = false;
+    });
+}
+
+function init_timeline_drag_and_drop() {
+    let draggable_rows = $('#timeline_list > li').has('div[id^="event_"]');
+    let drop_targets = $('#timeline_list > li > div[id^="event_"]');
+
+    draggable_rows.each(function() {
+        if ($(this).data('ui-draggable')) {
+            $(this).draggable('destroy');
+        }
+    });
+
+    drop_targets.each(function() {
+        if ($(this).data('ui-droppable')) {
+            $(this).droppable('destroy');
+        }
+    });
+
+    draggable_rows.find('.timeline-drag-handle').css('cursor', 'pointer');
+    draggable_rows.find('.timeline-heading a, .timeline-heading button:not(.timeline-drag-handle), .timeline-heading .dropdown-menu, .timeline-heading .dropdown-item, .timeline-heading [role=\"button\"], .timeline-heading [data-toggle]').css('cursor', 'pointer');
+
+    draggable_rows.draggable({
+        helper: 'clone',
+        appendTo: 'body',
+        handle: '.timeline-drag-handle',
+        containment: 'document',
+        distance: 8,
+        revert: 'invalid',
+        zIndex: 2000,
+        cancel: '.btn:not(.timeline-drag-handle), a, .dropdown-menu, .dropdown-item, [data-toggle="collapse"]',
+        start: function(event, ui) {
+            $(this).find('.timeline-drag-handle').css('cursor', 'pointer');
+            ui.helper.css({
+                width: $(this).outerWidth(),
+                opacity: 0.85
+            });
+        },
+        stop: function() {
+            $(this).find('.timeline-drag-handle').css('cursor', 'pointer');
+        }
+    });
+
+    drop_targets.droppable({
+        accept: function(draggable) {
+            return $(draggable).children('div[id^="event_"]').length > 0;
+        },
+        tolerance: 'pointer',
+        hoverClass: 'timeline-selected',
+        drop: function(event, ui) {
+            let dragged_panel = $(ui.draggable).children('div[id^="event_"]').first();
+            let target_panel = $(this);
+
+            let child_event_id = get_timeline_event_id_from_element(dragged_panel.attr('id'));
+            let parent_event_id = get_timeline_event_id_from_element(target_panel.attr('id'));
+
+            if (Number.isNaN(child_event_id) || Number.isNaN(parent_event_id)) {
+                notify_error('Unable to identify dragged event');
+                return;
+            }
+
+            if (child_event_id === parent_event_id) {
+                notify_error('An event cannot be its own parent');
+                return;
+            }
+
+            let child_event = get_timeline_event(child_event_id);
+            if (!child_event) {
+                notify_error('Unable to find dragged event');
+                return;
+            }
+
+            if (child_event.parent_event_id === parent_event_id) {
+                return;
+            }
+
+            if (would_create_timeline_cycle(child_event_id, parent_event_id)) {
+                notify_error('This move would create a parent loop');
+                return;
+            }
+
+            move_event_to_parent(child_event_id, parent_event_id);
+        }
+    });
 }
 
 function toggle_child_events() {
@@ -1004,8 +1457,8 @@ function toggle_child_events() {
             if (parent_event.hasClass('timeline-child')) {
                 continue;
             }
-            let btn = parent_event.find('button:last');
-            if (btn.html().indexOf('fa-chevron-down') !== -1) {
+            let btn = parent_event.find('.timeline-child-toggle').first();
+            if (btn.length > 0 && btn.html().indexOf('fa-chevron-down') !== -1) {
                 btn.html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
             }
         }
@@ -1019,8 +1472,8 @@ function toggle_child_events() {
             if (parent_event.hasClass('timeline-child')) {
                 continue;
             }
-            let btn = parent_event.find('button:last');
-            if (btn.html().indexOf('fa-chevron-right') !== -1) {
+            let btn = parent_event.find('.timeline-child-toggle').first();
+            if (btn.length > 0 && btn.html().indexOf('fa-chevron-right') !== -1) {
                 btn.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
             }
         }
@@ -1033,14 +1486,14 @@ function toggle_child_events_of_event(event_id) {
 
     if (child_events.is(':visible')) {
         child_events.hide();
-        let btn = $('#event_' + event_id).find('button:last');
-        if (btn.html().indexOf('fa-chevron-down') !== -1) {
+        let btn = $('#event_' + event_id).find('.timeline-child-toggle').first();
+        if (btn.length > 0 && btn.html().indexOf('fa-chevron-down') !== -1) {
             btn.html('<span class="btn-label"><i class="fa fa-chevron-right"></i> Child events</span>');
         }
     } else {
         child_events.show();
-        let btn = $('#event_' + event_id).find('button:last');
-        if (btn.html().indexOf('fa-chevron-right') !== -1) {
+        let btn = $('#event_' + event_id).find('.timeline-child-toggle').first();
+        if (btn.length > 0 && btn.html().indexOf('fa-chevron-right') !== -1) {
             btn.html('<span class="btn-label"><i class="fa fa-chevron-down"></i></span>');
         }
     }
@@ -1413,4 +1866,3 @@ $(document).ready(function(){
     });
 
 });
-
