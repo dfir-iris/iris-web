@@ -115,12 +115,16 @@ def user_has_comments(user: User):
     return comment is not None
 
 
-def search_comments(search_value):
-    search_condition = and_()
+def search_comments(search_value, accessible_case_ids=None):
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = Cases.case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
     comments = Comments.query.filter(
         Comments.comment_text.like(f'%{search_value}%'),
         Cases.client_id == Client.client_id,
-        search_condition
+        scope_filter
     ).with_entities(
         Comments.comment_id,
         Comments.comment_text,

@@ -32,10 +32,12 @@ from app.datamgmt.states import update_tasks_state
 from app.models.models import CaseTasks
 from app.models.models import TaskAssignee
 from app.models.cases import Cases
+from app.models.customers import Client
 from app.models.comments import Comments, TaskComments
 from app.models.models import TaskStatus
 from app.models.authorization import User
 from app.models.pagination_parameters import PaginationParameters
+from sqlalchemy import or_
 
 
 def get_tasks_status():
@@ -390,3 +392,33 @@ def update_utask_status(task_id, status, case_id):
                 pass
 
     return False
+
+
+def search_tasks(search_value, accessible_case_ids=None):
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = CaseTasks.task_case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+    pattern = f'%{search_value}%'
+
+    res = CaseTasks.query.with_entities(
+        CaseTasks.id.label('task_id'),
+        CaseTasks.task_title,
+        CaseTasks.task_description,
+        TaskStatus.status_name,
+        Cases.name.label('case_name'),
+        Cases.case_id,
+        Client.name.label('customer_name')
+    ).filter(
+        and_(
+            or_(
+                CaseTasks.task_title.ilike(pattern),
+                CaseTasks.task_description.ilike(pattern)
+            ),
+            CaseTasks.task_case_id == Cases.case_id,
+            Client.client_id == Cases.client_id,
+            scope_filter
+        )
+    ).outerjoin(CaseTasks.status).all()
+
+    return [row._asdict() for row in res]
