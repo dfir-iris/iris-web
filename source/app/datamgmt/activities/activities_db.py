@@ -18,6 +18,7 @@
 
 from sqlalchemy import and_
 from sqlalchemy import desc
+from sqlalchemy import func
 
 from app.models.cases import Cases
 from app.models.authorization import User
@@ -231,23 +232,17 @@ def list_activities_paginated(
         case_id: optional — restrict to a single case.
     """
 
-    base = UserActivity.query.with_entities(
-        UserActivity.id,
-        Cases.name.label('case_name'),
-        UserActivity.case_id,
-        User.name.label('user_name'),
-        UserActivity.user_id,
-        UserActivity.activity_date,
-        UserActivity.activity_desc,
-        UserActivity.user_input,
-        UserActivity.is_from_api
-    ).outerjoin(
-        UserActivity.user
-    ).outerjoin(
-        UserActivity.case
-    ).filter(
-        UserActivity.display_in_ui == True
-    )
+    # The UserActivity table accumulates near-duplicate rows whenever a
+    # client emits the same change repeatedly within seconds (e.g. a
+    # note editor's debounced autosave, an alert ingestion script
+    # re-emitting on retry). For the listing page we collapse rows that
+    # share (user_id, case_id, activity_desc) within a one-minute bucket
+    # and surface a single representative row carrying the most-recent
+    # timestamp plus an `occurrences` count. This is identical to how
+    # most activity feeds (GitHub, Slack) coalesce bursts.
+    bucket = func.date_trunc('minute', UserActivity.activity_date).label('bucket')
+
+    base = UserActivity.query.filter(UserActivity.display_in_ui == True)
 
     if accessible_case_ids is not None:
         # Empty list ⇒ no accessible cases. If the caller also wants
@@ -301,9 +296,51 @@ def list_activities_paginated(
     if is_manual is not None:
         base = base.filter(UserActivity.user_input == bool(is_manual))
 
-    return base.order_by(desc(UserActivity.activity_date)).paginate(
-        page=page, per_page=per_page, error_out=False
+    # Aggregation step. We pick MAX(id) as the representative row id so
+    # the frontend has a stable key for keyed-each updates; MAX(date) is
+    # the cluster's effective timestamp. `bool_or` collapses the two
+    # boolean flags — within a duplicate cluster they should be uniform
+    # anyway, but `bool_or` is correct if they ever diverge (e.g. one
+    # row came in via API, one via UI, for the same logical change).
+    aggregated = base.with_entities(
+        func.max(UserActivity.id).label('id'),
+        UserActivity.case_id,
+        UserActivity.user_id,
+        UserActivity.activity_desc,
+        bucket,
+        func.max(UserActivity.activity_date).label('activity_date'),
+        func.bool_or(UserActivity.user_input).label('user_input'),
+        func.bool_or(UserActivity.is_from_api).label('is_from_api'),
+        func.count().label('occurrences'),
+    ).group_by(
+        UserActivity.case_id,
+        UserActivity.user_id,
+        UserActivity.activity_desc,
+        bucket,
+    ).subquery()
+
+    # Re-attach friendly labels. We outer-join because user / case may
+    # be NULL (login events, global tasks; or users that were deleted
+    # after writing the row — UserActivity.user_id is nullable).
+    listing = (
+        UserActivity.query.session.query(
+            aggregated.c.id,
+            Cases.name.label('case_name'),
+            aggregated.c.case_id,
+            User.name.label('user_name'),
+            aggregated.c.user_id,
+            aggregated.c.activity_date,
+            aggregated.c.activity_desc,
+            aggregated.c.user_input,
+            aggregated.c.is_from_api,
+            aggregated.c.occurrences,
+        )
+        .outerjoin(User, User.id == aggregated.c.user_id)
+        .outerjoin(Cases, Cases.case_id == aggregated.c.case_id)
+        .order_by(desc(aggregated.c.activity_date))
     )
+
+    return listing.paginate(page=page, per_page=per_page, error_out=False)
 
 
 def search_users_activity_in_case(case_identifier):
