@@ -518,14 +518,32 @@ def build_filter_case_query(current_user_id,
                             sort_by=None,
                             sort_dir='asc',
                             is_open: bool=None,
-                            quick_search: str=None
+                            quick_search: str=None,
+                            start_close_date: str = None,
+                            end_close_date: str = None,
                             ):
     """
     Get a list of cases from the database, filtered by the given parameters
     """
     conditions = []
-    if start_open_date is not None and end_open_date is not None:
-        conditions.append(Cases.open_date.between(start_open_date, end_open_date))
+    # Open-date window. We accept each bound independently — the legacy
+    # behaviour required both to be set together, which forced callers
+    # to fake one end of the range when they only had one side. With
+    # `>=` / `<=` you can give just "opened since 2026-01-01" without
+    # also having to pick a closing bound.
+    if start_open_date is not None:
+        conditions.append(Cases.open_date >= start_open_date)
+    if end_open_date is not None:
+        conditions.append(Cases.open_date <= end_open_date)
+
+    # Close-date window — same independent-bound semantics. Rows with
+    # `close_date IS NULL` (still-open cases) drop out naturally on any
+    # bound because NULL comparisons fail; that's the right behaviour
+    # for a "filter by close date" use case.
+    if start_close_date is not None:
+        conditions.append(Cases.close_date >= start_close_date)
+    if end_close_date is not None:
+        conditions.append(Cases.close_date <= end_close_date)
 
     if case_customer_id is not None:
         conditions.append(Cases.client_id == case_customer_id)
@@ -637,7 +655,9 @@ def get_filtered_cases(current_user_id,
                        is_open: bool | None = None,
                        advanced_filters: list[dict[str, Any]] | None = None,
                        advanced_logic: str = 'and',
-                       quick_search: str | None = None
+                       quick_search: str | None = None,
+                       start_close_date: str | None = None,
+                       end_close_date: str | None = None,
                        ):
     kwargs: dict[str, Any] = {
         'current_user_id': current_user_id,
@@ -649,6 +669,11 @@ def get_filtered_cases(current_user_id,
         kwargs['start_open_date'] = start_open_date
     if end_open_date is not None:
         kwargs['end_open_date'] = end_open_date
+
+    if start_close_date is not None:
+        kwargs['start_close_date'] = start_close_date
+    if end_close_date is not None:
+        kwargs['end_close_date'] = end_close_date
 
     if case_customer_id is not None:
         kwargs['case_customer_id'] = case_customer_id

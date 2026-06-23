@@ -89,6 +89,8 @@ class CasesOperations:
         case_soc_id = request.args.get('case_soc_id', None, type=str)
         start_open_date = request.args.get('start_open_date', None, type=str)
         end_open_date = request.args.get('end_open_date', None, type=str)
+        start_close_date = request.args.get('start_close_date', None, type=str)
+        end_close_date = request.args.get('end_close_date', None, type=str)
         is_open = request.args.get('is_open', None, type=parse_boolean)
         # Free-text search across case name, customer name, and (numeric) case id.
         # Powers the context switcher's search box; an empty / whitespace value is ignored.
@@ -110,7 +112,9 @@ class CasesOperations:
             start_open_date,
             end_open_date,
             is_open,
-            quick_search=quick_search
+            quick_search=quick_search,
+            start_close_date=start_close_date,
+            end_close_date=end_close_date,
         )
 
         return response_api_paginated(self._schema, filtered_cases)
