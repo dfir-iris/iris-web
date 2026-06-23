@@ -318,24 +318,62 @@ def get_case_details_rt(case_id):
 
 
 def _delete_iocs(case_identifier):
-    # TODO should do this with the 2.0 SQLAlchemy API
-    # TODO maybe this can be performed automatically with cascades
-    com_ids = IocComments.query.with_entities(
-        IocComments.comment_id
-    ).join(
-        Ioc
-    ).filter(
-        IocComments.comment_ioc_id == Ioc.ioc_id,
-        Ioc.case_id == case_identifier
-    ).all()
+    # IoCs are shared between cases and alerts via `alert_iocs_association`.
+    # If we bulk-delete every IoC with `case_id = X` we hit the FK
+    # constraint as soon as one of them is still referenced from an
+    # alert (legitimate state: the IoC came in via an alert that wasn't
+    # merged into this case, or the case is being deleted but the alert
+    # survives). Mirror the partitioning `_delete_assets` already does:
+    #   - IoCs not referenced by any alert  → fully delete (with their
+    #     comments and link tables);
+    #   - IoCs still referenced by an alert → detach by clearing
+    #     `case_id` so the case-level FK no longer pins them, but the
+    #     alert-side association stays intact.
+    from app.models.iocs import alert_iocs_association
 
-    com_ids = [c.comment_id for c in com_ids]
-    IocComments.query.filter(IocComments.comment_id.in_(com_ids)).delete()
+    referenced_subq = db.session.query(alert_iocs_association.c.ioc_id).filter(
+        alert_iocs_association.c.ioc_id == Ioc.ioc_id
+    ).exists()
 
-    Comments.query.filter(
-        Comments.comment_id.in_(com_ids)
-    ).delete()
-    Ioc.query.filter(Ioc.case_id == case_identifier).delete()
+    deletable_ids = [
+        row.ioc_id
+        for row in db.session.query(Ioc.ioc_id).filter(
+            Ioc.case_id == case_identifier,
+            ~referenced_subq,
+        ).all()
+    ]
+
+    if deletable_ids:
+        com_ids = [
+            c.comment_id
+            for c in IocComments.query.with_entities(IocComments.comment_id).filter(
+                IocComments.comment_ioc_id.in_(deletable_ids)
+            ).all()
+        ]
+        if com_ids:
+            IocComments.query.filter(IocComments.comment_id.in_(com_ids)).delete(
+                synchronize_session=False)
+            Comments.query.filter(Comments.comment_id.in_(com_ids)).delete(
+                synchronize_session=False)
+
+        # IocAssetLink + CaseEventsIoc rows for these IoCs are scoped to
+        # this case (link tables don't survive the case anyway), but
+        # CaseEventsIoc filtering at the caller level only covers the
+        # `case_id` column. Belt-and-braces: clear them by ioc_id too so
+        # we never hit an "ioc still referenced" FK from a stray link.
+        IocAssetLink.query.filter(IocAssetLink.ioc_id.in_(deletable_ids)).delete(
+            synchronize_session=False)
+        CaseEventsIoc.query.filter(CaseEventsIoc.ioc_id.in_(deletable_ids)).delete(
+            synchronize_session=False)
+
+        Ioc.query.filter(Ioc.ioc_id.in_(deletable_ids)).delete(
+            synchronize_session=False)
+
+    # Anything left behind belonged to alerts too — detach from the case
+    # so the next `Cases.query.filter(...).delete()` doesn't fail on
+    # `ioc.case_id → cases.case_id`.
+    Ioc.query.filter(Ioc.case_id == case_identifier).update(
+        {Ioc.case_id: None}, synchronize_session=False)
 
 
 def _delete_assets(case_identifier):
