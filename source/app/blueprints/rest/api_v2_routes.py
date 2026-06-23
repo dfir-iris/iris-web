@@ -27,6 +27,7 @@ from app.blueprints.rest.v2.notes import notes_blueprint
 from app.blueprints.rest.v2.auth import auth_blueprint
 from app.blueprints.rest.v2.cases import cases_blueprint
 from app.blueprints.rest.v2.dashboard import dashboard_blueprint
+from app.blueprints.rest.v2.dim_tasks import dim_tasks_blueprint
 from app.blueprints.rest.v2.global_tasks import global_tasks_blueprint
 from app.blueprints.rest.v2.iocs import iocs_blueprint
 from app.blueprints.rest.v2.manage import manage_v2_blueprint
@@ -58,3 +59,4 @@ rest_v2_blueprint.register_blueprint(profile_blueprint)
 rest_v2_blueprint.register_blueprint(search_blueprint)
 rest_v2_blueprint.register_blueprint(alerts_filters_blueprint)
 rest_v2_blueprint.register_blueprint(activities_blueprint)
+rest_v2_blueprint.register_blueprint(dim_tasks_blueprint)
