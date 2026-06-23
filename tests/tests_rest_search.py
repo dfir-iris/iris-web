@@ -67,6 +67,21 @@ class TestsRestSearch(TestCase):
         # Capped at 100 per `search_across`.
         self.assertLessEqual(body['pagination']['per_page'], 100)
 
+    def test_search_should_accept_case_id_scope(self):
+        case_id = self._subject.create_dummy_case()
+        response = self._subject.get(
+            f'/api/v2/search?types=ioc,notes,assets,events,tasks,comments,evidences&value=%25&case_id={case_id}'
+        )
+        self.assertEqual(200, response.status_code)
+
+    def test_search_should_accept_case_ids_scope_csv(self):
+        c1 = self._subject.create_dummy_case()
+        c2 = self._subject.create_dummy_case()
+        response = self._subject.get(
+            f'/api/v2/search?types=ioc,notes&value=%25&case_ids={c1},{c2}'
+        )
+        self.assertEqual(200, response.status_code)
+
     def test_search_results_should_be_scoped_to_user_accessible_cases(self):
         # A fresh user with no group membership only inherits whatever
         # default access groups the seed provides. We just assert the

@@ -75,7 +75,7 @@ def search(search_type, search_value):
     return []
 
 
-def search_across(search_value, search_types, user_id, page=1, per_page=25):
+def search_across(search_value, search_types, user_id, page=1, per_page=25, case_id=None, case_ids=None):
     """Unified multi-type, access-scoped, paginated search.
 
     Args:
@@ -87,6 +87,13 @@ def search_across(search_value, search_types, user_id, page=1, per_page=25):
         user_id: scope the result set to cases this user has access to.
         page: 1-indexed page number.
         per_page: page size cap (we clamp to 1..100 to keep responses bounded).
+        case_id: optional — restrict to a single case. Kept for back-compat
+            with the single-case scope param; `case_ids` is the preferred
+            shape going forward.
+        case_ids: optional iterable of case ids to scope to. Each id is
+            intersected with the caller's accessible-case list, so a
+            request that mentions a forbidden case just drops it
+            (the caller never learns whether the case exists).
 
     Returns:
         dict with `data` (list of annotated rows) and `pagination` (total,
@@ -95,6 +102,23 @@ def search_across(search_value, search_types, user_id, page=1, per_page=25):
     track_activity(f'started a global search for {search_value} on {list(search_types)}')
 
     accessible_case_ids = user_list_cases_view(user_id)
+
+    # Normalise: collapse `case_id` (singular, legacy) into the same
+    # `requested_case_ids` set as the new `case_ids` param.
+    requested_case_ids = set()
+    if case_id is not None:
+        requested_case_ids.add(int(case_id))
+    if case_ids:
+        for cid in case_ids:
+            try:
+                requested_case_ids.add(int(cid))
+            except (TypeError, ValueError):
+                continue
+
+    # Intersect with the user's access list so the caller can never
+    # broaden their scope by guessing case ids they shouldn't see.
+    if requested_case_ids:
+        accessible_case_ids = [cid for cid in accessible_case_ids if cid in requested_case_ids]
 
     per_page = max(1, min(int(per_page or 25), 100))
     page = max(1, int(page or 1))

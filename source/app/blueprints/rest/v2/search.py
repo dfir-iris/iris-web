@@ -62,6 +62,21 @@ def search_across_cases():
 
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 25, type=int)
+    case_id = request.args.get('case_id', default=None, type=int)
+
+    # `case_ids` accepts either comma-separated `?case_ids=1,2,3` or
+    # repeated `?case_ids=1&case_ids=2` — same flexible shape as the
+    # `types` param above.
+    raw_case_ids = request.args.getlist('case_ids') or []
+    case_ids = []
+    for raw in raw_case_ids:
+        for piece in raw.split(','):
+            piece = piece.strip()
+            if piece:
+                try:
+                    case_ids.append(int(piece))
+                except ValueError:
+                    continue
 
     result = search_across(
         search_value=search_value,
@@ -69,6 +84,8 @@ def search_across_cases():
         user_id=iris_current_user.id,
         page=page,
         per_page=per_page,
+        case_id=case_id,
+        case_ids=case_ids or None,
     )
 
     return response_api_success(data=result)
