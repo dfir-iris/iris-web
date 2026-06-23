@@ -188,6 +188,124 @@ def get_recent_activities_for_user(user_id, limit=20, offset=0, accessible_case_
     return [row._asdict() for row in rows]
 
 
+def list_activities_paginated(
+        page=1,
+        per_page=25,
+        accessible_case_ids=None,
+        include_non_case=False,
+        search_value=None,
+        user_id=None,
+        case_id=None,
+        user_ids=None,
+        case_ids=None,
+        date_from=None,
+        date_to=None,
+        is_from_api=None,
+        is_manual=None,
+):
+    """Paginated, filtered listing of UserActivity rows for the Activities
+    page.
+
+    Same row shape as ``get_users_activities`` / ``get_all_users_activities``
+    but with proper pagination, optional access scoping, and an optional
+    text filter on ``activity_desc``. Mirrors the shape used elsewhere in
+    the v2 API (returns a ``Pagination`` object so callers can hand it
+    straight to ``response_api_paginated``).
+
+    Args:
+        page: 1-indexed page number.
+        per_page: page size (caller is expected to clamp).
+        accessible_case_ids:
+            * ``None``  → no access filter (caller is admin / has the
+              ``all_activities_read`` permission).
+            * iterable  → only rows whose ``case_id`` is in the list, or
+              (when ``include_non_case`` is True) rows with ``case_id IS
+              NULL`` regardless.
+        include_non_case:
+            if True, also include rows with no associated case (login
+            events, global task changes, etc). When False, only
+            case-linked activity is returned.
+        search_value: optional case-insensitive ILIKE filter on the
+            ``activity_desc`` column.
+        user_id: optional — restrict to a single user.
+        case_id: optional — restrict to a single case.
+    """
+
+    base = UserActivity.query.with_entities(
+        UserActivity.id,
+        Cases.name.label('case_name'),
+        UserActivity.case_id,
+        User.name.label('user_name'),
+        UserActivity.user_id,
+        UserActivity.activity_date,
+        UserActivity.activity_desc,
+        UserActivity.user_input,
+        UserActivity.is_from_api
+    ).outerjoin(
+        UserActivity.user
+    ).outerjoin(
+        UserActivity.case
+    ).filter(
+        UserActivity.display_in_ui == True
+    )
+
+    if accessible_case_ids is not None:
+        # Empty list ⇒ no accessible cases. If the caller also wants
+        # non-case-related rows, allow only those; otherwise short-
+        # circuit to an empty page.
+        if not accessible_case_ids:
+            if include_non_case:
+                base = base.filter(UserActivity.case_id.is_(None))
+            else:
+                base = base.filter(False)
+        else:
+            scope = UserActivity.case_id.in_(accessible_case_ids)
+            if include_non_case:
+                scope = scope | UserActivity.case_id.is_(None)
+            base = base.filter(scope)
+    elif not include_non_case:
+        # Admin view but the caller doesn't want non-case rows.
+        base = base.filter(UserActivity.case_id.isnot(None))
+
+    if search_value:
+        base = base.filter(UserActivity.activity_desc.ilike(f'%{search_value}%'))
+
+    if user_id is not None:
+        base = base.filter(UserActivity.user_id == user_id)
+
+    if case_id is not None:
+        base = base.filter(UserActivity.case_id == case_id)
+
+    # Multi-value filters. We accept the singular forms above too (legacy
+    # callers) and additively intersect with the multi-value ones — that
+    # way the UI can drive everything through the list params without
+    # needing to fall back to the singular shape.
+    if user_ids:
+        base = base.filter(UserActivity.user_id.in_(list(user_ids)))
+
+    if case_ids:
+        # Intersect with the access-scoped list when one is in effect so
+        # an admin filter on cases X+Y still respects a non-admin's
+        # accessible-case window if both were passed.
+        base = base.filter(UserActivity.case_id.in_(list(case_ids)))
+
+    if date_from is not None:
+        base = base.filter(UserActivity.activity_date >= date_from)
+
+    if date_to is not None:
+        base = base.filter(UserActivity.activity_date <= date_to)
+
+    if is_from_api is not None:
+        base = base.filter(UserActivity.is_from_api == bool(is_from_api))
+
+    if is_manual is not None:
+        base = base.filter(UserActivity.user_input == bool(is_manual))
+
+    return base.order_by(desc(UserActivity.activity_date)).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+
 def search_users_activity_in_case(case_identifier):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,

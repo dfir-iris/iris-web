@@ -18,6 +18,7 @@
 
 from flask import Blueprint
 
+from app.blueprints.rest.v2.activities import activities_blueprint
 from app.blueprints.rest.v2.alerts import alerts_blueprint
 from app.blueprints.rest.v2.assets import assets_blueprint
 from app.blueprints.rest.v2.events import events_blueprint
@@ -56,3 +57,4 @@ rest_v2_blueprint.register_blueprint(tags_blueprint)
 rest_v2_blueprint.register_blueprint(profile_blueprint)
 rest_v2_blueprint.register_blueprint(search_blueprint)
 rest_v2_blueprint.register_blueprint(alerts_filters_blueprint)
+rest_v2_blueprint.register_blueprint(activities_blueprint)
