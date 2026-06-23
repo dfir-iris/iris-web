@@ -234,6 +234,84 @@ def cases_update(case: Cases, updated_case, protagonists, tags) -> Cases:
         raise BusinessProcessingError('Data error', str(e))
 
 
+def cases_close(case_identifier) -> Cases:
+    """Close a case and cascade the state change to its alerts.
+
+    Mirrors the legacy ``POST /manage/cases/close/<id>`` handler so the
+    v2 endpoint behaves identically: it flips the case state to
+    "Closed", closes every linked alert that isn't already closed, maps
+    the case resolution onto the alert resolution, fires the
+    ``on_postload_case_update`` module hook, and records a history /
+    activity entry.
+    """
+    case = get_case(case_identifier)
+    if not case:
+        raise ObjectNotFoundError()
+
+    res = close_case(case_identifier)
+    if not res:
+        raise ObjectNotFoundError()
+
+    if case.alerts:
+        close_status = get_alert_status_by_name('Closed')
+        case_status_id_mapped = map_alert_resolution_to_case_status(case.status_id)
+
+        for alert in case.alerts:
+            if alert.alert_status_id != close_status.status_id:
+                alert.alert_status_id = close_status.status_id
+                alert = call_modules_hook('on_postload_alert_update', alert, caseid=case_identifier)
+
+            if alert.alert_resolution_status_id != case_status_id_mapped:
+                alert.alert_resolution_status_id = case_status_id_mapped
+                alert = call_modules_hook('on_postload_alert_resolution_update', alert,
+                                          caseid=case_identifier)
+
+                track_activity(f'closing alert ID {alert.alert_id} due to case #{case_identifier} being closed',
+                               caseid=case_identifier, ctx_less=False)
+
+                db.session.add(alert)
+
+    res = call_modules_hook('on_postload_case_update', res, caseid=case_identifier)
+
+    add_obj_history_entry(res, 'case closed')
+    track_activity(f'closed case ID {case_identifier}', caseid=case_identifier, ctx_less=False)
+    return res
+
+
+def cases_reopen(case_identifier) -> Cases:
+    """Reopen a previously-closed case and cascade to its alerts.
+
+    Mirrors ``POST /manage/cases/reopen/<id>``: clears the close date,
+    flips the state back to "Open", moves every linked alert that
+    isn't already "Merged" to that state (legacy behaviour — reopening
+    a case implies its alerts are no longer terminal), and records
+    history + activity.
+    """
+    case = get_case(case_identifier)
+    if not case:
+        raise ObjectNotFoundError()
+
+    res = reopen_case(case_identifier)
+    if not res:
+        raise ObjectNotFoundError()
+
+    if case.alerts:
+        merged_status = get_alert_status_by_name('Merged')
+        for alert in case.alerts:
+            if alert.alert_status_id != merged_status.status_id:
+                alert.alert_status_id = merged_status.status_id
+                track_activity(
+                    f'alert ID {alert.alert_id} status updated to merged due to case #{case_identifier} being reopen',
+                    caseid=case_identifier, ctx_less=False)
+                db.session.add(alert)
+
+    res = call_modules_hook('on_postload_case_update', res, caseid=case_identifier)
+
+    add_obj_history_entry(res, 'case reopen')
+    track_activity(f'reopen case ID {case_identifier}', caseid=case_identifier)
+    return res
+
+
 def cases_export_to_json(case_id):
     """Fully export a case a JSON"""
     export = {}

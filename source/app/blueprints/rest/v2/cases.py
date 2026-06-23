@@ -45,9 +45,11 @@ from app.blueprints.rest.v2.case_routes.events import case_events_blueprint
 from app.blueprints.rest.v2.case_routes.datastore import case_datastore_blueprint
 from app.blueprints.iris_user import iris_current_user
 from app.business.cases import cases_create
+from app.business.cases import cases_close
 from app.business.cases import cases_delete
 from app.business.cases import cases_exists
 from app.business.cases import cases_get_by_identifier
+from app.business.cases import cases_reopen
 from app.business.cases import cases_update
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
 from app.models.errors import BusinessProcessingError, ObjectNotFoundError
@@ -321,6 +323,30 @@ class CasesOperations:
         except BusinessProcessingError as e:
             return response_api_error(e.get_message(), e.get_data())
 
+    def close(self, identifier):
+        if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=identifier)
+
+        try:
+            case = cases_close(identifier)
+            return response_api_success(CaseDetailsSchema().dump(case))
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), e.get_data())
+
+    def reopen(self, identifier):
+        if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=identifier)
+
+        try:
+            case = cases_reopen(identifier)
+            return response_api_success(CaseDetailsSchema().dump(case))
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), e.get_data())
+
 
 # Create blueprint & import child blueprints
 cases_blueprint = Blueprint('cases',
@@ -372,6 +398,18 @@ def rest_v2_cases_update(identifier):
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
     return cases_operations.delete(identifier)
+
+
+@cases_blueprint.post('/<int:identifier>/close')
+@ac_api_requires(Permissions.standard_user)
+def case_routes_close(identifier):
+    return cases_operations.close(identifier)
+
+
+@cases_blueprint.post('/<int:identifier>/reopen')
+@ac_api_requires(Permissions.standard_user)
+def case_routes_reopen(identifier):
+    return cases_operations.reopen(identifier)
 
 
 @cases_blueprint.get('/<int:identifier>/access/users')
