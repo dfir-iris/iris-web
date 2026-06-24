@@ -24,6 +24,7 @@ from app.blueprints.rest.v2.manage_routes.customers import customers_blueprint
 from app.blueprints.rest.v2.manage_routes.server import server_blueprint
 from app.blueprints.rest.v2.manage_routes.modules import modules_blueprint
 from app.blueprints.rest.v2.manage_routes.case_objects import case_objects_blueprint
+from app.blueprints.rest.v2.manage_routes.case_templates import case_templates_blueprint
 
 manage_v2_blueprint = Blueprint("manage", __name__, url_prefix="/manage")
 
@@ -33,3 +34,4 @@ manage_v2_blueprint.register_blueprint(customers_blueprint)
 manage_v2_blueprint.register_blueprint(server_blueprint)
 manage_v2_blueprint.register_blueprint(modules_blueprint)
 manage_v2_blueprint.register_blueprint(case_objects_blueprint)
+manage_v2_blueprint.register_blueprint(case_templates_blueprint)
