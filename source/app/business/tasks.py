@@ -43,7 +43,7 @@ def tasks_delete(task: CaseTasks):
     delete_task(task.id)
     update_tasks_state(caseid=task.task_case_id)
     call_modules_hook('on_postload_task_delete', task.id, caseid=task.task_case_id)
-    track_activity(f'deleted task "{task.task_title}"')
+    track_activity(f'deleted task "{task.task_title}"', caseid=task.task_case_id)
 
 
 def tasks_create(task: CaseTasks, task_assignee_list) -> CaseTasks:
