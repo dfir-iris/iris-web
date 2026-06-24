@@ -31,10 +31,17 @@ def response_api_success(data):
 
 
 def _get_next_page(paginated_elements: Pagination):
+    # Return the next page *number* — historically this returned
+    # `has_next` (a boolean), which made it impossible for clients to
+    # drive infinite scroll: they got `True` instead of `2`, then
+    # incremented from `currentPage` and worked by coincidence on page
+    # 1 but desynced on subsequent loads. `next_num` is None when
+    # there's no next page, which matches the envelope's documented
+    # `next_page: int | None` shape.
     if not paginated_elements.has_next:
         return None
 
-    return paginated_elements.has_next
+    return paginated_elements.next_num
 
 
 def response_api_paginated(schema, paginated_elements: Pagination):
