@@ -260,10 +260,9 @@ def create_report_template() -> Response:
 @ac_api_requires(Permissions.server_administrator)
 def update_report_template(identifier: int) -> Response:
     """Metadata-only update. Takes JSON so admins can rename / re-tag
-    a template without re-uploading its file. To replace the file,
-    delete the row and re-create it — the legacy UI had no edit-with-
-    upload flow either and there's no reliable way to swap a docx in
-    place without breaking outstanding render jobs.
+    a template without re-uploading its file. To replace the file
+    itself, use `PUT /<id>/file` (multipart) — kept separate so this
+    route can stay plain JSON.
     """
     try:
         template = _get_template(identifier)
@@ -337,6 +336,85 @@ def delete_report_template(identifier: int) -> Response:
             'warning': f'Template row deleted but the file could not be removed: {fs_error}'
         })
     return response_api_deleted()
+
+
+# ----- File replacement ----------------------------------------------
+
+@report_templates_blueprint.put('/<int:identifier>/file')
+@ac_api_requires(Permissions.server_administrator)
+def replace_report_template_file(identifier: int) -> Response:
+    """Replace the underlying template file in place.
+
+    Multipart: a single `file` field, same allowlist as the create
+    endpoint. The renderer reads the file from disk every time a
+    report is generated, so an in-place swap is safe between
+    requests — no caching to invalidate.
+
+    Strategy: write the new file under a fresh random name first,
+    then atomically flip `internal_reference` to point at it and
+    unlink the old file. If the upload or DB update fails we drop
+    the staged file, leaving the original intact.
+    """
+    try:
+        template = _get_template(identifier)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    upload = request.files.get('file')
+    if upload is None or not upload.filename:
+        return response_api_error('No file uploaded')
+
+    if not _allowed_filename(upload.filename):
+        return response_api_error(
+            f"File extension not allowed. Use one of: {', '.join(sorted(_ALLOWED_EXTENSIONS))}"
+        )
+
+    safe_name = secure_filename(upload.filename)
+    _, extension = os.path.splitext(safe_name)
+    new_filename = _random_filename(extension)
+    new_path = os.path.join(app.config['TEMPLATES_PATH'], new_filename)
+
+    try:
+        upload.save(new_path)
+    except Exception as exc:
+        return response_api_error(f'Unable to save uploaded file: {exc}')
+
+    old_filename = template.internal_reference
+    template.internal_reference = new_filename
+    try:
+        db.session.commit()
+    except IntegrityError as exc:
+        db.session.rollback()
+        # DB write lost — discard the just-uploaded file so we don't
+        # orphan it on disk. The old file is still pointed at by the
+        # template row, so the render flow remains usable.
+        try:
+            os.unlink(new_path)
+        except Exception:
+            pass
+        return response_api_error(f'Database error: {exc}')
+
+    # Best-effort cleanup of the previous file. If this fails the
+    # only downside is an orphan on disk — the row already points at
+    # the new file, so users see the update. Don't fail the request.
+    try:
+        os.unlink(os.path.join(app.config['TEMPLATES_PATH'], old_filename))
+    except FileNotFoundError:
+        pass
+    except Exception:
+        # Log via track_activity so the orphan is traceable.
+        track_activity(
+            f"Report template '{template.name}' file replaced; "
+            f"could not remove previous file '{old_filename}'",
+            ctx_less=True,
+        )
+    else:
+        track_activity(
+            f"Report template '{template.name}' file replaced",
+            ctx_less=True,
+        )
+
+    return response_api_success(_serialize_template(template))
 
 
 # ----- File download --------------------------------------------------
