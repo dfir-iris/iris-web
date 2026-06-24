@@ -214,3 +214,236 @@ def delete_case_template(identifier: int) -> Response:
     return response_api_deleted()
 
 
+# ----- Schema introspection -------------------------------------------
+#
+# Powers the interactive editor on the Settings Case Templates page.
+# The frontend needs to know, per field: type, required, optional
+# length cap, free-form help. Rather than duplicating that metadata
+# client-side we introspect `CaseTemplateSchema` at request time so a
+# field added to the Marshmallow schema shows up in the UI without
+# any frontend change.
+#
+# The nested template shapes for tasks + note directories + notes are
+# NOT real Marshmallow schemas — `validate_case_template` enforces
+# them with hand-rolled checks on raw dicts. We mirror those rules
+# here as static descriptors so the frontend renders the same fields
+# the validator accepts. When the validator gains a new field this
+# descriptor must be updated to match.
+
+import marshmallow.fields as mf
+import marshmallow.validate as mv
+
+
+def _describe_marshmallow_field(field) -> Dict[str, Any]:
+    """Best-effort projection of a Marshmallow field to a UI descriptor.
+
+    Picks a coarse `kind` the frontend can switch on (`string`,
+    `text`, `integer`, `list[string]`, `list[object]`) and surfaces
+    `required`, `allow_none`, `missing` plus any `Length` validator's
+    max constraint — those are the four hints the form widgets need.
+
+    Everything more specific (e.g. enum membership) is left to the
+    schema's own `verify_*` hooks at save time; we don't try to
+    enumerate every Marshmallow validator type.
+    """
+    # The plain `String` field is the catch-all; we treat long-form
+    # description / summary as `text` (multi-line) by name convention
+    # since Marshmallow doesn't model that distinction.
+    if isinstance(field, mf.Integer):
+        kind = 'integer'
+    elif isinstance(field, mf.List):
+        # Inspect the inner type to disambiguate string lists (tags)
+        # from object lists (note_directories with their `notes`
+        # children). Anything else falls back to 'list[object]'.
+        inner = field.inner
+        if isinstance(inner, mf.String):
+            kind = 'list[string]'
+        elif isinstance(inner, mf.Dict):
+            kind = 'list[object]'
+        else:
+            kind = 'list[object]'
+    elif isinstance(field, mf.Boolean):
+        kind = 'boolean'
+    elif isinstance(field, mf.DateTime):
+        kind = 'datetime'
+    else:
+        kind = 'string'
+
+    max_length = None
+    for validator in field.validators or ():
+        if isinstance(validator, mv.Length) and validator.max is not None:
+            max_length = validator.max
+            break
+
+    return {
+        'kind': kind,
+        'required': bool(field.required),
+        'allow_none': bool(field.allow_none),
+        'dump_only': bool(field.dump_only),
+        'max_length': max_length,
+    }
+
+
+# Nested template shapes — these match the rules enforced by
+# `validate_case_template` in datamgmt/manage/manage_case_templates_db.py.
+_TASK_TEMPLATE_FIELDS = [
+    {
+        'name': 'title',
+        'label': 'Title',
+        'kind': 'string',
+        'required': True,
+        'help': 'Becomes the new task title.',
+    },
+    {
+        'name': 'description',
+        'label': 'Description',
+        'kind': 'text',
+        'required': False,
+        'help': 'Optional. Appears in the task detail panel.',
+    },
+    {
+        'name': 'tags',
+        'label': 'Tags',
+        'kind': 'list[string]',
+        'required': False,
+        'help': 'Optional. Comma-separated when applied.',
+    },
+]
+
+_NOTE_TEMPLATE_FIELDS = [
+    {
+        'name': 'title',
+        'label': 'Title',
+        'kind': 'string',
+        'required': True,
+    },
+    {
+        'name': 'content',
+        'label': 'Content',
+        'kind': 'text',
+        'required': False,
+        'help': 'Markdown is supported.',
+    },
+]
+
+_NOTE_DIRECTORY_TEMPLATE_FIELDS = [
+    {
+        'name': 'title',
+        'label': 'Directory name',
+        'kind': 'string',
+        'required': True,
+    },
+    {
+        'name': 'notes',
+        'label': 'Notes',
+        'kind': 'list[object]',
+        'required': False,
+        'item_schema': 'note',
+    },
+]
+
+# Friendly labels + per-field help text. Keyed by the schema's
+# field name so a future rename on the schema only needs to update
+# the schema; this dict can stay or be edited deliberately.
+_FIELD_LABELS: Dict[str, Dict[str, str]] = {
+    'name': {
+        'label': 'Name',
+        'help': "Short, unique slug. Required.",
+    },
+    'display_name': {
+        'label': 'Display name',
+        'help': "Shown in the picker; falls back to `name`.",
+    },
+    'description': {
+        'label': 'Description',
+        'help': "Admin-side description, not visible on cases.",
+    },
+    'author': {'label': 'Author', 'help': 'Optional. Up to 128 characters.'},
+    'title_prefix': {
+        'label': 'Case title prefix',
+        'help': 'Prepended to the case name on apply. Up to 32 characters.',
+    },
+    'summary': {
+        'label': 'Summary',
+        'help': 'Appended to the case description on apply.',
+    },
+    'tags': {'label': 'Tags', 'help': 'Appended to the case tags on apply.'},
+    'classification': {
+        'label': 'Classification',
+        'help': "Must match the `name` of an existing case classification.",
+    },
+    'note_directories': {
+        'label': 'Note directories',
+        'help': 'Created on the case on apply.',
+    },
+    'tasks': {
+        'label': 'Tasks',
+        'help': 'Created on the case on apply, with status "To Do".',
+    },
+}
+
+# Field-name overrides where the introspected `kind` is wrong for the
+# UI (Marshmallow has no `text` field, but `description` / `summary`
+# render better as textareas). Keyed by schema field name.
+_KIND_OVERRIDES: Dict[str, str] = {
+    'description': 'text',
+    'summary': 'text',
+}
+
+# Which item descriptor a `list[object]` field renders inside the
+# repeater. Keyed by schema field name; missing entries fall back to
+# a generic "object" with no fields, which the UI renders as a
+# read-only JSON snippet so the form stays useful for unknown shapes.
+_ITEM_SCHEMA_BY_FIELD: Dict[str, str] = {
+    'tasks': 'task',
+    'note_directories': 'note_directory',
+}
+
+
+@case_templates_blueprint.get('/schema')
+@ac_api_requires(Permissions.case_templates_read)
+def get_case_template_schema() -> Response:
+    """Describe `CaseTemplateSchema` + nested template shapes.
+
+    Returned shape is consumed by the interactive editor to build the
+    form. Keeping introspection here (rather than client-side) keeps
+    the form in lockstep with the backend schema — adding a field to
+    `CaseTemplateSchema` adds an input on the form on the next reload.
+
+    `tasks` is special-cased: it's stored as raw JSON on the model
+    and never declared as a Marshmallow field, but the post-modifier
+    treats it as a structured list. We expose it as if it were a
+    declared field so the UI can build the same repeater the rest of
+    the form uses.
+    """
+    schema = CaseTemplateSchema()
+    fields_out: List[Dict[str, Any]] = []
+
+    # CaseTemplateSchema.fields is an OrderedDict; preserves
+    # declaration order, which is the order users see in the form.
+    for name, field in schema.fields.items():
+        descriptor = _describe_marshmallow_field(field)
+        meta = _FIELD_LABELS.get(name, {})
+        kind = _KIND_OVERRIDES.get(name, descriptor['kind'])
+        entry: Dict[str, Any] = {
+            'name': name,
+            'label': meta.get('label', name.replace('_', ' ').capitalize()),
+            'help': meta.get('help', ''),
+            **descriptor,
+            'kind': kind,
+        }
+        item_schema = _ITEM_SCHEMA_BY_FIELD.get(name)
+        if item_schema is not None:
+            entry['item_schema'] = item_schema
+        fields_out.append(entry)
+
+    return response_api_success({
+        'fields': fields_out,
+        'item_schemas': {
+            'task': _TASK_TEMPLATE_FIELDS,
+            'note_directory': _NOTE_DIRECTORY_TEMPLATE_FIELDS,
+            'note': _NOTE_TEMPLATE_FIELDS,
+        },
+    })
+
+
