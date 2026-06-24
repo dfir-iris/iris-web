@@ -56,7 +56,16 @@ class CustomersOperations:
     def search(self):
         pagination_parameters = parse_pagination_parameters(request)
         user_is_server_administrator = ac_current_user_has_permission(Permissions.server_administrator)
-        customers = customers_filter(iris_current_user, pagination_parameters, user_is_server_administrator)
+        # `search` is an ILIKE substring match across name + description.
+        # Empty / whitespace-only values fall through as None so they
+        # don't add a no-op `LIKE '%%'` clause.
+        search = (request.args.get('search') or '').strip() or None
+        customers = customers_filter(
+            iris_current_user,
+            pagination_parameters,
+            user_is_server_administrator,
+            search=search,
+        )
         return response_api_paginated(self._schema, customers)
 
     def create(self):

@@ -69,7 +69,7 @@ def get_client_list(current_user_id: int, is_server_administrator: bool) -> List
     return output
 
 
-def get_paginated_customers(pagination_parameters: PaginationParameters, current_user_identifier: int, is_server_administrator: bool) -> Pagination:
+def get_paginated_customers(pagination_parameters: PaginationParameters, current_user_identifier: int, is_server_administrator: bool, search: Optional[str] = None) -> Pagination:
     query = Client.query
 
     if not is_server_administrator:
@@ -77,6 +77,17 @@ def get_paginated_customers(pagination_parameters: PaginationParameters, current
             Client.client_id == UserClient.client_id,
             UserClient.user_id == current_user_identifier
         )
+
+    # Case-insensitive substring match across the two human-readable
+    # fields. Cheap (no full-text index needed at this fleet size) and
+    # matches the legacy DataTables behaviour where typing in the
+    # search box filtered both columns.
+    if search:
+        needle = f'%{search.strip()}%'
+        if needle != '%%':
+            query = query.filter(
+                Client.name.ilike(needle) | Client.description.ilike(needle)
+            )
 
     return paginate(Client, pagination_parameters, query)
 
