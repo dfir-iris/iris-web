@@ -1464,19 +1464,39 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing ServerSettings objects.
+    """Schema for the singleton `ServerSettings` row.
 
-    This schema defines the fields to include when serializing and deserializing ServerSettings objects.
-    It includes fields for the HTTP proxy, HTTPS proxy, and whether to prevent post-modification repush.
+    Every editable column on the model is declared explicitly so the
+    SvelteKit `/settings/server` page can introspect the field list
+    via `Meta.fields` if it ever needs to. Two columns are intentionally
+    excluded from load and load-only respectively:
 
+      * `id` — the row is a singleton anchored at id=1; clients never
+        get to touch it.
+      * `has_updates_available` — written by the periodic update
+        checker, surfaced read-only on the page.
     """
-    http_proxy: Optional[str] = fields.String(required=False, allow_none=False)
-    https_proxy: Optional[str] = fields.String(required=False, allow_none=False)
+    http_proxy: Optional[str] = fields.String(required=False, allow_none=True)
+    https_proxy: Optional[str] = fields.String(required=False, allow_none=True)
     prevent_post_mod_repush: Optional[bool] = fields.Boolean(required=False)
+    prevent_post_objects_repush: Optional[bool] = fields.Boolean(required=False)
+    has_updates_available: Optional[bool] = fields.Boolean(dump_only=True)
+    enable_updates_check: Optional[bool] = fields.Boolean(required=False)
+    password_policy_min_length: Optional[int] = fields.Integer(required=False)
+    password_policy_upper_case: Optional[bool] = fields.Boolean(required=False)
+    password_policy_lower_case: Optional[bool] = fields.Boolean(required=False)
+    password_policy_digit: Optional[bool] = fields.Boolean(required=False)
+    password_policy_special_chars: Optional[str] = fields.String(required=False, allow_none=True)
+    enforce_mfa: Optional[bool] = fields.Boolean(required=False)
+    force_confirmation_before_delete: Optional[bool] = fields.Boolean(required=False)
 
     class Meta:
         model = ServerSettings
         load_instance = True
+        # `id` is excluded because the row is a singleton — there's
+        # only ever id=1 and the API shouldn't expose a way to change
+        # it.
+        exclude = ('id',)
         unknown = EXCLUDE
 
 
