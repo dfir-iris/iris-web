@@ -1,4 +1,4 @@
-from marshmallow import Schema, fields as ma_fields, validate, validates_schema, ValidationError
+from marshmallow import EXCLUDE, Schema, fields as ma_fields, validate, validates_schema, ValidationError
 
 
 class DashboardFilterSchema(Schema):
@@ -21,6 +21,9 @@ class DashboardWidgetFieldSchema(Schema):
 
 
 class DashboardWidgetSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     name = ma_fields.String(required=True)
     chart_type = ma_fields.String(
         required=True,
@@ -35,6 +38,9 @@ class DashboardWidgetSchema(Schema):
 
 
 class DashboardSectionSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     id = ma_fields.String(required=False)
     title = ma_fields.String(required=False, allow_none=True)
     description = ma_fields.String(required=False, allow_none=True)
@@ -43,11 +49,16 @@ class DashboardSectionSchema(Schema):
 
 
 class CustomDashboardSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+
     name = ma_fields.String(required=True)
     description = ma_fields.String(allow_none=True)
     is_shared = ma_fields.Boolean(required=False)
+    is_system = ma_fields.Boolean(required=False, dump_only=True)
     widgets = ma_fields.List(ma_fields.Nested(DashboardWidgetSchema), required=False)
     sections = ma_fields.List(ma_fields.Nested(DashboardSectionSchema), required=False)
+    filters_schema = ma_fields.List(ma_fields.Dict(), required=False)
 
     @validates_schema
     def validate_widget_structure(self, data, **kwargs):
