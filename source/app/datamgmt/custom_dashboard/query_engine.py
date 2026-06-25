@@ -363,6 +363,14 @@ class _WidgetQueryBuilder:
             self.group_labels.append(label)
 
     def add_select(self, expr: Any, label: str, aggregated: bool):
+        # Same widget can list the same column twice (e.g. once as a
+        # non-aggregated field and once in group_by). The group-by side
+        # already dedupes; mirror that for the SELECT projection so the
+        # response doesn't carry two columns sharing the same label.
+        if label in self.select_labels:
+            if not aggregated:
+                self.add_group_by(expr, label)
+            return
         labeled_expr = expr.label(label)
         self.selects.append(labeled_expr)
         self.select_labels.append(label)
