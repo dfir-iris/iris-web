@@ -67,6 +67,30 @@ from app.business.alerts import alerts_get_related
 alerts_rest_blueprint = Blueprint('alerts_rest', __name__)
 
 
+# Fields that must be immutable on alert update. The web UI never changes
+# these, and allowing them via the API lets a user with write access to one
+# customer re-attribute an alert to a customer they cannot see — either to
+# plant fake alerts under another customer's name, or (combined with an XSS
+# vector) to make another user move an alert into an attacker-controlled
+# customer. See GHSA-8hwq-v6vm-9grr / SBA-ADV-20260128-05 / CWE-863.
+#
+# alert_id:             primary key, must not be rewritten
+# alert_customer_id:    ownership, re-attribution bypasses customer-scoped ACL
+# alert_creation_time:  audit integrity; set once at creation
+_ALERT_UPDATE_READONLY_FIELDS = frozenset({
+    'alert_id',
+    'alert_customer_id',
+    'alert_creation_time',
+})
+
+
+def _strip_readonly_update_fields(payload):
+    """Remove fields that must never be mutated via the alert-update API."""
+    if not isinstance(payload, dict):
+        return payload
+    return {k: v for k, v in payload.items() if k not in _ALERT_UPDATE_READONLY_FIELDS}
+
+
 def _load(request_data, **kwargs):
     alert_schema = AlertSchema()
     return alert_schema.load(request_data, **kwargs)
@@ -332,8 +356,11 @@ def alerts_update_route(alert_id) -> Response:
     do_status_hook = False
 
     try:
-        # Load the JSON data from the request
-        data = request.get_json()
+        # Drop fields the caller must not be allowed to change on update
+        # (GHSA-8hwq-v6vm-9grr / SBA-ADV-20260128-05 / CWE-863). Done before
+        # any other processing so these values never reach the activity log
+        # or the ORM.
+        data = _strip_readonly_update_fields(request.get_json())
 
         activity_data = []
         for key, value in data.items():
@@ -411,9 +438,12 @@ def alerts_batch_update_route() -> Response:
     # Load the JSON data from the request
     data = request.get_json()
 
-    # Get the list of alert IDs and updates from the request data
+    # Get the list of alert IDs and updates from the request data. Strip
+    # immutable fields from the batch payload so one API call can't silently
+    # re-attribute every selected alert to a different customer
+    # (GHSA-8hwq-v6vm-9grr / SBA-ADV-20260128-05 / CWE-863).
     alert_ids: List[int] = data.get('alert_ids', [])
-    updates = data.get('updates', {})
+    updates = _strip_readonly_update_fields(data.get('updates', {}))
 
     if not updates.get('alert_tags'):
         updates.pop('alert_tags', None)
