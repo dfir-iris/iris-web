@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.sql import table, column
 
-from app.alembic.alembic_utils import _has_table
+from app.alembic.alembic_utils import _has_table, _table_has_column
 
 
 revision = 'c7f1e2a4d810'
@@ -129,6 +129,18 @@ def upgrade():
             sa.Column('created_at', sa.DateTime, server_default=sa.func.now(), nullable=False),
             sa.Column('updated_at', sa.DateTime, server_default=sa.func.now(), onupdate=sa.func.now(), nullable=False)
         )
+
+    # Reconcile pre-existing custom_dashboard table (e.g. created by a prior
+    # alembic head or by SQLAlchemy metadata) with the schema this migration
+    # expects. Add is_system if missing, relax owner_id NOT NULL so system
+    # rows can be seeded.
+    if _has_table('custom_dashboard'):
+        if not _table_has_column('custom_dashboard', 'is_system'):
+            op.add_column(
+                'custom_dashboard',
+                sa.Column('is_system', sa.Boolean, nullable=False, server_default=sa.text('false')),
+            )
+        op.execute(sa.text('ALTER TABLE custom_dashboard ALTER COLUMN owner_id DROP NOT NULL'))
 
     if not _has_table('custom_dashboard_widget'):
         op.create_table(
