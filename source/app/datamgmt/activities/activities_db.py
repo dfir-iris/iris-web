@@ -19,9 +19,12 @@
 from sqlalchemy import and_
 from sqlalchemy import desc
 from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy.orm import aliased
 
 from app.models.cases import Cases
 from app.models.authorization import User
+from app.models.customers import Client
 from app.models.models import UserActivity
 
 
@@ -186,6 +189,67 @@ def get_recent_activities_for_user(user_id, limit=20, offset=0, accessible_case_
 
     rows = base.order_by(desc(UserActivity.activity_date)).offset(offset).limit(limit).all()
 
+    return [row._asdict() for row in rows]
+
+
+def get_recent_major_case_activities_for_user(
+        user_id,
+        limit=20,
+        offset=0,
+        accessible_case_ids=None,
+):
+    """Recent high-signal case lifecycle activities (created/closed).
+
+    Returns case-linked activity rows enriched with case owner, case opener,
+    and customer names so dashboard widgets can render a compact "who/what"
+    summary without N follow-up requests.
+    """
+    if accessible_case_ids is None:
+        from app.datamgmt.manage.manage_cases_db import user_list_cases_view
+        accessible_case_ids = user_list_cases_view(user_id)
+
+    case_filter = UserActivity.case_id.in_(accessible_case_ids) if accessible_case_ids else None
+
+    owner_alias = aliased(User)
+    opener_alias = aliased(User)
+
+    activity_desc_lower = func.lower(UserActivity.activity_desc)
+    is_case_created = activity_desc_lower.like('new case%created%')
+    is_case_closed = or_(
+        activity_desc_lower == 'case closed',
+        activity_desc_lower.like('closed case id %')
+    )
+
+    base = UserActivity.query.with_entities(
+        UserActivity.id,
+        UserActivity.case_id,
+        UserActivity.activity_date,
+        UserActivity.activity_desc,
+        Cases.name.label('case_name'),
+        owner_alias.name.label('owner_name'),
+        opener_alias.name.label('opened_by_name'),
+        Client.name.label('customer_name')
+    ).join(
+        Cases, UserActivity.case_id == Cases.case_id
+    ).outerjoin(
+        owner_alias, Cases.owner_id == owner_alias.id
+    ).outerjoin(
+        opener_alias, Cases.user_id == opener_alias.id
+    ).outerjoin(
+        Client, Cases.client_id == Client.client_id
+    ).filter(
+        UserActivity.display_in_ui == True,
+        or_(is_case_created, is_case_closed)
+    )
+
+    if case_filter is not None:
+        base = base.filter(
+            (case_filter) | (UserActivity.user_id == user_id)
+        )
+    else:
+        base = base.filter(UserActivity.user_id == user_id)
+
+    rows = base.order_by(desc(UserActivity.activity_date)).offset(offset).limit(limit).all()
     return [row._asdict() for row in rows]
 
 

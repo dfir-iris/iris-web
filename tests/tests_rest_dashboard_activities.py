@@ -96,3 +96,30 @@ class TestsRestDashboardActivities(TestCase):
         # The other user has no access to the case we created — none of the
         # returned rows should reference it.
         self.assertTrue(all(row.get('case_id') != case_identifier for row in response))
+
+    def test_list_recent_major_case_activities_should_return_200(self):
+        response = self._subject.get('/api/v2/dashboard/activities/cases/major')
+        self.assertEqual(200, response.status_code)
+
+    def test_list_recent_major_case_activities_should_include_required_fields(self):
+        self._subject.create_dummy_case()
+        response = self._subject.get('/api/v2/dashboard/activities/cases/major').json()
+
+        self.assertGreaterEqual(len(response), 1)
+        self.assertIn('case_id', response[0])
+        self.assertIn('case_name', response[0])
+        self.assertIn('owner_name', response[0])
+        self.assertIn('opened_by_name', response[0])
+        self.assertIn('customer_name', response[0])
+
+    def test_list_recent_major_case_activities_should_honour_limit_offset(self):
+        for _ in range(3):
+            self._subject.create_dummy_case()
+
+        first_page = self._subject.get('/api/v2/dashboard/activities/cases/major?limit=1&offset=0').json()
+        second_page = self._subject.get('/api/v2/dashboard/activities/cases/major?limit=1&offset=1').json()
+
+        self.assertEqual(1, len(first_page))
+        self.assertEqual(1, len(second_page))
+        if first_page and second_page:
+            self.assertNotEqual(first_page[0].get('id'), second_page[0].get('id'))

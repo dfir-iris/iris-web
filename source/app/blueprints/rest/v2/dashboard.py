@@ -26,6 +26,7 @@ from app.business.cases import cases_filter_by_user
 from app.business.cases import cases_filter_by_reviewer
 from app.business.tasks import tasks_filter_by_user
 from app.datamgmt.activities.activities_db import get_recent_activities_for_user
+from app.datamgmt.activities.activities_db import get_recent_major_case_activities_for_user
 from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import CaseSchema
 
@@ -89,6 +90,36 @@ def list_recent_activities():
     rows = get_recent_activities_for_user(iris_current_user.id, limit=limit, offset=offset)
     # The DB query already projected the needed columns — no marshmallow
     # schema would add anything useful. Stamp dates as ISO strings and ship.
+    data = []
+    for row in rows:
+        d = dict(row)
+        if d.get('activity_date') is not None:
+            d['activity_date'] = d['activity_date'].isoformat()
+        data.append(d)
+
+    return response_api_success(data=data)
+
+
+@dashboard_blueprint.get('/activities/cases/major')
+@ac_api_requires()
+def list_recent_major_case_activities():
+    """Recent major case activities (created / closed) for dashboard use.
+
+    Query params:
+      - limit: int (default 20, max 100) — page size
+      - offset: int (default 0)         — pagination cursor
+    """
+    limit = request.args.get('limit', default=20, type=int)
+    if limit < 1:
+        limit = 20
+    if limit > 100:
+        limit = 100
+
+    offset = request.args.get('offset', default=0, type=int)
+    if offset < 0:
+        offset = 0
+
+    rows = get_recent_major_case_activities_for_user(iris_current_user.id, limit=limit, offset=offset)
     data = []
     for row in rows:
         d = dict(row)
