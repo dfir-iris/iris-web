@@ -192,7 +192,16 @@ class DatastoreOperations:
                 f'Update or delete virtual entry'
             )
 
-        resp = send_file(dsf.file_local_name, as_attachment=False, download_name=destination_name)
+        # Keep inline display only for file types the browser cannot execute
+        # as script. SVG can embed <script>; HTML/XML execute JS in the
+        # application origin. Force everything else to download so a
+        # malicious upload can't turn the datastore into a stored-XSS sink
+        # (SBA-ADV-20260126-03 / CWE-79).
+        safe_inline_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
+        file_extension = Path(destination_name).suffix.lower().lstrip('.')
+        serve_as_attachment = file_extension not in safe_inline_extensions
+
+        resp = send_file(dsf.file_local_name, as_attachment=serve_as_attachment, download_name=destination_name)
 
         track_activity(
             f'File "{destination_name}" downloaded',

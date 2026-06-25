@@ -76,7 +76,7 @@
                             <p>{{ cle }}</p>
 
                         {% elif attributes[ca][cle]["type"] == "html" %}
-                            {{ attributes[ca][cle]['value']| safe }}
+                            {{ attributes[ca][cle]['value'] | sanitize_attribute_html }}
 
                         {% endif %}
                     </div>
