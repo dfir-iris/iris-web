@@ -76,6 +76,25 @@ def _truthy(value):
     return str(value).strip().lower() in ('1', 'true', 'yes', 'on')
 
 
+# Allowlist of multipart form fields a caller may write through the file
+# add/update endpoints. Anything else (notably file_id, file_local_name,
+# file_case_id, file_sha256, file_size, added_by_user_id, file_date_added,
+# ...) is dropped before the schema is loaded. Closes the mass-assignment
+# vector reported as GHSA-qhqj-8qw6-wp8v / CWE-915.
+_DS_FILE_WRITABLE_FIELDS = (
+    'file_original_name',
+    'file_description',
+    'file_password',
+    'file_is_ioc',
+    'file_is_evidence',
+    'file_parent_id',
+)
+
+
+def _filter_ds_file_form(form):
+    return {field: form.get(field) for field in _DS_FILE_WRITABLE_FIELDS if field in form}
+
+
 class DatastoreOperations:
     """Case-scoped datastore operations exposed via the v2 API.
 
@@ -192,7 +211,7 @@ class DatastoreOperations:
             return response_api_not_found()
 
         try:
-            dsf_sc = self._file_schema.load(request.form, partial=True)
+            dsf_sc = self._file_schema.load(_filter_ds_file_form(request.form), partial=True)
 
             dsf_sc.file_parent_id = dsp.path_id
             dsf_sc.added_by_user_id = iris_current_user.id
@@ -248,7 +267,7 @@ class DatastoreOperations:
             return response_api_not_found()
 
         try:
-            dsf_sc = self._file_schema.load(request.form, instance=dsf, partial=True)
+            dsf_sc = self._file_schema.load(_filter_ds_file_form(request.form), instance=dsf, partial=True)
             add_obj_history_entry(dsf_sc, 'updated')
 
             if 'file_is_ioc' in request.form:
