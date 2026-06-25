@@ -98,7 +98,6 @@ def datastore_info_file(cur_id: int, caseid: int):
 
     file_schema = DSFileSchema()
     file = file_schema.dump(file)
-    del file['file_local_name']
 
     return response_success("", data=file)
 

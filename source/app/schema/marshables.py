@@ -255,7 +255,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_name: str = auto_field('name', required=True, validate=Length(min=2))
     user_login: str = auto_field('user', required=True, validate=Length(min=2))
     user_email: str = auto_field('email', required=True, validate=Length(min=2))
-    user_password: Optional[str] = auto_field('password', required=False)
+    user_password: Optional[str] = auto_field('password', required=False, load_only=True)
     user_isadmin: bool = fields.Boolean(required=True)
     user_id: Optional[int] = fields.Integer(required=False)
     user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
@@ -265,7 +265,8 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email',
+                   'is_service_account', 'mfa_secrets', 'webauthn_credentials']
         unknown = EXCLUDE
 
     @pre_load()
@@ -1130,7 +1131,7 @@ class UserFullSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['password', 'ctx_case', 'ctx_human_case']
+        exclude = ['password', 'ctx_case', 'ctx_human_case', 'mfa_secrets', 'webauthn_credentials']
         unknown = EXCLUDE
 
 
@@ -1319,6 +1320,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
     file_original_name: str = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
     file_description: str = auto_field('file_description', allow_none=False)
     file_content: Optional[bytes] = fields.Raw(required=False)
+    file_local_name: Optional[str] = auto_field('file_local_name', required=False, load_only=True)
 
     class Meta:
         model = DataStoreFile
@@ -2225,7 +2227,7 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
-                   'id', 'name', 'email', 'user', 'uuid']
+                   'id', 'name', 'email', 'user', 'uuid', 'mfa_secrets', 'webauthn_credentials']
         unknown = EXCLUDE
 
 
