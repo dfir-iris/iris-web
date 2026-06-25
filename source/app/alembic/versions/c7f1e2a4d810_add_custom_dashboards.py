@@ -82,7 +82,6 @@ def _statistics_definition():
                         'name': 'Alerts by severity',
                         'chart_type': 'pie',
                         'fields': [
-                            {'table': 'severities', 'column': 'severity_name', 'alias': 'severity'},
                             {'table': 'alerts', 'column': 'alert_id', 'aggregation': 'count', 'alias': 'total'}
                         ],
                         'group_by': ['severities.severity_name'],
@@ -92,7 +91,6 @@ def _statistics_definition():
                         'name': 'Cases by classification',
                         'chart_type': 'bar',
                         'fields': [
-                            {'table': 'case_classification', 'column': 'name_expanded', 'alias': 'classification'},
                             {'table': 'cases', 'column': 'case_id', 'aggregation': 'count', 'alias': 'total'}
                         ],
                         'group_by': ['case_classification.name_expanded'],
@@ -102,7 +100,6 @@ def _statistics_definition():
                         'name': 'Evidence by type',
                         'chart_type': 'bar',
                         'fields': [
-                            {'table': 'case_asset_types', 'column': 'asset_name', 'alias': 'asset_type'},
                             {'table': 'case_assets', 'column': 'asset_id', 'aggregation': 'count', 'alias': 'total'}
                         ],
                         'group_by': ['case_asset_types.asset_name'],
