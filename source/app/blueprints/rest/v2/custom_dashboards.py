@@ -292,25 +292,38 @@ def render_dashboard(dashboard_uuid: str):
     timeframe = _extract_timeframe(payload)
     filters = _extract_filters(payload)
 
-    sections = definition.get('sections') or []
-    widgets: List[Dict[str, Any]] = []
-    if sections:
-        for section in sections:
-            for widget in section.get('widgets') or []:
-                widgets.append(widget)
-    else:
-        widgets = definition.get('widgets') or []
-
-    rendered: List[Dict[str, Any]] = []
-    for widget in widgets:
+    def _render_one(widget: Dict[str, Any]) -> Dict[str, Any]:
         try:
-            rendered.append(_render_widget(widget, timeframe, filters))
+            return _render_widget(widget, timeframe, filters)
         except QueryExecutionError as e:
-            rendered.append({
+            return {
                 'name': widget.get('name'),
                 'chart_type': widget.get('chart_type'),
                 'error': str(e),
                 'layout': widget.get('layout') or {},
-            })
+            }
 
-    return response_api_success(data={'widgets': rendered})
+    sections_in = definition.get('sections') or []
+    rendered_widgets: List[Dict[str, Any]] = []
+    rendered_sections: List[Dict[str, Any]] = []
+
+    if sections_in:
+        for section in sections_in:
+            widgets_in = section.get('widgets') or []
+            section_rendered = [_render_one(w) for w in widgets_in]
+            rendered_widgets.extend(section_rendered)
+            rendered_sections.append({
+                'id': section.get('id'),
+                'title': section.get('title'),
+                'description': section.get('description'),
+                'show_divider': bool(section.get('show_divider')),
+                'widgets': section_rendered,
+            })
+    else:
+        for widget in definition.get('widgets') or []:
+            rendered_widgets.append(_render_one(widget))
+
+    return response_api_success(data={
+        'widgets': rendered_widgets,
+        'sections': rendered_sections,
+    })
