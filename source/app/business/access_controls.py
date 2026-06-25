@@ -23,7 +23,9 @@ from app.datamgmt.manage.manage_access_control_db import remove_duplicate_user_c
 from app.datamgmt.manage.manage_access_control_db import add_user_case_effective_access
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
+from app.datamgmt.manage.manage_users_db import get_user
 from app.logger import logger
+from app.models.authorization import Permissions
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import ac_has_permission_server_administrator
 from app.models.authorization import CaseAccessLevel
@@ -77,7 +79,22 @@ def ac_fast_check_user_has_case_access(user_id, cid, expected_access_levels: lis
     access_level = get_case_effective_access(user_id, cid)
 
     if not access_level:
-        # The user has no direct access, check if he is part of the client
+        # No direct grant. Before falling through to the client-membership
+        # check, confirm the user actually has app-level permissions —
+        # OIDC-only sessions without standard_user / server_administrator
+        # should not auto-inherit cases via customer membership. Mirrors
+        # the v2.4.29 guard in iris-engine ac_fast_check_user_has_case_access.
+        # Late import: iris_engine.access_control.utils imports back into
+        # this module, so resolve it at call time.
+        from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
+        user = get_user(user_id)
+        if user is None:
+            return None
+        permissions = ac_get_effective_permissions_of_user(user)
+        if not ac_flag_match_mask(permissions, Permissions.server_administrator.value) \
+                and not ac_flag_match_mask(permissions, Permissions.standard_user.value):
+            return None
+
         access_level = check_ua_case_client(user_id, cid)
         if not access_level:
             return None
