@@ -65,10 +65,9 @@ class Permissions(enum.Enum):
     activities_read = 0x400
     all_activities_read = 0x800
 
-    statistics_read = 0x1000
-    custom_dashboards_read = 0x2000
-    custom_dashboards_write = 0x4000
-    custom_dashboards_share = 0x8000
+    custom_dashboards_read = 0x1000
+    custom_dashboards_write = 0x2000
+    custom_dashboards_share = 0x4000
 
 
 class Organisation(db.Model):
