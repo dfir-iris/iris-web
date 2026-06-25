@@ -85,6 +85,13 @@ class TaxonomyConfig:
     order. `protected_check` is an optional callable that lets a
     taxonomy refuse a delete for a record the engine considers
     structural (e.g. the seeded "Open" / "Closed" case states).
+    `writable_fields` is the allowlist of input fields the create /
+    update endpoints will forward to the schema; anything else
+    (notably the primary key) is dropped before load to close the
+    mass-assignment vector reported as GHSA-w78h-mx7h-qm3h /
+    SBA-ADV-20260128-01 / CWE-915. The PK is excluded on purpose:
+    `update()` forces it from the URL parameter, `create()` lets the
+    DB assign it.
     """
 
     url_prefix: str
@@ -94,6 +101,7 @@ class TaxonomyConfig:
     pk_name: str
     search_columns: Iterable[str]
     activity_label: str
+    writable_fields: Iterable[str]
     protected_check: Optional[Callable[[Any], Optional[str]]] = None
 
 
@@ -109,6 +117,18 @@ class TaxonomyOperations:
 
     def __init__(self, config: TaxonomyConfig):
         self._config = config
+        self._writable = frozenset(config.writable_fields)
+
+    def _filter_payload(self, data):
+        """Drop everything not in the per-resource writable allowlist.
+
+        Closes the mass-assignment vector reported as GHSA-w78h-mx7h-qm3h
+        / SBA-ADV-20260128-01 / CWE-915. The primary key is never in the
+        allowlist — `update()` forces it from the URL parameter.
+        """
+        if not isinstance(data, dict):
+            return {}
+        return {k: v for k, v in data.items() if k in self._writable}
 
     def _get(self, identifier):
         row = self._config.model.query.filter(
@@ -144,7 +164,7 @@ class TaxonomyOperations:
     def create(self):
         schema = self._config.schema_factory()
         try:
-            request_data = request.get_json() or {}
+            request_data = self._filter_payload(request.get_json())
             row = schema.load(request_data)
             db_create(row)
             track_activity(f'Added {self._config.activity_label} {self._readable(row)}', ctx_less=True)
@@ -156,7 +176,7 @@ class TaxonomyOperations:
         schema = self._config.schema_factory()
         try:
             row = self._get(identifier)
-            request_data = request.get_json() or {}
+            request_data = self._filter_payload(request.get_json())
             # Schemas with `verify_unique` post-load look at the PK on
             # the loaded instance to skip the uniqueness check against
             # the row itself — force the value here so a partial update
@@ -273,6 +293,8 @@ _CONFIGS = [
         pk_name='asset_id',
         search_columns=('asset_name', 'asset_description'),
         activity_label='asset type',
+        writable_fields=('asset_name', 'asset_description',
+                         'asset_icon_compromised', 'asset_icon_not_compromised'),
     ),
     TaxonomyConfig(
         url_prefix='ioc-types',
@@ -282,6 +304,8 @@ _CONFIGS = [
         pk_name='type_id',
         search_columns=('type_name', 'type_description', 'type_taxonomy'),
         activity_label='IOC type',
+        writable_fields=('type_name', 'type_description', 'type_taxonomy',
+                         'type_validation_regex', 'type_validation_expect'),
     ),
     TaxonomyConfig(
         url_prefix='case-classifications',
@@ -291,6 +315,7 @@ _CONFIGS = [
         pk_name='id',
         search_columns=('name', 'name_expanded', 'description'),
         activity_label='case classification',
+        writable_fields=('name', 'name_expanded', 'description'),
     ),
     TaxonomyConfig(
         url_prefix='case-states',
@@ -301,6 +326,7 @@ _CONFIGS = [
         search_columns=('state_name', 'state_description'),
         activity_label='case state',
         protected_check=_case_state_protected,
+        writable_fields=('state_name', 'state_description'),
     ),
     TaxonomyConfig(
         url_prefix='evidence-types',
@@ -310,6 +336,7 @@ _CONFIGS = [
         pk_name='id',
         search_columns=('name', 'description'),
         activity_label='evidence type',
+        writable_fields=('name', 'description'),
     ),
 ]
 

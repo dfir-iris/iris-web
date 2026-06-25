@@ -49,16 +49,20 @@ class ProfileOperations:
     def update(self):
         try:
             user = users_get(iris_current_user.id)
-            request_data = request.get_json()
-            request_data['user_id'] = iris_current_user.id
+            # Self-service profile updates expose only a password change in
+            # the GUI. Restricting the payload to that one field stops any
+            # client from sneaking attributes the schema would otherwise
+            # accept (user_login, user_email, user_isadmin, user_name, ...)
+            # and overwriting the user's own row — the mass-assignment
+            # vector reported as GHSA-w78h-mx7h-qm3h / SBA-ADV-20260128-01 /
+            # CWE-915. `user_current_password` is not a model field and is
+            # popped off before the schema sees the payload.
+            raw = request.get_json()
+            if not isinstance(raw, dict):
+                raw = {}
+            new_password = raw.get('user_password')
+            current_password = raw.get('user_current_password')
 
-            # Password rotation requires proof that whoever is holding this
-            # session also knows the current password. Stops a hijacked
-            # session (or any stolen API key) from locking out the legit
-            # owner. Strip `user_current_password` out before marshmallow
-            # loads, since it isn't a model field.
-            new_password = request_data.get('user_password')
-            current_password = request_data.pop('user_current_password', None)
             if new_password:
                 if not current_password:
                     return response_api_error(
@@ -70,6 +74,11 @@ class ProfileOperations:
                         'Current password is incorrect',
                         data={'user_current_password': ['Incorrect password']}
                     )
+
+            request_data = {
+                'user_password': new_password,
+                'user_id': iris_current_user.id,
+            }
 
             user = self._update_request_schema.load(request_data, instance=user, partial=True)
             user = users_update(user, new_password)

@@ -78,6 +78,32 @@ from app.models.errors import ObjectNotFoundError
 from app.schema.marshables import UserSchemaForAPIV2
 
 
+# Allowlist of fields an administrator may write when creating or updating a
+# user via the v2 admin endpoints. Anything else the caller tries to sneak in
+# (uuid, mfa_secrets, webauthn_credentials, mfa_setup_complete, api_key,
+# external_id, ...) is silently dropped before the schema is loaded. Closes
+# the mass-assignment vector reported as GHSA-w78h-mx7h-qm3h /
+# SBA-ADV-20260128-01 / CWE-915.
+_ADMIN_USER_WRITABLE_FIELDS = {
+    'user_id',
+    'user_active',
+    'user_name',
+    'user_login',
+    'user_email',
+    'user_password',
+    'user_isadmin',
+    'user_is_service_account',
+    'user_primary_organisation_id',
+    'user_roles_str',
+}
+
+
+def _filter_admin_user_payload(data):
+    if not isinstance(data, dict):
+        return {}
+    return {k: v for k, v in data.items() if k in _ADMIN_USER_WRITABLE_FIELDS}
+
+
 class Users:
 
     def __init__(self):
@@ -119,7 +145,7 @@ class Users:
 
     def create(self):
         try:
-            request_data = request.get_json()
+            request_data = _filter_admin_user_payload(request.get_json())
             request_data['user_id'] = 0
             request_data['user_active'] = request_data.get('user_active', True)
             user = self._schema.load(request_data)
@@ -141,7 +167,7 @@ class Users:
 
         try:
             user = users_get(identifier)
-            request_data = request.get_json()
+            request_data = _filter_admin_user_payload(request.get_json())
             request_data['user_id'] = identifier
             new_user = self._schema.load(request_data, instance=user, partial=True)
             user_updated = users_update(new_user, request_data.get('user_password'))
