@@ -99,7 +99,7 @@ class CommentsOperations:
     def update(self, alert_identifier, identifier):
         if not alerts_exists(iris_current_user, (session.get('permissions') or 0), alert_identifier):
             return response_api_not_found()
-        return case_comment_update(identifier, 'events', None)
+        return case_comment_update(identifier, 'alerts', None)
 
     def delete(self, alert_identifier, identifier):
         try:

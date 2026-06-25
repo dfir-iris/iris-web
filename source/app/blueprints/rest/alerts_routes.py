@@ -1049,7 +1049,7 @@ def alert_comment_edit(alert_id, com_id):
     if not ac_current_user_has_customer_access(alert.alert_customer_id):
         return response_error('User not entitled to read alerts for the client', status=403)
 
-    return case_comment_update(com_id, 'events', None)
+    return case_comment_update(com_id, 'alerts', None)
 
 
 @alerts_rest_blueprint.route('/alerts/<int:alert_id>/comments/add', methods=['POST'])
