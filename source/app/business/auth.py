@@ -91,12 +91,28 @@ def validate_local_login(username: str, password: str):
 
 
 def _is_safe_url(target):
+    """Return True iff `target` is safe to use in a 302 Location header.
+
+    A safe target is a *relative* path on this application. The previous
+    implementation only checked `parsed.scheme` and `parsed.netloc`, which is
+    bypassed by payloads like `attacker.com?cid=1` — urlparse treats that as a
+    path with an empty netloc, but browsers resolving a `Location: attacker.com`
+    header will route the user to the attacker's host. That's GHSA-vjc3-7jwv-j9qf
+    / SBA-ADV-20260126-02 / CWE-601.
+
+    The strict rules:
+      - non-empty string
+      - no control characters (incl. tab/newline) or backslashes (some browsers
+        normalise `\\` -> `/`, turning `/\\evil.com` into `//evil.com`)
+      - starts with a single `/` (not `//`, which is protocol-relative)
+      - urlparse confirms no scheme and no netloc — defense in depth
     """
-    Check whether the target URL is safe for redirection by ensuring that it is a relative URL
-    (i.e., does not specify a scheme or netloc).
-    """
-    # Remove backslashes to mitigate obfuscation
-    target = target.replace('\\', '')
+    if not target or not isinstance(target, str):
+        return False
+    if any(ord(c) < 0x20 or c == '\\' for c in target):
+        return False
+    if not target.startswith('/') or target.startswith('//'):
+        return False
     parsed = urlparse(target)
     return not parsed.scheme and not parsed.netloc
 
@@ -106,13 +122,9 @@ def _filter_next_url(next_url, context_case):
     Ensures that the URL to which the user is redirected is safe. If the provided URL is not safe or is missing,
     a default URL (typically the index page) is returned.
     """
-    if not next_url:
+    if not _is_safe_url(next_url):
         return url_for('index.index', cid=context_case)
-    # Remove backslashes to mitigate obfuscation
-    next_url = next_url.replace('\\', '')
-    if _is_safe_url(next_url):
-        return next_url
-    return url_for('index.index', cid=context_case)
+    return next_url
 
 
 def wrap_login_user(user, is_oidc=False):
