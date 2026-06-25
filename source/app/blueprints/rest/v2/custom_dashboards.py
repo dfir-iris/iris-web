@@ -53,7 +53,7 @@ from app.datamgmt.custom_dashboard.query_engine import (
     format_widget_payload,
 )
 from app.datamgmt.custom_dashboard.schema import CustomDashboardSchema
-from app.iris_engine.access_control.utils import ac_current_user_has_permission
+from app.blueprints.access_controls import ac_current_user_has_permission
 from app.models.authorization import Permissions
 
 

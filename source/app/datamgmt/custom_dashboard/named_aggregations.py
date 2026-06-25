@@ -30,7 +30,8 @@ from sqlalchemy import and_, func, or_, select
 
 from app import db
 from app.datamgmt.manage.manage_access_control_db import get_user_clients_id
-from app.iris_engine.access_control.utils import ac_current_user_has_permission, ac_get_fast_user_cases_access
+from app.blueprints.access_controls import ac_current_user_has_permission
+from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
 from app.models.alerts import Alert, AlertCaseAssociation, AlertResolutionStatus, AlertStatus
 from app.models.authorization import Permissions
 from app.models.cases import Cases
