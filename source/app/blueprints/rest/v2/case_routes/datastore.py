@@ -88,6 +88,7 @@ _DS_FILE_WRITABLE_FIELDS = (
     'file_is_ioc',
     'file_is_evidence',
     'file_parent_id',
+    'file_tags',
 )
 
 
