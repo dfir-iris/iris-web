@@ -23,7 +23,6 @@ from app.datamgmt.manage.manage_access_control_db import remove_duplicate_user_c
 from app.datamgmt.manage.manage_access_control_db import add_user_case_effective_access
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
-from app.datamgmt.manage.manage_users_db import get_user
 from app.logger import logger
 from app.models.authorization import Permissions
 from app.models.authorization import UserCaseAccess
@@ -84,9 +83,10 @@ def ac_fast_check_user_has_case_access(user_id, cid, expected_access_levels: lis
         # OIDC-only sessions without standard_user / server_administrator
         # should not auto-inherit cases via customer membership. Mirrors
         # the v2.4.29 guard in iris-engine ac_fast_check_user_has_case_access.
-        # Late import: iris_engine.access_control.utils imports back into
-        # this module, so resolve it at call time.
+        # Late import: iris_engine.access_control.utils and manage_users_db
+        # both import back into this module, so resolve them at call time.
         from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
+        from app.datamgmt.manage.manage_users_db import get_user
         user = get_user(user_id)
         if user is None:
             return None
