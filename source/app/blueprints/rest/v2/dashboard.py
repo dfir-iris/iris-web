@@ -16,8 +16,12 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import datetime
+
 from flask import Blueprint
 from flask import request
+from sqlalchemy import and_
+from sqlalchemy import func
 
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.iris_user import iris_current_user
@@ -27,6 +31,9 @@ from app.business.cases import cases_filter_by_reviewer
 from app.business.tasks import tasks_filter_by_user
 from app.datamgmt.activities.activities_db import get_recent_activities_for_user
 from app.datamgmt.activities.activities_db import get_recent_major_case_activities_for_user
+from app.models.alerts import Alert
+from app.models.alerts import AlertStatus
+from app.models.cases import Cases
 from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import CaseSchema
 
@@ -142,3 +149,77 @@ def list_own_reviews():
             only=["case_id", "case_name",
                   "review_status.status_name", "status_id"]
         ).dump(reviews))
+
+
+# Status names the home page tile treats as "still on the user's plate". The
+# legacy production code used the exact strings "New", "Pending", "In progress"
+# (case-insensitive) — keep parity so a deployment that customised the alert
+# status names still gets a meaningful "Alerts assigned to you" count.
+_OPEN_ALERT_STATUS_NAMES = ('new', 'pending', 'in progress')
+
+
+@dashboard_blueprint.get('/kpis')
+@ac_api_requires()
+def get_dashboard_kpis():
+    """Compact KPI block for the SvelteKit home tile.
+
+    Returns just the few numbers the dashboard tile renders — keeps the
+    payload tiny so the call is cheap on every navigation. The full
+    Statistics page is served by the seeded custom dashboard, not by
+    this endpoint.
+
+    Response shape:
+      {
+        "assigned_alerts": {
+          "count": int,
+          "filter": {"alert_owner_id": int, "alert_status_id": [int, ...]}
+        },
+        "open_cases_count": int,
+        "cases_closed_last_30d": int,
+      }
+
+    The `filter` block under `assigned_alerts` lets the frontend deep-link
+    into the alerts page with the same predicate that produced the count
+    — no second round-trip to discover which status ids count as "open".
+    """
+    open_status_ids = [
+        row.status_id for row in AlertStatus.query
+        .with_entities(AlertStatus.status_id, AlertStatus.status_name)
+        .filter(func.lower(AlertStatus.status_name).in_(_OPEN_ALERT_STATUS_NAMES))
+        .all()
+    ]
+
+    assigned_alerts_count = 0
+    if open_status_ids:
+        assigned_alerts_count = (
+            Alert.query
+            .filter(Alert.alert_owner_id == iris_current_user.id)
+            .filter(Alert.alert_status_id.in_(open_status_ids))
+            .count()
+        )
+
+    open_cases_count = (
+        Cases.query
+        .filter(Cases.close_date.is_(None))
+        .count()
+    )
+
+    thirty_days_ago = datetime.date.today() - datetime.timedelta(days=30)
+    cases_closed_last_30d = (
+        Cases.query
+        .filter(Cases.close_date.isnot(None))
+        .filter(Cases.close_date >= thirty_days_ago)
+        .count()
+    )
+
+    return response_api_success(data={
+        'assigned_alerts': {
+            'count': assigned_alerts_count,
+            'filter': {
+                'alert_owner_id': iris_current_user.id,
+                'alert_status_id': open_status_ids,
+            },
+        },
+        'open_cases_count': open_cases_count,
+        'cases_closed_last_30d': cases_closed_last_30d,
+    })
