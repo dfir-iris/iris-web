@@ -71,10 +71,22 @@ class AlertsFiltersOperations:
             return response_api_error(e.get_message(), data=e.get_data())
 
     def put(self, identifier):
-        request_data = request.get_json()
+        request_data = request.get_json() or {}
+        # Pin the owner so a client can't move a filter under another
+        # user via mass-assignment. `alert_filter_get` returns a row
+        # the session user can *read* (own private + everyone's
+        # public), but write access requires ownership — enforced
+        # below.
+        request_data['created_by'] = iris_current_user.id
 
         try:
             saved_filter = alert_filter_get(iris_current_user, identifier)
+            if saved_filter.created_by != iris_current_user.id:
+                # Read does not imply write: a public filter is
+                # visible to everyone but only the creator can mutate
+                # it. Mirror the not-found path to avoid disclosing
+                # existence.
+                return response_api_not_found()
             new_saved_filter = self._load(
                 request_data, instance=saved_filter, partial=True
             )
@@ -94,6 +106,10 @@ class AlertsFiltersOperations:
     def delete(identifier):
         try:
             saved_filter = alert_filter_get(iris_current_user, identifier)
+            # Same ownership check as PUT: only the creator may delete
+            # the filter.
+            if saved_filter.created_by != iris_current_user.id:
+                return response_api_not_found()
             alert_filter_delete(saved_filter)
             return response_api_deleted()
 

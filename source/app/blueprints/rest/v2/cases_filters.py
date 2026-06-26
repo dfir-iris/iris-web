@@ -90,10 +90,24 @@ class CasesFiltersOperations:
         # endpoint — it would be a no-op route swap from the user's
         # perspective and a footgun for the alerts UI.
         request_data['filter_type'] = 'cases'
+        # Pin the owner: `alert_filter_get` returns a row when the
+        # user can *read* it (public filters or own private filters),
+        # but write authority is stricter than read. Forcing
+        # `created_by` to the session user prevents a malicious
+        # client from changing ownership through this PUT — same
+        # spirit as `create()` above. We also enforce the ownership
+        # check below so a user can only edit their own filter.
+        request_data['created_by'] = iris_current_user.id
 
         try:
             saved_filter = alert_filter_get(iris_current_user, identifier)
             if saved_filter.filter_type != 'cases':
+                return response_api_not_found()
+            if saved_filter.created_by != iris_current_user.id:
+                # Read access does not imply write access — a public
+                # filter is readable by everyone but only the owner
+                # can mutate it. Mirror the 404 the not-found path
+                # uses so existence isn't disclosed.
                 return response_api_not_found()
             new_saved_filter = self._load(
                 request_data, instance=saved_filter, partial=True
@@ -112,6 +126,11 @@ class CasesFiltersOperations:
         try:
             saved_filter = alert_filter_get(iris_current_user, identifier)
             if saved_filter.filter_type != 'cases':
+                return response_api_not_found()
+            # Same ownership check as PUT: only the creator may delete
+            # the filter. Public filters are readable by everyone but
+            # mutable only by their owner.
+            if saved_filter.created_by != iris_current_user.id:
                 return response_api_not_found()
             alert_filter_delete(saved_filter)
             return response_api_deleted()
