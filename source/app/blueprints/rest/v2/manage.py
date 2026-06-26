@@ -25,6 +25,7 @@ from app.blueprints.rest.v2.manage_routes.server import server_blueprint
 from app.blueprints.rest.v2.manage_routes.modules import modules_blueprint
 from app.blueprints.rest.v2.manage_routes.case_objects import case_objects_blueprint
 from app.blueprints.rest.v2.manage_routes.case_templates import case_templates_blueprint
+from app.blueprints.rest.v2.manage_routes.custom_attributes import custom_attributes_blueprint
 from app.blueprints.rest.v2.manage_routes.report_templates import report_templates_blueprint
 from app.blueprints.rest.v2.manage_routes.access_control import access_control_blueprint
 from app.blueprints.rest.v2.manage_routes.taxonomies import taxonomies_blueprint
@@ -38,6 +39,7 @@ manage_v2_blueprint.register_blueprint(server_blueprint)
 manage_v2_blueprint.register_blueprint(modules_blueprint)
 manage_v2_blueprint.register_blueprint(case_objects_blueprint)
 manage_v2_blueprint.register_blueprint(case_templates_blueprint)
+manage_v2_blueprint.register_blueprint(custom_attributes_blueprint)
 manage_v2_blueprint.register_blueprint(report_templates_blueprint)
 manage_v2_blueprint.register_blueprint(access_control_blueprint)
 manage_v2_blueprint.register_blueprint(taxonomies_blueprint)
