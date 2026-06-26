@@ -133,6 +133,43 @@ class ProfileOperations:
                 'mask': mask,
                 'names': names,
             },
+            # Per-user UI preferences that the SPA shell needs on the
+            # very first render so it doesn't flash one layout and then
+            # snap into the persisted one. Currently a single boolean
+            # for the collapsed side bar; keep the dict shape so we can
+            # add more (theme, density, …) without breaking the SPA.
+            'preferences': {
+                'has_mini_sidebar': bool(getattr(user, 'has_mini_sidebar', False)) if user else False,
+            },
+        })
+
+    def update_preferences(self):
+        """Persist a small dict of UI preferences on the current user.
+
+        Today only `has_mini_sidebar` is accepted — the SPA toggles
+        this when the user folds the side bar so the next session
+        opens with the same layout. Returns the updated preference
+        block so the client can re-seed its in-memory copy without a
+        second round-trip.
+        """
+        user = users_get(iris_current_user.id)
+        if user is None:
+            return response_api_error('Unknown user')
+
+        raw = request.get_json()
+        if not isinstance(raw, dict):
+            return response_api_error('Invalid request')
+
+        if 'has_mini_sidebar' in raw:
+            if not isinstance(raw['has_mini_sidebar'], bool):
+                return response_api_error(
+                    'has_mini_sidebar must be a boolean'
+                )
+            user.has_mini_sidebar = raw['has_mini_sidebar']
+
+        db.session.commit()
+        return response_api_success({
+            'has_mini_sidebar': bool(user.has_mini_sidebar),
         })
 
 
@@ -168,3 +205,9 @@ def refresh_permissions():
 @ac_api_requires()
 def get_context():
     return profile_operations.get_context()
+
+
+@profile_blueprint.put('/preferences')
+@ac_api_requires()
+def update_preferences():
+    return profile_operations.update_preferences()
