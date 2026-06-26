@@ -163,3 +163,28 @@ class TestsRestProfile(TestCase):
         user = self._subject.create_dummy_user()
         response = user.create('/api/v2/me/permissions/refresh', {})
         self.assertEqual(200, response.status_code)
+
+    def test_get_context_should_return_200(self):
+        response = self._subject.get('/api/v2/me/context')
+        self.assertEqual(200, response.status_code)
+
+    def test_get_context_should_expose_iris_version(self):
+        response = self._subject.get('/api/v2/me/context').json()
+        self.assertIn('iris_version', response)
+        self.assertIsInstance(response['iris_version'], str)
+        self.assertTrue(response['iris_version'])
+
+    def test_get_context_should_expose_demo_mode_flag(self):
+        response = self._subject.get('/api/v2/me/context').json()
+        self.assertIn('demo_mode', response)
+        self.assertIsInstance(response['demo_mode'], bool)
+
+    def test_get_context_should_expose_permission_mask_and_names(self):
+        response = self._subject.get('/api/v2/me/context').json()
+        permissions = response.get('permissions') or {}
+        self.assertIn('mask', permissions)
+        self.assertIn('names', permissions)
+        self.assertIsInstance(permissions['mask'], int)
+        self.assertIsInstance(permissions['names'], list)
+        # Every authenticated user gets standard_user implicitly.
+        self.assertIn('standard_user', permissions['names'])

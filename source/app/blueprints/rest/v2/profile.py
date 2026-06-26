@@ -18,6 +18,7 @@
 
 import secrets
 from flask import Blueprint
+from flask import current_app
 from flask import request
 from flask import session
 from marshmallow import ValidationError
@@ -32,6 +33,7 @@ from app.business.users import users_get
 from app.business.users import users_update
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
+from app.models.authorization import Permissions
 from app.schema.marshables import UserSchemaForAPIV2
 
 
@@ -101,6 +103,38 @@ class ProfileOperations:
         result = self._schema.dump(user)
         return response_api_success(result)
 
+    def get_context(self):
+        """Compact bootstrap payload the SPA needs on every load.
+
+        Returns the running IRIS version, the demo-mode flag, and the
+        effective permission mask + matching enum names for the current
+        user. The SPA uses this to render the version strip in the side
+        bar and to gate menu entries the user isn't allowed to reach.
+
+        Kept lightweight on purpose: no DB writes, no joins beyond what
+        `ac_get_effective_permissions_of_user` already does. Any
+        authenticated user can call it — this is *their own* context.
+        """
+        user = users_get(iris_current_user.id)
+        mask = ac_get_effective_permissions_of_user(user)
+        # `standard_user` is implicit for every authenticated user, even
+        # if the group bitmask doesn't include it (admins, service
+        # accounts). Include it so the SPA can treat it as a baseline.
+        if user is not None:
+            mask |= Permissions.standard_user.value
+        names = [p.name for p in Permissions if (mask & p.value) == p.value]
+
+        demo_mode = current_app.config.get('DEMO_MODE_ENABLED') == 'True'
+
+        return response_api_success({
+            'iris_version': current_app.config.get('IRIS_VERSION'),
+            'demo_mode': demo_mode,
+            'permissions': {
+                'mask': mask,
+                'names': names,
+            },
+        })
+
 
 profile_operations = ProfileOperations()
 profile_blueprint = Blueprint('profile_rest_v2', __name__, url_prefix='/me')
@@ -128,3 +162,9 @@ def renew_api_key():
 @ac_api_requires()
 def refresh_permissions():
     return profile_operations.refresh_permissions()
+
+
+@profile_blueprint.get('/context')
+@ac_api_requires()
+def get_context():
+    return profile_operations.get_context()
