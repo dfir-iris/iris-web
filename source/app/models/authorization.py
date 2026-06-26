@@ -21,11 +21,13 @@ import secrets
 import uuid
 from flask_login import UserMixin
 from sqlalchemy import BigInteger
+from sqlalchemy import DateTime
 from sqlalchemy import JSON
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
+from sqlalchemy import LargeBinary
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
@@ -226,6 +228,14 @@ class User(UserMixin, db.Model):
     mfa_secrets = Column(Text, nullable=True)
     webauthn_credentials = Column(JSON, nullable=True)
     mfa_setup_complete = Column(Boolean(), default=False)
+    # Avatar storage. `avatar_blob` is the normalised 256x256 PNG
+    # served by `/api/v2/users/<id>/avatar`; `avatar_mime` is the
+    # MIME used for the Content-Type header on that response;
+    # `avatar_updated_at` powers both the ETag and `Last-Modified`
+    # so clients revalidate cheaply.
+    avatar_blob = Column(LargeBinary, nullable=True)
+    avatar_mime = Column(String(64), nullable=True)
+    avatar_updated_at = Column(DateTime, nullable=True)
 
     groups = relationship('Group', secondary='user_group', viewonly=True)
     permissions = relationship('Group', secondary='user_group', viewonly=True)
