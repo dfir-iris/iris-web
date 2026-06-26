@@ -720,81 +720,120 @@ def get_filtered_cases(current_user_id,
     query = build_filter_case_query(**kwargs)
 
     if advanced_filters:
-        adv_conditions = []
-        joined_client = False
-        joined_state = False
-        joined_owner = False
+        # Caller may pass either:
+        #   * a list of condition dicts (legacy) — wrap into a single
+        #     root group whose logic is `advanced_logic`;
+        #   * a group dict `{ logic, items: [<cond>|<group>] }` —
+        #     walked recursively. Items can be arbitrarily nested
+        #     groups so the UI can express `(A and B) or (C and D)`
+        #     style queries.
+        join_state = {
+            'client': False,
+            'state': False,
+            'owner': False,
+            'severity': False,
+        }
 
-        for f in advanced_filters:
-            field_id = f.get('fieldId')
-            operation = f.get('operation')
-            value = f.get('value', '')
-
-            if not isinstance(field_id, str) or not isinstance(operation, str) or not isinstance(value, str):
-                continue
-
-            field_expr: Any = None
-
+        def _field_expr_for(field_id: str):
+            nonlocal query
             if field_id == 'title':
-                field_expr = Cases.name
-            elif field_id == 'case_id':
-                field_expr = cast(Cases.case_id, String)
-            elif field_id == 'outcome':
-                field_expr = Cases.closing_note
-            elif field_id == 'open_date':
-                field_expr = cast(Cases.open_date, String)
-            elif field_id == 'classification':
-                field_expr = cast(Cases.classification_id, String)
-            elif field_id == 'customer':
-                if not joined_client:
+                return Cases.name
+            if field_id == 'case_id':
+                return cast(Cases.case_id, String)
+            if field_id == 'outcome':
+                return Cases.closing_note
+            if field_id == 'open_date':
+                return cast(Cases.open_date, String)
+            if field_id == 'classification':
+                return cast(Cases.classification_id, String)
+            if field_id == 'customer':
+                if not join_state['client']:
                     query = query.join(Client, Cases.client_id == Client.client_id)
-                    joined_client = True
-                field_expr = Client.name
-            elif field_id == 'state':
-                if not joined_state:
+                    join_state['client'] = True
+                return Client.name
+            if field_id == 'state':
+                if not join_state['state']:
                     query = query.join(CaseState, Cases.state_id == CaseState.state_id)
-                    joined_state = True
-                field_expr = CaseState.state_name
-            elif field_id == 'owner':
-                if not joined_owner:
+                    join_state['state'] = True
+                return CaseState.state_name
+            if field_id == 'owner':
+                if not join_state['owner']:
                     query = query.join(User, Cases.owner_id == User.id)
-                    joined_owner = True
-                field_expr = User.user
+                    join_state['owner'] = True
+                return User.user
+            if field_id == 'severity':
+                # Joined separately from the simple `severity_identifier`
+                # path above. `outerjoin` so cases without a severity
+                # still pass through.
+                if not join_state['severity']:
+                    from app.models.alerts import Severity
+                    query = query.outerjoin(Severity, Cases.severity_id == Severity.severity_id)
+                    join_state['severity'] = True
+                from app.models.alerts import Severity
+                return Severity.severity_name
+            return None
 
+        def _condition_sql(field_id: str, op: str, value: str):
+            field_expr = _field_expr_for(field_id)
             if field_expr is None:
-                continue
-
-            op = operation.lower()
-
+                return None
+            op = (op or '').lower()
             if op == 'empty':
-                adv_conditions.append(or_(field_expr.is_(None), field_expr == ''))
-                continue
+                return or_(field_expr.is_(None), field_expr == '')
             if op == 'not_empty':
-                adv_conditions.append(and_(field_expr.is_not(None), field_expr != ''))
-                continue
-
+                return and_(field_expr.is_not(None), field_expr != '')
             if op == 'equals':
-                adv_conditions.append(field_expr == value)
-            elif op == 'not':
-                adv_conditions.append(field_expr != value)
-            elif op == 'starts_with':
-                adv_conditions.append(field_expr.ilike(f'{value}%'))
-            elif op == 'not_starts_with':
-                adv_conditions.append(~field_expr.ilike(f'{value}%'))
-            elif op == 'contains':
-                adv_conditions.append(field_expr.ilike(f'%{value}%'))
-            elif op == 'not_contains':
-                adv_conditions.append(~field_expr.ilike(f'%{value}%'))
-            elif op == 'ends_with':
-                adv_conditions.append(field_expr.ilike(f'%{value}'))
-            elif op == 'not_ends_with':
-                adv_conditions.append(~field_expr.ilike(f'%{value}'))
+                return field_expr == value
+            if op == 'not':
+                return field_expr != value
+            if op == 'starts_with':
+                return field_expr.ilike(f'{value}%')
+            if op == 'not_starts_with':
+                return ~field_expr.ilike(f'{value}%')
+            if op == 'contains':
+                return field_expr.ilike(f'%{value}%')
+            if op == 'not_contains':
+                return ~field_expr.ilike(f'%{value}%')
+            if op == 'ends_with':
+                return field_expr.ilike(f'%{value}')
+            if op == 'not_ends_with':
+                return ~field_expr.ilike(f'%{value}')
+            return None
 
-        if adv_conditions:
-            if (advanced_logic or 'and').lower() == 'or':
-                query = query.filter(or_(*adv_conditions))
-            else:
-                query = query.filter(and_(*adv_conditions))
+        def _walk_group(node: dict) -> Any:
+            items = node.get('items') or []
+            group_logic = (node.get('logic') or 'and').lower()
+            parts: list[Any] = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                if 'items' in item:
+                    sub = _walk_group(item)
+                    if sub is not None:
+                        parts.append(sub)
+                else:
+                    cond = _condition_sql(
+                        item.get('fieldId') or '',
+                        item.get('operation') or '',
+                        item.get('value', '') if isinstance(item.get('value'), str) else ''
+                    )
+                    if cond is not None:
+                        parts.append(cond)
+            if not parts:
+                return None
+            return or_(*parts) if group_logic == 'or' else and_(*parts)
+
+        if isinstance(advanced_filters, list):
+            root_group = {'logic': (advanced_logic or 'and').lower(), 'items': advanced_filters}
+        elif isinstance(advanced_filters, dict):
+            root_group = advanced_filters
+        else:
+            root_group = None
+
+        if root_group is not None:
+            sql = _walk_group(root_group)
+            if sql is not None:
+                query = query.filter(sql)
 
     return query.paginate(page=pagination_parameters.get_page(),
                           per_page=pagination_parameters.get_per_page(),

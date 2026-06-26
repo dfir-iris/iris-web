@@ -128,7 +128,7 @@ class CasesOperations:
             return response_api_error("Invalid logic (expected 'and' or 'or')")
 
         raw_filters = request.args.get('filters', None, type=str)
-        advanced_filters: list[dict[str, Any]] | None = None
+        advanced_filters: Any = None
 
         if raw_filters:
             try:
@@ -137,52 +137,82 @@ class CasesOperations:
             except Exception:
                 return response_api_error('Invalid filters JSON')
 
-            if not isinstance(parsed, list):
-                return response_api_error('Invalid filters (expected a JSON array)')
+            # Accept either:
+            #   * Legacy flat list of conditions combined by the
+            #     top-level `logic` query param (`?logic=and`).
+            #   * Nested group object: `{ logic, items: [<cond>|<group>] }`
+            #     where groups can recurse arbitrarily deep.
+            # The validator below normalises both into the nested form
+            # so the SQL builder downstream only has to handle one
+            # shape.
+            ALLOWED_OPS = {
+                'equals', 'not',
+                'starts_with', 'not_starts_with',
+                'contains', 'not_contains',
+                'ends_with', 'not_ends_with',
+                'empty', 'not_empty'
+            }
+            MAX_DEPTH = 8  # safety cap on recursion depth
 
-            advanced_filters = []
-            for i, f in enumerate(parsed):
+            def _validate_condition(f: Any, path: str) -> dict[str, Any]:
                 if not isinstance(f, dict):
-                    return response_api_error(f'Invalid filter at index {i} (expected object)')
-
+                    raise ValueError(f'Invalid condition at {path} (expected object)')
                 field_id = f.get('fieldId')
                 operation = f.get('operation')
                 value = f.get('value', '')
 
                 if not isinstance(field_id, str) or not field_id:
-                    return response_api_error(f'Invalid fieldId at index {i}')
+                    raise ValueError(f'Invalid fieldId at {path}')
                 if not isinstance(operation, str) or not operation:
-                    return response_api_error(f'Invalid operation at index {i}')
+                    raise ValueError(f'Invalid operation at {path}')
                 if not isinstance(value, str):
-                    return response_api_error(f'Invalid value at index {i}')
+                    raise ValueError(f'Invalid value at {path}')
 
-                operation = operation.lower()
-
-                allowed_ops = {
-                    'equals',
-                    'not',
-                    'starts_with',
-                    'not_starts_with',
-                    'contains',
-                    'not_contains',
-                    'ends_with',
-                    'not_ends_with',
-                    'empty',
-                    'not_empty'
-                }
-                if operation not in allowed_ops:
-                    return response_api_error(f'Invalid operation at index {i}')
-
-                if operation in ('empty', 'not_empty'):
+                op = operation.lower()
+                if op not in ALLOWED_OPS:
+                    raise ValueError(f'Invalid operation at {path}')
+                if op in ('empty', 'not_empty'):
                     value = ''
 
-                advanced_filters.append(
-                    {
-                        'fieldId': field_id,
-                        'operation': operation,
-                        'value': value
-                    }
-                )
+                return {'fieldId': field_id, 'operation': op, 'value': value}
+
+            def _validate_group(node: Any, depth: int, path: str) -> dict[str, Any]:
+                if depth > MAX_DEPTH:
+                    raise ValueError(f'Filter group too deeply nested at {path}')
+                if not isinstance(node, dict):
+                    raise ValueError(f'Invalid group at {path} (expected object)')
+                group_logic = str(node.get('logic', 'and')).lower()
+                if group_logic not in ('and', 'or'):
+                    raise ValueError(f"Invalid logic at {path} (expected 'and' or 'or')")
+                items = node.get('items')
+                if not isinstance(items, list):
+                    raise ValueError(f'Invalid items at {path} (expected list)')
+
+                normalised: list[dict[str, Any]] = []
+                for i, item in enumerate(items):
+                    sub_path = f'{path}.items[{i}]'
+                    if isinstance(item, dict) and (
+                        'items' in item or 'logic' in item and 'fieldId' not in item
+                    ):
+                        normalised.append(_validate_group(item, depth + 1, sub_path))
+                    else:
+                        normalised.append(_validate_condition(item, sub_path))
+
+                return {'logic': group_logic, 'items': normalised}
+
+            try:
+                if isinstance(parsed, list):
+                    # Legacy shape: wrap in a single root group whose
+                    # logic is the page-level `logic` query param.
+                    advanced_filters = _validate_group(
+                        {'logic': logic, 'items': parsed}, 0, 'filters'
+                    )
+                elif isinstance(parsed, dict):
+                    advanced_filters = _validate_group(parsed, 0, 'filters')
+                else:
+                    return response_api_error('Invalid filters (expected array or object)')
+            except ValueError as e:
+                return response_api_error(str(e))
 
         case_ids_str = request.args.get('case_ids', None, type=str)
         if case_ids_str:
