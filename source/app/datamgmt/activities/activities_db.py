@@ -411,6 +411,12 @@ def search_users_activity_in_case(case_identifier):
     ua = UserActivity.query.with_entities(
         UserActivity.activity_date,
         User.name,
+        # Exposed so the SPA can render the per-row avatar through the
+        # avatar endpoint (`/api/v2/users/<id>/avatar`). Without the
+        # id the activity panel would have to fall back to initials
+        # for everyone — fine for unknown users, but a regression for
+        # rows whose author *does* have a real avatar uploaded.
+        User.id.label('user_id'),
         UserActivity.activity_desc,
         UserActivity.is_from_api
     ).filter(and_(

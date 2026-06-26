@@ -265,8 +265,14 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
+        # `avatar_blob` is bytes — never serialise it through JSON;
+        # the actual image is fetched lazily from
+        # `/api/v2/users/<id>/avatar`. `avatar_mime` is an
+        # implementation detail, also dropped. `avatar_updated_at`
+        # passes through so the SPA can cache-bust the avatar URL.
         exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email',
-                   'is_service_account', 'mfa_secrets', 'webauthn_credentials']
+                   'is_service_account', 'mfa_secrets', 'webauthn_credentials',
+                   'avatar_blob', 'avatar_mime']
         unknown = EXCLUDE
 
     @pre_load()
@@ -1131,7 +1137,8 @@ class UserFullSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['password', 'ctx_case', 'ctx_human_case', 'mfa_secrets', 'webauthn_credentials']
+        exclude = ['password', 'ctx_case', 'ctx_human_case', 'mfa_secrets', 'webauthn_credentials',
+                   'avatar_blob', 'avatar_mime']
         unknown = EXCLUDE
 
 
@@ -2227,7 +2234,8 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
-                   'id', 'name', 'email', 'user', 'uuid', 'mfa_secrets', 'webauthn_credentials']
+                   'id', 'name', 'email', 'user', 'uuid', 'mfa_secrets', 'webauthn_credentials',
+                   'avatar_blob', 'avatar_mime']
         unknown = EXCLUDE
 
 
@@ -2562,7 +2570,10 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ['api_key', 'password', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account', 'mfa_secrets',
-                   'webauthn_credentials', 'mfa_setup_complete', 'external_id', 'active', 'id']
+                   'webauthn_credentials', 'mfa_setup_complete', 'external_id', 'active', 'id',
+                   # See UserSchema above — bytes blob never goes
+                   # through JSON; image bytes are served lazily.
+                   'avatar_blob', 'avatar_mime']
         unknown = EXCLUDE
 
     def get_user_primary_organisation(self, obj):
