@@ -71,6 +71,20 @@ class Permissions(enum.Enum):
     custom_dashboards_write = 0x2000
     custom_dashboards_share = 0x4000
 
+    war_rooms_read = 0x8000
+    war_rooms_write = 0x10000
+    war_rooms_create = 0x20000
+
+
+class WarRoomAccessLevel(enum.Enum):
+    deny_all = 0x1
+    read_only = 0x2
+    full_access = 0x4
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
+
 
 class Organisation(db.Model):
     __tablename__ = 'organisations'
@@ -281,6 +295,58 @@ class UserFollowedCase(db.Model):
     case_id = Column(BigInteger, ForeignKey('cases.case_id', ondelete='CASCADE'),
                      primary_key=True, nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=text("now()"))
+
+    user = relationship('User')
+
+
+class UserWarRoomAccess(db.Model):
+    __tablename__ = "user_war_room_access"
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'user_id', name='uq_user_war_room_access_room_user'),
+    )
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    user = relationship('User')
+
+
+class GroupWarRoomAccess(db.Model):
+    __tablename__ = "group_war_room_access"
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'group_id', name='uq_group_war_room_access_room_group'),
+    )
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    group_id = Column(BigInteger, ForeignKey('groups.group_id', ondelete='CASCADE'), nullable=False)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    group = relationship('Group')
+
+
+class UserWarRoomEffectiveAccess(db.Model):
+    """Cached effective access per (user, war_room).
+
+    Mirrors `UserCaseEffectiveAccess` so list-queries can be answered
+    with a single indexed lookup instead of recomputing the
+    user→group→war_room precedence chain on every request.
+    """
+    __tablename__ = "user_war_room_effective_access"
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'user_id',
+                         name='uq_user_war_room_effective_access_room_user'),
+    )
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False)
+    access_level = Column(BigInteger, nullable=False)
 
     user = relationship('User')
 

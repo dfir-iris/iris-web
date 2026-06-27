@@ -606,6 +606,16 @@ def ac_fast_check_current_user_has_case_access(cid, access_level):
     return ac_fast_check_user_has_case_access(iris_current_user.id, cid, access_level)
 
 
+def ac_fast_check_current_user_has_war_room_access(war_room_id, access_level):
+    # Late import: business.war_rooms_access imports several models that
+    # also pull this module transitively. Keeping it lazy avoids the
+    # circular-import trap and matches the pattern used elsewhere.
+    from app.business.war_rooms_access import ac_fast_check_user_has_war_room_access
+    return ac_fast_check_user_has_war_room_access(
+        iris_current_user.id, war_room_id, access_level
+    )
+
+
 def _get_current_permissions_mask():
     # Token-based authentication
     if hasattr(g, 'auth_token_user_id'):

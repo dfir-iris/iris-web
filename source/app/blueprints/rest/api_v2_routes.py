@@ -41,6 +41,7 @@ from app.blueprints.rest.v2.avatars import admin_avatar_blueprint
 from app.blueprints.rest.v2.avatars import me_avatar_blueprint
 from app.blueprints.rest.v2.avatars import users_public_blueprint
 from app.blueprints.rest.v2.cases_filters import cases_filters_blueprint
+from app.blueprints.rest.v2.war_rooms.root import war_rooms_blueprint
 
 
 # Create root /api/v2 blueprint
@@ -70,3 +71,4 @@ rest_v2_blueprint.register_blueprint(me_avatar_blueprint)
 rest_v2_blueprint.register_blueprint(admin_avatar_blueprint)
 rest_v2_blueprint.register_blueprint(activities_blueprint)
 rest_v2_blueprint.register_blueprint(dim_tasks_blueprint)
+rest_v2_blueprint.register_blueprint(war_rooms_blueprint)

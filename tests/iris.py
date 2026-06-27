@@ -66,6 +66,9 @@ class Iris:
     def update(self, path, body):
         return self._api.put(path, body)
 
+    def patch(self, path, body):
+        return self._api.patch(path, body)
+
     def delete(self, path):
         return self._api.delete(path)
 
@@ -122,6 +125,13 @@ class Iris:
         return response['case_id']
 
     def clear_database(self):
+        # War rooms reference cases via FK; drop them first so the case
+        # delete loop below doesn't trip ON DELETE CASCADE on rows we
+        # then re-list.
+        war_rooms = self.get('/api/v2/war-rooms').json()
+        if isinstance(war_rooms, list):
+            for room in war_rooms:
+                self.delete(f"/api/v2/war-rooms/{room['war_room_id']}")
         cases = self.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
         for case in cases['data']:
             identifier = case['case_id']

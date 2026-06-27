@@ -502,6 +502,28 @@ def list_case_followers(identifier):
     ])
 
 
+@cases_blueprint.get('/<int:identifier>/war-rooms')
+@ac_api_requires()
+def list_case_war_rooms(identifier):
+    """Return war rooms this case is attached to.
+
+    Used by the case detail topbar to render the "in war room" badge +
+    quick-jump menu. Read-only — gated by case read access.
+    """
+    from app.business.war_rooms import war_rooms_for_case
+    from app.blueprints.rest.v2.war_rooms.serializers import serialize_case_war_room_summary
+
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    rows = war_rooms_for_case(identifier)
+    return response_api_success(data=[serialize_case_war_room_summary(r) for r in rows])
+
+
 @cases_blueprint.get('/<int:identifier>/activities')
 @ac_api_requires()
 def list_case_activities(identifier):
