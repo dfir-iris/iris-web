@@ -25,6 +25,13 @@ def _jwt_user():
     if payload.get("type") != "access":
         return "invalid"
 
+    # Step-1 tokens (password validated but MFA not yet verified) must not
+    # admit the bearer to protected endpoints. Treating them as `invalid`
+    # rather than `None` short-circuits the legacy/session fallthrough — a
+    # step-1 access token shouldn't quietly promote to a session login.
+    if payload.get("mfa_required") and not payload.get("mfa_verified"):
+        return "invalid"
+
     return users_get_active(payload["user_id"])
 
 

@@ -542,7 +542,15 @@ def _local_authentication_process(incoming_request: Request):
 
 def _token_authentication_process(incoming_request: Request):
     """
-    Process authentication using an Authorization header with Bearer token
+    Process authentication using an Authorization header with Bearer token.
+
+    Refuses to admit a token whose carrier hasn't passed MFA when the server
+    policy requires it. Without this check, an attacker holding valid
+    username+password could call any `ac_api_requires`-decorated endpoint
+    immediately after the initial login (which issues a step-1 token with
+    `mfa_verified=False`) — bypassing the MFA challenge entirely. The flag
+    pair travels in the JWT itself so we don't need to consult the DB on
+    every request.
     """
     auth_header = incoming_request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
@@ -556,6 +564,13 @@ def _token_authentication_process(incoming_request: Request):
     user_data = validate_auth_token(token)
 
     if not user_data:
+        return False
+
+    if user_data.get('mfa_required') and not user_data.get('mfa_verified'):
+        # Don't populate g.auth_user — falling through to session auth
+        # would defeat the purpose. Returning False here lets the caller
+        # reject the request as unauthenticated, which is the correct
+        # surface for a step-1 token presented to a protected endpoint.
         return False
 
     # Store user data for later use

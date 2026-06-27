@@ -231,14 +231,19 @@ def generate_auth_tokens(user, mfa_verified: bool = False):
         algorithm='HS256'
     )
 
-    # Generate refresh token
+    # Generate refresh token. The MFA flags travel with the refresh too so
+    # the refresh endpoint can mint new access tokens that preserve the
+    # caller's MFA state without re-prompting — and, crucially, without
+    # silently upgrading a step-1 refresh into a verified access token.
     refresh_token_payload = {
         'user_id': user.id,
         'user_name': user.name,
         'user_email': user.email,
         'user_login': user.user,
         'exp': refresh_token_expiry,
-        'type': 'refresh'
+        'type': 'refresh',
+        'mfa_required': mfa_required,
+        'mfa_verified': effective_mfa_verified,
     }
     refresh_token = jwt.encode(
         refresh_token_payload,
