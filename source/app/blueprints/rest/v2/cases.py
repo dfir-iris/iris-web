@@ -42,6 +42,7 @@ from app.blueprints.rest.v2.case_routes.notes_directories import case_notes_dire
 from app.blueprints.rest.v2.case_routes.tasks import case_tasks_blueprint
 from app.blueprints.rest.v2.case_routes.evidences import case_evidences_blueprint
 from app.blueprints.rest.v2.case_routes.events import case_events_blueprint
+from app.blueprints.rest.v2.case_routes.timelines import case_timelines_blueprint
 from app.blueprints.rest.v2.case_routes.datastore import case_datastore_blueprint
 from app.blueprints.iris_user import iris_current_user
 from app.business.cases import cases_create
@@ -393,6 +394,7 @@ cases_blueprint.register_blueprint(case_notes_blueprint)
 cases_blueprint.register_blueprint(case_tasks_blueprint)
 cases_blueprint.register_blueprint(case_evidences_blueprint)
 cases_blueprint.register_blueprint(case_events_blueprint)
+cases_blueprint.register_blueprint(case_timelines_blueprint)
 cases_blueprint.register_blueprint(case_datastore_blueprint)
 
 cases_operations = CasesOperations()
@@ -465,6 +467,39 @@ def list_case_access_users(identifier):
 
     users = get_users_list_restricted_from_case(identifier)
     return response_api_success(users)
+
+
+@cases_blueprint.get('/<int:identifier>/followers')
+@ac_api_requires()
+def list_case_followers(identifier):
+    """Return the users following this case.
+
+    Each entry is `{user_id, user_name, user_login}`. The dashboard
+    "Follow" toggle on the case header reads this list to render the
+    current follower count and to highlight whether *you* are
+    following.
+    """
+    from app.models.authorization import User
+    from app.models.authorization import UserFollowedCase
+
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    rows = (
+        db.session.query(User.id, User.user, User.name)
+        .join(UserFollowedCase, UserFollowedCase.user_id == User.id)
+        .filter(UserFollowedCase.case_id == identifier)
+        .order_by(User.name.asc())
+        .all()
+    )
+    return response_api_success(data=[
+        {'user_id': r.id, 'user_login': r.user, 'user_name': r.name}
+        for r in rows
+    ])
 
 
 @cases_blueprint.get('/<int:identifier>/activities')

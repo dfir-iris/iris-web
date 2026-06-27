@@ -270,6 +270,21 @@ class User(UserMixin, db.Model):
         return self
 
 
+class UserFollowedCase(db.Model):
+    __tablename__ = 'user_followed_case'
+    __table_args__ = (
+        UniqueConstraint('user_id', 'case_id', name='uq_user_followed_case_user_case'),
+    )
+
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'),
+                     primary_key=True, nullable=False)
+    case_id = Column(BigInteger, ForeignKey('cases.case_id', ondelete='CASCADE'),
+                     primary_key=True, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=text("now()"))
+
+    user = relationship('User')
+
+
 def ac_flag_match_mask(flag, mask):
     return (flag & mask) == mask
 

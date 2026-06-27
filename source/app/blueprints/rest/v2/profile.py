@@ -22,18 +22,28 @@ from flask import current_app
 from flask import request
 from flask import session
 from marshmallow import ValidationError
+from sqlalchemy.exc import IntegrityError
 
 from app import bc
 from app.db import db
 from app.blueprints.iris_user import iris_current_user
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.endpoints import response_api_created
+from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
+from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
+from app.business.cases import cases_exists
 from app.business.users import users_get
 from app.business.users import users_update
 from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
 from app.iris_engine.access_control.utils import ac_recompute_effective_ac
+from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
+from app.models.authorization import UserFollowedCase
+from app.models.cases import Cases
+from app.schema.marshables import CaseDetailsSchema
 from app.schema.marshables import UserSchemaForAPIV2
 
 
@@ -143,6 +153,89 @@ class ProfileOperations:
             },
         })
 
+    def list_followed_cases(self):
+        """Return cases the current user follows.
+
+        Followed cases are surfaced on the dashboard's "Following" tile
+        regardless of ownership. Rows the user has lost access to
+        (revoked group membership, customer reassignment, etc.) are
+        filtered out so the dashboard never renders a tile the user
+        cannot open.
+        """
+        followed = (
+            Cases.query
+            .join(UserFollowedCase, UserFollowedCase.case_id == Cases.case_id)
+            .filter(UserFollowedCase.user_id == iris_current_user.id)
+            .order_by(UserFollowedCase.created_at.desc())
+            .all()
+        )
+
+        # Drop entries the user is no longer allowed to see. We use the
+        # fast check (read_only or full_access) because the dashboard
+        # only renders a title + link — no protected fields are shipped.
+        visible = [
+            c for c in followed
+            if ac_fast_check_current_user_has_case_access(
+                c.case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+            )
+        ]
+
+        return response_api_success(data=CaseDetailsSchema(many=True).dump(visible))
+
+    def follow_case(self):
+        """Add a case to the current user's followed-cases list.
+
+        Idempotent: re-following an already-followed case returns 201
+        rather than 400 to keep the SPA's "Follow" button safe to retry
+        on flaky connections.
+        """
+        raw = request.get_json()
+        if not isinstance(raw, dict):
+            return response_api_error('Invalid request')
+        case_id = raw.get('case_id')
+        if not isinstance(case_id, int):
+            return response_api_error('case_id must be an integer')
+
+        if not cases_exists(case_id):
+            return response_api_not_found()
+        # Users can only follow cases they can actually open. Without
+        # this gate the dashboard would silently start linking to a
+        # case the user has no read access to.
+        if not ac_fast_check_current_user_has_case_access(
+                case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+            return response_api_error('No access to this case')
+
+        existing = (
+            UserFollowedCase.query
+            .filter_by(user_id=iris_current_user.id, case_id=case_id)
+            .first()
+        )
+        if existing is not None:
+            return response_api_created({'case_id': case_id, 'followed': True})
+
+        follow = UserFollowedCase(user_id=iris_current_user.id, case_id=case_id)
+        db.session.add(follow)
+        try:
+            db.session.commit()
+        except IntegrityError:
+            # Race with a concurrent POST from the same user. Same
+            # outcome as the existing-row branch above.
+            db.session.rollback()
+        return response_api_created({'case_id': case_id, 'followed': True})
+
+    def unfollow_case(self, case_id):
+        """Remove a case from the current user's followed-cases list.
+
+        Idempotent: unfollowing a case that isn't followed returns 204
+        rather than 404 so the SPA can fire-and-forget on toggle clicks
+        without first round-tripping the current state.
+        """
+        UserFollowedCase.query.filter_by(
+            user_id=iris_current_user.id, case_id=case_id
+        ).delete(synchronize_session=False)
+        db.session.commit()
+        return response_api_deleted()
+
     def update_preferences(self):
         """Persist a small dict of UI preferences on the current user.
 
@@ -211,3 +304,21 @@ def get_context():
 @ac_api_requires()
 def update_preferences():
     return profile_operations.update_preferences()
+
+
+@profile_blueprint.get('/followed-cases')
+@ac_api_requires()
+def list_followed_cases():
+    return profile_operations.list_followed_cases()
+
+
+@profile_blueprint.post('/followed-cases')
+@ac_api_requires()
+def follow_case():
+    return profile_operations.follow_case()
+
+
+@profile_blueprint.delete('/followed-cases/<int:case_id>')
+@ac_api_requires()
+def unfollow_case(case_id):
+    return profile_operations.unfollow_case(case_id)

@@ -162,6 +162,59 @@ class CasesEvent(db.Model):
     )
 
 
+class CaseTimeline(db.Model):
+    """Named timeline inside a case.
+
+    A case can hold any number of timelines. Events join multiple
+    timelines through `CaseEventTimeline` so a single piece of evidence
+    can appear on, e.g., the "Attacker activity" and "Network" views
+    simultaneously without duplication.
+
+    Every case gets a `is_default=True` row named "Main" at creation
+    time (and at migration time for existing cases). New events are
+    auto-attached to it unless the caller specifies a different set —
+    keeps existing API clients working without any change.
+    """
+    __tablename__ = 'case_timelines'
+    __table_args__ = (
+        UniqueConstraint('case_id', 'name', name='uq_case_timelines_case_name'),
+    )
+
+    timeline_id = Column(BigInteger, primary_key=True)
+    case_id = Column(ForeignKey('cases.case_id', ondelete='CASCADE'), nullable=False, index=True)
+    name = Column(String(128), nullable=False)
+    description = Column(Text, nullable=True)
+    # Hex string (#RRGGBB) the SPA uses to tint the timeline pill and
+    # optionally the event card border when only this timeline is
+    # active. Validated server-side before insert/update.
+    color = Column(String(7), nullable=True)
+    is_default = Column(Boolean, nullable=False, default=False,
+                        server_default=text('false'))
+    created_at = Column(DateTime, nullable=False, server_default=text('now()'))
+    created_by_id = Column(ForeignKey('user.id'), nullable=True)
+
+    case = relationship('Cases')
+    created_by = relationship('User')
+
+
+class CaseEventTimeline(db.Model):
+    """M2M between case events and the timelines they appear on.
+
+    Pure junction — no extra columns — because per-(event, timeline)
+    metadata is intentionally out of scope. An event that appears on
+    zero timelines is still rendered when the user selects "All" but
+    is invisible when any specific timeline is filtered.
+    """
+    __tablename__ = 'case_event_timelines'
+
+    event_id = Column(BigInteger,
+                      ForeignKey('cases_events.event_id', ondelete='CASCADE'),
+                      primary_key=True, nullable=False)
+    timeline_id = Column(BigInteger,
+                         ForeignKey('case_timelines.timeline_id', ondelete='CASCADE'),
+                         primary_key=True, nullable=False, index=True)
+
+
 class CaseState(db.Model):
     __tablename__ = 'case_state'
 

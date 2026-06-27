@@ -142,6 +142,13 @@ def cases_create(user, case: Cases, case_template_id) -> Cases:
 
     ac_set_new_case_access(user, case.case_id, case.client_id)
 
+    # Every case gets a "Main" default timeline at creation time. The
+    # SPA timeline view lets users add more timelines on demand, but
+    # this default guarantees new events land somewhere visible
+    # without any extra step from the caller.
+    from app.business.case_timelines import case_ensure_default_timeline
+    case_ensure_default_timeline(case.case_id, created_by_id=user.id)
+
     case = call_modules_hook('on_postload_case_create', case)
 
     add_obj_history_entry(case, 'created')

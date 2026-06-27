@@ -60,6 +60,7 @@ from app.models.assets import CompromiseStatus, AssetsType, CaseAssets
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import User
 from app.models.cases import CasesEvent
+from app.models.cases import CaseEventTimeline
 from app.models.models import CaseEventsAssets
 from app.models.models import CaseEventsIoc
 from app.models.models import EventCategory
@@ -652,6 +653,22 @@ def _extract_timeline(assets: str | None, assets_id: str | None, caseid, categor
         if assets_map[event_id] == len_assets:
             assets_filter.append(event_id)
 
+    # Build {event_id -> [timeline_id, ...]} for every event we're
+    # about to ship so the SPA sidebar can filter on-the-fly without a
+    # second round-trip. Pre-computing once per request keeps this O(N)
+    # instead of one query per event in the hot loop below.
+    event_ids_in_scope = [row.event_id for row in timeline]
+    timelines_by_event: dict[int, list[int]] = {}
+    if event_ids_in_scope:
+        rows = (
+            CaseEventTimeline.query
+            .with_entities(CaseEventTimeline.event_id, CaseEventTimeline.timeline_id)
+            .filter(CaseEventTimeline.event_id.in_(event_ids_in_scope))
+            .all()
+        )
+        for r in rows:
+            timelines_by_event.setdefault(r.event_id, []).append(r.timeline_id)
+
     iocs_filter = []
     if iocs:
         for ioc in iocs_cache:
@@ -710,6 +727,7 @@ def _extract_timeline(assets: str | None, assets_id: str | None, caseid, categor
                 )
 
         ras['iocs'] = alki
+        ras['timeline_ids'] = timelines_by_event.get(ras['event_id'], [])
 
         tim.append(ras)
     return cache, events_list, tim
