@@ -17,6 +17,7 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_read
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_write
+from app.business.war_room_chat import emit_system_event
 from app.business.war_room_tasks import (
     war_room_task_close,
     war_room_task_create,
@@ -126,6 +127,12 @@ def create_task(war_room_id):
         )
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
+    emit_system_event(
+        war_room_id, 'task_assigned',
+        f'Created task: {task.title}',
+        author_id=iris_current_user.id,
+        ref_type='war_room_task', ref_id=task.task_id,
+    )
     return response_api_created(_serialize_obj(task))
 
 
@@ -163,6 +170,12 @@ def close_task(war_room_id, task_id):
                                     closed_by_id=iris_current_user.id)
     except ObjectNotFoundError:
         return response_api_not_found()
+    emit_system_event(
+        war_room_id, 'task_completed',
+        f'Closed task: {task.title}',
+        author_id=iris_current_user.id,
+        ref_type='war_room_task', ref_id=task.task_id,
+    )
     return response_api_success(_serialize_obj(task))
 
 
@@ -176,6 +189,12 @@ def reopen_task(war_room_id, task_id):
         task = war_room_task_reopen(war_room_id, task_id)
     except ObjectNotFoundError:
         return response_api_not_found()
+    emit_system_event(
+        war_room_id, 'task_assigned',
+        f'Reopened task: {task.title}',
+        author_id=iris_current_user.id,
+        ref_type='war_room_task', ref_id=task.task_id,
+    )
     return response_api_success(_serialize_obj(task))
 
 

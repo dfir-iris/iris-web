@@ -250,6 +250,37 @@ def parse_slash(body):
     return match.group('cmd'), (match.group('rest') or '').strip()
 
 
+# ----- System message helper for REST mutations ---------------------------
+
+def emit_system_event(war_room_id, kind, body, *, author_id=None,
+                      ref_type=None, ref_id=None, ref_case_id=None):
+    """Best-effort write of a system-kind chat row.
+
+    Used by REST routes (case attach/detach, member add/remove, task
+    create/close, …) so the activity panel reflects what happened in
+    the war room even when the actor used the regular UI instead of a
+    slash command. Failures are swallowed: the parent REST mutation
+    already succeeded; we don't want a chat-stream hiccup to roll back
+    a legitimate workspace change.
+    """
+    try:
+        msg = WarRoomChatMessage()
+        msg.war_room_id = war_room_id
+        msg.author_id = author_id
+        msg.body = body[:_BODY_MAX_LEN] if body else None
+        msg.kind = kind
+        msg.ref_type = ref_type
+        msg.ref_id = ref_id
+        msg.ref_case_id = ref_case_id
+        db.session.add(msg)
+        db.session.commit()
+    except Exception:
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+
+
 # ----- Activity ingest -----------------------------------------------------
 
 def ingest_case_activity(case_id, activity_text, ref_activity_id=None):

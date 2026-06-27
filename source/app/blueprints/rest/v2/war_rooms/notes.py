@@ -15,6 +15,7 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_read
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_write
+from app.business.war_room_chat import emit_system_event
 from app.business.war_room_notes import (
     war_room_note_create,
     war_room_note_delete,
@@ -69,6 +70,12 @@ def create_note(war_room_id):
         )
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
+    emit_system_event(
+        war_room_id, 'note',
+        f'Created note: {note.title}',
+        author_id=iris_current_user.id,
+        ref_type='war_room_note', ref_id=note.note_id,
+    )
     return response_api_created(_serialize(note))
 
 

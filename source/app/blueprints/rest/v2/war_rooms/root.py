@@ -41,6 +41,7 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_read
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_write
+from app.business.war_room_chat import emit_system_event
 from app.blueprints.rest.v2.war_rooms.serializers import serialize_case_attachment
 from app.blueprints.rest.v2.war_rooms.serializers import serialize_member
 from app.blueprints.rest.v2.war_rooms.serializers import serialize_war_room
@@ -175,6 +176,16 @@ def update_war_room(war_room_id):
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
+    # Surface state changes in the activity panel. Field-level edits
+    # (rename, color, description) are intentionally not logged here —
+    # they're low signal during a crisis. State transitions are.
+    if 'state' in raw and raw['state']:
+        emit_system_event(
+            war_room_id, 'system',
+            f'War room state changed to {raw["state"]}',
+            author_id=iris_current_user.id,
+        )
+
     return response_api_success(data=serialize_war_room(war_room))
 
 
@@ -234,6 +245,14 @@ def add_member(war_room_id):
         return response_api_error(e.get_message())
 
     rows = war_room_members_list(war_room_id)
+    member_row = next((r for r in rows if r.user_id == user_id), None)
+    if member_row is not None:
+        emit_system_event(
+            war_room_id, 'system',
+            f'Added member {member_row.name or member_row.login} '
+            f'as {member_row.role}',
+            author_id=iris_current_user.id,
+        )
     return response_api_created([serialize_member(r) for r in rows if r.user_id == user_id][0])
 
 
@@ -244,6 +263,11 @@ def remove_member(war_room_id, user_id):
     if err is not None:
         return err
     war_room_remove_member(war_room_id, user_id)
+    emit_system_event(
+        war_room_id, 'system',
+        f'Removed member #{user_id}',
+        author_id=iris_current_user.id,
+    )
     return response_api_deleted()
 
 
@@ -293,6 +317,17 @@ def attach_case(war_room_id):
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
+    # Reuse the case-attached chat kind so the activity panel shows the
+    # event alongside chat-emitted `/attach` events. ref_case_id stamps
+    # the case so a per-case filter on the chat surfaces it later.
+    emit_system_event(
+        war_room_id, 'case_attached',
+        f'Attached case #{case_id}'
+        + (f' — {raw.get("note")}' if raw.get('note') else ''),
+        author_id=iris_current_user.id,
+        ref_type='case', ref_id=case_id, ref_case_id=case_id,
+    )
+
     return response_api_created({
         'war_room_id': link.war_room_id,
         'case_id': link.case_id,
@@ -311,4 +346,10 @@ def detach_case(war_room_id, case_id):
         war_room_detach_case(war_room_id, case_id)
     except ObjectNotFoundError:
         return response_api_not_found()
+    emit_system_event(
+        war_room_id, 'case_detached',
+        f'Detached case #{case_id}',
+        author_id=iris_current_user.id,
+        ref_type='case', ref_id=case_id, ref_case_id=case_id,
+    )
     return response_api_deleted()
