@@ -243,12 +243,13 @@ class WarRoomChatMessage(db.Model):
     ref_id = Column(BigInteger, nullable=True)
     ref_case_id = Column(BigInteger, ForeignKey('cases.case_id', ondelete='SET NULL'),
                          nullable=True, index=True)
-    # Fine-grained activity classifier for case-activity rows: `note.created`,
-    # `ioc.updated`, `asset.deleted`, etc. NULL for chat-author messages and
-    # for system rows that don't map to a tracked-activity verb. Lets the
-    # SPA's stream filter pane offer per-case, per-type checkboxes without
-    # re-parsing the activity description on the client.
-    activity_type = Column(String(48), nullable=True, index=True)
+    # `activity_type` USED to live here when case activity was backfilled
+    # into the chat table. The stream now pulls UserActivity rows live
+    # and classifies them at read time, so this column is never
+    # written to and never selected. The Alembic migration that adds
+    # the column (`e5a1b46c7d92`) is still kept for forward-compat
+    # in case we want server-side filtering by type later, but
+    # absence of the column at the DB level is intentionally tolerated.
     created_at = Column(DateTime, nullable=False, server_default=text('now()'))
     edited_at = Column(DateTime, nullable=True)
     deleted_at = Column(DateTime, nullable=True)

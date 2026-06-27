@@ -31,6 +31,7 @@ from app.models.war_rooms import WarRoomChatReaction
 _BODY_MAX_LEN = 16_384
 _PAGE_DEFAULT = 50
 _PAGE_MAX = 200
+_DATETIME_MIN = datetime.datetime.min
 
 
 _VALID_KINDS = {
@@ -132,17 +133,169 @@ def _validate_body(body, kind):
     return body
 
 
+def _virtual_activity_row(ua_row, war_room_id):
+    """Wrap a UserActivity row as a chat-list row.
+
+    Same shape the REST serializer expects from the chat query
+    (`.message_id`, `.body`, `.kind`, `.activity_type`, `.created_at`,
+    …). The message id is synthesised with a high offset (-id) so it
+    never collides with a real chat message_id and the SPA can still
+    treat it as a stable React-style key.
+    """
+    from types import SimpleNamespace
+    return SimpleNamespace(
+        # Negative id keeps virtual rows out of the real id space
+        # without polluting the integer cursor on the chat side.
+        message_id=-int(ua_row.id),
+        war_room_id=war_room_id,
+        author_id=ua_row.user_id,
+        body=ua_row.activity_desc,
+        kind='case_activity',
+        ref_type='user_activity',
+        ref_id=int(ua_row.id),
+        ref_case_id=ua_row.case_id,
+        activity_type=classify_activity_text(ua_row.activity_desc),
+        created_at=ua_row.activity_date,
+        edited_at=None,
+        deleted_at=None,
+        author_login=ua_row.user_login,
+        author_name=ua_row.user_name,
+    )
+
+
+def _fetch_live_case_activities(war_room_id, before_dt, limit,
+                                case_ids=None):
+    """Pull live `UserActivity` rows for cases attached to this war room.
+
+    Avoids the chat-table backfill: every render of the stream sees
+    the up-to-date case activity, so a case attached after the war
+    room was created surfaces its full history immediately, and a
+    case detached drops out without leaving stale rows behind.
+
+    The query filters by the war room's current attached-case set
+    (intersected with the caller's `case_ids` filter if provided), so
+    case_id mismatches just no-op.
+    """
+    from app.models.authorization import User
+    from app.models.models import UserActivity
+    from app.models.war_rooms import WarRoomCase
+    from sqlalchemy import and_
+
+    attached = (
+        WarRoomCase.query
+        .with_entities(WarRoomCase.case_id)
+        .filter(WarRoomCase.war_room_id == war_room_id)
+        .all()
+    )
+    attached_ids = [row.case_id for row in attached]
+    if not attached_ids:
+        return []
+    if case_ids:
+        attached_ids = [c for c in attached_ids if c in set(case_ids)]
+        if not attached_ids:
+            return []
+
+    q = (
+        db.session.query(
+            UserActivity.id,
+            UserActivity.user_id,
+            UserActivity.case_id,
+            UserActivity.activity_date,
+            UserActivity.activity_desc,
+            User.user.label('user_login'),
+            User.name.label('user_name'),
+        )
+        .outerjoin(User, User.id == UserActivity.user_id)
+        .filter(and_(
+            UserActivity.case_id.in_(attached_ids),
+            UserActivity.display_in_ui == True,
+            # Filter out the noise the case activity panel also drops —
+            # same exclusion list as `get_auto_activities`.
+            UserActivity.activity_desc.notlike('[Unbound]%'),
+            UserActivity.activity_desc.notlike('Started a search for %'),
+            UserActivity.activity_desc.notlike('Updated global task %'),
+            UserActivity.activity_desc.notlike('Created new global task %'),
+            UserActivity.activity_desc.notlike('Started a new case creation %'),
+        ))
+    )
+    if before_dt is not None:
+        q = q.filter(UserActivity.activity_date < before_dt)
+
+    rows = (
+        q.order_by(desc(UserActivity.activity_date))
+        .limit(limit)
+        .all()
+    )
+    return [_virtual_activity_row(r, war_room_id) for r in rows]
+
+
 def list_messages(war_room_id, before=None, limit=None, kinds=None,
                   case_ids=None):
-    """Cursor-paginate the chat stream.
+    """Return the next page of the war-room stream, newest first.
 
-    `before` is a message_id — return messages with smaller ids
-    (older). `kinds` and `case_ids` filter further.
+    Two sources are merged at read time:
+
+      1. Real chat-table rows (`WarRoomChatMessage`) — operator
+         messages, war-room-level system events, SitRep publishes,
+         task assignments, case attach/detach.
+      2. Live `UserActivity` rows for every case currently attached
+         to this war room — no backfill, no duplication. A case
+         attached later instantly surfaces its full activity history;
+         a case detached drops out of the stream.
+
+    The merge sorts by `created_at` descending. `before` remains a
+    chat `message_id` for backwards compatibility with the SPA's
+    infinite-scroll: we resolve it to the matching row's timestamp
+    and use that as the activity-side cursor.
+
+    `kinds` filtering works as before. `case_ids` constrains both
+    sides (chat-row `ref_case_id` and `UserActivity.case_id`).
     """
     if limit is None:
         limit = _PAGE_DEFAULT
     limit = min(int(limit), _PAGE_MAX)
 
+    want_case_activity = (not kinds) or ('case_activity' in kinds)
+
+    # Resolve the cursor to a timestamp so we can apply it to both
+    # sources. None on initial load means "from now backwards".
+    # `before` may be a real chat message_id (positive) or a virtual
+    # UserActivity id (negative; encoded as -ua.id by
+    # `_virtual_activity_row`) — handle both so infinite scroll keeps
+    # working after the cursor crosses a stream-of-activity span.
+    before_dt = None
+    if before is not None:
+        cursor_int = int(before)
+        if cursor_int < 0:
+            from app.models.models import UserActivity
+            ua_row = (
+                UserActivity.query
+                .with_entities(UserActivity.activity_date)
+                .filter(UserActivity.id == -cursor_int)
+                .first()
+            )
+            if ua_row and ua_row.activity_date:
+                before_dt = ua_row.activity_date
+        else:
+            cursor_row = (
+                WarRoomChatMessage.query
+                .with_entities(WarRoomChatMessage.created_at)
+                .filter(WarRoomChatMessage.message_id == cursor_int)
+                .first()
+            )
+            if cursor_row and cursor_row.created_at:
+                before_dt = cursor_row.created_at
+
+    # Drop any previously-ingested case_activity rows so we don't double
+    # them up against the live UserActivity pull below — installs that
+    # backfilled into the chat table before this change won't surface
+    # rows twice as a result.
+    #
+    # We intentionally do NOT select `activity_type` from the chat row:
+    # activity classification lives on live UserActivity rows (synthesised
+    # below). Skipping the column keeps the endpoint working on databases
+    # that haven't run the `e5a1b46c7d92` migration yet — important for
+    # rolling upgrades.
     q = (
         db.session.query(
             WarRoomChatMessage.message_id,
@@ -153,7 +306,6 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
             WarRoomChatMessage.ref_type,
             WarRoomChatMessage.ref_id,
             WarRoomChatMessage.ref_case_id,
-            WarRoomChatMessage.activity_type,
             WarRoomChatMessage.created_at,
             WarRoomChatMessage.edited_at,
             WarRoomChatMessage.deleted_at,
@@ -162,18 +314,40 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
         )
         .outerjoin(User, User.id == WarRoomChatMessage.author_id)
         .filter(WarRoomChatMessage.war_room_id == war_room_id)
+        .filter(WarRoomChatMessage.kind != 'case_activity')
     )
-
     if before is not None:
-        q = q.filter(WarRoomChatMessage.message_id < int(before))
+        # Real chat ids only — virtual UA ids are negative and the
+        # `before_dt` clamp above already covers their case in the
+        # date-based merge below.
+        if int(before) > 0:
+            q = q.filter(WarRoomChatMessage.message_id < int(before))
+        elif before_dt is not None:
+            q = q.filter(WarRoomChatMessage.created_at < before_dt)
     if kinds:
         q = q.filter(WarRoomChatMessage.kind.in_(list(kinds)))
     if case_ids:
         q = q.filter(WarRoomChatMessage.ref_case_id.in_(list(case_ids)))
 
-    rows = q.order_by(desc(WarRoomChatMessage.message_id)).limit(limit).all()
-    # Caller gets newest-first; the SPA reverses for display.
-    return rows
+    chat_rows = q.order_by(desc(WarRoomChatMessage.message_id)).limit(limit).all()
+
+    if not want_case_activity:
+        return chat_rows
+
+    # Overfetch live activities to fill the page after merge — we'll
+    # trim down to `limit` after sorting.
+    activity_rows = _fetch_live_case_activities(
+        war_room_id, before_dt=before_dt, limit=limit, case_ids=case_ids
+    )
+
+    # Merge by created_at desc. When timestamps tie, real chat rows
+    # come first so a /command + its emitted system row stay adjacent.
+    merged = list(chat_rows) + list(activity_rows)
+    merged.sort(
+        key=lambda r: (r.created_at or _DATETIME_MIN, r.message_id),
+        reverse=True
+    )
+    return merged[:limit]
 
 
 def create_message(war_room_id, author_id, body, kind=None,
@@ -319,6 +493,14 @@ def parse_slash(body):
 def emit_system_event(war_room_id, kind, body, *, author_id=None,
                       ref_type=None, ref_id=None, ref_case_id=None,
                       activity_type=None):
+    """Write a system-kind chat row.
+
+    `activity_type` is accepted for API compatibility with callers that
+    used to stamp it, but is intentionally ignored on write — the
+    column is read-side-only and is now never queried, so we skip it
+    to keep the helper safe on databases that haven't applied the
+    `e5a1b46c7d92` migration.
+    """
     """Best-effort write of a system-kind chat row.
 
     Used by REST routes (case attach/detach, member add/remove, task
@@ -337,7 +519,7 @@ def emit_system_event(war_room_id, kind, body, *, author_id=None,
         msg.ref_type = ref_type
         msg.ref_id = ref_id
         msg.ref_case_id = ref_case_id
-        msg.activity_type = activity_type
+        # Don't touch msg.activity_type — see helper docstring.
         db.session.add(msg)
         db.session.commit()
     except Exception:
@@ -350,33 +532,12 @@ def emit_system_event(war_room_id, kind, body, *, author_id=None,
 # ----- Activity ingest -----------------------------------------------------
 
 def ingest_case_activity(case_id, activity_text, ref_activity_id=None):
-    """Mirror a case-activity row into every war room the case is in.
+    """DEPRECATED — no-op kept for backwards compatibility.
 
-    Called from the activity tracker so the war-room chat always
-    reflects what's happening on its attached cases without the SPA
-    having to subscribe per-case.
+    Earlier versions mirrored case-activity rows into the chat table.
+    `list_messages` now pulls `UserActivity` rows live at render time
+    so a case attached after-the-fact instantly surfaces its full
+    history with zero duplication. This shim stays so external test
+    callers don't break; new code should not call it.
     """
-    from app.models.war_rooms import WarRoomCase
-
-    rooms = (
-        WarRoomCase.query
-        .with_entities(WarRoomCase.war_room_id)
-        .filter(WarRoomCase.case_id == case_id)
-        .all()
-    )
-    if not rooms:
-        return
-
-    activity_type = classify_activity_text(activity_text)
-    for r in rooms:
-        msg = WarRoomChatMessage()
-        msg.war_room_id = r.war_room_id
-        msg.author_id = None
-        msg.body = activity_text[:_BODY_MAX_LEN] if activity_text else None
-        msg.kind = 'case_activity'
-        msg.ref_type = 'user_activity'
-        msg.ref_id = ref_activity_id
-        msg.ref_case_id = case_id
-        msg.activity_type = activity_type
-        db.session.add(msg)
-    db.session.commit()
+    return None
