@@ -61,4 +61,16 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
     db.session.add(ua)
     db.session.commit()
 
+    # Mirror the activity into the chat stream of every war room the
+    # case is attached to. Best-effort: if the table doesn't exist yet
+    # (very old install pre-migration) or the import fails for any
+    # reason, the original activity row still persisted — we don't want
+    # this side-channel to ever break the primary tracker path.
+    if caseid is not None and display_in_ui:
+        try:
+            from app.business.war_room_chat import ingest_case_activity
+            ingest_case_activity(caseid, ua.activity_desc, ref_activity_id=ua.id)
+        except Exception:
+            pass
+
     return ua
