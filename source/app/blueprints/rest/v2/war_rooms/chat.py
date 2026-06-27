@@ -55,6 +55,7 @@ def _serialize(row, reactions=None):
         'ref_type': row.ref_type,
         'ref_id': row.ref_id,
         'ref_case_id': row.ref_case_id,
+        'activity_type': row.activity_type,
         'created_at': row.created_at.isoformat() if row.created_at else None,
         'edited_at': row.edited_at.isoformat() if row.edited_at else None,
         'deleted_at': row.deleted_at.isoformat() if row.deleted_at else None,

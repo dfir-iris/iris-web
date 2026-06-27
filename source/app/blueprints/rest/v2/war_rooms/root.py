@@ -326,6 +326,7 @@ def attach_case(war_room_id):
         + (f' — {raw.get("note")}' if raw.get('note') else ''),
         author_id=iris_current_user.id,
         ref_type='case', ref_id=case_id, ref_case_id=case_id,
+        activity_type='case.attached',
     )
 
     return response_api_created({
@@ -351,5 +352,6 @@ def detach_case(war_room_id, case_id):
         f'Detached case #{case_id}',
         author_id=iris_current_user.id,
         ref_type='case', ref_id=case_id, ref_case_id=case_id,
+        activity_type='case.detached',
     )
     return response_api_deleted()

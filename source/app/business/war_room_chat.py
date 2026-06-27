@@ -42,6 +42,69 @@ _VALID_KINDS = {
 }
 
 
+# --- Activity classifier --------------------------------------------------
+#
+# Patterns derived from the verbs IRIS's business layer feeds into
+# `track_activity()`. Order matters: more specific patterns first. Anything
+# that doesn't match falls through to `case.other` so the row still shows
+# up in the unfiltered stream view.
+import re as _re
+
+_ACTIVITY_RULES = [
+    (_re.compile(r'^new case '), 'case.created'),
+    (_re.compile(r'^case closed$', _re.IGNORECASE), 'case.closed'),
+    (_re.compile(r'^case re-opened$', _re.IGNORECASE), 'case.reopened'),
+    (_re.compile(r'^case updated', _re.IGNORECASE), 'case.updated'),
+    (_re.compile(r'^case reviewer', _re.IGNORECASE), 'case.reviewer_changed'),
+    (_re.compile(r'^closed case id', _re.IGNORECASE), 'case.closed'),
+
+    (_re.compile(r'^created note', _re.IGNORECASE), 'note.created'),
+    (_re.compile(r'^updated note', _re.IGNORECASE), 'note.updated'),
+    (_re.compile(r'^deleted note revision', _re.IGNORECASE), 'note.updated'),
+    (_re.compile(r'^deleted note', _re.IGNORECASE), 'note.deleted'),
+    (_re.compile(r'^added directory', _re.IGNORECASE), 'directory.created'),
+    (_re.compile(r'^modified directory', _re.IGNORECASE), 'directory.updated'),
+    (_re.compile(r'^deleted directory', _re.IGNORECASE), 'directory.deleted'),
+
+    (_re.compile(r'^added ioc', _re.IGNORECASE), 'ioc.created'),
+    (_re.compile(r'^updated ioc', _re.IGNORECASE), 'ioc.updated'),
+    (_re.compile(r'^deleted ioc', _re.IGNORECASE), 'ioc.deleted'),
+
+    (_re.compile(r'^added asset', _re.IGNORECASE), 'asset.created'),
+    (_re.compile(r'^updated asset', _re.IGNORECASE), 'asset.updated'),
+    (_re.compile(r'^(deleted|removed) asset', _re.IGNORECASE), 'asset.deleted'),
+
+    (_re.compile(r'^added evidence', _re.IGNORECASE), 'evidence.created'),
+    (_re.compile(r'^updated evidence', _re.IGNORECASE), 'evidence.updated'),
+    (_re.compile(r'^deleted evidence', _re.IGNORECASE), 'evidence.deleted'),
+
+    (_re.compile(r'^added task', _re.IGNORECASE), 'task.created'),
+    (_re.compile(r'^updated task', _re.IGNORECASE), 'task.updated'),
+    (_re.compile(r'^deleted task', _re.IGNORECASE), 'task.deleted'),
+
+    (_re.compile(r'^added event', _re.IGNORECASE), 'event.created'),
+    (_re.compile(r'^updated event', _re.IGNORECASE), 'event.updated'),
+    (_re.compile(r'^deleted event', _re.IGNORECASE), 'event.deleted'),
+
+    (_re.compile(r'^(linked|unlinked) alert', _re.IGNORECASE), 'alert.linked'),
+]
+
+
+def classify_activity_text(text):
+    """Map a tracked activity description to a fine-grained type slug.
+
+    The IRIS tracker capitalises the first letter of every message, so
+    we match case-insensitively. Returns `'case.other'` when nothing
+    fits; the stream still surfaces those under the "Other" toggle.
+    """
+    if not isinstance(text, str) or not text:
+        return 'case.other'
+    for pattern, slug in _ACTIVITY_RULES:
+        if pattern.search(text):
+            return slug
+    return 'case.other'
+
+
 def _validate_kind(kind):
     if kind is None:
         return 'message'
@@ -90,6 +153,7 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
             WarRoomChatMessage.ref_type,
             WarRoomChatMessage.ref_id,
             WarRoomChatMessage.ref_case_id,
+            WarRoomChatMessage.activity_type,
             WarRoomChatMessage.created_at,
             WarRoomChatMessage.edited_at,
             WarRoomChatMessage.deleted_at,
@@ -253,7 +317,8 @@ def parse_slash(body):
 # ----- System message helper for REST mutations ---------------------------
 
 def emit_system_event(war_room_id, kind, body, *, author_id=None,
-                      ref_type=None, ref_id=None, ref_case_id=None):
+                      ref_type=None, ref_id=None, ref_case_id=None,
+                      activity_type=None):
     """Best-effort write of a system-kind chat row.
 
     Used by REST routes (case attach/detach, member add/remove, task
@@ -272,6 +337,7 @@ def emit_system_event(war_room_id, kind, body, *, author_id=None,
         msg.ref_type = ref_type
         msg.ref_id = ref_id
         msg.ref_case_id = ref_case_id
+        msg.activity_type = activity_type
         db.session.add(msg)
         db.session.commit()
     except Exception:
@@ -301,6 +367,7 @@ def ingest_case_activity(case_id, activity_text, ref_activity_id=None):
     if not rooms:
         return
 
+    activity_type = classify_activity_text(activity_text)
     for r in rooms:
         msg = WarRoomChatMessage()
         msg.war_room_id = r.war_room_id
@@ -310,5 +377,6 @@ def ingest_case_activity(case_id, activity_text, ref_activity_id=None):
         msg.ref_type = 'user_activity'
         msg.ref_id = ref_activity_id
         msg.ref_case_id = case_id
+        msg.activity_type = activity_type
         db.session.add(msg)
     db.session.commit()
