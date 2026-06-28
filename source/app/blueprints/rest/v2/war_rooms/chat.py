@@ -136,16 +136,6 @@ def _resolve_slash(war_room_id, cmd, rest):
             )
         return ('decision', rest, 'war_room_chat', None, None)
 
-    if cmd == 'whoami':
-        # Self-test affordance: useful when an operator is uncertain
-        # about which session is authenticated as which IRIS user
-        # mid-incident. The row is system-kind and links nowhere.
-        body = (
-            f'You are signed in as {iris_current_user.user} '
-            f'(#{iris_current_user.id})'
-        )
-        return ('system', body, None, None, None)
-
     if cmd == 'attach':
         # `/attach <case_id> [reason]`
         parts = rest.split(None, 1)
@@ -320,7 +310,7 @@ def _resolve_slash(war_room_id, cmd, rest):
     if cmd in ('help', '?'):
         body = (
             'Commands: /note /pin /decision /attach /detach /task /assign '
-            '/sitrep /summary /state /priority /whoami'
+            '/sitrep /summary /state /priority'
         )
         return ('system', body, None, None, None)
 
