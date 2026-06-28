@@ -112,6 +112,11 @@ def list_chat(war_room_id):
     )
 
 
+_VALID_STATES = {'open', 'active', 'standby', 'closed'}
+_PRIORITY_LEVELS = {'low', 'medium', 'high', 'critical'}
+_PRIORITY_ALIASES = {'med': 'medium', 'mid': 'medium', 'crit': 'critical'}
+
+
 def _resolve_slash(war_room_id, cmd, rest):
     """Translate a recognised slash command into a structured message.
 
@@ -120,11 +125,27 @@ def _resolve_slash(war_room_id, cmd, rest):
     falls through to a normal message).
     """
     if cmd == 'note':
-        # Lightweight: just stamp the body as a note-kind row so it can
-        # be filtered out of the noise.
-        return ('note', rest, None, None, None)
+        return ('note', rest, 'war_room_chat', None, None)
     if cmd == 'pin':
-        return ('pin', rest, None, None, None)
+        return ('pin', rest, 'war_room_chat', None, None)
+
+    if cmd == 'decision':
+        if not rest:
+            raise BusinessProcessingError(
+                'Usage: /decision <what we decided>'
+            )
+        return ('decision', rest, 'war_room_chat', None, None)
+
+    if cmd == 'whoami':
+        # Self-test affordance: useful when an operator is uncertain
+        # about which session is authenticated as which IRIS user
+        # mid-incident. The row is system-kind and links nowhere.
+        body = (
+            f'You are signed in as {iris_current_user.user} '
+            f'(#{iris_current_user.id})'
+        )
+        return ('system', body, None, None, None)
+
     if cmd == 'attach':
         # `/attach <case_id> [reason]`
         parts = rest.split(None, 1)
@@ -145,21 +166,75 @@ def _resolve_slash(war_room_id, cmd, rest):
                              attached_by_id=iris_current_user.id, note=note)
         body = f'Attached case #{case_id}' + (f' — {note}' if note else '')
         return ('case_attached', body, 'case', case_id, case_id)
-    if cmd == 'task':
-        # `/task <title>` — phase 4 wires the full task table; for now
-        # we still emit a chat row so the operator's intent is logged
-        # even if the task sub-system rejects it.
-        if not rest:
-            raise BusinessProcessingError('Usage: /task <title>')
-        from app.business.war_room_tasks import war_room_task_create
-        task = war_room_task_create(
-            war_room_id, title=rest, created_by_id=iris_current_user.id
+
+    if cmd == 'detach':
+        # `/detach <case_id>` — symmetrical with /attach. Useful in the
+        # rare crisis where a case was attached in error or is moved out.
+        parts = rest.split(None, 1)
+        if not parts or not parts[0].isdigit():
+            raise BusinessProcessingError('Usage: /detach <case_id>')
+        case_id = int(parts[0])
+        from app.business.war_rooms import war_room_detach_case
+        from app.models.errors import ObjectNotFoundError
+        try:
+            war_room_detach_case(war_room_id, case_id)
+        except ObjectNotFoundError:
+            raise BusinessProcessingError(
+                f'Case #{case_id} is not attached to this war room'
+            )
+        return (
+            'case_detached', f'Detached case #{case_id}',
+            'case', case_id, case_id,
         )
-        return ('task_assigned', f'Created task: {rest}',
-                'war_room_task', task.task_id, None)
+
+    if cmd == 'task':
+        # `/task <title>` — single-arg form.
+        # `/task @user <title>` — assign on creation (resolves the
+        # mention to a User row via login or display name).
+        if not rest:
+            raise BusinessProcessingError('Usage: /task [@user] <title>')
+        from app.business.war_room_tasks import war_room_task_create
+        assignee_id = None
+        assignee_label = None
+        title = rest
+        if rest.startswith('@'):
+            head, _, tail = rest.partition(' ')
+            if not tail.strip():
+                raise BusinessProcessingError(
+                    'Usage: /task @user <title>'
+                )
+            assignee_id, assignee_label = _resolve_user_handle(head[1:])
+            title = tail.strip()
+        task = war_room_task_create(
+            war_room_id, title=title,
+            created_by_id=iris_current_user.id,
+            assignee_id=assignee_id,
+        )
+        body = (
+            f'Created task for {assignee_label}: {title}'
+            if assignee_label else f'Created task: {title}'
+        )
+        return ('task_assigned', body, 'war_room_task', task.task_id, None)
+
+    if cmd == 'assign':
+        # `/assign @user <title>` — shorthand for `/task @user <title>`.
+        if not rest or not rest.startswith('@'):
+            raise BusinessProcessingError('Usage: /assign @user <title>')
+        head, _, tail = rest.partition(' ')
+        if not tail.strip():
+            raise BusinessProcessingError('Usage: /assign @user <title>')
+        from app.business.war_room_tasks import war_room_task_create
+        assignee_id, assignee_label = _resolve_user_handle(head[1:])
+        title = tail.strip()
+        task = war_room_task_create(
+            war_room_id, title=title,
+            created_by_id=iris_current_user.id,
+            assignee_id=assignee_id,
+        )
+        body = f'Assigned to {assignee_label}: {title}'
+        return ('task_assigned', body, 'war_room_task', task.task_id, None)
+
     if cmd == 'sitrep':
-        # `/sitrep <title>` — opens a draft SitRep. Body becomes the
-        # title.
         if not rest:
             raise BusinessProcessingError('Usage: /sitrep <title>')
         from app.business.war_room_sitreps import sitrep_draft
@@ -167,7 +242,120 @@ def _resolve_slash(war_room_id, cmd, rest):
                            authored_by_id=iris_current_user.id)
         return ('sitrep_published', f'Drafted SitRep: {rest}',
                 'sitrep', sit.sitrep_id, None)
+
+    if cmd == 'state':
+        # `/state <open|active|standby|closed>` — flip the war-room
+        # lifecycle without leaving the stream. Useful during a crisis
+        # when the IC wants to wave the room into Active or wind it down.
+        target = rest.strip().lower()
+        if target not in _VALID_STATES:
+            raise BusinessProcessingError(
+                'Usage: /state <open|active|standby|closed>'
+            )
+        from app.business.war_rooms import war_room_update
+        war_room_update(
+            war_room_id, state=target,
+            closed_by_id=iris_current_user.id if target == 'closed' else None,
+        )
+        return (
+            'priority' if target in ('active', 'closed') else 'system',
+            f'War room state set to {target}',
+            'war_room', war_room_id, None,
+        )
+
+    if cmd == 'priority':
+        # `/priority <low|medium|high|critical>` — purely a banner row.
+        # State-side effects on the war room could be added later but
+        # for now this just stamps a visible row in the stream the team
+        # can rally around.
+        level = rest.strip().lower()
+        level = _PRIORITY_ALIASES.get(level, level)
+        if level not in _PRIORITY_LEVELS:
+            raise BusinessProcessingError(
+                'Usage: /priority <low|medium|high|critical>'
+            )
+        if level in ('high', 'critical'):
+            # Hot-up the war room when the operator declares a hot
+            # priority — saves them an extra /state command.
+            from app.business.war_rooms import war_room_update
+            war_room_update(war_room_id, state='active')
+        return (
+            'priority',
+            f'Priority set to {level.upper()}',
+            'war_room', war_room_id, None,
+        )
+
+    if cmd == 'summary':
+        # Auto-generate a SitRep draft seeded with the current war-room
+        # snapshot. Operator just polishes the prose before publishing.
+        from app.business.war_room_sitreps import sitrep_draft, _snapshot
+        snap = _snapshot(war_room_id)
+        body_md_lines = [
+            '## Snapshot',
+            f'- Attached cases: ' + (
+                ', '.join(f'#{c}' for c in (snap.get('attached_case_ids') or [])) or '—'
+            ),
+            f'- Open tasks: {snap.get("tasks_open", 0)}',
+            f'- Closed tasks: {snap.get("tasks_closed", 0)}',
+            '',
+            '## Situation',
+            rest.strip() or '_Describe the current situation._',
+            '',
+            '## Next steps',
+            '_What we plan to do next._',
+        ]
+        title = rest.strip()[:120] or f'Auto SitRep — {snap.get("captured_at", "now")[:10]}'
+        sit = sitrep_draft(
+            war_room_id,
+            title=title,
+            body_md='\n'.join(body_md_lines),
+            authored_by_id=iris_current_user.id,
+        )
+        return (
+            'sitrep_published',
+            f'Drafted SitRep: {title}',
+            'sitrep', sit.sitrep_id, None,
+        )
+
+    if cmd in ('help', '?'):
+        body = (
+            'Commands: /note /pin /decision /attach /detach /task /assign '
+            '/sitrep /summary /state /priority /whoami'
+        )
+        return ('system', body, None, None, None)
+
     return None
+
+
+def _resolve_user_handle(handle):
+    """Look up a `@handle` to a (user_id, display_label) pair.
+
+    Matches against `user.user` (login) first, then `user.name`
+    (display name). Case-insensitive. Raises a `BusinessProcessingError`
+    when no match is found so the operator sees a useful hint instead
+    of a silent no-assignee task.
+    """
+    from app.models.authorization import User
+    from app.db import db
+    from sqlalchemy import or_, func
+    if not handle:
+        raise BusinessProcessingError('Empty user mention')
+    h = handle.strip()
+    row = (
+        db.session.query(User.id, User.user, User.name)
+        .filter(
+            or_(
+                func.lower(User.user) == h.lower(),
+                func.lower(User.name) == h.lower(),
+            )
+        )
+        .first()
+    )
+    if row is None:
+        raise BusinessProcessingError(
+            f'No user matched @{handle}. Use a login or full name.'
+        )
+    return row.id, (row.name or row.user)
 
 
 @war_rooms_chat_blueprint.post('')

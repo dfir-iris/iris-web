@@ -40,6 +40,13 @@ _VALID_KINDS = {
     'case_attached', 'case_detached',
     'case_activity',
     'sitrep_published', 'note', 'pin',
+    # `decision` rows are first-class so the SitRep author can lift them
+    # straight out via a future timeline-of-decisions query; they
+    # otherwise behave like a richer `/note`.
+    'decision',
+    # `priority` flags a banner-style row stamped when the operator flips
+    # the war room into a hotter posture via `/priority` or `/state`.
+    'priority',
 }
 
 
