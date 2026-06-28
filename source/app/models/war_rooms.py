@@ -204,6 +204,7 @@ class WarRoomTimelineEvent(db.Model):
     event_date = Column(DateTime, nullable=True)
     event_tz = Column(String(16), nullable=True)
     color = Column(String(7), nullable=True)
+    category = Column(String(64), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text('now()'))
     created_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
 

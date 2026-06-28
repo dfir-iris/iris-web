@@ -20,7 +20,9 @@ from app.models.war_rooms import WarRoomTimelineEvent
 
 
 _NAME_MAX_LEN = 128
+_CATEGORY_MAX_LEN = 64
 _HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
+_UNSET = object()
 
 
 def _validate_name(name):
@@ -141,7 +143,8 @@ def list_timeline_events(war_room_id, timeline_ids=None):
 
 def create_timeline_event(war_room_id, timeline_id, title=None, content=None,
                           event_date=None, event_tz=None, color=None,
-                          case_id=None, event_id=None, created_by_id=None):
+                          category=None, case_id=None, event_id=None,
+                          created_by_id=None):
     timeline = get_timeline(war_room_id, timeline_id)
     if (case_id is None) != (event_id is None):
         raise BusinessProcessingError(
@@ -152,6 +155,15 @@ def create_timeline_event(war_room_id, timeline_id, title=None, content=None,
             'Provide either a case event reference or a title/content'
         )
     color = _validate_color(color)
+    if category is not None:
+        if not isinstance(category, str):
+            raise BusinessProcessingError('Category must be a string')
+        stripped = category.strip()
+        if len(stripped) > _CATEGORY_MAX_LEN:
+            raise BusinessProcessingError(
+                f'Category must be at most {_CATEGORY_MAX_LEN} characters'
+            )
+        category = stripped or None
     row = WarRoomTimelineEvent()
     row.timeline_id = timeline.timeline_id
     row.case_id = case_id
@@ -161,13 +173,14 @@ def create_timeline_event(war_room_id, timeline_id, title=None, content=None,
     row.event_date = event_date
     row.event_tz = event_tz
     row.color = color
+    row.category = category
     row.created_by_id = created_by_id
     db.session.add(row)
     db.session.commit()
     return row
 
 
-def delete_timeline_event(war_room_id, event_id):
+def _get_event(war_room_id, event_id):
     row = (
         WarRoomTimelineEvent.query
         .join(WarRoomTimeline,
@@ -178,5 +191,49 @@ def delete_timeline_event(war_room_id, event_id):
     )
     if row is None:
         raise ObjectNotFoundError()
+    return row
+
+
+def update_timeline_event(war_room_id, event_id, *, title=_UNSET, content=_UNSET,
+                          event_date=_UNSET, event_tz=_UNSET, color=_UNSET,
+                          category=_UNSET, timeline_id=_UNSET):
+    """Partial update for a war-room timeline event.
+
+    Sentinel-based: a field passed as `_UNSET` is left untouched, while
+    explicit `None` clears it. `timeline_id` is the drag-between-timelines
+    knob — validates the target belongs to the same war room.
+    """
+    row = _get_event(war_room_id, event_id)
+    if timeline_id is not _UNSET and timeline_id != row.timeline_id:
+        target = get_timeline(war_room_id, timeline_id)
+        row.timeline_id = target.timeline_id
+    if title is not _UNSET:
+        row.title = title
+    if content is not _UNSET:
+        row.content = content
+    if event_date is not _UNSET:
+        row.event_date = event_date
+    if event_tz is not _UNSET:
+        row.event_tz = event_tz
+    if color is not _UNSET:
+        row.color = _validate_color(color)
+    if category is not _UNSET:
+        if category is None or category == '':
+            row.category = None
+        else:
+            if not isinstance(category, str):
+                raise BusinessProcessingError('Category must be a string')
+            stripped = category.strip()
+            if len(stripped) > _CATEGORY_MAX_LEN:
+                raise BusinessProcessingError(
+                    f'Category must be at most {_CATEGORY_MAX_LEN} characters'
+                )
+            row.category = stripped or None
+    db.session.commit()
+    return row
+
+
+def delete_timeline_event(war_room_id, event_id):
+    row = _get_event(war_room_id, event_id)
     db.session.delete(row)
     db.session.commit()

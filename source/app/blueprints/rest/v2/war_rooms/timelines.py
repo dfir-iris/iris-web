@@ -26,6 +26,7 @@ from app.business.war_room_timelines import (
     list_timeline_events,
     list_timelines,
     update_timeline,
+    update_timeline_event,
 )
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -61,6 +62,10 @@ def _serialize_event(e):
         'event_date': e.event_date.isoformat() if e.event_date else None,
         'event_tz': e.event_tz,
         'color': e.color,
+        # `category` may be absent on databases predating the column —
+        # tolerate that so the route still returns valid JSON when the
+        # migration hasn't been run yet.
+        'category': getattr(e, 'category', None),
         'created_at': e.created_at.isoformat() if e.created_at else None,
         'created_by_id': e.created_by_id,
     }
@@ -181,6 +186,7 @@ def add_event(war_room_id, timeline_id):
             event_date=event_date,
             event_tz=raw.get('event_tz'),
             color=raw.get('color'),
+            category=raw.get('category'),
             case_id=raw.get('case_id'),
             event_id=raw.get('event_id'),
             created_by_id=iris_current_user.id,
@@ -190,6 +196,40 @@ def add_event(war_room_id, timeline_id):
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
     return response_api_created(_serialize_event(row))
+
+
+@war_rooms_timelines_blueprint.patch('/events/<int:event_id>')
+@ac_api_requires()
+def patch_event(war_room_id, event_id):
+    """Partial update for a war-room timeline event.
+
+    Body fields are all optional; only those present are touched. A
+    missing key is left as-is; an explicit `null` clears the field.
+    `timeline_id` re-parents the event (drag-between-timelines).
+    """
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    raw = request.get_json()
+    if not isinstance(raw, dict):
+        return response_api_error('Invalid request')
+    kwargs = {}
+    for key in ('title', 'content', 'event_tz', 'color', 'category',
+                'timeline_id'):
+        if key in raw:
+            kwargs[key] = raw[key]
+    if 'event_date' in raw:
+        try:
+            kwargs['event_date'] = _parse_event_date(raw['event_date'])
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message())
+    try:
+        row = update_timeline_event(war_room_id, event_id, **kwargs)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    return response_api_success(_serialize_event(row))
 
 
 @war_rooms_timelines_blueprint.delete('/events/<int:event_id>')
