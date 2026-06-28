@@ -378,11 +378,26 @@ def post_chat(war_room_id):
             resolved = _resolve_slash(war_room_id, slash[0], slash[1])
         except BusinessProcessingError as e:
             return response_api_error(e.get_message())
-        except ImportError:
-            # The sub-system isn't installed yet (a phase 4/7 feature
-            # not landed). Fall through to a plain message so the chat
-            # still records the intent.
-            resolved = None
+        except ImportError as e:
+            # A required sub-system isn't importable (test envs, a
+            # feature module not yet packaged). Surface it instead of
+            # silently dropping the command so the operator sees what
+            # broke.
+            return response_api_error(
+                f'Command unavailable in this build: {e}'
+            )
+        except Exception as e:  # noqa: BLE001 — narrow to message text
+            # Any unexpected error inside a slash handler used to bubble
+            # up as a 500 with no body, which made `/summary` and the
+            # like look like silent failures. Surface the message so the
+            # SPA toast actually says something useful.
+            import traceback
+            from app.logger import logger
+            logger.exception('Slash command failed')
+            return response_api_error(
+                f'Command failed: {e.__class__.__name__}: {e}'
+            )
+
         if resolved is not None:
             kind, body, ref_type, ref_id, ref_case_id = resolved
             try:
@@ -395,6 +410,16 @@ def post_chat(war_room_id):
                 return response_api_error(e.get_message())
             _emit_socket(war_room_id, 'message:new', {'message_id': msg.message_id})
             return response_api_created({'message_id': msg.message_id, 'kind': msg.kind})
+
+        # Unknown command. Returning an explicit 400 — instead of
+        # falling through to `create_message(body)` and storing the
+        # literal `/foo` text as a normal message — keeps the
+        # operator's intent obvious. They get a "command not found"
+        # toast and can correct themselves; nothing pollutes the
+        # stream as a confused chat bubble.
+        return response_api_error(
+            f'Unknown command "/{slash[0]}". Try /help.'
+        )
 
     try:
         msg = create_message(war_room_id, iris_current_user.id, body)
