@@ -155,7 +155,15 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', app.config['IRIS_ALLOW_ORIGIN'])
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    # PATCH was missing — preflight for `PATCH /api/v2/war-rooms/<id>`
+    # (and any other v2 PATCH endpoint we add) failed the CORS check
+    # because this list didn't include the verb. Browsers cache failed
+    # preflights for a few seconds, so a stale tab may keep failing
+    # briefly after this lands.
+    response.headers.add(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    )
 
     return response
 
