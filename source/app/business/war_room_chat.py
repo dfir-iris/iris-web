@@ -26,12 +26,50 @@ from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.war_rooms import WarRoomChatMessage
 from app.models.war_rooms import WarRoomChatReaction
+from app.models.war_rooms import WarRoomThreadFollower
 
 
 _BODY_MAX_LEN = 16_384
 _PAGE_DEFAULT = 50
 _PAGE_MAX = 200
 _DATETIME_MIN = datetime.datetime.min
+
+# Cache for the once-per-process check of whether the threading
+# columns (`parent_message_id`, `thread_title`) and the follower table
+# actually exist on the live database. We probe the information_schema
+# the first time we need to know and then short-circuit so we don't
+# pay for the lookup on every request.
+#
+# Same rationale as the `activity_type` skip: a war room installed
+# against a database where the threading migration hasn't run yet
+# should still be able to read the stream. Threading features just
+# go dark until the migration lands.
+_THREADS_SUPPORTED = None
+
+
+def _threads_supported():
+    """Probe whether the threading schema exists on this DB.
+
+    Cached for the lifetime of the worker process. A successful probe
+    pins the result True; a failed probe pins it False so we don't
+    hammer information_schema on every request.
+    """
+    global _THREADS_SUPPORTED
+    if _THREADS_SUPPORTED is not None:
+        return _THREADS_SUPPORTED
+    try:
+        from sqlalchemy import text as _text
+        row = db.session.execute(
+            _text(
+                "SELECT 1 FROM information_schema.columns "
+                "WHERE table_name = 'war_room_chat_message' "
+                "AND column_name = 'parent_message_id' LIMIT 1"
+            )
+        ).first()
+        _THREADS_SUPPORTED = row is not None
+    except Exception:
+        _THREADS_SUPPORTED = False
+    return _THREADS_SUPPORTED
 
 
 _VALID_KINDS = {
@@ -162,6 +200,11 @@ def _virtual_activity_row(ua_row, war_room_id):
         ref_id=int(ua_row.id),
         ref_case_id=ua_row.case_id,
         activity_type=classify_activity_text(ua_row.activity_desc),
+        # UA-derived rows never participate in threads; the fields are
+        # set explicitly so the row's shape matches the chat-row tuple
+        # and downstream serializers don't have to special-case it.
+        parent_message_id=None,
+        thread_title=None,
         created_at=ua_row.activity_date,
         edited_at=None,
         deleted_at=None,
@@ -303,26 +346,46 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
     # below). Skipping the column keeps the endpoint working on databases
     # that haven't run the `e5a1b46c7d92` migration yet — important for
     # rolling upgrades.
+    # Threading columns are conditionally selected: on databases that
+    # haven't applied the threads migration yet, requesting
+    # `parent_message_id` / `thread_title` would raise UndefinedColumn
+    # before any row could be returned. We probe the schema once and
+    # cache the result.
+    threads_on = _threads_supported()
+    columns = [
+        WarRoomChatMessage.message_id,
+        WarRoomChatMessage.war_room_id,
+        WarRoomChatMessage.author_id,
+        WarRoomChatMessage.body,
+        WarRoomChatMessage.kind,
+        WarRoomChatMessage.ref_type,
+        WarRoomChatMessage.ref_id,
+        WarRoomChatMessage.ref_case_id,
+    ]
+    if threads_on:
+        columns += [
+            WarRoomChatMessage.parent_message_id,
+            WarRoomChatMessage.thread_title,
+        ]
+    columns += [
+        WarRoomChatMessage.created_at,
+        WarRoomChatMessage.edited_at,
+        WarRoomChatMessage.deleted_at,
+        User.user.label('author_login'),
+        User.name.label('author_name'),
+    ]
     q = (
-        db.session.query(
-            WarRoomChatMessage.message_id,
-            WarRoomChatMessage.war_room_id,
-            WarRoomChatMessage.author_id,
-            WarRoomChatMessage.body,
-            WarRoomChatMessage.kind,
-            WarRoomChatMessage.ref_type,
-            WarRoomChatMessage.ref_id,
-            WarRoomChatMessage.ref_case_id,
-            WarRoomChatMessage.created_at,
-            WarRoomChatMessage.edited_at,
-            WarRoomChatMessage.deleted_at,
-            User.user.label('author_login'),
-            User.name.label('author_name'),
-        )
+        db.session.query(*columns)
         .outerjoin(User, User.id == WarRoomChatMessage.author_id)
         .filter(WarRoomChatMessage.war_room_id == war_room_id)
         .filter(WarRoomChatMessage.kind != 'case_activity')
     )
+    if threads_on:
+        # Replies stay inside their thread panel — the top-level stream
+        # only shows roots so a chatty thread doesn't drown out other
+        # activity. Skipped when threading isn't supported on this DB
+        # yet (all messages are roots in that case).
+        q = q.filter(WarRoomChatMessage.parent_message_id.is_(None))
     if before is not None:
         # Real chat ids only — virtual UA ids are negative and the
         # `before_dt` clamp above already covers their case in the
@@ -534,6 +597,254 @@ def emit_system_event(war_room_id, kind, body, *, author_id=None,
             db.session.rollback()
         except Exception:
             pass
+
+
+# ----- Threads -------------------------------------------------------------
+
+_THREAD_TITLE_MAX_LEN = 160
+
+
+def _validate_thread_title(title):
+    if title is None or title == '':
+        return None
+    if not isinstance(title, str):
+        raise BusinessProcessingError('Thread title must be a string')
+    stripped = title.strip()
+    if not stripped:
+        return None
+    if len(stripped) > _THREAD_TITLE_MAX_LEN:
+        raise BusinessProcessingError(
+            f'Thread title must be at most {_THREAD_TITLE_MAX_LEN} characters'
+        )
+    return stripped
+
+
+def _get_root_message(war_room_id, message_id):
+    """Resolve a message id to its thread root.
+
+    A reply (`parent_message_id IS NOT NULL`) folds upward to its
+    parent so callers can pass either the root or any reply id and get
+    consistent behaviour for follow/title/list.
+    """
+    msg = get_message(war_room_id, message_id)
+    if _threads_supported() and msg.parent_message_id is not None:
+        return get_message(war_room_id, msg.parent_message_id)
+    return msg
+
+
+def _require_threads():
+    """Surface a clean error when a thread route is called on a DB
+    that hasn't applied the threading migration yet. Callers turn
+    this into a 400 instead of a 500 with a stack trace."""
+    if not _threads_supported():
+        raise BusinessProcessingError(
+            'Threads are not enabled on this server yet — '
+            'apply the latest migrations.'
+        )
+
+
+def create_reply(war_room_id, parent_message_id, author_id, body):
+    """Post a reply hanging off a thread root.
+
+    Threads are two-level: replying to a reply folds the new row up to
+    the same root, mirroring how operators expect "reply to this
+    thread" to behave. The same `_VALID_KINDS` rules apply — replies
+    are always `kind='message'` for now.
+    """
+    _require_threads()
+    root = _get_root_message(war_room_id, parent_message_id)
+    if root.deleted_at is not None:
+        raise BusinessProcessingError('Cannot reply on a deleted message')
+    body = _validate_body(body, 'message')
+
+    msg = WarRoomChatMessage()
+    msg.war_room_id = war_room_id
+    msg.author_id = author_id
+    msg.body = body
+    msg.kind = 'message'
+    msg.parent_message_id = root.message_id
+    db.session.add(msg)
+    db.session.commit()
+    return msg
+
+
+def list_replies(war_room_id, root_message_id, limit=None):
+    """Return all replies for a thread root, oldest first.
+
+    Oldest-first matches how thread side-pane UIs typically render
+    (read top-to-bottom). Pagination is by `limit` only since threads
+    are expected to be small relative to the main stream.
+    """
+    if not _threads_supported():
+        return []
+    if limit is None:
+        limit = _PAGE_DEFAULT
+    limit = min(int(limit), _PAGE_MAX)
+    root = _get_root_message(war_room_id, root_message_id)
+    q = (
+        db.session.query(
+            WarRoomChatMessage.message_id,
+            WarRoomChatMessage.war_room_id,
+            WarRoomChatMessage.author_id,
+            WarRoomChatMessage.body,
+            WarRoomChatMessage.kind,
+            WarRoomChatMessage.ref_type,
+            WarRoomChatMessage.ref_id,
+            WarRoomChatMessage.ref_case_id,
+            WarRoomChatMessage.parent_message_id,
+            WarRoomChatMessage.thread_title,
+            WarRoomChatMessage.created_at,
+            WarRoomChatMessage.edited_at,
+            WarRoomChatMessage.deleted_at,
+            User.user.label('author_login'),
+            User.name.label('author_name'),
+        )
+        .outerjoin(User, User.id == WarRoomChatMessage.author_id)
+        .filter(WarRoomChatMessage.war_room_id == war_room_id)
+        .filter(WarRoomChatMessage.parent_message_id == root.message_id)
+        .order_by(WarRoomChatMessage.message_id.asc())
+        .limit(limit)
+    )
+    return q.all()
+
+
+def set_thread_title(war_room_id, message_id, title):
+    """Promote a message to a named topic, or rename / clear the name.
+
+    Always operates on the root: if the caller passed a reply id, we
+    fold up to the root so the title lives on the right row.
+    """
+    _require_threads()
+    root = _get_root_message(war_room_id, message_id)
+    root.thread_title = _validate_thread_title(title)
+    db.session.commit()
+    return root
+
+
+def list_thread_roots(war_room_id, limit=None):
+    """Return thread roots with reply counts and follower flags.
+
+    A "thread" here is any root that has either at least one reply OR
+    a named `thread_title`. A naked message with neither isn't listed
+    — operators don't need to see every message in the threads
+    sidebar, just the ones with content branching off them.
+
+    Results are sorted by latest activity (max of root.created_at and
+    the newest reply's created_at) descending so an active thread
+    bubbles to the top.
+    """
+    if not _threads_supported():
+        return []
+    if limit is None:
+        limit = _PAGE_DEFAULT
+    limit = min(int(limit), _PAGE_MAX)
+
+    from sqlalchemy import func
+    # Aggregate replies per root.
+    reply_stats = (
+        db.session.query(
+            WarRoomChatMessage.parent_message_id.label('root_id'),
+            func.count(WarRoomChatMessage.message_id).label('reply_count'),
+            func.max(WarRoomChatMessage.created_at).label('last_reply_at'),
+        )
+        .filter(WarRoomChatMessage.war_room_id == war_room_id)
+        .filter(WarRoomChatMessage.parent_message_id.isnot(None))
+        .group_by(WarRoomChatMessage.parent_message_id)
+        .subquery()
+    )
+
+    q = (
+        db.session.query(
+            WarRoomChatMessage.message_id,
+            WarRoomChatMessage.war_room_id,
+            WarRoomChatMessage.author_id,
+            WarRoomChatMessage.body,
+            WarRoomChatMessage.kind,
+            WarRoomChatMessage.thread_title,
+            WarRoomChatMessage.created_at,
+            WarRoomChatMessage.deleted_at,
+            User.user.label('author_login'),
+            User.name.label('author_name'),
+            reply_stats.c.reply_count,
+            reply_stats.c.last_reply_at,
+        )
+        .outerjoin(User, User.id == WarRoomChatMessage.author_id)
+        .outerjoin(reply_stats,
+                   reply_stats.c.root_id == WarRoomChatMessage.message_id)
+        .filter(WarRoomChatMessage.war_room_id == war_room_id)
+        .filter(WarRoomChatMessage.parent_message_id.is_(None))
+        # Either has replies OR a name — naked unnamed roots aren't
+        # treated as threads.
+        .filter(and_(
+            (reply_stats.c.reply_count.isnot(None)) |
+            (WarRoomChatMessage.thread_title.isnot(None))
+        ))
+        .order_by(
+            func.coalesce(reply_stats.c.last_reply_at,
+                          WarRoomChatMessage.created_at).desc()
+        )
+        .limit(limit)
+    )
+    return q.all()
+
+
+def follow_thread(war_room_id, message_id, user_id):
+    """Add a follow row for (user, root). Idempotent.
+
+    Returns True on insert, False if the row already existed.
+    """
+    _require_threads()
+    root = _get_root_message(war_room_id, message_id)
+    existing = (
+        WarRoomThreadFollower.query
+        .filter_by(message_id=root.message_id, user_id=user_id)
+        .first()
+    )
+    if existing is not None:
+        return False
+    row = WarRoomThreadFollower()
+    row.message_id = root.message_id
+    row.user_id = user_id
+    db.session.add(row)
+    db.session.commit()
+    return True
+
+
+def unfollow_thread(war_room_id, message_id, user_id):
+    """Remove the follow row if present. Idempotent — returns True on
+    delete, False if there was nothing to remove."""
+    if not _threads_supported():
+        return False
+    root = _get_root_message(war_room_id, message_id)
+    row = (
+        WarRoomThreadFollower.query
+        .filter_by(message_id=root.message_id, user_id=user_id)
+        .first()
+    )
+    if row is None:
+        return False
+    db.session.delete(row)
+    db.session.commit()
+    return True
+
+
+def list_followed_thread_ids(war_room_id, user_id):
+    """IDs of roots that `user_id` follows in this war room.
+
+    Used by the UI to flag followed threads in the sidebar list. Scoped
+    to the war room via a join so we don't leak follows across rooms.
+    """
+    if not _threads_supported():
+        return []
+    rows = (
+        db.session.query(WarRoomThreadFollower.message_id)
+        .join(WarRoomChatMessage,
+              WarRoomChatMessage.message_id == WarRoomThreadFollower.message_id)
+        .filter(WarRoomChatMessage.war_room_id == war_room_id)
+        .filter(WarRoomThreadFollower.user_id == user_id)
+        .all()
+    )
+    return [r.message_id for r in rows]
 
 
 # ----- Activity ingest -----------------------------------------------------

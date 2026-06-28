@@ -243,6 +243,21 @@ class WarRoomChatMessage(db.Model):
     ref_id = Column(BigInteger, nullable=True)
     ref_case_id = Column(BigInteger, ForeignKey('cases.case_id', ondelete='SET NULL'),
                          nullable=True, index=True)
+    # Threading. `parent_message_id` is nullable: a row with NULL parent
+    # is a top-level stream message; a row pointing at another message
+    # is a reply hanging off that root. Two-level only — replies can
+    # never themselves be parents (enforced at the business layer, not
+    # at the DB, so we don't pay for a CHECK on every insert).
+    #
+    # `thread_title` is set on root messages that have been promoted to
+    # named topics via `/thread <title>`. NULL means the message is a
+    # plain root with no name; readers fall back to a truncation of the
+    # body for the threads list.
+    parent_message_id = Column(BigInteger,
+                               ForeignKey('war_room_chat_message.message_id',
+                                          ondelete='CASCADE'),
+                               nullable=True, index=True)
+    thread_title = Column(String(160), nullable=True)
     # `activity_type` USED to live here when case activity was backfilled
     # into the chat table. The stream now pulls UserActivity rows live
     # and classifies them at read time, so this column is never
@@ -256,6 +271,31 @@ class WarRoomChatMessage(db.Model):
 
     war_room = relationship('WarRoom')
     author = relationship('User')
+
+
+class WarRoomThreadFollower(db.Model):
+    """Per-user follow flag for a thread root.
+
+    Pure indicator for now — used by the UI to show the followed-thread
+    pill and (later) to drive notifications. One row per (user, root)
+    pair; deleted to unfollow.
+    """
+    __tablename__ = 'war_room_thread_follower'
+    __table_args__ = (
+        UniqueConstraint('message_id', 'user_id',
+                         name='uq_war_room_thread_follower'),
+    )
+
+    id = Column(BigInteger, primary_key=True)
+    # The thread root — always a `WarRoomChatMessage` with
+    # `parent_message_id IS NULL`.
+    message_id = Column(BigInteger,
+                        ForeignKey('war_room_chat_message.message_id',
+                                   ondelete='CASCADE'),
+                        nullable=False, index=True)
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'),
+                     nullable=False, index=True)
+    created_at = Column(DateTime, nullable=False, server_default=text('now()'))
 
 
 class WarRoomChatReaction(db.Model):
