@@ -278,6 +278,16 @@ def war_room_remove_member(war_room_id, user_id):
 # ----------------------------------------------------- Case attachment ---
 
 def war_room_cases_list(war_room_id):
+    """Return the war-room's attached cases joined with their customer.
+
+    Customer name is denormalised onto the row so the SPA can render
+    it without a per-row fetch. `customer_id` and `customer_name`
+    might be NULL on truly orphan cases (shouldn't happen — `Cases`
+    has a non-null FK to `Client` — but the LEFT OUTER JOIN keeps
+    the listing robust against bad data).
+    """
+    from app.models.customers import Client
+
     rows = (
         db.session.query(
             WarRoomCase.war_room_id,
@@ -285,8 +295,11 @@ def war_room_cases_list(war_room_id):
             WarRoomCase.attached_at,
             WarRoomCase.note,
             Cases.name.label('case_name'),
+            Cases.client_id.label('customer_id'),
+            Client.name.label('customer_name'),
         )
         .join(Cases, Cases.case_id == WarRoomCase.case_id)
+        .outerjoin(Client, Client.client_id == Cases.client_id)
         .filter(WarRoomCase.war_room_id == war_room_id)
         .order_by(WarRoomCase.attached_at.asc())
         .all()

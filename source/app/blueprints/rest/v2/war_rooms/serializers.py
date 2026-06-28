@@ -49,6 +49,10 @@ def serialize_case_attachment(row):
         'war_room_id': row.war_room_id,
         'case_id': row.case_id,
         'case_name': row.case_name,
+        # Customer is denormalised on the row so the SPA can render the
+        # case alongside its owning customer without a per-row fetch.
+        'customer_id': getattr(row, 'customer_id', None),
+        'customer_name': getattr(row, 'customer_name', None),
         'attached_at': row.attached_at.isoformat() if row.attached_at else None,
         'note': row.note,
     }

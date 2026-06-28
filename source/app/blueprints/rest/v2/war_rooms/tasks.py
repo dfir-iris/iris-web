@@ -67,8 +67,14 @@ def _serialize_row(row):
         'source_case_task_id': row.source_case_task_id,
         'created_at': row.created_at.isoformat() if row.created_at else None,
         'created_by_id': row.created_by_id,
+        # Display names for each actor on the task. Joined server-side
+        # so the SPA renders the row in one shot.
+        'created_by_login': getattr(row, 'created_by_login', None),
+        'created_by_name': getattr(row, 'created_by_name', None),
         'closed_at': row.closed_at.isoformat() if row.closed_at else None,
         'closed_by_id': row.closed_by_id,
+        'closed_by_login': getattr(row, 'closed_by_login', None),
+        'closed_by_name': getattr(row, 'closed_by_name', None),
         'tags': row.tags,
     }
 

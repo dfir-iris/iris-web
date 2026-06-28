@@ -35,7 +35,19 @@ def _validate_title(title):
 
 
 def war_room_task_list(war_room_id):
+    """List tasks on a war room with assignee / creator / closer joined.
+
+    Three independent outer-joins on `User` (aliased) so a single row
+    carries the display name for every actor — the SPA shows them as
+    "<assignee> · created by <creator>" without a per-row roundtrip.
+    """
     from app.models.authorization import User
+    from sqlalchemy.orm import aliased
+
+    Assignee = aliased(User)
+    Creator = aliased(User)
+    Closer = aliased(User)
+
     rows = (
         db.session.query(
             WarRoomTask.task_id,
@@ -52,10 +64,16 @@ def war_room_task_list(war_room_id):
             WarRoomTask.closed_at,
             WarRoomTask.closed_by_id,
             WarRoomTask.tags,
-            User.user.label('assignee_login'),
-            User.name.label('assignee_name'),
+            Assignee.user.label('assignee_login'),
+            Assignee.name.label('assignee_name'),
+            Creator.user.label('created_by_login'),
+            Creator.name.label('created_by_name'),
+            Closer.user.label('closed_by_login'),
+            Closer.name.label('closed_by_name'),
         )
-        .outerjoin(User, User.id == WarRoomTask.assignee_id)
+        .outerjoin(Assignee, Assignee.id == WarRoomTask.assignee_id)
+        .outerjoin(Creator, Creator.id == WarRoomTask.created_by_id)
+        .outerjoin(Closer, Closer.id == WarRoomTask.closed_by_id)
         .filter(WarRoomTask.war_room_id == war_room_id)
         .order_by(WarRoomTask.created_at.desc())
         .all()
