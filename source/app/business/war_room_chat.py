@@ -50,26 +50,39 @@ _THREADS_SUPPORTED = None
 def _threads_supported():
     """Probe whether the threading schema exists on this DB.
 
-    Cached for the lifetime of the worker process. A successful probe
-    pins the result True; a failed probe pins it False so we don't
-    hammer information_schema on every request.
+    Cached for the lifetime of the worker process *only when positive*
+    — a negative result is NOT cached so a freshly-applied migration is
+    picked up automatically without a Flask restart. The probe is cheap
+    enough that this is fine.
+
+    We use a fresh engine connection (not `db.session.execute`) because
+    a session that just rolled back a transaction can return spurious
+    results for follow-up queries until it's reset.
     """
     global _THREADS_SUPPORTED
-    if _THREADS_SUPPORTED is not None:
-        return _THREADS_SUPPORTED
+    if _THREADS_SUPPORTED is True:
+        return True
     try:
         from sqlalchemy import text as _text
-        row = db.session.execute(
-            _text(
-                "SELECT 1 FROM information_schema.columns "
-                "WHERE table_name = 'war_room_chat_message' "
-                "AND column_name = 'parent_message_id' LIMIT 1"
-            )
-        ).first()
-        _THREADS_SUPPORTED = row is not None
+        with db.engine.connect() as conn:
+            row = conn.execute(
+                _text(
+                    "SELECT 1 FROM information_schema.columns "
+                    "WHERE table_name = 'war_room_chat_message' "
+                    "AND column_name = 'parent_message_id' LIMIT 1"
+                )
+            ).first()
+        supported = row is not None
     except Exception:
-        _THREADS_SUPPORTED = False
-    return _THREADS_SUPPORTED
+        # Swallow but don't pin — the next request retries. The probe
+        # failing usually means a transient DB issue, not a permanent
+        # "threads off" state.
+        from app.logger import logger
+        logger.exception('Threads support probe failed')
+        return False
+    if supported:
+        _THREADS_SUPPORTED = True
+    return supported
 
 
 _VALID_KINDS = {
