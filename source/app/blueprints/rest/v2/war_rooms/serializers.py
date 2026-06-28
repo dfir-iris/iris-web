@@ -49,10 +49,20 @@ def serialize_case_attachment(row):
         'war_room_id': row.war_room_id,
         'case_id': row.case_id,
         'case_name': row.case_name,
-        # Customer is denormalised on the row so the SPA can render the
-        # case alongside its owning customer without a per-row fetch.
+        # Customer / owner / lifecycle joined server-side so the SPA can
+        # render a rich row + filter on these fields without a per-row
+        # fetch.
         'customer_id': getattr(row, 'customer_id', None),
         'customer_name': getattr(row, 'customer_name', None),
+        'owner_id': getattr(row, 'owner_id', None),
+        'owner_login': getattr(row, 'owner_login', None),
+        'owner_name': getattr(row, 'owner_name', None),
+        'open_date': row.open_date.isoformat() if getattr(row, 'open_date', None) else None,
+        'close_date': row.close_date.isoformat() if getattr(row, 'close_date', None) else None,
+        'state_id': getattr(row, 'state_id', None),
+        'state_name': getattr(row, 'state_name', None),
+        'task_count': int(getattr(row, 'task_count', 0) or 0),
+        'task_open_count': int(getattr(row, 'task_open_count', 0) or 0),
         'attached_at': row.attached_at.isoformat() if row.attached_at else None,
         'note': row.note,
     }

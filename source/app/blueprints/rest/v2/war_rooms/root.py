@@ -55,6 +55,7 @@ from app.business.war_rooms import (
     war_room_get,
     war_room_list_for_user,
     war_room_members_list,
+    war_room_people,
     war_room_remove_member,
     war_room_update,
 )
@@ -267,6 +268,24 @@ def remove_member(war_room_id, user_id):
         author_id=iris_current_user.id,
     )
     return response_api_deleted()
+
+
+# --- People banner ----------------------------------------------------------
+
+@war_rooms_blueprint.get('/<int:war_room_id>/people')
+@ac_api_requires()
+def list_people(war_room_id):
+    """Return the union of war-room members and every user with
+    effective access to any attached case.
+
+    Surfaced as a banner above the war-room tabs so an operator can
+    see at a glance who's on the war. Read-only — adding members
+    still goes through the Members tab.
+    """
+    err = require_war_room_read(war_room_id)
+    if err is not None:
+        return err
+    return response_api_success(data=war_room_people(war_room_id))
 
 
 # --- Case attachment --------------------------------------------------------

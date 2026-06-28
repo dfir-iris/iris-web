@@ -278,15 +278,42 @@ def war_room_remove_member(war_room_id, user_id):
 # ----------------------------------------------------- Case attachment ---
 
 def war_room_cases_list(war_room_id):
-    """Return the war-room's attached cases joined with their customer.
+    """Return the war-room's attached cases joined with everything the
+    SPA needs to render a rich row in one shot:
 
-    Customer name is denormalised onto the row so the SPA can render
-    it without a per-row fetch. `customer_id` and `customer_name`
-    might be NULL on truly orphan cases (shouldn't happen — `Cases`
-    has a non-null FK to `Client` — but the LEFT OUTER JOIN keeps
-    the listing robust against bad data).
+      * `customer_id` / `customer_name`
+      * `owner_id` / `owner_name` / `owner_login`
+      * `open_date` / `close_date`
+      * `state_id` / `state_name`
+      * `task_count` (total) / `task_open_count`
+
+    Task counts are computed via subqueries so a case with thousands of
+    tasks doesn't fan out the result set. Open vs. closed is determined
+    by `task_status.status_name not in ('done','closed','cancelled')`
+    case-insensitively — matches what the case dashboard considers open.
     """
+    from app.models.authorization import User
+    from app.models.cases import CaseState
     from app.models.customers import Client
+    from app.models.models import CaseTasks, TaskStatus
+    from sqlalchemy import case as sa_case, func, and_
+
+    open_status_clause = func.lower(TaskStatus.status_name).notin_(
+        ['done', 'closed', 'cancelled']
+    )
+
+    task_total_sq = (
+        db.session.query(
+            CaseTasks.task_case_id.label('case_id'),
+            func.count(CaseTasks.id).label('task_count'),
+            func.sum(
+                sa_case((open_status_clause, 1), else_=0)
+            ).label('task_open_count'),
+        )
+        .outerjoin(TaskStatus, TaskStatus.id == CaseTasks.task_status_id)
+        .group_by(CaseTasks.task_case_id)
+        .subquery()
+    )
 
     rows = (
         db.session.query(
@@ -297,9 +324,25 @@ def war_room_cases_list(war_room_id):
             Cases.name.label('case_name'),
             Cases.client_id.label('customer_id'),
             Client.name.label('customer_name'),
+            Cases.owner_id,
+            User.name.label('owner_name'),
+            User.user.label('owner_login'),
+            Cases.open_date,
+            Cases.close_date,
+            Cases.state_id,
+            CaseState.state_name,
+            func.coalesce(task_total_sq.c.task_count, 0).label('task_count'),
+            func.coalesce(task_total_sq.c.task_open_count, 0).label(
+                'task_open_count'
+            ),
         )
         .join(Cases, Cases.case_id == WarRoomCase.case_id)
         .outerjoin(Client, Client.client_id == Cases.client_id)
+        .outerjoin(User, User.id == Cases.owner_id)
+        .outerjoin(CaseState, CaseState.state_id == Cases.state_id)
+        .outerjoin(
+            task_total_sq, task_total_sq.c.case_id == WarRoomCase.case_id
+        )
         .filter(WarRoomCase.war_room_id == war_room_id)
         .order_by(WarRoomCase.attached_at.asc())
         .all()
@@ -368,6 +411,138 @@ def war_rooms_for_case(case_id):
 
 
 # --------------------------------------------- Default timeline guarantee
+
+def war_room_people(war_room_id):
+    """Return the people working on the war.
+
+    Three lanes merged on `user_id`:
+      1. Explicit members of the war room (carry their `role` here).
+      2. Users with effective access to any case attached to the room.
+      3. The case owners themselves (already covered by lane 2, but
+         we surface them as `is_owner=True` so the SPA can promote
+         them in the banner).
+
+    Each row carries the union of source signals (`is_member`,
+    `is_owner`, `case_ids`) plus the basic identity fields so the
+    banner can render avatars + role hints without per-user fetches.
+    """
+    from app.models.authorization import (
+        User,
+        UserCaseEffectiveAccess,
+        WarRoomAccessLevel,
+    )
+
+    attached_case_ids = [
+        r.case_id
+        for r in (
+            WarRoomCase.query
+            .with_entities(WarRoomCase.case_id)
+            .filter(WarRoomCase.war_room_id == war_room_id)
+            .all()
+        )
+    ]
+
+    members = (
+        db.session.query(
+            WarRoomMember.user_id,
+            WarRoomMember.role,
+            User.user.label('login'),
+            User.name.label('name'),
+            User.email,
+        )
+        .join(User, User.id == WarRoomMember.user_id)
+        .filter(WarRoomMember.war_room_id == war_room_id)
+        .all()
+    )
+
+    case_accessors = []
+    case_owners = []
+    if attached_case_ids:
+        case_accessors = (
+            db.session.query(
+                UserCaseEffectiveAccess.user_id,
+                UserCaseEffectiveAccess.case_id,
+                User.user.label('login'),
+                User.name.label('name'),
+                User.email,
+            )
+            .join(User, User.id == UserCaseEffectiveAccess.user_id)
+            .filter(
+                UserCaseEffectiveAccess.case_id.in_(attached_case_ids),
+                UserCaseEffectiveAccess.access_level
+                != WarRoomAccessLevel.deny_all.value,
+                User.active == True,  # noqa: E712 — SQL identity comparison
+            )
+            .all()
+        )
+        case_owners = (
+            db.session.query(
+                Cases.owner_id.label('user_id'),
+                Cases.case_id,
+                User.user.label('login'),
+                User.name.label('name'),
+                User.email,
+            )
+            .join(User, User.id == Cases.owner_id)
+            .filter(Cases.case_id.in_(attached_case_ids))
+            .all()
+        )
+
+    people = {}
+    for m in members:
+        people[m.user_id] = {
+            'user_id': m.user_id,
+            'login': m.login,
+            'name': m.name,
+            'email': m.email,
+            'role': m.role,
+            'is_member': True,
+            'is_owner': False,
+            'case_ids': set(),
+        }
+    for row in case_accessors:
+        entry = people.setdefault(row.user_id, {
+            'user_id': row.user_id,
+            'login': row.login,
+            'name': row.name,
+            'email': row.email,
+            'role': None,
+            'is_member': False,
+            'is_owner': False,
+            'case_ids': set(),
+        })
+        entry['case_ids'].add(row.case_id)
+    for row in case_owners:
+        entry = people.setdefault(row.user_id, {
+            'user_id': row.user_id,
+            'login': row.login,
+            'name': row.name,
+            'email': row.email,
+            'role': None,
+            'is_member': False,
+            'is_owner': True,
+            'case_ids': set(),
+        })
+        entry['is_owner'] = True
+        entry['case_ids'].add(row.case_id)
+
+    # Sort: members first (leads before responders before observers),
+    # then case owners, then plain access — within each group by display
+    # name so the banner reads predictably.
+    role_rank = {'lead': 0, 'responder': 1, 'observer': 2}
+
+    def sort_key(p):
+        member_rank = 0 if p['is_member'] else (1 if p['is_owner'] else 2)
+        role = role_rank.get(p.get('role') or '', 99)
+        return (member_rank, role, (p.get('name') or p.get('login') or '').lower())
+
+    rows = []
+    for p in people.values():
+        p['case_ids'] = sorted(p['case_ids'])
+        rows.append(p)
+    rows.sort(key=sort_key)
+    return rows
+
 
 def war_room_ensure_default_timeline(war_room_id, created_by_id=None):
     """Create the war room's "Main" timeline if missing. Idempotent."""

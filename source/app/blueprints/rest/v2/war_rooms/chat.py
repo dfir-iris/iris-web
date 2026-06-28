@@ -378,24 +378,31 @@ def post_chat(war_room_id):
             resolved = _resolve_slash(war_room_id, slash[0], slash[1])
         except BusinessProcessingError as e:
             return response_api_error(e.get_message())
-        except ImportError as e:
+        except ImportError:
             # A required sub-system isn't importable (test envs, a
-            # feature module not yet packaged). Surface it instead of
-            # silently dropping the command so the operator sees what
-            # broke.
+            # feature module not yet packaged). Surface a generic
+            # "unavailable" message — exception text would leak
+            # internal module paths to the operator's browser.
+            from app.logger import logger
+            logger.exception('Slash command module missing')
             return response_api_error(
-                f'Command unavailable in this build: {e}'
+                'Command unavailable in this build.'
             )
-        except Exception as e:  # noqa: BLE001 — narrow to message text
+        except Exception:  # noqa: BLE001 — generic catch with correlation id
             # Any unexpected error inside a slash handler used to bubble
             # up as a 500 with no body, which made `/summary` and the
-            # like look like silent failures. Surface the message so the
-            # SPA toast actually says something useful.
-            import traceback
+            # like look like silent failures. Log full traceback
+            # server-side with a correlation id and return a generic
+            # message — don't echo `repr(e)` to the SPA, since that
+            # surfaces table names, file paths, etc.
+            import uuid
             from app.logger import logger
-            logger.exception('Slash command failed')
+            err_id = uuid.uuid4().hex[:8]
+            logger.exception(
+                'Slash command failed', extra={'err_id': err_id}
+            )
             return response_api_error(
-                f'Command failed: {e.__class__.__name__}: {e}'
+                f'Command failed (ref {err_id}). See server logs.'
             )
 
         if resolved is not None:
