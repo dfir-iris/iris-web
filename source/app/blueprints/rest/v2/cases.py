@@ -502,25 +502,6 @@ def list_case_followers(identifier):
     ])
 
 
-@cases_blueprint.get('/<int:identifier>/summary')
-@ac_api_requires()
-def case_summary_endpoint(identifier):
-    """Aggregated indicators for the war-room graph side sheet."""
-    from app.business.case_summary import case_summary
-
-    if not cases_exists(identifier):
-        return response_api_not_found()
-    if not ac_fast_check_current_user_has_case_access(
-        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
-    ):
-        return ac_api_return_access_denied(caseid=identifier)
-    try:
-        data = case_summary(identifier)
-    except ObjectNotFoundError:
-        return response_api_not_found()
-    return response_api_success(data)
-
-
 @cases_blueprint.get('/<int:identifier>/war-rooms')
 @ac_api_requires()
 def list_case_war_rooms(identifier):

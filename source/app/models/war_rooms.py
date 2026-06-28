@@ -29,7 +29,6 @@ from sqlalchemy import Boolean
 from sqlalchemy import CheckConstraint
 from sqlalchemy import Column
 from sqlalchemy import DateTime
-from sqlalchemy import Float
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -368,46 +367,6 @@ class WarRoomSitRep(db.Model):
 
     war_room = relationship('WarRoom')
     authored_by = relationship('User')
-
-
-class WarRoomGraphNode(db.Model):
-    """One node on the war-room cases-as-graph board.
-
-    `kind` is `case` when the node represents an attached case, or
-    `annotation` for free-floating notes/anchors the operator dropped on
-    the canvas. `ref_id` points at the case when applicable.
-    """
-    __tablename__ = 'war_room_graph_node'
-
-    node_id = Column(BigInteger, primary_key=True)
-    war_room_id = Column(BigInteger,
-                         ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
-    kind = Column(String(16), nullable=False)
-    ref_id = Column(BigInteger, nullable=True)
-    label = Column(Text, nullable=True)
-    note_md = Column(Text, nullable=True)
-    color = Column(String(7), nullable=True)
-    x = Column(Float, nullable=False, server_default=text('0'))
-    y = Column(Float, nullable=False, server_default=text('0'))
-
-
-class WarRoomGraphEdge(db.Model):
-    __tablename__ = 'war_room_graph_edge'
-
-    edge_id = Column(BigInteger, primary_key=True)
-    war_room_id = Column(BigInteger,
-                         ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
-    from_node_id = Column(BigInteger,
-                          ForeignKey('war_room_graph_node.node_id', ondelete='CASCADE'),
-                          nullable=False)
-    to_node_id = Column(BigInteger,
-                        ForeignKey('war_room_graph_node.node_id', ondelete='CASCADE'),
-                        nullable=False)
-    label = Column(Text, nullable=True)
-    note_md = Column(Text, nullable=True)
-    style = Column(String(16), nullable=True)
 
 
 class WarRoomDatastoreFile(db.Model):
