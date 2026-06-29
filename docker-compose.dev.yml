@@ -111,10 +111,16 @@ services:
       - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-https://127.0.0.1}
       - PUBLIC_INTERNAL_API_URL=http://${IRIS_UPSTREAM_SERVER}:${IRIS_UPSTREAM_PORT}
       - PUBLIC_USE_MOCK_API_DATA=false
-      - ORIGIN=https://127.0.0.1
+      - ORIGIN=${ORIGIN:-https://127.0.0.1}
       - PROTOCOL_HEADER=x-forwarded-proto
       - HOST_HEADER=x-forwarded-host
       - NODE_ENV=development
+      # Whitelist hostnames Vite will serve the dev SPA to. Without
+      # this, hitting the container behind nginx via a real hostname
+      # gets blocked by Vite's host-header check. Set in iris-web/.env:
+      #   VITE_ALLOWED_HOSTS=iris-lab.example.com
+      # or `all` to disable the check entirely.
+      - VITE_ALLOWED_HOSTS=${VITE_ALLOWED_HOSTS:-}
     volumes:
       - ${IRIS_SVELTEKIT_FRONTEND_DIR:-../iris-frontend}:/app # Map the frontend directory dynamically
       - /app/node_modules # Ensure `node_modules` is preserved inside the container
