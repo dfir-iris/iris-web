@@ -30,6 +30,13 @@ services:
       - POSTGRES_ADMIN_USER
       - POSTGRES_ADMIN_PASSWORD
       - POSTGRES_DB
+      # PG18's Docker image refuses to use a directory mounted directly
+      # as PGDATA (it expects the version-prefixed layout from
+      # pg_ctlcluster). Pointing PGDATA at a sub-path inside the
+      # mounted volume sidesteps that check and keeps the on-disk
+      # layout the same across the project's bind mounts / named
+      # volumes regardless of host.
+      - PGDATA=/var/lib/postgresql/data/pgdata
     networks:
       - iris_backend
     volumes:

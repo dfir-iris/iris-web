@@ -199,21 +199,28 @@ step_restore_to_pg18() {
     fi
 
     # If the volume was already initialised as PG18 from a previous failed
-    # run we want to wipe it before re-restoring.
+    # run we want to wipe it before re-restoring. We look inside the
+    # `pgdata` sub-path because that's where PG18 actually stores its
+    # cluster (see the PGDATA env var below for why).
     local existing_ver
     existing_ver="$(docker run --rm -v "${NEW_VOLUME}:/var/lib/postgresql/data" "${NEW_IMAGE}" \
-        sh -c 'cat /var/lib/postgresql/data/PG_VERSION 2>/dev/null || true')"
+        sh -c 'cat /var/lib/postgresql/data/pgdata/PG_VERSION 2>/dev/null || true')"
     if [[ -n "${existing_ver}" && "${existing_ver}" != "18" ]]; then
         die "${NEW_VOLUME} contains PG_VERSION=${existing_ver} — refusing to overwrite. Inspect manually."
     fi
 
     log "Starting temporary PG18 container to receive the restore"
+    # PGDATA points at a sub-path inside the mounted volume to satisfy
+    # PG18's "PGDATA must not equal the mountpoint" check. This matches
+    # the compose service so the volume the restore writes is the same
+    # layout the running iriswebapp_db will pick up.
     docker run -d --rm \
         --name "${TMP_NEW_CTR}" \
         -v "${NEW_VOLUME}:/var/lib/postgresql/data" \
         -v "${DUMP_DIR}:/dumps:ro" \
         -e POSTGRES_USER="${POSTGRES_USER}" \
         -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
+        -e PGDATA=/var/lib/postgresql/data/pgdata \
         "${NEW_IMAGE}" >/dev/null
 
     log "Waiting for PG18 to accept connections"
