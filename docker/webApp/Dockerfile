@@ -85,10 +85,6 @@ COPY ./source .
 
 COPY --from=compile-js-image /ui/dist/ /iriswebapp/static/
 
-# Add execution right to binaries needed by evtx2splunk for iris_evtx module
-RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/fd
-RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/evtx_dump
-
 RUN chmod +x iris-entrypoint.sh
 RUN chmod +x wait-for-iriswebapp.sh
 #ENTRYPOINT [ "./iris-entrypoint.sh" ]
