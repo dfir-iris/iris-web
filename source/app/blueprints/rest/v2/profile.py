@@ -43,7 +43,7 @@ from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Permissions
 from app.models.authorization import UserFollowedCase
 from app.models.cases import Cases
-from app.schema.marshables import CaseDetailsSchema
+from app.schema.marshables import CaseSchemaForAPIV2
 from app.schema.marshables import UserSchemaForAPIV2
 
 
@@ -180,7 +180,12 @@ class ProfileOperations:
             )
         ]
 
-        return response_api_success(data=CaseDetailsSchema(many=True).dump(visible))
+        # Use the v2 API schema so the response matches what the SPA's
+        # `Case` type expects (case_name / case_customer / severity /
+        # state). `CaseDetailsSchema` here would ship the raw model
+        # field names (`name`, `client`, ...) and the dashboard
+        # "Following" tile would render rows with no title.
+        return response_api_success(data=CaseSchemaForAPIV2(many=True).dump(visible))
 
     def follow_case(self):
         """Add a case to the current user's followed-cases list.
