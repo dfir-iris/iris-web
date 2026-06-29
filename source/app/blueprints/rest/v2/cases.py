@@ -53,6 +53,7 @@ from app.business.cases import cases_get_by_identifier
 from app.business.cases import cases_reopen
 from app.business.cases import cases_update
 from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
+from app.datamgmt.manage.manage_access_control_db import get_case_effective_access
 from app.models.errors import BusinessProcessingError, ObjectNotFoundError
 from app.business.cases import cases_filter
 from app.schema.marshables import CaseSchemaForAPIV2
@@ -467,6 +468,26 @@ def list_case_access_users(identifier):
 
     users = get_users_list_restricted_from_case(identifier)
     return response_api_success(users)
+
+
+@cases_blueprint.get('/<int:identifier>/access/me')
+@ac_api_requires()
+def get_case_access_me(identifier):
+    """Return the current user's effective access level for this case.
+
+    The SPA reads this once per case load to gate edit/delete affordances
+    before the user can attempt a 403. The integer matches `CaseAccessLevel`
+    (1 = deny_all, 2 = read_only, 4 = full_access). A user with no row in
+    `UserCaseEffectiveAccess` is treated as deny_all so the frontend can
+    still render a coherent "no access" state.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+
+    level = get_case_effective_access(iris_current_user.id, identifier)
+    if level is None:
+        level = CaseAccessLevel.deny_all.value
+    return response_api_success({'access_level': int(level)})
 
 
 @cases_blueprint.get('/<int:identifier>/followers')

@@ -62,7 +62,12 @@ class NotesDirectories:
     def search(self, case_identifier):
         if not cases_exists(case_identifier):
             return response_api_not_found()
-        if not ac_fast_check_current_user_has_case_access(case_identifier, [CaseAccessLevel.full_access]):
+        # Listing folders is a read operation — read-only users need it to
+        # navigate the notes tree. Only mutating endpoints (create/update/
+        # delete) below require full_access.
+        if not ac_fast_check_current_user_has_case_access(
+            case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+        ):
             return ac_api_return_access_denied(case_identifier)
 
         pagination_parameters = parse_pagination_parameters(request, default_order_by='name', default_direction='asc')
