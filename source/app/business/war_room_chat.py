@@ -50,35 +50,47 @@ _THREADS_SUPPORTED = None
 def _threads_supported():
     """Probe whether the threading schema exists on this DB.
 
-    Cached for the lifetime of the worker process *only when positive*
-    — a negative result is NOT cached so a freshly-applied migration is
-    picked up automatically without a Flask restart. The probe is cheap
-    enough that this is fine.
+    Runs the actual query against the column on a fresh connection. If
+    Postgres raises `UndefinedColumn`, threads are off — anything else
+    means they're available. Cached only on a positive result so a
+    freshly-applied migration is picked up on the next request without
+    a Flask restart.
 
-    We use a fresh engine connection (not `db.session.execute`) because
-    a session that just rolled back a transaction can return spurious
-    results for follow-up queries until it's reset.
+    Earlier implementations used `information_schema.columns` and the
+    SQLAlchemy inspector — both gave wrong negatives in practice
+    (search_path issues, stale inspector caches). Going straight to the
+    column is the most direct test.
     """
     global _THREADS_SUPPORTED
     if _THREADS_SUPPORTED is True:
         return True
     try:
         from sqlalchemy import text as _text
+        # Fresh connection so a poisoned session can't taint the probe.
+        # We `SELECT parent_message_id LIMIT 0` so it works on an empty
+        # table — and Postgres still validates the column reference at
+        # plan time, so the missing-column case raises immediately.
         with db.engine.connect() as conn:
-            row = conn.execute(
+            conn.execute(
                 _text(
-                    "SELECT 1 FROM information_schema.columns "
-                    "WHERE table_name = 'war_room_chat_message' "
-                    "AND column_name = 'parent_message_id' LIMIT 1"
+                    'SELECT parent_message_id '
+                    'FROM war_room_chat_message LIMIT 0'
                 )
-            ).first()
-        supported = row is not None
-    except Exception:
-        # Swallow but don't pin — the next request retries. The probe
-        # failing usually means a transient DB issue, not a permanent
-        # "threads off" state.
+            )
+        supported = True
+    except Exception as e:
+        # Distinguish "column doesn't exist" from any other DB error so
+        # operators have a fighting chance of debugging the probe when
+        # it goes wrong. The `pgcode` for UndefinedColumn is '42703'.
         from app.logger import logger
-        logger.exception('Threads support probe failed')
+        pgcode = getattr(getattr(e, 'orig', None), 'pgcode', None)
+        if pgcode == '42703':
+            logger.info('Threads disabled: parent_message_id column missing')
+        else:
+            logger.exception(
+                'Threads support probe failed unexpectedly '
+                '(pgcode=%s)', pgcode
+            )
         return False
     if supported:
         _THREADS_SUPPORTED = True
