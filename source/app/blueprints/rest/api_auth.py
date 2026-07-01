@@ -5,7 +5,22 @@ import jwt
 
 from app import app
 from app.business.users import users_get_active
+from app.models.errors import ObjectNotFoundError
 from app.blueprints.rest.endpoints import response_api_error
+
+
+def _safe_get_active(user_id):
+    # The identifier on a token/session may point at a user that has since
+    # been deleted or deactivated. Callers translate the None into either
+    # "invalid" (JWT — where the caller *did* present a signed identity
+    # that we're rejecting) or a plain unauthenticated fallthrough for
+    # legacy/session paths. Without this we'd propagate
+    # ObjectNotFoundError up to the Flask exception handler and log a
+    # 500 for what is really just a stale credential.
+    try:
+        return users_get_active(user_id)
+    except ObjectNotFoundError:
+        return None
 
 
 def _jwt_user():
@@ -32,19 +47,22 @@ def _jwt_user():
     if payload.get("mfa_required") and not payload.get("mfa_verified"):
         return "invalid"
 
-    return users_get_active(payload["user_id"])
+    user = _safe_get_active(payload["user_id"])
+    # Signed token for a user that no longer exists → reject outright,
+    # don't quietly fall through to legacy/session auth.
+    return user if user is not None else "invalid"
 
 
 def _legacy_token_user():
     if not hasattr(g, "auth_user"):
         return None
-    return users_get_active(g.auth_user["user_id"])
+    return _safe_get_active(g.auth_user["user_id"])
 
 
 def _session_user():
     if not current_user.is_authenticated:
         return None
-    return users_get_active(current_user.id)
+    return _safe_get_active(current_user.id)
 
 
 def api_auth(*, require_mfa: bool = False):
