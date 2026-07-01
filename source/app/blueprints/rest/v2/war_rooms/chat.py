@@ -31,6 +31,7 @@ from app.business.war_room_chat import create_reply
 from app.business.war_room_chat import delete_message
 from app.business.war_room_chat import follow_thread
 from app.business.war_room_chat import list_followed_thread_ids
+from app.business.war_room_chat import list_trace_log
 from app.business.war_room_chat import list_messages
 from app.business.war_room_chat import list_reactions
 from app.business.war_room_chat import list_replies
@@ -107,6 +108,12 @@ def list_chat(war_room_id):
     limit = request.args.get('limit', type=int)
     kinds_raw = request.args.get('kinds', type=str)
     case_ids_raw = request.args.get('case_ids', type=str)
+    # `search` drives the top-of-stream quick-filter — empty string is
+    # normalised to None so the SPA can just always pass the field.
+    search_raw = request.args.get('search', type=str)
+    search = search_raw.strip() if isinstance(search_raw, str) else None
+    if search == '':
+        search = None
 
     kinds = [k.strip() for k in kinds_raw.split(',') if k.strip()] if kinds_raw else None
     case_ids = None
@@ -117,7 +124,7 @@ def list_chat(war_room_id):
             return response_api_error('Invalid case_ids')
 
     rows = list_messages(war_room_id, before=before, limit=limit,
-                         kinds=kinds, case_ids=case_ids)
+                         kinds=kinds, case_ids=case_ids, search=search)
     reactions = list_reactions([r.message_id for r in rows])
     return response_api_success(
         data=[_serialize(r, reactions.get(r.message_id)) for r in rows]
@@ -551,6 +558,24 @@ def list_threads(war_room_id):
     )
 
 
+@war_rooms_chat_blueprint.get('/trace-log')
+@ac_api_requires()
+def list_trace(war_room_id):
+    """Return every decision / pin / note in the war room, including
+    replies inside threads.
+
+    Used by the "Decisions & Pins" sidebar index — the operator needs
+    a complete, time-ordered "who decided what and when" view without
+    having to page the entire stream back manually.
+    """
+    err = require_war_room_read(war_room_id)
+    if err is not None:
+        return err
+    limit = request.args.get('limit', type=int)
+    rows = list_trace_log(war_room_id, limit=limit)
+    return response_api_success(data=[_serialize(r) for r in rows])
+
+
 @war_rooms_chat_blueprint.get('/<int:message_id>/replies')
 @ac_api_requires()
 def list_message_replies(war_room_id, message_id):
@@ -578,9 +603,33 @@ def post_reply(war_room_id, message_id):
     if not isinstance(raw, dict):
         return response_api_error('Invalid request')
     body = raw.get('body')
+    if not isinstance(body, str):
+        return response_api_error('body is required')
+
+    # Slash commands inside a reply. Only the "trace" kinds — /decision,
+    # /pin, /note — persist as structured rows on the thread itself; the
+    # room-wide commands (/attach, /task, /state, …) belong on the main
+    # stream, not buried in a thread. We reject those explicitly rather
+    # than silently storing them as plain replies so the operator's
+    # intent isn't lost.
+    kind = 'message'
+    slash = parse_slash(body)
+    if slash is not None:
+        cmd, rest = slash
+        if cmd in ('decision', 'pin', 'note'):
+            if cmd == 'decision' and not rest:
+                return response_api_error('Usage: /decision <what we decided>')
+            kind = cmd
+            body = rest
+        else:
+            return response_api_error(
+                f'/{cmd} is a room-wide command — post it on the main '
+                f'stream, not inside a thread.'
+            )
+
     try:
         msg = create_reply(
-            war_room_id, message_id, iris_current_user.id, body
+            war_room_id, message_id, iris_current_user.id, body, kind=kind,
         )
     except ObjectNotFoundError:
         return response_api_not_found()
@@ -592,6 +641,7 @@ def post_reply(war_room_id, message_id):
     return response_api_created({
         'message_id': msg.message_id,
         'parent_message_id': msg.parent_message_id,
+        'kind': msg.kind,
     })
 
 

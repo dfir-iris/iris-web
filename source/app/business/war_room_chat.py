@@ -239,7 +239,7 @@ def _virtual_activity_row(ua_row, war_room_id):
 
 
 def _fetch_live_case_activities(war_room_id, before_dt, limit,
-                                case_ids=None):
+                                case_ids=None, search=None):
     """Pull live `UserActivity` rows for cases attached to this war room.
 
     Avoids the chat-table backfill: every render of the stream sees
@@ -295,6 +295,9 @@ def _fetch_live_case_activities(war_room_id, before_dt, limit,
     )
     if before_dt is not None:
         q = q.filter(UserActivity.activity_date < before_dt)
+    needle = search.strip() if isinstance(search, str) else None
+    if needle:
+        q = q.filter(UserActivity.activity_desc.ilike(f'%{needle}%'))
 
     rows = (
         q.order_by(desc(UserActivity.activity_date))
@@ -305,7 +308,7 @@ def _fetch_live_case_activities(war_room_id, before_dt, limit,
 
 
 def list_messages(war_room_id, before=None, limit=None, kinds=None,
-                  case_ids=None):
+                  case_ids=None, search=None):
     """Return the next page of the war-room stream, newest first.
 
     Two sources are merged at read time:
@@ -325,6 +328,10 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
 
     `kinds` filtering works as before. `case_ids` constrains both
     sides (chat-row `ref_case_id` and `UserActivity.case_id`).
+    `search` case-insensitively matches the chat body / activity
+    description with a `%needle%` LIKE — the SPA uses this to drive
+    the top-of-stream quick-filter without pulling the full firehose
+    to the client.
     """
     if limit is None:
         limit = _PAGE_DEFAULT
@@ -423,6 +430,13 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
         q = q.filter(WarRoomChatMessage.kind.in_(list(kinds)))
     if case_ids:
         q = q.filter(WarRoomChatMessage.ref_case_id.in_(list(case_ids)))
+    # Free-text filter: ILIKE against the message body. Soft-deleted
+    # rows drop out here too, because their body is nulled at delete
+    # time and NULL doesn't match `LIKE`. Overfetch is fine — the merge
+    # step below trims to `limit`.
+    needle = search.strip() if isinstance(search, str) else None
+    if needle:
+        q = q.filter(WarRoomChatMessage.body.ilike(f'%{needle}%'))
 
     chat_rows = q.order_by(desc(WarRoomChatMessage.message_id)).limit(limit).all()
 
@@ -432,7 +446,8 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
     # Overfetch live activities to fill the page after merge — we'll
     # trim down to `limit` after sorting.
     activity_rows = _fetch_live_case_activities(
-        war_room_id, before_dt=before_dt, limit=limit, case_ids=case_ids
+        war_room_id, before_dt=before_dt, limit=limit, case_ids=case_ids,
+        search=needle,
     )
 
     # Merge by created_at desc. When timestamps tie, real chat rows
@@ -668,25 +683,38 @@ def _require_threads():
         )
 
 
-def create_reply(war_room_id, parent_message_id, author_id, body):
+def create_reply(war_room_id, parent_message_id, author_id, body, kind='message'):
     """Post a reply hanging off a thread root.
 
     Threads are two-level: replying to a reply folds the new row up to
     the same root, mirroring how operators expect "reply to this
-    thread" to behave. The same `_VALID_KINDS` rules apply — replies
-    are always `kind='message'` for now.
+    thread" to behave. `kind` accepts the trace-friendly subset
+    (`message`, `decision`, `pin`, `note`) so slash commands like
+    `/decision` and `/pin` used inside a thread persist as structured
+    rows — the operator gets the same visual chrome (icon, colour) as
+    on the main stream, and the "who decided what and when" index can
+    surface these entries whether they were posted top-level or in a
+    thread.
     """
     _require_threads()
     root = _get_root_message(war_room_id, parent_message_id)
     if root.deleted_at is not None:
         raise BusinessProcessingError('Cannot reply on a deleted message')
-    body = _validate_body(body, 'message')
+    # Only the plain-message + trace kinds are allowed as replies. Other
+    # kinds (task_assigned, case_attached, sitrep_published, …) represent
+    # room-wide state changes that belong in the main stream, not
+    # buried inside a thread.
+    if kind not in ('message', 'decision', 'pin', 'note'):
+        raise BusinessProcessingError(
+            f'Kind "{kind}" is not allowed as a thread reply'
+        )
+    body = _validate_body(body, kind)
 
     msg = WarRoomChatMessage()
     msg.war_room_id = war_room_id
     msg.author_id = author_id
     msg.body = body
-    msg.kind = 'message'
+    msg.kind = kind
     msg.parent_message_id = root.message_id
     db.session.add(msg)
     db.session.commit()
@@ -728,6 +756,59 @@ def list_replies(war_room_id, root_message_id, limit=None):
         .filter(WarRoomChatMessage.war_room_id == war_room_id)
         .filter(WarRoomChatMessage.parent_message_id == root.message_id)
         .order_by(WarRoomChatMessage.message_id.asc())
+        .limit(limit)
+    )
+    return q.all()
+
+
+_TRACE_KINDS = ('decision', 'pin', 'note')
+
+
+def list_trace_log(war_room_id, limit=None):
+    """Return every trace-worthy message (decisions, pins, notes) in the
+    war room — including replies inside threads.
+
+    Unlike `list_messages`, this doesn't skip replies (the main-stream
+    listing hides them so a chatty thread doesn't drown out other
+    activity, but the trace log needs the full picture: a decision
+    posted inside a thread is still a decision). Ordered newest-first
+    so the sidebar renders "most recent first" without a client-side
+    reverse.
+    """
+    if limit is None:
+        limit = _PAGE_MAX
+    limit = min(int(limit), _PAGE_MAX)
+
+    threads_on = _threads_supported()
+    columns = [
+        WarRoomChatMessage.message_id,
+        WarRoomChatMessage.war_room_id,
+        WarRoomChatMessage.author_id,
+        WarRoomChatMessage.body,
+        WarRoomChatMessage.kind,
+        WarRoomChatMessage.ref_type,
+        WarRoomChatMessage.ref_id,
+        WarRoomChatMessage.ref_case_id,
+        WarRoomChatMessage.created_at,
+        WarRoomChatMessage.edited_at,
+        WarRoomChatMessage.deleted_at,
+        User.user.label('author_login'),
+        User.name.label('author_name'),
+    ]
+    # `parent_message_id` doesn't exist on installs that haven't run
+    # the threads migration yet — probe the schema so this endpoint
+    # keeps working through a rolling upgrade. When it's absent, every
+    # trace-worthy message is by definition a top-level one anyway.
+    if threads_on:
+        columns.append(WarRoomChatMessage.parent_message_id)
+
+    q = (
+        db.session.query(*columns)
+        .outerjoin(User, User.id == WarRoomChatMessage.author_id)
+        .filter(WarRoomChatMessage.war_room_id == war_room_id)
+        .filter(WarRoomChatMessage.kind.in_(_TRACE_KINDS))
+        .filter(WarRoomChatMessage.deleted_at.is_(None))
+        .order_by(desc(WarRoomChatMessage.created_at), desc(WarRoomChatMessage.message_id))
         .limit(limit)
     )
     return q.all()
