@@ -24,6 +24,7 @@ from app.datamgmt.case.case_assets_db import search_assets
 from app.datamgmt.case.case_events_db import search_events
 from app.datamgmt.case.case_tasks_db import search_tasks
 from app.datamgmt.case.case_evidences_search_db import search_evidences
+from app.datamgmt.manage.manage_cases_db import search_case_summaries
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
 
 
@@ -38,6 +39,7 @@ _SEARCHERS = {
     'events': search_events,
     'tasks': search_tasks,
     'evidences': search_evidences,
+    'summaries': search_case_summaries,
 }
 
 SUPPORTED_SEARCH_TYPES = tuple(_SEARCHERS.keys())
@@ -47,6 +49,8 @@ def _annotate(rows, search_type):
     # Tag every row with its discriminator + a stable id field the frontend
     # can use as a list key. Each helper projects its own primary key into
     # the row already; here we just normalise the name to `result_id`.
+    # Summaries key off `case_id` since the summary lives on the case row
+    # itself — there's no separate "summary" record.
     id_field_per_type = {
         'ioc': 'ioc_id',
         'notes': 'note_id',
@@ -55,6 +59,7 @@ def _annotate(rows, search_type):
         'events': 'event_id',
         'tasks': 'task_id',
         'evidences': 'evidence_id',
+        'summaries': 'case_id',
     }
     id_field = id_field_per_type[search_type]
     for row in rows:

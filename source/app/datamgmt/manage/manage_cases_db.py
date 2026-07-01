@@ -182,6 +182,32 @@ def user_list_cases_view(user_id):
     return [r.case_id for r in res]
 
 
+def search_case_summaries(search_value, accessible_case_ids=None):
+    # Same shape as the per-type search helpers in datamgmt/case/*_db.py:
+    # accept a `%`-wildcarded value + optional access-scope list, return a
+    # list of `_asdict()` row dicts the global search endpoint annotates
+    # with a `type` discriminator.
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = Cases.case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
+    rows = Cases.query.with_entities(
+        Cases.case_id,
+        Cases.name.label('case_name'),
+        Cases.description.label('summary_excerpt'),
+        Client.name.label('customer_name')
+    ).filter(
+        and_(
+            Cases.description.ilike(f'%{search_value}%'),
+            Cases.client_id == Client.client_id,
+            scope_filter
+        )
+    ).order_by(Client.name, Cases.case_id).all()
+
+    return [row._asdict() for row in rows]
+
+
 def close_case(case_id):
     res = Cases.query.filter(
         Cases.case_id == case_id
