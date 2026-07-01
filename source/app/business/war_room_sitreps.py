@@ -93,9 +93,12 @@ def sitrep_draft(war_room_id, title, body_md='', authored_by_id=None):
 
 
 def sitrep_update(war_room_id, sitrep_id, title=None, body_md=None):
+    # `published` is a state marker, not a write-lock — an IC needs to
+    # be able to correct a published SitRep (typo, updated facts) after
+    # the fact. The snapshot captured at publish time stays as it was
+    # (it represents "what this report claimed at publication"), only
+    # the free-text body and title are editable here.
     sit = sitrep_get(war_room_id, sitrep_id)
-    if sit.published:
-        raise BusinessProcessingError('Published SitReps are immutable')
     if title is not None:
         if not isinstance(title, str) or not title.strip():
             raise BusinessProcessingError('SitRep title is required')
@@ -123,9 +126,12 @@ def sitrep_publish(war_room_id, sitrep_id):
 
 
 def sitrep_delete(war_room_id, sitrep_id):
+    # Published SitReps can still be deleted — matches the "publishing
+    # is just a state" contract. Callers (UI) should confirm loudly for
+    # published ones since a delete removes the record entirely; the
+    # chat "SitRep published" mirror-message stays but its ref now
+    # points at nothing, which the chat surface handles as a dead ref.
     sit = sitrep_get(war_room_id, sitrep_id)
-    if sit.published:
-        raise BusinessProcessingError('Published SitReps cannot be deleted')
     db.session.delete(sit)
     db.session.commit()
 
