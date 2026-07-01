@@ -799,11 +799,59 @@ def get_filtered_cases(current_user_id,
                 return Severity.severity_name
             return None
 
+        def _tag_condition(op: str, value: str):
+            # Tags are many-to-many (Cases → CaseTags → Tags), so a plain
+            # join would multiply case rows in the result set. Use
+            # EXISTS/NOT EXISTS against the tag title instead — one row
+            # per case regardless of how many tags match, and the
+            # semantics of `not_contains` / `empty` come out clean.
+            base = db.session.query(CaseTags.case_id).join(
+                Tags, Tags.id == CaseTags.tag_id
+            ).filter(CaseTags.case_id == Cases.case_id)
+
+            def has(pattern: str):
+                return base.filter(Tags.tag_title.ilike(pattern)).exists()
+
+            def eq(exact: str):
+                return base.filter(Tags.tag_title == exact).exists()
+
+            if op == 'empty':
+                # No tags at all attached to the case.
+                return ~db.session.query(CaseTags.case_id).filter(
+                    CaseTags.case_id == Cases.case_id
+                ).exists()
+            if op == 'not_empty':
+                return db.session.query(CaseTags.case_id).filter(
+                    CaseTags.case_id == Cases.case_id
+                ).exists()
+            if op == 'equals':
+                return eq(value)
+            if op == 'not':
+                return ~eq(value)
+            if op == 'starts_with':
+                return has(f'{value}%')
+            if op == 'not_starts_with':
+                return ~has(f'{value}%')
+            if op == 'contains':
+                return has(f'%{value}%')
+            if op == 'not_contains':
+                return ~has(f'%{value}%')
+            if op == 'ends_with':
+                return has(f'%{value}')
+            if op == 'not_ends_with':
+                return ~has(f'%{value}')
+            return None
+
         def _condition_sql(field_id: str, op: str, value: str):
+            op = (op or '').lower()
+            # Tags are multi-valued so they don't fit the scalar
+            # `field_expr op value` shape the other fields use — hand off
+            # to the EXISTS-based builder before falling through.
+            if field_id == 'tags':
+                return _tag_condition(op, value)
             field_expr = _field_expr_for(field_id)
             if field_expr is None:
                 return None
-            op = (op or '').lower()
             if op == 'empty':
                 return or_(field_expr.is_(None), field_expr == '')
             if op == 'not_empty':
