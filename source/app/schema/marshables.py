@@ -2142,29 +2142,38 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def parse_permissions(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Parses the group permissions.
+        """Normalise `group_permissions` into an access-control bitmask.
 
-        This method parses the group permissions specified in the data and converts them to an access control mask.
-        If no permissions are specified, it sets the mask to 0.
+        Accepts either an int (already a mask) or a list of ints
+        (OR-folded into a mask). Historically this method injected
+        `group_permissions = 0` when the caller omitted the key, which
+        silently wiped a group's permissions on any partial PATCH that
+        happened to only touch `group_name` / `group_description`.
+        We now leave the key alone when it isn't supplied so `load(...,
+        partial=True)` can preserve the persisted value.
 
         Args:
-            data: The data to load.
-            kwargs: Additional keyword arguments.
+            data: The raw payload to load.
+            kwargs: Marshmallow-supplied context (unused).
 
         Returns:
-            The loaded data with the access control mask.
-
+            The payload with `group_permissions` normalised, or
+            untouched if the caller didn't send it.
         """
-        permissions = data.get('group_permissions')
-        if type(permissions) != list and not isinstance(permissions, type(None)):
+        if 'group_permissions' not in data:
+            return data
+
+        permissions = data['group_permissions']
+        if permissions is None:
+            # Explicit null → treat as "clear all permissions" (0).
+            # Distinct from "key absent", which we skip above.
+            data['group_permissions'] = 0
+            return data
+
+        if not isinstance(permissions, list):
             permissions = [permissions]
 
-        if permissions is not None:
-            data['group_permissions'] = ac_mask_from_val_list(permissions)
-
-        else:
-            data['group_permissions'] = 0
-
+        data['group_permissions'] = ac_mask_from_val_list(permissions)
         return data
 
 
