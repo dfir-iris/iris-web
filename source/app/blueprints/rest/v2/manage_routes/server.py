@@ -45,12 +45,48 @@ from app.datamgmt.manage.manage_srv_settings_db import get_server_settings_as_di
 from app.datamgmt.manage.manage_srv_settings_db import get_srv_settings
 from app.db import db
 from app.iris_engine.backup.backup import backup_iris_db
+from app.iris_engine.mail.outbound import mail_send_system
+from app.iris_engine.mail.secrets import encrypt_secret
 from app.iris_engine.updater.updater import remove_periodic_update_checks
 from app.iris_engine.updater.updater import setup_periodic_update_checks
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ServerSettingsSchema
 from dictdiffer import diff
+
+
+# Mail passwords are held as ciphertext in the DB; the schema marks
+# these fields `load_only=True` so a GET never leaks even the
+# ciphertext. Instead the read path emits *_password_set booleans so
+# the SPA can render a "•••••" placeholder for a set field vs an
+# empty input for an unset one.
+_MAIL_PASSWORD_FIELDS = ('mail_smtp_password', 'mail_imap_password')
+
+
+def _mail_password_flags(settings) -> dict:
+    """Compact `{<field>_set: bool}` map for the mail password fields."""
+    return {
+        f'{field}_set': bool(getattr(settings, field, None))
+        for field in _MAIL_PASSWORD_FIELDS
+    }
+
+
+def _encrypt_mail_passwords_in_body(body: dict) -> None:
+    """In-place: wrap any plaintext mail password with Fernet.
+
+    Called before the Marshmallow schema load so the encrypted string
+    is what actually lands in the DB. An empty-string value means the
+    admin wants to CLEAR the password (map to None). Missing keys are
+    left alone — partial update, keep the current ciphertext.
+    """
+    for field in _MAIL_PASSWORD_FIELDS:
+        if field not in body:
+            continue
+        raw = body[field]
+        if raw is None or raw == '':
+            body[field] = None
+            continue
+        body[field] = encrypt_secret(raw)
 
 
 class ServerOperations:
@@ -79,12 +115,20 @@ class ServerOperations:
         from `app.config` + the alembic head. Bundling the two lets the
         page render its read-only top-of-page strip without a second
         round-trip.
+
+        Mail passwords are load-only on the schema so the dump never
+        includes them; we attach `*_password_set` booleans instead so
+        the SPA can render placeholder inputs for set-but-hidden
+        fields.
         """
         settings = get_srv_settings()
         from app.datamgmt.manage.manage_srv_settings_db import get_alembic_revision
 
+        settings_dump = self._schema.dump(settings)
+        settings_dump.update(_mail_password_flags(settings))
+
         return response_api_success({
-            'settings': self._schema.dump(settings),
+            'settings': settings_dump,
             'versions': {
                 'iris_version': app.config.get('IRIS_VERSION'),
                 'api_min': app.config.get('API_MIN_VERSION'),
@@ -113,6 +157,14 @@ class ServerOperations:
         settings = get_srv_settings()
         original_update_check = settings.enable_updates_check
 
+        # Wrap plaintext mail passwords in Fernet BEFORE the schema
+        # load — the DB column should never hold a plaintext value.
+        _encrypt_mail_passwords_in_body(body)
+        # Snapshot mail interval so we can nudge the beat scheduler
+        # if the operator changes it below.
+        old_imap_interval = settings.mail_imap_poll_interval_sec
+        old_imap_enabled = settings.mail_imap_enabled
+
         try:
             original_dump = self._schema.dump(settings)
             differences = list(diff(original_dump, body))
@@ -133,15 +185,60 @@ class ServerOperations:
                 else:
                     remove_periodic_update_checks()
 
+            # If the IMAP interval or enabled flag flipped, refresh
+            # the beat schedule so the next tick uses the new value
+            # without a worker restart.
+            if (updated.mail_imap_poll_interval_sec != old_imap_interval
+                    or updated.mail_imap_enabled != old_imap_enabled):
+                try:
+                    from app.iris_engine.mail.inbound import _register_mail_beat_schedule
+                    _register_mail_beat_schedule(celery)
+                except Exception:
+                    app.logger.exception('Failed to refresh mail beat schedule')
+
             track_activity(f'Server settings updated: {changes}', ctx_less=True)
             # Re-cache the dump on app.config so other code paths that
             # read `app.config['SERVER_SETTINGS']` see the new values
             # without an extra DB hit. The legacy route did the same.
-            app.config['SERVER_SETTINGS'] = self._schema.dump(updated)
-            return response_api_success(app.config['SERVER_SETTINGS'])
+            settings_dump = self._schema.dump(updated)
+            settings_dump.update(_mail_password_flags(updated))
+            app.config['SERVER_SETTINGS'] = settings_dump
+            return response_api_success(settings_dump)
 
         except marshmallow.exceptions.ValidationError as exc:
             return response_api_error('Data error', data=exc.messages)
+
+    # ----- Mail test-send ------------------------------------------
+
+    @staticmethod
+    def send_test_mail() -> Response:
+        """Send a probe mail via the current SMTP config.
+
+        Body: `{"to": "user@example.com"}`. Runs synchronously (not
+        via the Celery task) so the admin sees the outcome in the
+        same request — this is a diagnostic path, not the normal
+        delivery path.
+        """
+        body = request.get_json(silent=True) or {}
+        to_addr = (body.get('to') or '').strip()
+        if not to_addr or '@' not in to_addr:
+            return response_api_error('to must be a valid email address')
+        try:
+            delivered = mail_send_system(
+                [to_addr],
+                subject='[IRIS] SMTP test message',
+                body='This is a test email from IRIS. '
+                     'If you received it, your SMTP configuration works.\n',
+            )
+        except Exception as exc:
+            return response_api_error('SMTP delivery failed', data=str(exc))
+        if not delivered:
+            return response_api_error(
+                'SMTP is not configured or is disabled — check the mail '
+                'section on the Server Settings page.'
+            )
+        track_activity(f'Sent SMTP test email to {to_addr}', ctx_less=True)
+        return response_api_success({'delivered': True, 'to': to_addr})
 
     # ----- Database backup -----------------------------------------
 
@@ -185,6 +282,12 @@ def server_put_settings() -> Response:
 @ac_api_requires(Permissions.server_administrator)
 def server_make_db_backup() -> Response:
     return server_operations.make_db_backup()
+
+
+@server_blueprint.post('/mail/test-send')
+@ac_api_requires(Permissions.server_administrator)
+def server_send_test_mail() -> Response:
+    return server_operations.send_test_mail()
 
 
 # Silence the unused-import linter — `get_server_settings_as_dict` is

@@ -219,19 +219,20 @@ def notify(user_id: int,
             'created_at': notification.created_at.isoformat(),
         }, room=f'user-{user_id}')
 
-    if channels.get('email'):
-        # Email delivery is asynchronous. Feature 2 wires this up — for
-        # now we log a hand-off marker so the F1 rollout can observe
-        # what would have been sent. When Feature 2 lands the import
-        # below will resolve.
+    if channels.get('email') and notification is not None:
+        # Email delivery is asynchronous — hand off to a Celery task
+        # so a slow SMTP endpoint doesn't stall the request that
+        # fired the notification. The task itself checks whether
+        # SMTP is configured and short-circuits if disabled.
         try:
-            from app.iris_engine.mail.outbound import send_notification_email  # type: ignore
-            if notification is not None:
-                send_notification_email.delay(notification.id)  # type: ignore[attr-defined]
-        except ImportError:
-            logger.debug(
-                'Email channel enabled for user=%s event=%s but mail '
-                'subsystem not present yet — skipping SMTP hand-off',
+            from app.iris_engine.mail.outbound import send_notification_email
+            send_notification_email.delay(notification.id)
+        except Exception:
+            # Never let a mail hand-off fail the request. The
+            # in-app path already succeeded and there's no user-
+            # visible reason to error out.
+            logger.exception(
+                'Failed to enqueue notification email for user=%s event=%s',
                 user_id, event_type,
             )
 

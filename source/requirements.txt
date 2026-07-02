@@ -37,6 +37,7 @@ qrcode[pil]==7.4.2
 dictdiffer==0.2.0
 oic==1.7.0
 bleach==6.1.0
+imap-tools==1.5.0
 
 https://github.com/dfir-iris/docx-generator/releases/download/v0.9.1/docx_generator-0.9.1-py3-none-any.whl
 dependencies/iris_interface-1.2.0-py3-none-any.whl

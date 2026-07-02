@@ -518,6 +518,33 @@ class ServerSettings(db.Model):
     enforce_mfa = Column(Boolean)
     force_confirmation_before_delete = Column(Boolean)
 
+    # ---- Mail — outbound (SMTP) --------------------------------------
+    # Split into distinct fields (rather than a JSONB blob) so the
+    # Marshmallow schema can validate each one and the admin UI can
+    # bind checkboxes / inputs directly. `mail_smtp_password` holds
+    # Fernet-encrypted ciphertext when set — the raw password never
+    # touches the DB. See app/iris_engine/mail/secrets.py.
+    mail_smtp_enabled = Column(Boolean, nullable=True, default=False)
+    mail_smtp_host = Column(String(255), nullable=True)
+    mail_smtp_port = Column(Integer, nullable=True)
+    mail_smtp_user = Column(String(255), nullable=True)
+    mail_smtp_password = Column(Text, nullable=True)
+    mail_smtp_use_tls = Column(Boolean, nullable=True, default=True)
+    mail_smtp_use_ssl = Column(Boolean, nullable=True, default=False)
+    mail_from_address = Column(String(255), nullable=True)
+    mail_from_name = Column(String(255), nullable=True)
+
+    # ---- Mail — inbound (IMAP) ---------------------------------------
+    mail_imap_enabled = Column(Boolean, nullable=True, default=False)
+    mail_imap_host = Column(String(255), nullable=True)
+    mail_imap_port = Column(Integer, nullable=True)
+    mail_imap_user = Column(String(255), nullable=True)
+    mail_imap_password = Column(Text, nullable=True)
+    mail_imap_use_ssl = Column(Boolean, nullable=True, default=True)
+    mail_imap_mailbox = Column(String(255), nullable=True, default='INBOX')
+    mail_imap_poll_interval_sec = Column(Integer, nullable=True, default=300)
+    mail_imap_max_attachment_mb = Column(Integer, nullable=True, default=20)
+
 
 class IrisModule(db.Model):
     __tablename__ = "iris_module"
