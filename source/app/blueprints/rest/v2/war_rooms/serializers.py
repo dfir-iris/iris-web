@@ -29,6 +29,8 @@ def serialize_war_room(war_room):
         'created_by_id': war_room.created_by_id,
         'closed_at': war_room.closed_at.isoformat() if war_room.closed_at else None,
         'closed_by_id': war_room.closed_by_id,
+        'archived_at': war_room.archived_at.isoformat() if war_room.archived_at else None,
+        'archived_by_id': war_room.archived_by_id,
         'custom_attributes': war_room.custom_attributes,
     }
 

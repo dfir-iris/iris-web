@@ -86,10 +86,17 @@ class WarRoom(db.Model):
     created_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
     closed_at = Column(DateTime, nullable=True)
     closed_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
+    # Archive is a filing decision independent of the operational state
+    # (open / active / standby / closed). NULL = live in the default
+    # list; timestamped = moved out of the default view but still fully
+    # readable. See migration c4d1a2b7f503.
+    archived_at = Column(DateTime, nullable=True)
+    archived_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
     custom_attributes = Column(JSONB, nullable=True)
 
     created_by = relationship('User', foreign_keys=[created_by_id])
     closed_by = relationship('User', foreign_keys=[closed_by_id])
+    archived_by = relationship('User', foreign_keys=[archived_by_id])
     severity = relationship('Severity')
 
 

@@ -18,7 +18,7 @@ mocking Flask.
 import datetime
 import re
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, case, or_
 
 from app.db import db
 from app.models.authorization import (
@@ -100,12 +100,49 @@ def war_room_get(war_room_id):
     return row
 
 
-def war_room_list_for_user(user_id, is_admin=False, state=None, search=None):
+# Sort priority for the list view: rooms an operator is actively
+# working land at the top, closed rooms drop to the bottom. Archived
+# rooms are handled separately (they either share a section in the SPA
+# or are excluded entirely depending on the `archived` filter), so this
+# ordering only needs to worry about the operational lifecycle.
+_STATE_SORT_ORDER = {
+    'active': 0,
+    'open': 1,
+    'standby': 2,
+    'closed': 3,
+}
+
+
+def _state_priority_expr():
+    """SQLAlchemy CASE that maps the state string to a sort integer.
+
+    Anything unrecognised falls to the end so a future state added
+    without updating this table still sorts predictably.
+    """
+    return case(
+        _STATE_SORT_ORDER,
+        value=WarRoom.state,
+        else_=len(_STATE_SORT_ORDER),
+    )
+
+
+def war_room_list_for_user(user_id, is_admin=False, state=None, search=None,
+                           archived=None):
     """List the war rooms visible to a user.
 
     Admins see every row; everyone else is filtered through the
     effective-access cache (precedence already resolved: deny_all rows
     are excluded from the join).
+
+    `archived` controls the archive lens:
+
+      * `False` / None — the default: exclude archived rooms.
+      * `True`         — return *only* archived rooms.
+      * `'any'`        — return both, letting the caller decide.
+
+    Rooms come back sorted by an operational-priority CASE (active >
+    open > standby > closed) then by creation date desc, so the room
+    an operator most likely needs to open is at the top of the list.
     """
     query = WarRoom.query
     if not is_admin:
@@ -123,6 +160,15 @@ def war_room_list_for_user(user_id, is_admin=False, state=None, search=None):
         state = _validate_state(state)
         query = query.filter(WarRoom.state == state)
 
+    if archived == 'any':
+        pass
+    elif archived is True:
+        query = query.filter(WarRoom.archived_at.is_not(None))
+    else:
+        # Default (None or False): hide archived rows so a user's main
+        # list stays focused on live workspaces.
+        query = query.filter(WarRoom.archived_at.is_(None))
+
     if search:
         needle = f'%{search.strip()}%'
         query = query.filter(or_(
@@ -130,7 +176,31 @@ def war_room_list_for_user(user_id, is_admin=False, state=None, search=None):
             WarRoom.description.ilike(needle),
         ))
 
-    return query.order_by(WarRoom.created_at.desc()).all()
+    return (
+        query
+        .order_by(_state_priority_expr().asc(), WarRoom.created_at.desc())
+        .all()
+    )
+
+
+def war_room_archive(war_room_id, archived_by_id):
+    """Mark the room as archived. Idempotent: re-archiving is a no-op."""
+    war_room = war_room_get(war_room_id)
+    if war_room.archived_at is None:
+        war_room.archived_at = datetime.datetime.utcnow()
+        war_room.archived_by_id = archived_by_id
+        db.session.commit()
+    return war_room
+
+
+def war_room_unarchive(war_room_id):
+    """Clear the archive stamp. Idempotent: unarchiving a live room is a no-op."""
+    war_room = war_room_get(war_room_id)
+    if war_room.archived_at is not None:
+        war_room.archived_at = None
+        war_room.archived_by_id = None
+        db.session.commit()
+    return war_room
 
 
 def war_room_create(name, description=None, state=None, severity_id=None,

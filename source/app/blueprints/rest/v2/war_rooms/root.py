@@ -47,6 +47,7 @@ from app.blueprints.rest.v2.war_rooms.serializers import serialize_member
 from app.blueprints.rest.v2.war_rooms.serializers import serialize_war_room
 from app.business.war_rooms import (
     war_room_add_member,
+    war_room_archive,
     war_room_attach_case,
     war_room_cases_list,
     war_room_create,
@@ -57,6 +58,7 @@ from app.business.war_rooms import (
     war_room_members_list,
     war_room_people,
     war_room_remove_member,
+    war_room_unarchive,
     war_room_update,
 )
 from app.models.authorization import CaseAccessLevel
@@ -100,10 +102,21 @@ def list_war_rooms():
 
     state = request.args.get('state', type=str)
     search = request.args.get('search', type=str)
+    # `archived` accepts a small controlled vocabulary:
+    #   * absent / 'false' / '0' — live rooms only (default)
+    #   * 'true' / '1'           — archived rooms only
+    #   * 'any' / 'all'          — both
+    archived_raw = (request.args.get('archived', type=str) or '').strip().lower()
+    if archived_raw in ('true', '1'):
+        archived = True
+    elif archived_raw in ('any', 'all'):
+        archived = 'any'
+    else:
+        archived = False
 
     rooms = war_room_list_for_user(
         iris_current_user.id, is_admin=_is_admin(),
-        state=state, search=search,
+        state=state, search=search, archived=archived,
     )
     return response_api_success(data=[serialize_war_room(r) for r in rooms])
 
@@ -204,6 +217,50 @@ def delete_war_room(war_room_id):
     except ObjectNotFoundError:
         return response_api_not_found()
     return response_api_deleted()
+
+
+# --- Archive ---------------------------------------------------------------
+#
+# Archive is a filing decision independent from the operational state
+# (`open` / `active` / `standby` / `closed`). A user with write access
+# can archive or unarchive the room; state and every child row are
+# preserved. `POST` archives, `DELETE` unarchives — matches the
+# member/follower REST shape used elsewhere in this file.
+
+@war_rooms_blueprint.post('/<int:war_room_id>/archive')
+@ac_api_requires()
+def archive_war_room(war_room_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    try:
+        war_room = war_room_archive(
+            war_room_id, archived_by_id=iris_current_user.id,
+        )
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    emit_system_event(
+        war_room_id, 'system', 'War room archived',
+        author_id=iris_current_user.id,
+    )
+    return response_api_success(data=serialize_war_room(war_room))
+
+
+@war_rooms_blueprint.delete('/<int:war_room_id>/archive')
+@ac_api_requires()
+def unarchive_war_room(war_room_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    try:
+        war_room = war_room_unarchive(war_room_id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    emit_system_event(
+        war_room_id, 'system', 'War room unarchived',
+        author_id=iris_current_user.id,
+    )
+    return response_api_success(data=serialize_war_room(war_room))
 
 
 # --- Members ----------------------------------------------------------------
