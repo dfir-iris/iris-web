@@ -40,6 +40,9 @@ from flask import request
 from PIL import Image
 from PIL import UnidentifiedImageError
 
+from sqlalchemy import func
+from sqlalchemy import or_
+
 from app.blueprints.access_controls import ac_api_requires
 from app.blueprints.iris_user import iris_current_user
 from app.blueprints.rest.endpoints import response_api_deleted
@@ -49,6 +52,7 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.business.users import users_get
 from app.db import db
 from app.models.authorization import Permissions
+from app.models.authorization import User
 from app.models.errors import ObjectNotFoundError
 
 
@@ -184,6 +188,62 @@ def get_user_avatar(identifier: int) -> Response:
     if user is None:
         return response_api_not_found()
     return _serve_avatar(user)
+
+
+# Lightweight directory for the @-mention autocomplete. Any authenticated
+# user can list active users so mention chips work without needing the
+# admin-only /manage/users endpoint. The payload is intentionally minimal
+# (id, login, name) — no email, no roles, no permissions — so it can't
+# be repurposed as a permission-info leak. Bounded by `_MENTION_LIMIT`
+# because the mention popup only shows a handful of results.
+_MENTION_LIMIT = 50
+
+
+@users_public_blueprint.get('/mentionable')
+@ac_api_requires()
+def get_mentionable_users() -> Response:
+    """Return active users matching `?q=<prefix>` for the mention popup.
+
+    Match is case-insensitive prefix against `user.user` (login) OR
+    `user.name` (display name), plus an `ilike` fallback so mid-word
+    matches also surface (e.g. `q=alice` finds "Alice Doe" and
+    "malice@bar" alike). Empty `q` returns the first N active users
+    which the client can then fuzzy-filter locally.
+    """
+    q_raw = request.args.get('q', default='', type=str) or ''
+    q = q_raw.strip().lower()
+
+    query = User.query.filter(User.active == True)  # noqa: E712
+    if q:
+        # Prefix match first (cheap on indexed columns), fall back to
+        # substring match. Kept as one query so a single row-scan
+        # answers both.
+        like = f'%{q}%'
+        query = query.filter(or_(
+            func.lower(User.user).like(like),
+            func.lower(User.name).like(like),
+        ))
+
+    # Deterministic order so paginated / infinite-scroll clients see a
+    # stable list. `name` is the primary sort — display name is what
+    # the user sees in the mention chip.
+    rows = (
+        query
+        .order_by(func.lower(User.name).asc(), User.id.asc())
+        .limit(_MENTION_LIMIT)
+        .all()
+    )
+
+    return response_api_success({
+        'data': [
+            {
+                'user_id': u.id,
+                'user_login': u.user,
+                'user_name': u.name,
+            }
+            for u in rows
+        ],
+    })
 
 
 # ----- Self-service endpoints ------------------------------------------------

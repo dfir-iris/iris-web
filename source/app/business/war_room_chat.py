@@ -475,6 +475,15 @@ def create_message(war_room_id, author_id, body, kind=None,
     msg.ref_case_id = ref_case_id
     db.session.add(msg)
     db.session.commit()
+
+    # Fire notifications on plain user messages only — system-authored
+    # kinds (task_assigned, sitrep_published, case_attached, …) get
+    # their notification via the origin action's own hook, not the
+    # chat mirror. `_fire_message_notifications` is a no-op if the
+    # notifications subsystem is not installed (safe on partial
+    # rollouts).
+    if kind == 'message':
+        _fire_message_notifications(msg)
     return msg
 
 
@@ -718,6 +727,8 @@ def create_reply(war_room_id, parent_message_id, author_id, body, kind='message'
     msg.parent_message_id = root.message_id
     db.session.add(msg)
     db.session.commit()
+
+    _fire_reply_notifications(msg, root.message_id)
     return msg
 
 
@@ -951,6 +962,122 @@ def list_followed_thread_ids(war_room_id, user_id):
         .all()
     )
     return [r.message_id for r in rows]
+
+
+# ----- Notification fan-out ------------------------------------------------
+#
+# Chat messages and thread replies both need to notify a set of
+# recipients. Kept as helpers so `create_message` / `create_reply` stay
+# focussed on persistence and the notification path can be exercised
+# and updated in one place. Failure here MUST NOT bubble — a broken
+# notification pipeline shouldn't prevent a chat message from being
+# posted.
+
+def _fire_message_notifications(msg):
+    """Notify members mentioned in a new plain chat message.
+
+    Room members (WarRoomMember roster) are NOT blanket-notified — a
+    busy war room would drown its participants. Only mentions raise
+    the bell. The war-room event type is reserved for followed-thread
+    replies (see `_fire_reply_notifications`).
+    """
+    try:
+        from app.iris_engine.notifications.mentions import extract_mentioned_user_ids
+        from app.iris_engine.notifications.service import notify_many
+        from app.models.war_rooms import WarRoomMember
+
+        mentioned = extract_mentioned_user_ids(msg.body)
+        if not mentioned:
+            return
+
+        # Only notify members of this war room — a mention chip on a
+        # user without room access would be a leak (bell would surface
+        # the room title/body).
+        member_ids = {
+            row.user_id for row in
+            WarRoomMember.query
+            .filter(WarRoomMember.war_room_id == msg.war_room_id)
+            .filter(WarRoomMember.user_id.in_(mentioned))
+            .all()
+        }
+        if not member_ids:
+            return
+
+        notify_many(
+            user_ids=list(member_ids),
+            event_type='mention',
+            title='You were mentioned in a war room',
+            body=(msg.body or '')[:255],
+            link=f'/war-rooms/{msg.war_room_id}/chat',
+            source_type='war_room_message',
+            source_id=msg.message_id,
+            exclude_user_ids=[msg.author_id] if msg.author_id else [],
+        )
+    except Exception:
+        # Broad catch — see note above. A missing notifications module
+        # or a DB blip must not fail the chat write.
+        import logging
+        logging.getLogger(__name__).exception(
+            'war-room mention notification failed')
+
+
+def _fire_reply_notifications(msg, root_message_id):
+    """Notify thread followers + mentions on a new reply."""
+    try:
+        from app.iris_engine.notifications.mentions import extract_mentioned_user_ids
+        from app.iris_engine.notifications.service import notify_many
+
+        # 1. Thread followers (excluding the author)
+        follower_ids = {
+            row.user_id for row in
+            WarRoomThreadFollower.query
+            .filter(WarRoomThreadFollower.message_id == root_message_id)
+            .all()
+        }
+
+        if follower_ids:
+            notify_many(
+                user_ids=list(follower_ids),
+                event_type='war_room_thread_reply',
+                title='New reply in a thread you follow',
+                body=(msg.body or '')[:255],
+                link=f'/war-rooms/{msg.war_room_id}/chat?thread={root_message_id}',
+                source_type='war_room_thread_reply',
+                source_id=msg.message_id,
+                exclude_user_ids=[msg.author_id] if msg.author_id else [],
+            )
+
+        # 2. Mentions inside the reply (independent from follow —
+        # mentioning a non-follower still pings them).
+        mentioned = extract_mentioned_user_ids(msg.body)
+        if mentioned:
+            from app.models.war_rooms import WarRoomMember
+            member_ids = {
+                row.user_id for row in
+                WarRoomMember.query
+                .filter(WarRoomMember.war_room_id == msg.war_room_id)
+                .filter(WarRoomMember.user_id.in_(mentioned))
+                .all()
+            }
+            # Avoid double-notifying someone who both follows AND was
+            # mentioned — the mention notification is more informative
+            # so we keep it and drop the follow one for that user.
+            member_ids = member_ids - follower_ids
+            if member_ids:
+                notify_many(
+                    user_ids=list(member_ids),
+                    event_type='mention',
+                    title='You were mentioned in a war-room thread',
+                    body=(msg.body or '')[:255],
+                    link=f'/war-rooms/{msg.war_room_id}/chat?thread={root_message_id}',
+                    source_type='war_room_thread_reply',
+                    source_id=msg.message_id,
+                    exclude_user_ids=[msg.author_id] if msg.author_id else [],
+                )
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception(
+            'war-room reply notification failed')
 
 
 # ----- Activity ingest -----------------------------------------------------

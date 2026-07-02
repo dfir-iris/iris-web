@@ -184,7 +184,9 @@ lm.request_loader(load_user_from_request)
 from app.blueprints.socket_io_event_handlers.case_event_handlers import register_case_event_handlers
 from app.blueprints.socket_io_event_handlers.case_notes_event_handlers import register_notes_event_handlers
 from app.blueprints.socket_io_event_handlers.update_event_handlers import register_update_event_handlers
+from app.blueprints.socket_io_event_handlers.notification_event_handlers import register_notification_socket_handlers
 
 register_case_event_handlers()
 register_notes_event_handlers()
 register_update_event_handlers()
+register_notification_socket_handlers()

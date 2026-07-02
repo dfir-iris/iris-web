@@ -1338,6 +1338,19 @@ class PostInit:
                 self._logger.info("Creating base hooks")
                 create_safe_hooks()
 
+                # Seed the admin-default notification settings. Idempotent
+                # so operator toggles from a prior boot survive.
+                self._logger.info("Seeding notification admin defaults")
+                from app.iris_engine.notifications.service import seed_admin_defaults
+                seed_admin_defaults()
+
+                # Wire the built-in notification hook listeners.
+                # `register_notification_listeners` is idempotent — a
+                # second call is a no-op.
+                self._logger.info("Registering notification hook listeners")
+                from app.iris_engine.notifications.hook_listeners import register_notification_listeners
+                register_notification_listeners()
+
                 # Create initial authorization model, administrative user, and customer
                 self._logger.info("Creating initial authorisation model")
                 def_org, gadm, ganalysts = create_safe_auth_model()
