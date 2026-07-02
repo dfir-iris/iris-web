@@ -44,6 +44,10 @@ from app.blueprints.rest.v2.cases_filters import cases_filters_blueprint
 from app.blueprints.rest.v2.war_rooms.root import war_rooms_blueprint
 from app.blueprints.rest.v2.notifications import notifications_blueprint
 from app.blueprints.rest.v2.notifications import admin_notifications_blueprint
+from app.blueprints.rest.v2.mail import mail_blueprint
+from app.blueprints.rest.v2.incidents import incidents_blueprint
+from app.blueprints.rest.v2.incident_rules import incident_rules_blueprint
+from app.blueprints.rest.v2.investigation_flows import investigation_flows_blueprint
 
 
 # Create root /api/v2 blueprint
@@ -76,3 +80,7 @@ rest_v2_blueprint.register_blueprint(dim_tasks_blueprint)
 rest_v2_blueprint.register_blueprint(war_rooms_blueprint)
 rest_v2_blueprint.register_blueprint(notifications_blueprint)
 rest_v2_blueprint.register_blueprint(admin_notifications_blueprint)
+rest_v2_blueprint.register_blueprint(mail_blueprint)
+rest_v2_blueprint.register_blueprint(incidents_blueprint)
+rest_v2_blueprint.register_blueprint(incident_rules_blueprint)
+rest_v2_blueprint.register_blueprint(investigation_flows_blueprint)

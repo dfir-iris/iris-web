@@ -53,6 +53,7 @@ from app.models.assets import AnalysisStatus
 from app.models.alerts import Severity
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertResolutionStatus
+from app.models.incidents import IncidentStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import User
@@ -716,6 +717,18 @@ def create_safe_alert_status():
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
 
 
+def create_safe_incident_status():
+    """Seed the IncidentStatus lookup. Idempotent — safe to re-run at boot."""
+    create_safe(db.session, IncidentStatus, status_name='Open',
+                status_description='Incident is open and receiving alerts')
+    create_safe(db.session, IncidentStatus, status_name='Investigating',
+                status_description='Incident is being investigated by an analyst')
+    create_safe(db.session, IncidentStatus, status_name='Dismissed',
+                status_description='Incident closed with no further action')
+    create_safe(db.session, IncidentStatus, status_name='Escalated',
+                status_description='Incident escalated to a case')
+
+
 def create_safe_evidence_types():
     """Creates new Evidence Types objects if they do not already exist.
 
@@ -1322,6 +1335,9 @@ class PostInit:
                 self._logger.info("Creating base alert status")
                 create_safe_alert_status()
 
+                self._logger.info("Creating base incident status")
+                create_safe_incident_status()
+
                 self._logger.info("Creating base evidence types")
                 create_safe_evidence_types()
 
@@ -1350,6 +1366,19 @@ class PostInit:
                 self._logger.info("Registering notification hook listeners")
                 from app.iris_engine.notifications.hook_listeners import register_notification_listeners
                 register_notification_listeners()
+
+                # Import the mail engine so its Celery tasks (outbound
+                # send + inbound poll) and the beat-schedule connect
+                # handler register. The connect handler is idempotent
+                # — if IMAP is disabled the task itself short-circuits
+                # each tick. Import for side-effects.
+                self._logger.info("Registering mail Celery tasks + beat schedule")
+                import app.iris_engine.mail  # noqa: F401  side-effects only
+
+                # Register the incident-rules evaluator so the Celery worker
+                # discovers it at boot. Import for side-effects only.
+                self._logger.info("Registering incident-rules Celery tasks")
+                import app.iris_engine.incident_rules  # noqa: F401  side-effects only
 
                 # Create initial authorization model, administrative user, and customer
                 self._logger.info("Creating initial authorisation model")

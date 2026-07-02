@@ -17,7 +17,8 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 import json
 
-from sqlalchemy import String, Text, inspect, or_, not_, and_
+from sqlalchemy import JSON, String, Text, inspect, or_, not_, and_
+from sqlalchemy.dialects.postgresql import JSONB
 
 from app import app
 from app.models.errors import BusinessProcessingError
@@ -106,12 +107,18 @@ def apply_custom_conditions(query, model, custom_conditions, relationship_model_
     """
     Apply custom conditions to the query.
 
-    The custom_conditions parameter should be a list of dict objects with the following keys:
-      - 'field': a field name (or a relationship.field using dot notation)
-      - 'operator': the operator (e.g., 'eq', 'like', 'in', etc.)
-      - 'value': the value to compare against
+    Each item in `custom_conditions` is either:
+      * A **leaf** — dict with `field` / `operator` / `value`.
+      * A **group** — dict with `logic` ('and'/'or'/'not') and its own
+        `conditions` list, recursively. Nested groups let callers build
+        arbitrary AND/OR trees (e.g. `(A and B) or (C and D)`) — the
+        rule / flow condition builders on the frontend rely on this.
 
-    An optional relationship_model_map can be provided to map relationship names to models.
+    Existing callers that pass a flat list of leaves continue to work
+    unchanged; the recursion only kicks in when an item omits `field`.
+
+    An optional `relationship_model_map` maps relationship names to
+    models, used for dot-notation fields like `assets.asset_name`.
     """
     conditions = []
     if relationship_model_map is None:
@@ -120,21 +127,56 @@ def apply_custom_conditions(query, model, custom_conditions, relationship_model_
     joined_relationships = set()
 
     for cond in custom_conditions:
+        if not isinstance(cond, dict):
+            raise ValueError(f'condition entry must be a dict, got {type(cond).__name__}')
+
+        # Group form: recurse and combine.
+        if 'field' not in cond and 'conditions' in cond:
+            inner_logic = cond.get('logic', 'and')
+            inner_items = cond.get('conditions') or []
+            query, inner_leaves = apply_custom_conditions(
+                query, model, inner_items, relationship_model_map
+            )
+            combined = combine_conditions(inner_leaves, inner_logic)
+            if combined is not None:
+                conditions.append(combined)
+            continue
+
+        # Leaf form.
         field_path = cond.get('field')
         operator = cond.get('operator')
         value = cond.get('value')
         if '.' in field_path:
-            # Handle related fields via dot notation
-            relationship_name, related_field_name = field_path.split('.', 1)
-            if relationship_name not in relationship_model_map:
-                raise ValueError(f"Unknown relationship: {relationship_name}")
-            related_model = relationship_model_map[relationship_name]
-            # Join the relationship if not already joined
-            if relationship_name not in joined_relationships:
-                query = query.join(getattr(model, relationship_name))
-                joined_relationships.add(relationship_name)
+            head, tail = field_path.split('.', 1)
+            # A dotted path can mean two things:
+            #   (a) a relationship path like `assets.asset_name` — join
+            #       the related model and treat the tail as a column
+            #       name on that model
+            #   (b) a JSON(B) column path like `alert_context.foo.bar` —
+            #       the head is a JSON column on this model and the
+            #       tail(s) drill into the document
+            # We prefer (b) when the head *is* a column on this model
+            # AND its type is JSON/JSONB. Otherwise we fall back to (a).
+            head_attr = getattr(model, head, None)
+            head_is_json_column = (
+                head_attr is not None
+                and hasattr(head_attr, 'type')
+                and isinstance(head_attr.type, (JSON, JSONB))
+            )
 
-            related_field = get_field_from_model(related_model, related_field_name)
+            if head_is_json_column:
+                condition = build_json_condition(head_attr, tail, operator, value)
+                conditions.append(condition)
+                continue
+
+            if head not in relationship_model_map:
+                raise ValueError(f"Unknown relationship or JSON column: {head}")
+            related_model = relationship_model_map[head]
+            if head not in joined_relationships:
+                query = query.join(getattr(model, head))
+                joined_relationships.add(head)
+
+            related_field = get_field_from_model(related_model, tail)
 
             condition = build_condition(related_field, operator, value)
             conditions.append(condition)
@@ -145,6 +187,57 @@ def apply_custom_conditions(query, model, custom_conditions, relationship_model_
             conditions.append(condition)
 
     return query, conditions
+
+
+def build_json_condition(json_column, path, operator, value):
+    """Build a SQLAlchemy condition against a nested JSON(B) path.
+
+    `path` is a dot-separated string like `foo.bar.baz`; each segment
+    becomes a key traversal step (Postgres `->` for intermediate
+    JSON-returning steps and `->>` (`astext`) for the final compare so
+    the RHS is a text scalar that composes with `ilike`/`in`/`==`).
+
+    Array indices work implicitly — Postgres accepts numeric-looking
+    strings as array indices via `->`. We keep the dotted spelling
+    (`items.0.value`) rather than invent a bracket syntax, so rule
+    authors don't have to know two spellings.
+
+    Numeric comparisons (`gte`/`lte`) cast the extracted text to
+    numeric first; unsupported operators bubble up from build_condition
+    via a shared path.
+    """
+    segments = path.split('.')
+    if not segments:
+        raise ValueError("JSON path must not be empty")
+
+    expr = json_column
+    for segment in segments[:-1]:
+        expr = expr[segment]
+    # Final step: extract as text so the comparison RHS is a string
+    # and existing operator handling (`ilike`, `in_`, `==`) applies
+    # without further coercion. Postgres' `->>` operator returns text.
+    final = expr[segments[-1]].astext
+
+    if operator in ('gte', 'lte'):
+        # Cast to numeric on the fly so `alert_context.count >= 10`
+        # compares as a number. Text-wise `'2' > '10'` would be true
+        # otherwise (lexicographic).
+        from sqlalchemy import cast, Numeric
+        casted = cast(final, Numeric)
+        return casted >= value if operator == 'gte' else casted <= value
+    if operator in ('not', 'neq'):
+        return final != value
+    if operator == 'in':
+        return final.in_(value)
+    if operator == 'not_in':
+        return ~final.in_(value)
+    if operator == 'eq':
+        return final == value
+    if operator == 'like':
+        return final.ilike(f"%{value}%")
+    if operator == 'not_like':
+        return ~final.ilike(f"%{value}%")
+    raise ValueError(f"Unsupported operator for JSON path: {operator}")
 
 
 def get_field_from_model(model, field_path):

@@ -84,6 +84,14 @@ from app.models.alerts import Alert
 from app.models.alerts import Severity
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertResolutionStatus
+from app.models.incidents import Incident
+from app.models.incidents import IncidentStatus
+from app.models.incident_rules import IncidentRule
+from app.models.incident_rules import RULE_ACTION_CREATE_INCIDENT
+from app.models.investigation_flows import InvestigationFlow
+from app.models.investigation_flows import InvestigationFlowStep
+from app.models.investigation_flows import AlertInvestigationProgress
+from app.models.investigation_flows import IncidentInvestigationProgress
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -1505,6 +1513,34 @@ class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
     enforce_mfa: Optional[bool] = fields.Boolean(required=False)
     force_confirmation_before_delete: Optional[bool] = fields.Boolean(required=False)
 
+    # ---- Mail — outbound (SMTP) --------------------------------------
+    # Passwords are load-only: the GET path must never return the
+    # ciphertext (leaking it doesn't leak the plaintext, but it does
+    # reveal that the field is set, and future rotation of SECRET_KEY
+    # would make the exposure worse). Instead the read path returns a
+    # sentinel `_password_set` boolean the SPA uses to render "•••••"
+    # placeholders in the form — see `ServerOperations.read_settings`.
+    mail_smtp_enabled: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_smtp_host: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_smtp_port: Optional[int] = fields.Integer(required=False, allow_none=True)
+    mail_smtp_user: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_smtp_password: Optional[str] = fields.String(required=False, allow_none=True, load_only=True)
+    mail_smtp_use_tls: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_smtp_use_ssl: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_from_address: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_from_name: Optional[str] = fields.String(required=False, allow_none=True)
+
+    # ---- Mail — inbound (IMAP) ---------------------------------------
+    mail_imap_enabled: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_imap_host: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_imap_port: Optional[int] = fields.Integer(required=False, allow_none=True)
+    mail_imap_user: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_imap_password: Optional[str] = fields.String(required=False, allow_none=True, load_only=True)
+    mail_imap_use_ssl: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_imap_mailbox: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_imap_poll_interval_sec: Optional[int] = fields.Integer(required=False, allow_none=True)
+    mail_imap_max_attachment_mb: Optional[int] = fields.Integer(required=False, allow_none=True)
+
     class Meta:
         model = ServerSettings
         load_instance = True
@@ -2334,6 +2370,8 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     assets = ma.Nested(CaseAssetsSchema, many=True, exclude=['alerts'])
     resolution_status = ma.Nested(AlertResolutionSchema)
     cases = fields.Pluck(AlertCaseSchema, 'case_id', many=True, required=False)
+    incidents = fields.Method('_incident_ids', dump_only=True)
+    investigation_flow = fields.Method('_flow_summary', dump_only=True)
 
     class Meta:
         model = Alert
@@ -2341,6 +2379,15 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
         unknown = EXCLUDE
+
+    def _incident_ids(self, alert: Alert):
+        return [i.incident_id for i in (alert.incidents or [])]
+
+    def _flow_summary(self, alert: Alert):
+        flow = alert.investigation_flow
+        if not flow:
+            return None
+        return {'flow_id': flow.flow_id, 'flow_name': flow.flow_name}
 
     @pre_load
     def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
@@ -2733,3 +2780,190 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
                 raise ValidationError(password_error, field_name='user_password')
 
         return data
+
+
+class IncidentStatusSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = IncidentStatus
+        load_instance = True
+        unknown = EXCLUDE
+
+
+class IncidentSchema(ma.SQLAlchemyAutoSchema):
+    status = ma.Nested(IncidentStatusSchema, dump_only=True)
+    severity = ma.Nested(SeveritySchema, dump_only=True)
+    customer = ma.Nested(CustomerSchema, dump_only=True)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'], dump_only=True)
+    alert_ids = fields.Method('_alert_ids', dump_only=True)
+    investigation_flow = fields.Method('_flow_summary', dump_only=True)
+
+    class Meta:
+        model = Incident
+        include_relationships = True
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+    def _alert_ids(self, incident: Incident):
+        return [a.alert_id for a in (incident.alerts or [])]
+
+    def _flow_summary(self, incident: Incident):
+        flow = incident.investigation_flow
+        if not flow:
+            return None
+        return {'flow_id': flow.flow_id, 'flow_name': flow.flow_name}
+
+
+def _validate_condition_node(node, path):
+    """Recursively check that a condition tree is well-formed.
+
+    A node is either:
+      * a leaf `{field, operator[, value]}`
+      * a group `{logic, conditions: [...]}` where each entry is itself a node
+
+    Same shape `apply_custom_conditions` accepts. We stay lenient — the
+    SQL layer will reject unknown fields / operators when the rule
+    fires; the goal here is only to reject obviously malformed rows.
+    """
+    if not isinstance(node, dict):
+        raise ValidationError(f'{path} must be an object')
+    if 'conditions' in node and 'field' not in node:
+        # Group node
+        logic = node.get('logic', 'and')
+        if logic not in ('and', 'or', 'not'):
+            raise ValidationError(f"{path}.logic must be one of 'and'/'or'/'not'")
+        inner = node.get('conditions')
+        if not isinstance(inner, list):
+            raise ValidationError(f'{path}.conditions must be a list')
+        for idx, sub in enumerate(inner):
+            _validate_condition_node(sub, f'{path}.conditions[{idx}]')
+        return
+    # Leaf node
+    if 'field' not in node or 'operator' not in node:
+        raise ValidationError(f'{path} must include field and operator')
+
+
+def _validate_rule_conditions(payload):
+    if not isinstance(payload, dict):
+        raise ValidationError('rule_conditions must be an object')
+    logic = payload.get('logic', 'and')
+    if logic not in ('and', 'or', 'not'):
+        raise ValidationError("rule_conditions.logic must be one of 'and'/'or'/'not'")
+    conditions = payload.get('conditions')
+    if not isinstance(conditions, list) or not conditions:
+        raise ValidationError('rule_conditions.conditions must be a non-empty list')
+    for idx, cond in enumerate(conditions):
+        _validate_condition_node(cond, f'rule_conditions.conditions[{idx}]')
+    time_window = payload.get('time_window_seconds')
+    if time_window is not None and (not isinstance(time_window, int) or time_window < 0):
+        raise ValidationError('rule_conditions.time_window_seconds must be a non-negative integer')
+    group_by = payload.get('group_by')
+    if group_by is not None and (not isinstance(group_by, list)
+                                 or not all(isinstance(g, str) for g in group_by)):
+        raise ValidationError('rule_conditions.group_by must be a list of field names')
+
+
+class IncidentRuleSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = IncidentRule
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+    @pre_load
+    def _validate(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        if 'rule_conditions' in data:
+            _validate_rule_conditions(data['rule_conditions'])
+        action = data.get('rule_action_type')
+        # The historical `attach_flow` action was removed — flows now own
+        # their own conditions (see InvestigationFlow.flow_conditions), so
+        # the only remaining rule action is stacking alerts into incidents.
+        if action is not None and action != RULE_ACTION_CREATE_INCIDENT:
+            raise ValidationError(
+                f'rule_action_type must be {RULE_ACTION_CREATE_INCIDENT}'
+            )
+        scope = data.get('rule_customer_scope')
+        if scope is not None and (not isinstance(scope, list)
+                                  or not all(isinstance(s, int) for s in scope)):
+            raise ValidationError('rule_customer_scope must be null or a list of customer ids')
+        return data
+
+
+class InvestigationFlowStepSchema(ma.SQLAlchemyAutoSchema):
+    # `flow_id` is set by the route from the URL path (see
+    # `flow_step_create` in `app/business/investigation_flows.py`), so the
+    # client must not have to repeat it in the body. Without this override
+    # marshmallow-sqlalchemy makes it required (the column is
+    # `nullable=False`) and the POST 400s with "Missing data for required
+    # field.". `load_default=None` lets `.load()` succeed without it; the
+    # route stamps the correct id before commit.
+    flow_id = auto_field(required=False, load_default=None)
+
+    class Meta:
+        model = InvestigationFlowStep
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+
+class InvestigationFlowSchema(ma.SQLAlchemyAutoSchema):
+    steps = ma.Nested(InvestigationFlowStepSchema, many=True)
+
+    class Meta:
+        model = InvestigationFlow
+        include_relationships = True
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+    @pre_load
+    def _validate(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        # Reuse the same conditions validator as incident rules so the DSL
+        # semantics stay identical across features. `flow_conditions` may
+        # be omitted (an empty condition list is the default), but a
+        # payload that includes it must be well-formed.
+        from app.models.investigation_flows import FLOW_TARGETS
+        conditions = data.get('flow_conditions')
+        if conditions is not None:
+            if not isinstance(conditions, dict):
+                raise ValidationError('flow_conditions must be an object')
+            logic = conditions.get('logic', 'and')
+            if logic not in ('and', 'or', 'not'):
+                raise ValidationError("flow_conditions.logic must be 'and'/'or'/'not'")
+            cond_list = conditions.get('conditions')
+            if not isinstance(cond_list, list):
+                raise ValidationError('flow_conditions.conditions must be a list')
+            # Empty list is allowed here (unlike rules) — a flow with no
+            # conditions simply never auto-attaches; deploy skips it too.
+            for idx, cond in enumerate(cond_list):
+                _validate_condition_node(cond, f'flow_conditions.conditions[{idx}]')
+        target = data.get('flow_target')
+        if target is not None and target not in FLOW_TARGETS:
+            raise ValidationError(
+                f'flow_target must be one of {"/".join(FLOW_TARGETS)}'
+            )
+        scope = data.get('flow_customer_scope')
+        if scope is not None and (not isinstance(scope, list)
+                                  or not all(isinstance(s, int) for s in scope)):
+            raise ValidationError('flow_customer_scope must be null or a list of customer ids')
+        return data
+
+
+class AlertInvestigationProgressSchema(ma.SQLAlchemyAutoSchema):
+    completed_by = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login'], dump_only=True)
+
+    class Meta:
+        model = AlertInvestigationProgress
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+
+class IncidentInvestigationProgressSchema(ma.SQLAlchemyAutoSchema):
+    completed_by = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login'], dump_only=True)
+
+    class Meta:
+        model = IncidentInvestigationProgress
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE

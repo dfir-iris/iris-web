@@ -76,6 +76,16 @@ class Permissions(enum.Enum):
     war_rooms_write = 0x10000
     war_rooms_create = 0x20000
 
+    incidents_read = 0x40000
+    incidents_write = 0x80000
+    incidents_delete = 0x100000
+
+    incident_rules_read = 0x200000
+    incident_rules_write = 0x400000
+
+    investigation_flows_read = 0x800000
+    investigation_flows_write = 0x1000000
+
 
 class WarRoomAccessLevel(enum.Enum):
     deny_all = 0x1
