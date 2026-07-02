@@ -272,7 +272,11 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         # passes through so the SPA can cache-bust the avatar URL.
         exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email',
                    'is_service_account', 'mfa_secrets', 'webauthn_credentials',
-                   'avatar_blob', 'avatar_mime']
+                   'avatar_blob', 'avatar_mime',
+                   # `preferences` has its own dedicated endpoints — no
+                   # reason to ship a potentially large JSONB blob on
+                   # every user serialisation.
+                   'preferences']
         unknown = EXCLUDE
 
     @pre_load()
@@ -1138,7 +1142,9 @@ class UserFullSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ['password', 'ctx_case', 'ctx_human_case', 'mfa_secrets', 'webauthn_credentials',
-                   'avatar_blob', 'avatar_mime']
+                   'avatar_blob', 'avatar_mime',
+                   # `preferences` has its own dedicated endpoints.
+                   'preferences']
         unknown = EXCLUDE
 
 
@@ -2582,7 +2588,10 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
                    'webauthn_credentials', 'mfa_setup_complete', 'external_id', 'active', 'id',
                    # See UserSchema above — bytes blob never goes
                    # through JSON; image bytes are served lazily.
-                   'avatar_blob', 'avatar_mime']
+                   'avatar_blob', 'avatar_mime',
+                   # `preferences` has its own dedicated endpoints —
+                   # kept out of the general user serialiser.
+                   'preferences']
         unknown = EXCLUDE
 
     def get_user_primary_organisation(self, obj):

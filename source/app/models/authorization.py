@@ -32,6 +32,7 @@ from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -250,6 +251,12 @@ class User(UserMixin, db.Model):
     avatar_blob = Column(LargeBinary, nullable=True)
     avatar_mime = Column(String(64), nullable=True)
     avatar_updated_at = Column(DateTime, nullable=True)
+
+    # Free-form per-user preferences bag. Keyed by feature namespace
+    # (e.g. `war_room_stream` for the chat sidebar filter selection)
+    # so we can add more preferences later without new migrations.
+    # See migration d8e3f1a90c17.
+    preferences = Column(JSONB, nullable=True)
 
     groups = relationship('Group', secondary='user_group', viewonly=True)
     permissions = relationship('Group', secondary='user_group', viewonly=True)

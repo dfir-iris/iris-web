@@ -509,5 +509,61 @@ def audit_user(identifier: int) -> Response:
     })
 
 
+# ---- Per-user preferences -------------------------------------------------
+#
+# Read/write a single top-level key in the caller's own `preferences`
+# JSONB bag. Not admin-gated: every logged-in user manages their own
+# settings. The key is validated as a slug so a malicious caller can't
+# stuff arbitrary paths into the JSON tree. Values are stored verbatim
+# and returned as-is; the SPA owns the shape per feature namespace
+# (e.g. `war_room_stream`).
+
+import re as _pref_re
+
+_PREF_KEY_RE = _pref_re.compile(r'^[a-z][a-z0-9_-]{0,63}$')
+
+
+def _get_pref_user():
+    from app.models.authorization import User
+    return User.query.filter_by(id=iris_current_user.id).first()
+
+
+@users_blueprint.get('/me/preferences/<key>')
+@ac_api_requires()
+def get_my_preference(key: str):
+    if not _PREF_KEY_RE.match(key or ''):
+        return response_api_error('Invalid preference key')
+    me = _get_pref_user()
+    if me is None:
+        return response_api_not_found()
+    prefs = me.preferences or {}
+    return response_api_success({'key': key, 'value': prefs.get(key)})
+
+
+@users_blueprint.put('/me/preferences/<key>')
+@ac_api_requires()
+def put_my_preference(key: str):
+    if not _PREF_KEY_RE.match(key or ''):
+        return response_api_error('Invalid preference key')
+    raw = request.get_json(silent=True) or {}
+    if 'value' not in raw:
+        return response_api_error('Body must contain a `value` field')
+    value = raw['value']
+    me = _get_pref_user()
+    if me is None:
+        return response_api_not_found()
+    # Copy-and-replace so SQLAlchemy sees the JSONB as dirty — mutating
+    # the dict in place would be missed by the change-tracking layer
+    # (JSONB is not automatically deep-tracked).
+    prefs = dict(me.preferences or {})
+    if value is None:
+        prefs.pop(key, None)
+    else:
+        prefs[key] = value
+    me.preferences = prefs
+    db.session.commit()
+    return response_api_success({'key': key, 'value': prefs.get(key)})
+
+
 # Keep linter quiet about unused imports referenced indirectly.
 _ = (Any, Dict, List)
