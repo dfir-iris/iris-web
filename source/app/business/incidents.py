@@ -30,6 +30,20 @@ from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.incidents import Incident
 from app.models.incidents import IncidentStatus
+from app.util import add_obj_history_entry
+
+
+# Fields whose changes are worth pinning to the analyst activity trail —
+# status, owner, severity, title. Description edits generate a lot of
+# small revisions (typos, formatting) so we keep them out to avoid
+# flooding the timeline; the analyst still sees the current text on the
+# detail page.
+_AUDITED_FIELDS = {
+    'incident_status_id': 'status',
+    'incident_owner_id': 'owner',
+    'incident_severity_id': 'severity',
+    'incident_title': 'title',
+}
 
 
 # Public status-name constants. Kept as module-level names so callers
@@ -73,6 +87,7 @@ def incidents_create(incident: Incident) -> Incident:
     incident.incident_creation_time = datetime.utcnow()
     db.session.add(incident)
     db.session.commit()
+    add_obj_history_entry(incident, 'created', commit=True)
     track_activity(f'created incident #{incident.incident_id} - {incident.incident_title}', ctx_less=True)
     _enqueue_flow_evaluation(incident.incident_id)
     return incident
@@ -135,8 +150,27 @@ def incidents_search(customer_id: Optional[int], status_id: Optional[int],
 
 
 def incidents_update(incident: Incident, changes: dict) -> Incident:
+    # Snapshot before-values for audited fields so we can record the
+    # transition into modification_history. Reading via getattr after
+    # setattr would already show the new value.
+    audit_before = {
+        key: getattr(incident, key, None)
+        for key in _AUDITED_FIELDS
+        if key in changes
+    }
     for key, value in changes.items():
         setattr(incident, key, value)
+    for key, label in _AUDITED_FIELDS.items():
+        if key not in changes:
+            continue
+        old_value = audit_before.get(key)
+        new_value = getattr(incident, key, None)
+        if old_value == new_value:
+            continue
+        add_obj_history_entry(
+            incident,
+            f'changed {label}: {old_value!r} -> {new_value!r}',
+        )
     db.session.commit()
     track_activity(f'updated incident #{incident.incident_id}', ctx_less=True)
     _enqueue_flow_evaluation(incident.incident_id)
@@ -162,15 +196,21 @@ def incident_add_alerts(incident: Incident, alert_ids: Iterable[int]) -> Inciden
         Alert.alert_customer_id == incident.incident_customer_id
     ).all()
     existing = {a.alert_id for a in incident.alerts}
+    added_ids = []
     for alert in alerts:
         if alert.alert_id not in existing:
             incident.alerts.append(alert)
+            added_ids.append(alert.alert_id)
+    if added_ids:
+        add_obj_history_entry(incident, f'linked alerts: {added_ids}')
     db.session.commit()
     return incident
 
 
 def incident_remove_alert(incident: Incident, alert_id: int) -> Incident:
-    incident.alerts = [a for a in incident.alerts if a.alert_id != alert_id]
+    if any(a.alert_id == alert_id for a in incident.alerts):
+        incident.alerts = [a for a in incident.alerts if a.alert_id != alert_id]
+        add_obj_history_entry(incident, f'unlinked alert #{alert_id}')
     db.session.commit()
     return incident
 
@@ -199,6 +239,7 @@ def incident_escalate_to_case(incident: Incident, template_id: Optional[int] = N
     )
     incident.incident_case_id = case.case_id
     incident.incident_status_id = _status_id(_STATUS_ESCALATED)
+    add_obj_history_entry(incident, f'escalated to case #{case.case_id}')
     db.session.commit()
     track_activity(
         f'escalated incident #{incident.incident_id} to case #{case.case_id}',

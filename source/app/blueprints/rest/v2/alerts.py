@@ -141,7 +141,8 @@ class AlertsOperations:
             user_identifier_filter,
             page,
             per_page,
-            request.args.get('sort')
+            request.args.get('sort'),
+            request.args.get('incident_id', type=int),
         )
 
         if filtered_alerts is None:

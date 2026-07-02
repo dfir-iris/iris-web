@@ -46,6 +46,20 @@ def get_filtered_alert_comments(alert_identifier: int, pagination_parameters: Pa
     return query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page())
 
 
+def get_filtered_incident_comments(incident_identifier: int, pagination_parameters: PaginationParameters) -> Pagination:
+    query = Comments.query.filter(
+        Comments.comment_incident_id == incident_identifier
+    ).order_by(Comments.comment_date.asc())
+    return query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page())
+
+
+def get_incident_comment(incident_identifier: int, comment_identifier: int) -> Optional[Comments]:
+    return Comments.query.filter(
+        Comments.comment_id == comment_identifier,
+        Comments.comment_incident_id == incident_identifier,
+    ).first()
+
+
 def get_filtered_asset_comments(asset_identifier: int, pagination_parameters: PaginationParameters) -> Pagination:
     query = Comments.query.filter(
         AssetComments.comment_asset_id == asset_identifier

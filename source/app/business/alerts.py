@@ -43,7 +43,8 @@ from app.models.errors import ObjectNotFoundError
 
 def alerts_search(start_date, end_date, source_start_date, source_end_date, title, description,
                   status, severity, owner, source, tags, case_identifier, customer_identifier, classification, alert_identifiers,
-                  assets, iocs, resolution_status, source_reference, custom_conditions, user_identifier_filter, page, per_page, sort):
+                  assets, iocs, resolution_status, source_reference, custom_conditions, user_identifier_filter, page, per_page, sort,
+                  incident_identifier=None):
 
     return get_filtered_alerts(
         start_date,
@@ -69,7 +70,8 @@ def alerts_search(start_date, end_date, source_start_date, source_end_date, titl
         sort,
         user_identifier_filter,
         source_reference,
-        custom_conditions
+        custom_conditions,
+        incident_id=incident_identifier,
     )
 
 

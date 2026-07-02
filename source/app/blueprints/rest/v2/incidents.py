@@ -31,6 +31,9 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_success
+from app.blueprints.rest.v2.incidents_routes.comments import (
+    incidents_comments_blueprint,
+)
 from app.blueprints.rest.v2.incidents_routes.investigation_progress import (
     incidents_investigation_progress_blueprint,
 )
@@ -69,6 +72,7 @@ def _strip_readonly(payload):
 
 incidents_blueprint = Blueprint('incidents_rest_v2', __name__, url_prefix='/incidents')
 incidents_blueprint.register_blueprint(incidents_investigation_progress_blueprint)
+incidents_blueprint.register_blueprint(incidents_comments_blueprint)
 
 _schema = IncidentSchema()
 

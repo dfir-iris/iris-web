@@ -2796,6 +2796,7 @@ class IncidentSchema(ma.SQLAlchemyAutoSchema):
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'], dump_only=True)
     alert_ids = fields.Method('_alert_ids', dump_only=True)
     investigation_flow = fields.Method('_flow_summary', dump_only=True)
+    source_rule = fields.Method('_source_rule_summary', dump_only=True)
 
     class Meta:
         model = Incident
@@ -2812,6 +2813,14 @@ class IncidentSchema(ma.SQLAlchemyAutoSchema):
         if not flow:
             return None
         return {'flow_id': flow.flow_id, 'flow_name': flow.flow_name}
+
+    def _source_rule_summary(self, incident: Incident):
+        # Surface the rule that created the incident so the detail page can
+        # link back to /settings/incident-rules for auditability.
+        rule = incident.source_rule
+        if not rule:
+            return None
+        return {'rule_id': rule.rule_id, 'rule_name': rule.rule_name}
 
 
 def _validate_condition_node(node, path):

@@ -42,10 +42,12 @@ class Comments(db.Model):
     comment_user_id = Column(ForeignKey('user.id'))
     comment_case_id = Column(ForeignKey('cases.case_id'))
     comment_alert_id = Column(ForeignKey('alerts.alert_id'))
+    comment_incident_id = Column(ForeignKey('incidents.incident_id'))
 
     user = relationship('User')
     case = relationship('Cases')
     alert = relationship('Alert')
+    incident = relationship('Incident')
 
 
 class EventComments(db.Model):

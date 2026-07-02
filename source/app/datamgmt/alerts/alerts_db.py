@@ -65,6 +65,7 @@ from app.models.customers import Client
 from app.models.alerts import Alert
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertCaseAssociation
+from app.models.incidents import AlertIncidentAssociation
 from app.models.alerts import SimilarAlertsCache
 from app.models.alerts import AlertResolutionStatus
 from app.models.alerts import AlertSimilarity
@@ -118,7 +119,13 @@ def get_filtered_alerts(
         sort: str,
         user_identifier: int | None,
         source_reference,
-        custom_conditions: List[dict]
+        custom_conditions: List[dict],
+        # `incident_id`:
+        #   * positive int → alerts attached to that incident
+        #   * -1           → alerts NOT attached to any incident
+        #                    (analyst filter "orphans only")
+        #   * None         → no filter
+        incident_id: int | None = None,
     ) -> Pagination:
     conditions = []
 
@@ -179,6 +186,17 @@ def get_filtered_alerts(
 
     if case_id is not None:
         conditions.append(Alert.cases.any(AlertCaseAssociation.case_id == case_id))
+
+    if incident_id is not None:
+        if incident_id == -1:
+            # Orphans: alerts with zero incident memberships. Analyst
+            # uses this to spot anything not yet triaged into an
+            # incident container.
+            conditions.append(~Alert.incidents.any())
+        else:
+            conditions.append(
+                Alert.incidents.any(AlertIncidentAssociation.incident_id == incident_id)
+            )
 
     if assets is not None:
         if isinstance(assets, list):
@@ -327,13 +345,17 @@ def create_case_from_alerts(alerts: List[Alert], iocs_list: List[str], assets_li
     if note:
         escalation_note = f"\n\n### Escalation note\n\n{note}\n\n"
 
+    # Default to empty prefix — the variable is unconditionally
+    # referenced when building the case name below, and passing
+    # `template_id=None` (the incident-escalation path does) would
+    # otherwise raise UnboundLocalError.
+    case_template_title_prefix = ""
     if template_id is not None and template_id != 0 and template_id != '':
         case_template = get_case_template_by_id(template_id)
         if case_template:
             case_template_title_prefix = case_template.title_prefix
 
     # Create the case
-    # FIXME I think there is a bug, if no template_id is provided
     case = Cases(
         name=f"[ALERT]{case_template_title_prefix} "
              f"Merge of alerts {', '.join([str(alert.alert_id) for alert in alerts])}" if not case_title else
