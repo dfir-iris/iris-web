@@ -21,6 +21,8 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
+from app.business.access_controls import access_controls_user_accessible_customers
+from app.business.access_controls import access_controls_user_has_customer_scope
 from app.datamgmt.filtering import apply_custom_conditions
 from app.datamgmt.filtering import combine_conditions
 from app.db import db
@@ -39,33 +41,106 @@ from app.models.investigation_flows import InvestigationFlow
 from app.models.investigation_flows import InvestigationFlowStep
 
 
-def flows_create(flow: InvestigationFlow) -> InvestigationFlow:
-    db.session.add(flow)
-    db.session.commit()
-    track_activity(f'created investigation flow #{flow.flow_id} - {flow.flow_name}', ctx_less=True)
-    return flow
+# ---------------------------------------------------------------------------
+# CRUD
+#
+# Route handlers must call the scope-aware helpers below (that take
+# `user`/`permissions`) — never the `_unchecked` variants. The
+# `_unchecked` helpers exist for the Celery-worker code path (flow
+# evaluator, deploy_flow) where there's no request context to derive
+# a caller from.
+# ---------------------------------------------------------------------------
 
-
-def flows_list(customer_id: Optional[int] = None) -> List[InvestigationFlow]:
-    """Return active flows visible for a customer. `customer_id=None` returns
-    all active flows (settings admin view). A flow is visible when its
-    `flow_customer_scope` is null (all customers) or contains `customer_id`."""
-    query = InvestigationFlow.query.filter(InvestigationFlow.flow_is_active.is_(True))
-    if customer_id is None:
-        return query.order_by(InvestigationFlow.flow_name.asc()).all()
-    rows = query.order_by(InvestigationFlow.flow_name.asc()).all()
-    return [f for f in rows
-            if f.flow_customer_scope is None or customer_id in (f.flow_customer_scope or [])]
-
-
-def flows_get(identifier: int) -> InvestigationFlow:
+def _flows_get_unchecked(identifier: int) -> InvestigationFlow:
     flow = InvestigationFlow.query.filter_by(flow_id=identifier).first()
     if not flow:
         raise ObjectNotFoundError()
     return flow
 
 
-def flows_update(flow: InvestigationFlow, changes: dict) -> InvestigationFlow:
+def _flow_step_get_unchecked(step_id: int) -> InvestigationFlowStep:
+    step = InvestigationFlowStep.query.filter_by(step_id=step_id).first()
+    if not step:
+        raise ObjectNotFoundError()
+    return step
+
+
+def flows_create(user, permissions, flow: InvestigationFlow,
+                 fallback_customer_access=None) -> InvestigationFlow:
+    """Persist a new flow after verifying the caller can act on every
+    customer the flow declares in `flow_customer_scope`. Global (null)
+    scope requires `server_administrator` — otherwise `investigation_flows_write`
+    would suffice to attach a flow to every tenant on the box."""
+    if not access_controls_user_has_customer_scope(
+        user, permissions, flow.flow_customer_scope,
+        fallback_customer_access=fallback_customer_access,
+    ):
+        raise BusinessProcessingError(
+            'You do not have access to every customer in flow_customer_scope '
+            '(or the flow is global and you are not a server administrator).'
+        )
+    db.session.add(flow)
+    db.session.commit()
+    track_activity(f'created investigation flow #{flow.flow_id} - {flow.flow_name}', ctx_less=True)
+    return flow
+
+
+def flows_list(user, permissions) -> List[InvestigationFlow]:
+    """List active flows visible to the caller.
+
+    Semantics match `rules_list`:
+      * `server_administrator` sees every flow.
+      * Everyone else sees flows whose `flow_customer_scope` is a subset
+        of their accessible customers. Null-scope flows are hidden from
+        non-admins.
+    """
+    accessible = access_controls_user_accessible_customers(user, permissions)
+    query = InvestigationFlow.query.filter(
+        InvestigationFlow.flow_is_active.is_(True)
+    ).order_by(InvestigationFlow.flow_name.asc())
+    if accessible is None:
+        return query.all()
+    rows = query.all()
+    return [
+        f for f in rows
+        if f.flow_customer_scope is not None
+        and f.flow_customer_scope
+        and set(f.flow_customer_scope).issubset(accessible)
+    ]
+
+
+def flows_get(user, permissions, identifier: int,
+              fallback_customer_access=None) -> InvestigationFlow:
+    """Fetch a flow + gate by caller's scope. `ObjectNotFoundError` on
+    lack of access — same "no side-channel enumeration" pattern as the
+    rules helpers."""
+    flow = _flows_get_unchecked(identifier)
+    if not access_controls_user_has_customer_scope(
+        user, permissions, flow.flow_customer_scope,
+        fallback_customer_access=fallback_customer_access,
+    ):
+        raise ObjectNotFoundError()
+    return flow
+
+
+def flows_update(user, permissions, flow: InvestigationFlow, changes: dict,
+                 fallback_customer_access=None) -> InvestigationFlow:
+    """Apply `changes` after checking both current and incoming scope.
+    Refusing the update when either side is unreachable prevents a caller
+    from pivoting a flow between tenants."""
+    if not access_controls_user_has_customer_scope(
+        user, permissions, flow.flow_customer_scope,
+        fallback_customer_access=fallback_customer_access,
+    ):
+        raise ObjectNotFoundError()
+    if 'flow_customer_scope' in changes:
+        if not access_controls_user_has_customer_scope(
+            user, permissions, changes['flow_customer_scope'],
+            fallback_customer_access=fallback_customer_access,
+        ):
+            raise BusinessProcessingError(
+                'You do not have access to every customer in the new flow_customer_scope.'
+            )
     for key, value in changes.items():
         if key == 'steps':
             continue  # steps mutated via separate endpoints
@@ -76,6 +151,9 @@ def flows_update(flow: InvestigationFlow, changes: dict) -> InvestigationFlow:
 
 
 def flows_delete(flow: InvestigationFlow) -> None:
+    """Delete a flow. Caller-scope check is done by the getter that
+    loaded `flow` — routes MUST load flows through `flows_get(user, ...)`
+    before delete."""
     identifier = flow.flow_id
     db.session.delete(flow)
     db.session.commit()
@@ -83,20 +161,33 @@ def flows_delete(flow: InvestigationFlow) -> None:
 
 
 def flow_step_create(flow: InvestigationFlow, step: InvestigationFlowStep) -> InvestigationFlowStep:
+    """Attach a step to `flow`. Route MUST have loaded `flow` via
+    `flows_get(user, ...)` so the caller-scope check has already run —
+    otherwise a caller could `POST /investigation-flows/<other-tenant-id>/steps`
+    to seed steps on a flow they can't see."""
     step.flow_id = flow.flow_id
     db.session.add(step)
     db.session.commit()
     return step
 
 
-def flow_step_get(step_id: int) -> InvestigationFlowStep:
-    step = InvestigationFlowStep.query.filter_by(step_id=step_id).first()
-    if not step:
+def flow_step_get(user, permissions, step_id: int,
+                  fallback_customer_access=None) -> InvestigationFlowStep:
+    """Fetch a step + verify the caller has access to the parent flow.
+    Same 404-on-no-access pattern to avoid step-id enumeration."""
+    step = _flow_step_get_unchecked(step_id)
+    parent = _flows_get_unchecked(step.flow_id)
+    if not access_controls_user_has_customer_scope(
+        user, permissions, parent.flow_customer_scope,
+        fallback_customer_access=fallback_customer_access,
+    ):
         raise ObjectNotFoundError()
     return step
 
 
 def flow_step_update(step: InvestigationFlowStep, changes: dict) -> InvestigationFlowStep:
+    """Mutate a step. Route MUST have loaded `step` via
+    `flow_step_get(user, ...)`."""
     for key, value in changes.items():
         setattr(step, key, value)
     db.session.commit()
@@ -104,6 +195,8 @@ def flow_step_update(step: InvestigationFlowStep, changes: dict) -> Investigatio
 
 
 def flow_step_delete(step: InvestigationFlowStep) -> None:
+    """Delete a step. Route MUST have loaded `step` via
+    `flow_step_get(user, ...)`."""
     db.session.delete(step)
     db.session.commit()
 
@@ -119,7 +212,11 @@ def alert_progress_record(alert: Alert, step_id: int, user_id: int,
     """Idempotent: re-checking the same step just updates the note + timestamp."""
     if not alert.alert_investigation_flow_id:
         raise BusinessProcessingError('Alert has no investigation flow attached')
-    step = flow_step_get(step_id)
+    # Caller-scope was already enforced when the Alert/Incident was
+    # loaded upstream; the step lookup here is a data-integrity check
+    # (step must belong to the entity's attached flow), so the unchecked
+    # variant is correct.
+    step = _flow_step_get_unchecked(step_id)
     if step.flow_id != alert.alert_investigation_flow_id:
         raise BusinessProcessingError('Step does not belong to the alert\'s flow')
     row = AlertInvestigationProgress.query.filter_by(
@@ -168,7 +265,11 @@ def incident_progress_record(incident: Incident, step_id: int, user_id: int,
                              note: Optional[str] = None) -> IncidentInvestigationProgress:
     if not incident.incident_investigation_flow_id:
         raise BusinessProcessingError('Incident has no investigation flow attached')
-    step = flow_step_get(step_id)
+    # Caller-scope was already enforced when the Alert/Incident was
+    # loaded upstream; the step lookup here is a data-integrity check
+    # (step must belong to the entity's attached flow), so the unchecked
+    # variant is correct.
+    step = _flow_step_get_unchecked(step_id)
     if step.flow_id != incident.incident_investigation_flow_id:
         raise BusinessProcessingError("Step does not belong to the incident's flow")
     row = IncidentInvestigationProgress.query.filter_by(

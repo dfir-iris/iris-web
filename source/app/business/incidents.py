@@ -32,17 +32,39 @@ from app.models.incidents import Incident
 from app.models.incidents import IncidentStatus
 
 
-_STATUS_OPEN = 'Open'
-_STATUS_INVESTIGATING = 'Investigating'
-_STATUS_DISMISSED = 'Dismissed'
-_STATUS_ESCALATED = 'Escalated'
+# Public status-name constants. Kept as module-level names so callers
+# in other modules can reference them without either duplicating the
+# literal string (drift risk) or reaching into an underscored private
+# (lint violation). The `_STATUS_*` aliases below are kept for the
+# in-file callers.
+INCIDENT_STATUS_OPEN = 'Open'
+INCIDENT_STATUS_INVESTIGATING = 'Investigating'
+INCIDENT_STATUS_DISMISSED = 'Dismissed'
+INCIDENT_STATUS_ESCALATED = 'Escalated'
+
+_STATUS_OPEN = INCIDENT_STATUS_OPEN
+_STATUS_INVESTIGATING = INCIDENT_STATUS_INVESTIGATING
+_STATUS_DISMISSED = INCIDENT_STATUS_DISMISSED
+_STATUS_ESCALATED = INCIDENT_STATUS_ESCALATED
 
 
-def _status_id(status_name: str) -> int:
+def resolve_status_id(status_name: str) -> int:
+    """Look up an `IncidentStatus.status_id` by its human-readable name.
+
+    Public so other business modules (e.g. `incident_rules._apply_create_incident`)
+    can resolve the "Open" status when opening a new incident, without
+    reaching into a private helper — Ruff / import-linters flag cross-
+    module private imports and the underscore signals module-internal
+    intent."""
     status = IncidentStatus.query.filter_by(status_name=status_name).first()
     if not status:
         raise BusinessProcessingError(f'IncidentStatus "{status_name}" is not seeded')
     return status.status_id
+
+
+# Backwards-compatible alias — this file's own callers used `_status_id`
+# before the rename; keep the alias so no in-file caller changes.
+_status_id = resolve_status_id
 
 
 def incidents_create(incident: Incident) -> Incident:

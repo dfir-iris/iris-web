@@ -135,3 +135,62 @@ def access_controls_user_has_customer_access(
             return False
 
     return False
+
+
+def access_controls_user_has_customer_scope(
+    user,
+    permissions,
+    customer_scope,
+    fallback_customer_access=None
+):
+    """Verify the caller can act on a resource declared with the given
+    `customer_scope` shape used by incident rules and investigation flows.
+
+    Semantics — mirror the tenant-safety pattern used elsewhere:
+      * `customer_scope == None` (a null-scope "global" resource) requires
+        `server_administrator`. Non-admins must never be able to create,
+        edit, deploy, or back-fill a resource that would affect every
+        tenant on the box.
+      * A non-empty list requires access to EVERY customer id in it
+        (subset check). Rejecting a partial-access payload is the safe
+        default: acting on the resource touches every customer in the
+        list, so any single unreachable id is a cross-tenant write.
+      * An empty list is treated the same as null-scope — the resource
+        has no meaningful tenant boundary, so admin-only is the right
+        gate rather than silently allowing a global write."""
+    if ac_has_permission_server_administrator(permissions):
+        return True
+
+    if not customer_scope:  # None or []
+        return False
+
+    if not isinstance(customer_scope, (list, tuple)):
+        # Payload shape guard — schema validation should already have
+        # caught this, but a defensive False here means "unknown shape,
+        # deny" rather than "unknown shape, allow".
+        return False
+
+    for customer_id in customer_scope:
+        if not access_controls_user_has_customer_access(
+            user, permissions, customer_id,
+            fallback_customer_access=fallback_customer_access,
+        ):
+            return False
+    return True
+
+
+def access_controls_user_accessible_customers(user, permissions):
+    """Return the set of customer ids the caller can read. `None` marker
+    means "no filter — server_administrator sees all". Used by list
+    endpoints so they don't leak resources scoped to unreachable tenants."""
+    from app.models.authorization import UserClient  # local import — avoid boot-time cycle
+
+    if ac_has_permission_server_administrator(permissions):
+        return None
+    user_id = getattr(user, 'id', None)
+    if user_id is None:
+        return set()
+    rows = UserClient.query.with_entities(UserClient.client_id).filter(
+        UserClient.user_id == user_id
+    ).all()
+    return {r[0] for r in rows}

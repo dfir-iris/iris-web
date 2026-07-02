@@ -22,12 +22,15 @@ from datetime import timedelta
 from typing import List
 from typing import Optional
 
+from app.business.access_controls import access_controls_user_accessible_customers
+from app.business.access_controls import access_controls_user_has_customer_scope
 from app.business.incidents import incident_open_matching
 from app.datamgmt.filtering import apply_custom_conditions
 from app.datamgmt.filtering import combine_conditions
 from app.db import db
 from app.logger import logger
 from app.models.alerts import Alert
+from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.incident_rules import IncidentRule
 from app.models.incident_rules import RULE_ACTION_CREATE_INCIDENT
@@ -36,37 +39,104 @@ from app.models.incidents import Incident
 
 # ---------------------------------------------------------------------------
 # CRUD
+#
+# Every getter that a route calls must be gated by the caller's identity so
+# a request from tenant A can never touch a rule scoped to tenant B — see
+# `access_controls_user_has_customer_scope` for the exact semantics. The
+# raw helpers (used internally by the evaluator, which runs in a Celery
+# worker with no request context) live under the `_unchecked` suffix and
+# MUST NOT be called from route handlers.
 # ---------------------------------------------------------------------------
 
-def rules_create(rule: IncidentRule) -> IncidentRule:
-    db.session.add(rule)
-    db.session.commit()
-    return rule
-
-
-def rules_get(identifier: int) -> IncidentRule:
+def _rules_get_unchecked(identifier: int) -> IncidentRule:
     rule = IncidentRule.query.filter_by(rule_id=identifier).first()
     if not rule:
         raise ObjectNotFoundError()
     return rule
 
 
-def rules_list(customer_id: Optional[int] = None) -> List[IncidentRule]:
-    """List rules visible for a customer. When `customer_id` is None (admin
-    settings view), return all rules. Otherwise return active rules whose
-    scope is null (global) or contains the customer."""
-    query = IncidentRule.query
-    if customer_id is None:
-        return query.order_by(IncidentRule.rule_priority.asc(),
-                              IncidentRule.rule_id.asc()).all()
-    rows = query.filter(IncidentRule.rule_is_active.is_(True)).order_by(
+def rules_create(user, permissions, rule: IncidentRule,
+                 fallback_customer_access=None) -> IncidentRule:
+    """Persist a new rule after verifying the caller can act on every
+    customer the rule targets. A caller trying to create a rule scoped to
+    a tenant they can't see (or a null-scope global rule without
+    server_administrator) is rejected — otherwise `incident_rules_write`
+    would double as customer-elevation."""
+    if not access_controls_user_has_customer_scope(
+        user, permissions, rule.rule_customer_scope,
+        fallback_customer_access=fallback_customer_access,
+    ):
+        raise BusinessProcessingError(
+            'You do not have access to every customer in rule_customer_scope '
+            '(or the rule is global and you are not a server administrator).'
+        )
+    db.session.add(rule)
+    db.session.commit()
+    return rule
+
+
+def rules_get(user, permissions, identifier: int,
+              fallback_customer_access=None) -> IncidentRule:
+    """Fetch a rule + verify the caller has access to it. Raises
+    `ObjectNotFoundError` rather than a distinct forbidden error so a
+    caller can't enumerate rule ids across tenants by watching for a
+    403-vs-404 difference."""
+    rule = _rules_get_unchecked(identifier)
+    if not access_controls_user_has_customer_scope(
+        user, permissions, rule.rule_customer_scope,
+        fallback_customer_access=fallback_customer_access,
+    ):
+        raise ObjectNotFoundError()
+    return rule
+
+
+def rules_list(user, permissions) -> List[IncidentRule]:
+    """List rules visible to the caller.
+
+      * `server_administrator` sees every rule (null-scope + all tenants).
+      * Everyone else sees only rules whose `rule_customer_scope` is a
+        subset of the customers they have access to. Null-scope (global)
+        rules are hidden from non-admins because acting on them would
+        cross every tenant boundary.
+
+    Ordering matches the evaluator so the UI reads in the same order the
+    engine would fire them."""
+    accessible = access_controls_user_accessible_customers(user, permissions)
+    query = IncidentRule.query.order_by(
         IncidentRule.rule_priority.asc(), IncidentRule.rule_id.asc()
-    ).all()
-    return [r for r in rows
-            if r.rule_customer_scope is None or customer_id in (r.rule_customer_scope or [])]
+    )
+    if accessible is None:  # server_administrator
+        return query.all()
+    rows = query.all()
+    return [
+        r for r in rows
+        if r.rule_customer_scope is not None
+        and r.rule_customer_scope
+        and set(r.rule_customer_scope).issubset(accessible)
+    ]
 
 
-def rules_update(rule: IncidentRule, changes: dict) -> IncidentRule:
+def rules_update(user, permissions, rule: IncidentRule, changes: dict,
+                 fallback_customer_access=None) -> IncidentRule:
+    """Apply `changes` after verifying the caller can act on both the
+    rule's *current* scope AND its *incoming* scope. Skipping either
+    check would let a caller who can only see tenant A pivot a rule
+    from A → B (or vice versa) as a smuggling primitive."""
+    # Current scope
+    if not access_controls_user_has_customer_scope(
+        user, permissions, rule.rule_customer_scope,
+        fallback_customer_access=fallback_customer_access,
+    ):
+        raise ObjectNotFoundError()
+    # Incoming scope — only check if the payload tried to change it.
+    if 'rule_customer_scope' in changes:
+        if not access_controls_user_has_customer_scope(
+            user, permissions, changes['rule_customer_scope'],
+            fallback_customer_access=fallback_customer_access,
+        ):
+            raise BusinessProcessingError(
+                'You do not have access to every customer in the new rule_customer_scope.'
+            )
     for key, value in changes.items():
         setattr(rule, key, value)
     rule.rule_updated_at = datetime.utcnow()
@@ -75,6 +145,9 @@ def rules_update(rule: IncidentRule, changes: dict) -> IncidentRule:
 
 
 def rules_delete(rule: IncidentRule) -> None:
+    """Delete a rule. Caller-scope check is done by whichever getter
+    fetched `rule` — routes must load rules through `rules_get(user, ...)`
+    before delete."""
     db.session.delete(rule)
     db.session.commit()
 
@@ -147,9 +220,11 @@ def _apply_create_incident(rule: IncidentRule, alert: Alert) -> Optional[Inciden
         incident_dedupe_key=dedupe_key,
         incident_creation_time=datetime.utcnow(),
     )
-    # Deferred import to avoid a cycle at module import time.
-    from app.business.incidents import _status_id, _STATUS_OPEN
-    incident.incident_status_id = _status_id(_STATUS_OPEN)
+    # Deferred import to avoid a cycle at module import time. Public
+    # names (no leading underscore) so Ruff doesn't flag cross-module
+    # private imports.
+    from app.business.incidents import INCIDENT_STATUS_OPEN, resolve_status_id
+    incident.incident_status_id = resolve_status_id(INCIDENT_STATUS_OPEN)
     db.session.add(incident)
     db.session.flush()
     incident.alerts.append(alert)

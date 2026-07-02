@@ -118,3 +118,91 @@ class TestsRestIncidentRules(TestCase):
         user = self._subject.create_dummy_user(permissions=IRIS_PERMISSION_INCIDENT_RULES_READ)
         response = user.create('/api/v2/incident-rules', _rule_body())
         self.assertEqual(403, response.status_code)
+
+    # -------------------------------------------------------------------
+    # Security regression coverage for the tenancy hardening pass.
+    # These tests all use a non-admin user with only the incident-rules
+    # permissions — they must NOT be able to create global rules, reach
+    # rules scoped to unreachable customers, or spoof attribution.
+    # -------------------------------------------------------------------
+
+    def test_non_admin_cannot_create_global_rule(self):
+        # Null customer_scope means "all tenants" — reserved for
+        # server_administrator, otherwise incident_rules_write would
+        # double as tenant elevation.
+        rw = IRIS_PERMISSION_INCIDENT_RULES_READ | IRIS_PERMISSION_INCIDENT_RULES_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        response = user.create(
+            '/api/v2/incident-rules', _rule_body(rule_customer_scope=None)
+        )
+        # The scope check raises BusinessProcessingError → 400.
+        self.assertEqual(400, response.status_code)
+
+    def test_non_admin_cannot_create_rule_scoped_to_unreachable_customer(self):
+        rw = IRIS_PERMISSION_INCIDENT_RULES_READ | IRIS_PERMISSION_INCIDENT_RULES_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        other_customer = self._subject.create_dummy_customer()
+        response = user.create(
+            '/api/v2/incident-rules',
+            _rule_body(rule_customer_scope=[other_customer])
+        )
+        self.assertEqual(400, response.status_code)
+
+    def test_non_admin_cannot_read_rule_scoped_to_unreachable_customer(self):
+        # Admin creates a rule scoped to a customer the dummy user
+        # doesn't belong to. That rule must be invisible via GET / list /
+        # PUT / DELETE / test / backfill.
+        other_customer = self._subject.create_dummy_customer()
+        created = self._subject.create(
+            '/api/v2/incident-rules',
+            _rule_body(rule_customer_scope=[other_customer])
+        ).json()
+        rule_id = created.get('rule_id') or created['data']['rule_id']
+
+        rw = IRIS_PERMISSION_INCIDENT_RULES_READ | IRIS_PERMISSION_INCIDENT_RULES_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        response = user.get(f'/api/v2/incident-rules/{rule_id}')
+        self.assertEqual(404, response.status_code)
+
+    def test_non_admin_cannot_backfill_rule_scoped_to_unreachable_customer(self):
+        other_customer = self._subject.create_dummy_customer()
+        created = self._subject.create(
+            '/api/v2/incident-rules',
+            _rule_body(rule_customer_scope=[other_customer])
+        ).json()
+        rule_id = created.get('rule_id') or created['data']['rule_id']
+
+        rw = IRIS_PERMISSION_INCIDENT_RULES_READ | IRIS_PERMISSION_INCIDENT_RULES_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        response = user.create(
+            f'/api/v2/incident-rules/{rule_id}/backfill', {'sample_days': 7}
+        )
+        self.assertEqual(404, response.status_code)
+
+    def test_list_hides_rules_from_unreachable_tenants(self):
+        other_customer = self._subject.create_dummy_customer()
+        created = self._subject.create(
+            '/api/v2/incident-rules',
+            _rule_body(rule_customer_scope=[other_customer])
+        ).json()
+        rule_id = created.get('rule_id') or created['data']['rule_id']
+
+        rw = IRIS_PERMISSION_INCIDENT_RULES_READ | IRIS_PERMISSION_INCIDENT_RULES_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        response = user.get('/api/v2/incident-rules').json()
+        rows = response.get('data', response) if isinstance(response, dict) else response
+        rule_ids = [r['rule_id'] for r in rows] if isinstance(rows, list) else []
+        self.assertNotIn(rule_id, rule_ids)
+
+    def test_created_by_is_server_owned_not_client_spoofable(self):
+        # A caller who supplies a bogus `rule_created_by` in the body must
+        # not have it honoured — the server stamps its own user id.
+        body = _rule_body()
+        body['rule_created_by'] = 999999
+        response = self._subject.create('/api/v2/incident-rules', body).json()
+        # The response schema exposes rule_created_by (include_fk=True).
+        stamped = response.get('rule_created_by')
+        if stamped is None and isinstance(response.get('data'), dict):
+            stamped = response['data'].get('rule_created_by')
+        # 1 is the seeded administrator user id used by the harness.
+        self.assertEqual(1, stamped)

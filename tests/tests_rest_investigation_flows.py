@@ -136,6 +136,66 @@ class TestsRestInvestigationFlows(TestCase):
         counts = payload.get('data', payload)
         self.assertGreaterEqual(counts['alerts_attached'], 1)
 
+    # -------------------------------------------------------------------
+    # Security regression coverage (mirror tests_rest_incident_rules.py).
+    # -------------------------------------------------------------------
+
+    def test_non_admin_cannot_create_global_flow(self):
+        rw = IRIS_PERMISSION_INVESTIGATION_FLOWS_READ | IRIS_PERMISSION_INVESTIGATION_FLOWS_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        response = user.create(
+            '/api/v2/investigation-flows',
+            _flow_body(flow_customer_scope=None)
+        )
+        self.assertEqual(400, response.status_code)
+
+    def test_non_admin_cannot_create_flow_scoped_to_unreachable_customer(self):
+        rw = IRIS_PERMISSION_INVESTIGATION_FLOWS_READ | IRIS_PERMISSION_INVESTIGATION_FLOWS_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        other_customer = self._subject.create_dummy_customer()
+        response = user.create(
+            '/api/v2/investigation-flows',
+            _flow_body(flow_customer_scope=[other_customer])
+        )
+        self.assertEqual(400, response.status_code)
+
+    def test_non_admin_cannot_deploy_flow_scoped_to_unreachable_customer(self):
+        other_customer = self._subject.create_dummy_customer()
+        created = self._subject.create(
+            '/api/v2/investigation-flows',
+            _flow_body(flow_customer_scope=[other_customer])
+        ).json()
+        flow_id = created.get('flow_id') or created['data']['flow_id']
+
+        rw = IRIS_PERMISSION_INVESTIGATION_FLOWS_READ | IRIS_PERMISSION_INVESTIGATION_FLOWS_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        response = user.create(f'/api/v2/investigation-flows/{flow_id}/deploy', {})
+        self.assertEqual(404, response.status_code)
+
+    def test_list_hides_flows_from_unreachable_tenants(self):
+        other_customer = self._subject.create_dummy_customer()
+        created = self._subject.create(
+            '/api/v2/investigation-flows',
+            _flow_body(flow_customer_scope=[other_customer])
+        ).json()
+        flow_id = created.get('flow_id') or created['data']['flow_id']
+
+        rw = IRIS_PERMISSION_INVESTIGATION_FLOWS_READ | IRIS_PERMISSION_INVESTIGATION_FLOWS_WRITE
+        user = self._subject.create_dummy_user(permissions=rw)
+        response = user.get('/api/v2/investigation-flows').json()
+        rows = response.get('data', response) if isinstance(response, dict) else response
+        flow_ids = [f['flow_id'] for f in rows] if isinstance(rows, list) else []
+        self.assertNotIn(flow_id, flow_ids)
+
+    def test_created_by_is_server_owned_not_client_spoofable(self):
+        body = _flow_body()
+        body['flow_created_by'] = 999999
+        response = self._subject.create('/api/v2/investigation-flows', body).json()
+        stamped = response.get('flow_created_by')
+        if stamped is None and isinstance(response.get('data'), dict):
+            stamped = response['data'].get('flow_created_by')
+        self.assertEqual(1, stamped)
+
     def test_deploy_skips_alerts_already_attached(self):
         # Once attached, deploy shouldn't overwrite — analyst may have
         # chosen the current flow deliberately.

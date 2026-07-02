@@ -652,3 +652,14 @@ def ac_current_user_has_customer_access(customer_identifier):
         _get_current_permissions_mask(),
         customer_identifier
     )
+
+
+def ac_current_user_permissions_mask():
+    """Public accessor for the caller's effective permission mask.
+
+    Route handlers that need to pass the mask into a business-layer
+    helper — e.g. the incident-rules / investigation-flows scope
+    checks — should use this rather than importing the underscored
+    `_get_current_permissions_mask` directly (linters flag cross-module
+    private imports, and the underscore signals module-internal use)."""
+    return _get_current_permissions_mask()
