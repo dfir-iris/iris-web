@@ -1,0 +1,151 @@
+#  IRIS Source Code
+#  contact@dfir-iris.org
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Lesser General Public
+#  License as published by the Free Software Foundation; either
+#  version 3 of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Lesser General Public License for more details.
+#
+#  Production-style stack for the new SvelteKit UI.
+#
+#  Mirrors docker-compose.dev.yml, but the frontend is a compiled
+#  SvelteKit Node bundle (no Vite, no HMR, no bind mount). Use this
+#  when you want the new UI behind nginx without running the Vite dev
+#  server.
+#
+#  Usage:
+#    docker compose -f docker-compose.new-ui.yml --profile new-ui up -d --build
+#
+#  Required env (iris-web/.env):
+#    ORIGIN=https://your.deployment.host        # SvelteKit CSRF gate
+#    IRIS_SVELTEKIT_FRONTEND_DIR=../iris-frontend
+#    NGINX_CONF_FILE=nginx-newui.conf
+
+services:
+  rabbitmq:
+    extends:
+      file: docker-compose.base.yml
+      service: rabbitmq
+    user: rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity || exit 1
+      start_period: 60s
+      start_interval: 1s
+
+  db:
+    extends:
+      file: docker-compose.base.yml
+      service: db
+    build:
+      context: docker/db
+    image: iriswebapp_db:newui
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: pg_isready -U postgres -d iris_db || exit 1
+      start_period: 60s
+      start_interval: 1s
+
+  app:
+    extends:
+      file: docker-compose.base.yml
+      service: app
+    build:
+      context: .
+      dockerfile: docker/webApp/Dockerfile
+    image: iriswebapp_app:newui
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: curl --head --fail http://localhost:8000 || exit 1
+      start_period: 60s
+      start_interval: 1s
+
+  worker:
+    extends:
+      file: docker-compose.base.yml
+      service: worker
+    build:
+      context: .
+      dockerfile: docker/webApp/Dockerfile
+    image: iriswebapp_app:newui
+    depends_on:
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: celery -A app.celery inspect ping || exit 1
+      start_period: 60s
+      start_interval: 1s
+
+  nginx:
+    extends:
+      file: docker-compose.base.yml
+      service: nginx
+    build:
+      context: ./docker/nginx
+      args:
+        NGINX_CONF_GID: 1234
+        NGINX_CONF_FILE: ${NGINX_CONF_FILE:-nginx-newui.conf}
+    image: iriswebapp_nginx:newui
+    depends_on:
+      app:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+
+  frontend:
+    # Compiled SvelteKit Node bundle. No source bind-mount, no `npm
+    # install` on boot — the image carries everything it needs.
+    build:
+      context: ${IRIS_SVELTEKIT_FRONTEND_DIR:-../iris-frontend}
+      dockerfile: ${IRIS_FRONTEND_DOCKERFILE:-../iris-web/docker/frontend/Dockerfile}
+    image: iris_frontend:newui
+    profiles: ["new-ui"]
+    container_name: iris_sveltekit_frontend
+    environment:
+      # Both fall back to IRIS_HOSTNAME so operators only declare the
+      # external hostname once (in iris-web/.env). Explicit
+      # PUBLIC_EXTERNAL_API_URL / ORIGIN still take precedence — useful
+      # when the API is served from a different host than the UI.
+      - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-https://${IRIS_HOSTNAME:-127.0.0.1}}
+      - PUBLIC_INTERNAL_API_URL=http://${IRIS_UPSTREAM_SERVER}:${IRIS_UPSTREAM_PORT}
+      - PUBLIC_USE_MOCK_API_DATA=false
+      # ORIGIN gates SvelteKit's CSRF check in production (see
+      # svelte.config.js → kit.csrf.checkOrigin). Must match the
+      # external URL the user hits.
+      - ORIGIN=${ORIGIN:-https://${IRIS_HOSTNAME:-127.0.0.1}}
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
+      - NODE_ENV=production
+    ports:
+      - "5173:5173"
+    networks:
+      - iris_backend
+      - iris_frontend
+    restart: always
+
+volumes:
+  iris-downloads:
+  user_templates:
+  server_data:
+  db_data:
+
+networks:
+  iris_backend:
+    name: iris_backend
+  iris_frontend:
+    name: iris_frontend
