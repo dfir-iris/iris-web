@@ -160,6 +160,68 @@ def login():
     return response_api_success(data=user_data)
 
 
+@auth_blueprint.post('/oidc-exchange')
+def oidc_exchange():
+    """
+    Trade a fresh OIDC-authenticated session cookie for JWT access/refresh
+    tokens, then invalidate the session so the cookie can't be reused.
+
+    Security model:
+      - Only redeemable when the Flask session was created by a successful
+        OIDC callback in this same session (checked via the one-time
+        `oidc_authenticated` flag set in login.oidc_authorise). A plain
+        local-login session, or a session hydrated some other way, is
+        rejected — this endpoint is not a general session->JWT converter.
+      - Single-use: the flag is popped and the session is fully cleared
+        before the response is returned, so the same session cookie
+        cannot mint a second set of tokens even if the browser replays.
+      - MFA is trusted from the IdP for OIDC users (mirrors wrap_login_user's
+        is_oidc=True branch, which skips IRIS's local MFA prompt). Tokens
+        are minted with mfa_verified=True — same policy as the existing
+        session-based OIDC login has today.
+    """
+    if not is_authentication_oidc():
+        return response_api_error('OIDC authentication is not enabled', 400)
+
+    if not iris_current_user.is_authenticated:
+        return response_api_error('Unauthorized', 401)
+
+    if not session.pop('oidc_authenticated', False):
+        # The user has a valid session but it wasn't created via the OIDC
+        # callback (or the marker has already been consumed by a prior
+        # exchange). Do NOT mint tokens.
+        return response_api_error('No pending OIDC exchange for this session', 403)
+
+    user = users_get_active(iris_current_user.id)
+    if user is None:
+        session.clear()
+        return response_api_error('User not active', 403)
+
+    user_data = UserSchema(
+        exclude=['user_password', 'mfa_secrets', 'webauthn_credentials']
+    ).dump(user)
+
+    # OIDC users' MFA is enforced at the IdP. Match wrap_login_user's
+    # is_oidc branch and mint tokens with mfa_verified=True so the SPA
+    # doesn't route them through IRIS's local MFA prompt.
+    tokens = generate_auth_tokens(user, mfa_verified=True)
+    user_data.update({'tokens': tokens})
+    user_data.update(_mfa_status_for(user))
+
+    # Invalidate the bridge cookie: log the flask-login user out and
+    # wipe every session key. From this point on the SPA authenticates
+    # solely via the JWT it just received.
+    logout_user()
+    session.clear()
+
+    track_activity(
+        f'User {user.user} exchanged OIDC session for JWT tokens',
+        ctx_less=True, display_in_ui=False,
+    )
+
+    return response_api_success(data=user_data)
+
+
 @auth_blueprint.post('/mfa-setup')
 def mfa_setup():
     """

@@ -139,6 +139,11 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap", "oidc"]:
     @login_blueprint.route("/login", methods=["GET", "POST"])
     def login():
         if iris_current_user.is_authenticated:
+            # If the old Jinja UI is the one receiving the post-OIDC
+            # redirect, the SPA-only JWT exchange marker never gets
+            # consumed. Drop it here so it can't linger and be
+            # redeemed later by a rogue XHR from the same browser.
+            session.pop("oidc_authenticated", None)
             return redirect(url_for("index.index"))
 
         if (
@@ -352,7 +357,22 @@ if is_authentication_oidc():
             ]
             update_user_groups(user.id, new_user_group)
 
-        return wrap_login_user(user, is_oidc=True)
+        # Mark this session as OIDC-authenticated so the SPA can call
+        # /api/v2/auth/oidc-exchange exactly once to trade the session
+        # cookie for JWT tokens. Single-use: the exchange endpoint
+        # clears both this flag and the session immediately, so a
+        # stolen cookie can't be redeemed twice.
+        session["oidc_authenticated"] = True
+
+        wrap_login_user(user, is_oidc=True)
+
+        # Regardless of `next`, send the browser to the SPA's login
+        # page with an OIDC marker. The SPA's onMount detects the
+        # marker, calls oidc-exchange, populates the JWT store, and
+        # then navigates to `/`. Overriding wrap_login_user's redirect
+        # target here also blocks an open-redirect via ?next=... on
+        # the OIDC callback.
+        return redirect("/login?oidc=1")
 
 
 # MFA hardening constants. Values are deliberately conservative — a legitimate

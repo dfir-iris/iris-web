@@ -25,20 +25,49 @@ from oic.oic.message import ProviderConfigurationResponse
 def get_oidc_client(config, logger) -> Client:
     client = Client(client_authn_method=CLIENT_AUTHN_METHOD)
 
-    # retrieve provider configuration dynamically from metadata
-    # or fall back to env vars
+    issuer = config.get("OIDC_ISSUER_URL")
+
+    # Try dynamic discovery first. If the well-known endpoint is
+    # reachable and well-formed, every endpoint URL (authorization,
+    # token, userinfo, end-session, ...) is populated on the client.
+    discovery_error = None
     try:
-        client.provider_config(config.get("OIDC_ISSUER_URL"))
+        client.provider_config(issuer)
     except Exception as e:
-        logger.warning(f"Could not read OIDC metadata, using environment variables - error {e}")
+        discovery_error = e
+        logger.warning(
+            "OIDC discovery failed for issuer %s — falling back to "
+            "environment variables. Error: %s", issuer, e,
+        )
+
         op_info = ProviderConfigurationResponse(
-            issuer=config.get("OIDC_ISSUER_URL"),
+            issuer=issuer,
             authorization_endpoint=config.get("OIDC_AUTH_ENDPOINT"),
             token_endpoint=config.get("OIDC_TOKEN_ENDPOINT"),
             end_session_endpoint=config.get("OIDC_END_SESSION_ENDPOINT"),
         )
 
         client.handle_provider_config(op_info, op_info['issuer'])
+
+    # Fail loud at startup rather than letting the request-time code
+    # blow up later inside oic with the famously opaque
+    # `argument of type 'NoneType' is not iterable`. If we get here
+    # with no authorization_endpoint, the operator either hit a
+    # discovery error AND didn't set OIDC_AUTH_ENDPOINT, or the
+    # discovery doc itself was missing the field.
+    if not getattr(client, "authorization_endpoint", None):
+        msg = (
+            "OIDC client could not resolve authorization_endpoint. "
+            "Check that the IRIS app container can reach "
+            f"{issuer!r}/.well-known/openid-configuration "
+            "(set OIDC_ISSUER_URL correctly + verify network + TLS), "
+            "or set OIDC_AUTH_ENDPOINT / OIDC_TOKEN_ENDPOINT / "
+            "OIDC_END_SESSION_ENDPOINT in iris-web/.env to bypass "
+            "discovery."
+        )
+        if discovery_error is not None:
+            msg += f" Discovery error was: {discovery_error}"
+        raise RuntimeError(msg)
 
     info = {
         "client_id": config.get("OIDC_CLIENT_ID"),
