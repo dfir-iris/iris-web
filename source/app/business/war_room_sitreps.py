@@ -10,6 +10,7 @@ import json
 from sqlalchemy import desc, func
 
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.war_rooms import WarRoomCase
@@ -89,6 +90,8 @@ def sitrep_draft(war_room_id, title, body_md='', authored_by_id=None):
     sit.published = False
     db.session.add(sit)
     db.session.commit()
+    track_activity(f'drafted sitrep "{sit.title}" (v{sit.version})',
+                   war_room_id=war_room_id)
     return sit
 
 
@@ -106,6 +109,8 @@ def sitrep_update(war_room_id, sitrep_id, title=None, body_md=None):
     if body_md is not None:
         sit.body_md = body_md
     db.session.commit()
+    track_activity(f'updated sitrep "{sit.title}" (v{sit.version})',
+                   war_room_id=war_room_id)
     return sit
 
 
@@ -122,6 +127,8 @@ def sitrep_publish(war_room_id, sitrep_id):
     sit.published = True
     sit.authored_at = datetime.datetime.utcnow()
     db.session.commit()
+    track_activity(f'published sitrep "{sit.title}" (v{sit.version})',
+                   war_room_id=war_room_id)
     return sit
 
 
@@ -132,8 +139,10 @@ def sitrep_delete(war_room_id, sitrep_id):
     # chat "SitRep published" mirror-message stays but its ref now
     # points at nothing, which the chat surface handles as a dead ref.
     sit = sitrep_get(war_room_id, sitrep_id)
+    label = f'"{sit.title}" (v{sit.version})'
     db.session.delete(sit)
     db.session.commit()
+    track_activity(f'deleted sitrep {label}', war_room_id=war_room_id)
 
 
 def sitrep_as_markdown(sit):

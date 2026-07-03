@@ -16,6 +16,7 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+from app.business.war_rooms_access import ac_get_fast_user_war_rooms_access
 from app.datamgmt.activities.activities_db import list_activities_paginated
 from app.datamgmt.activities.activities_db import search_users_activity_in_case
 from app.datamgmt.manage.manage_cases_db import user_list_cases_view
@@ -34,8 +35,10 @@ def list_activities(
         search_value=None,
         scope_user_id=None,
         case_id=None,
+        war_room_id=None,
         user_ids=None,
         case_ids=None,
+        war_room_ids=None,
         date_from=None,
         date_to=None,
         is_from_api=None,
@@ -55,11 +58,15 @@ def list_activities(
 
     if can_read_all:
         accessible_case_ids = None
+        accessible_war_room_ids = None
     else:
         # `user_list_cases_view` returns the case ids the user can see.
         # Pass through verbatim — `list_activities_paginated` understands
         # an empty list as "no cases" and short-circuits accordingly.
         accessible_case_ids = user_list_cases_view(user_id)
+        # War-room access lives on its own ACL table (see
+        # `war_rooms_access`), independent of case ACLs.
+        accessible_war_room_ids = ac_get_fast_user_war_rooms_access(user_id)
 
     # When the caller asks for specific cases but isn't a global reader,
     # intersect their request with the accessible-case window so a guess
@@ -75,16 +82,26 @@ def list_activities(
             # rather than dropping the filter and showing everything.
             effective_case_ids = [-1]
 
+    effective_war_room_ids = war_room_ids
+    if not can_read_all and war_room_ids:
+        accessible_wr_set = set(accessible_war_room_ids or [])
+        effective_war_room_ids = [wid for wid in war_room_ids if wid in accessible_wr_set]
+        if not effective_war_room_ids:
+            effective_war_room_ids = [-1]
+
     return list_activities_paginated(
         page=page,
         per_page=per_page,
         accessible_case_ids=accessible_case_ids,
+        accessible_war_room_ids=accessible_war_room_ids,
         include_non_case=include_non_case,
         search_value=search_value or None,
         user_id=scope_user_id,
         case_id=case_id,
+        war_room_id=war_room_id,
         user_ids=user_ids,
         case_ids=effective_case_ids,
+        war_room_ids=effective_war_room_ids,
         date_from=date_from,
         date_to=date_to,
         is_from_api=is_from_api,

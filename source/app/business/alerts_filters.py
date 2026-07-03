@@ -18,12 +18,18 @@
 
 from app.db import db
 from app.datamgmt.filters.filters_db import get_filters, get_filter_by_id
+from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import ObjectNotFoundError
+
+
+def _filter_label(saved_filter):
+    return getattr(saved_filter, 'filter_name', None) or f'#{getattr(saved_filter, "id", "?")}'
 
 
 def alert_filter_add(new_saved_filter):
     db.session.add(new_saved_filter)
     db.session.commit()
+    track_activity(f'created saved filter "{_filter_label(new_saved_filter)}"')
 
 
 def alert_filter_list(user, filter_type="alerts", include_public=True):
@@ -44,8 +50,11 @@ def alert_filter_get(user, identifier):
 
 def alert_filter_update():
     db.session.commit()
+    track_activity('updated a saved filter')
 
 
 def alert_filter_delete(saved_filter):
+    label = _filter_label(saved_filter)
     db.session.delete(saved_filter)
     db.session.commit()
+    track_activity(f'deleted saved filter "{label}"')

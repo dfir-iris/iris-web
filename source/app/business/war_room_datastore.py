@@ -18,6 +18,7 @@ import uuid
 from flask import current_app
 
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.war_rooms import WarRoomCase
@@ -132,6 +133,8 @@ def war_room_datastore_save(war_room_id, file_stream, filename,
     row.tags = tags
     db.session.add(row)
     db.session.commit()
+    track_activity(f'uploaded file "{row.filename}" ({total} bytes) to datastore',
+                   war_room_id=war_room_id)
     return row
 
 
@@ -145,6 +148,7 @@ def war_room_datastore_open(row):
 def war_room_datastore_delete(war_room_id, file_id):
     row = war_room_datastore_get(war_room_id, file_id)
     path = row.storage_path
+    filename = row.filename
     db.session.delete(row)
     db.session.commit()
     if path and os.path.exists(path):
@@ -154,6 +158,8 @@ def war_room_datastore_delete(war_room_id, file_id):
             # Don't roll back the DB delete — leaving an orphan blob is
             # less bad than leaving the row pointing at it.
             pass
+    track_activity(f'deleted file "{filename}" from datastore',
+                   war_room_id=war_room_id)
 
 
 def war_room_attached_cases(war_room_id):

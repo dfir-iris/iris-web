@@ -23,6 +23,7 @@ timelines so the REST blueprints can stay thin.
 import re
 
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.models.cases import CaseEventTimeline
 from app.models.cases import CaseTimeline
 from app.models.cases import CasesEvent
@@ -108,6 +109,11 @@ def case_timeline_create(case_id, name, description=None, color=None,
     )
     db.session.add(timeline)
     db.session.commit()
+    if not is_default:
+        # Skip the audit line for the default-timeline bootstrap so a
+        # brand-new case doesn't drop two rows (case create + main
+        # timeline create) in the feed.
+        track_activity(f'created timeline "{name}"', caseid=case_id)
     return timeline
 
 
@@ -134,6 +140,7 @@ def case_timeline_update(case_id, timeline_id, name=None, description=None,
         timeline.color = _validate_color(color)
 
     db.session.commit()
+    track_activity(f'updated timeline "{timeline.name}"', caseid=case_id)
     return timeline
 
 
@@ -144,8 +151,10 @@ def case_timeline_delete(case_id, timeline_id):
     timeline = case_timeline_get(case_id, timeline_id)
     if timeline.is_default:
         raise BusinessProcessingError('The default timeline cannot be deleted')
+    name = timeline.name
     db.session.delete(timeline)
     db.session.commit()
+    track_activity(f'deleted timeline "{name}"', caseid=case_id)
 
 
 def case_ensure_default_timeline(case_id, created_by_id=None):

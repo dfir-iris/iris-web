@@ -13,6 +13,7 @@ operator wrote inline OR a reference to an existing case event.
 import re
 
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.war_rooms import WarRoomTimeline
@@ -88,6 +89,7 @@ def create_timeline(war_room_id, name, description=None, color=None,
     t.created_by_id = created_by_id
     db.session.add(t)
     db.session.commit()
+    track_activity(f'created war room timeline "{t.name}"', war_room_id=war_room_id)
     return t
 
 
@@ -110,6 +112,7 @@ def update_timeline(war_room_id, timeline_id, name=None, description=None,
     if color is not None:
         t.color = _validate_color(color)
     db.session.commit()
+    track_activity(f'updated war room timeline "{t.name}"', war_room_id=war_room_id)
     return t
 
 
@@ -117,8 +120,10 @@ def delete_timeline(war_room_id, timeline_id):
     t = get_timeline(war_room_id, timeline_id)
     if t.is_default:
         raise BusinessProcessingError('The default timeline cannot be deleted')
+    name = t.name
     db.session.delete(t)
     db.session.commit()
+    track_activity(f'deleted war room timeline "{name}"', war_room_id=war_room_id)
 
 
 # Events -------------------------------------------------------------------
@@ -177,6 +182,8 @@ def create_timeline_event(war_room_id, timeline_id, title=None, content=None,
     row.created_by_id = created_by_id
     db.session.add(row)
     db.session.commit()
+    label = row.title or (f'case event #{event_id}' if event_id else 'event')
+    track_activity(f'added timeline event "{label}"', war_room_id=war_room_id)
     return row
 
 
@@ -230,10 +237,14 @@ def update_timeline_event(war_room_id, event_id, *, title=_UNSET, content=_UNSET
                 )
             row.category = stripped or None
     db.session.commit()
+    label = row.title or (f'case event #{row.event_id}' if row.event_id else f'event #{row.id}')
+    track_activity(f'updated timeline event "{label}"', war_room_id=war_room_id)
     return row
 
 
 def delete_timeline_event(war_room_id, event_id):
     row = _get_event(war_room_id, event_id)
+    label = row.title or (f'case event #{row.event_id}' if row.event_id else f'event #{row.id}')
     db.session.delete(row)
     db.session.commit()
+    track_activity(f'deleted timeline event "{label}"', war_room_id=war_room_id)

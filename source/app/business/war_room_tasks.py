@@ -13,6 +13,7 @@ coordination item without losing the link.
 import datetime
 
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.war_rooms import WarRoomTask
@@ -108,6 +109,7 @@ def war_room_task_create(war_room_id, title, description=None,
     task.created_by_id = created_by_id
     db.session.add(task)
     db.session.commit()
+    track_activity(f'created war room task "{task.title}"', war_room_id=war_room_id)
     return task
 
 
@@ -120,6 +122,7 @@ def war_room_task_update(war_room_id, task_id, **fields):
         if f in fields:
             setattr(task, f, fields[f])
     db.session.commit()
+    track_activity(f'updated war room task "{task.title}"', war_room_id=war_room_id)
     return task
 
 
@@ -128,6 +131,7 @@ def war_room_task_close(war_room_id, task_id, closed_by_id=None):
     task.closed_at = datetime.datetime.utcnow()
     task.closed_by_id = closed_by_id
     db.session.commit()
+    track_activity(f'closed war room task "{task.title}"', war_room_id=war_room_id)
     return task
 
 
@@ -136,10 +140,13 @@ def war_room_task_reopen(war_room_id, task_id):
     task.closed_at = None
     task.closed_by_id = None
     db.session.commit()
+    track_activity(f'reopened war room task "{task.title}"', war_room_id=war_room_id)
     return task
 
 
 def war_room_task_delete(war_room_id, task_id):
     task = war_room_task_get(war_room_id, task_id)
+    title = task.title
     db.session.delete(task)
     db.session.commit()
+    track_activity(f'deleted war room task "{title}"', war_room_id=war_room_id)

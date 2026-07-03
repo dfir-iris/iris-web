@@ -28,6 +28,7 @@ from app.business.incidents import incident_open_matching
 from app.datamgmt.filtering import apply_custom_conditions
 from app.datamgmt.filtering import combine_conditions
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.logger import logger
 from app.models.alerts import Alert
 from app.models.errors import BusinessProcessingError
@@ -72,6 +73,7 @@ def rules_create(user, permissions, rule: IncidentRule,
         )
     db.session.add(rule)
     db.session.commit()
+    track_activity(f'created incident rule "{rule.rule_name}"')
     return rule
 
 
@@ -141,6 +143,7 @@ def rules_update(user, permissions, rule: IncidentRule, changes: dict,
         setattr(rule, key, value)
     rule.rule_updated_at = datetime.utcnow()
     db.session.commit()
+    track_activity(f'updated incident rule "{rule.rule_name}"')
     return rule
 
 
@@ -148,8 +151,10 @@ def rules_delete(rule: IncidentRule) -> None:
     """Delete a rule. Caller-scope check is done by whichever getter
     fetched `rule` — routes must load rules through `rules_get(user, ...)`
     before delete."""
+    name = rule.rule_name
     db.session.delete(rule)
     db.session.commit()
+    track_activity(f'deleted incident rule "{name}"')
 
 
 # ---------------------------------------------------------------------------

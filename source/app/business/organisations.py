@@ -18,6 +18,7 @@
 
 from app.datamgmt.db_operations import db_create
 from app.datamgmt.manage.manage_organisations import get_organisation_by_name
+from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Organisation
 from app.models.errors import ObjectNotFoundError
 
@@ -32,4 +33,5 @@ def organisations_get(name) -> Organisation:
 def organisations_create(name, description) -> Organisation:
     organisation = Organisation(org_name=name, org_description=description)
     db_create(organisation)
+    track_activity(f'created organisation "{name}"')
     return organisation

@@ -7,6 +7,7 @@
 import datetime
 
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.war_rooms import WarRoomNote
@@ -46,6 +47,7 @@ def war_room_note_create(war_room_id, title, content=None, created_by_id=None):
     note.updated_by_id = created_by_id
     db.session.add(note)
     db.session.commit()
+    track_activity(f'created war room note "{note.title}"', war_room_id=war_room_id)
     return note
 
 
@@ -59,10 +61,13 @@ def war_room_note_update(war_room_id, note_id, title=None, content=None,
     note.updated_at = datetime.datetime.utcnow()
     note.updated_by_id = updated_by_id
     db.session.commit()
+    track_activity(f'updated war room note "{note.title}"', war_room_id=war_room_id)
     return note
 
 
 def war_room_note_delete(war_room_id, note_id):
     note = war_room_note_get(war_room_id, note_id)
+    title = note.title
     db.session.delete(note)
     db.session.commit()
+    track_activity(f'deleted war room note "{title}"', war_room_id=war_room_id)

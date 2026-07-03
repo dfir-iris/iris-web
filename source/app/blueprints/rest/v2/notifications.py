@@ -37,6 +37,8 @@ from app.iris_engine.notifications.service import upsert_user_settings
 from app.models.authorization import Permissions
 from app.models.notifications import CHANNELS
 from app.models.notifications import EVENT_TYPES
+from app.models.notifications import Notification
+from app.models.notifications import NotificationSetting
 
 
 notifications_blueprint = Blueprint(
@@ -210,6 +212,185 @@ def put_settings():
         'channels': list(CHANNELS),
         'settings': merged,
     })
+
+
+# ---------------------------------------------------------------------------
+# Diagnostics — end-to-end health check for the notifications pipeline
+# ---------------------------------------------------------------------------
+
+@notifications_blueprint.get('/_diag')
+@ac_api_requires()
+def get_diag():
+    """Report the state of every link in the notification chain.
+
+    Meant for interactive debugging when notifications feel broken. Each
+    section reports a boolean-ish signal plus a short note so the caller
+    can pinpoint which link is down without SSH'ing into the pod.
+
+    Sections:
+      * `hook_listeners` — is `call_modules_hook` wrapped, and how many
+        of the expected hook names are mapped?
+      * `socket_namespace` — is the `/notifications` namespace attached
+        to the running SocketIO server?
+      * `db` — do the tables exist and how many rows are in them?
+      * `settings` — the caller's effective settings + admin defaults
+        (redacted to booleans only, no PII).
+      * `recent` — the 5 most recent rows for the caller, so we can tell
+        "the write happened, socket delivery failed" apart from "the
+        write never happened".
+    """
+    import time
+    from sqlalchemy import inspect as sa_inspect
+
+    from app import socket_io
+    from app.db import db
+    from app.iris_engine.notifications import hook_listeners
+    from app.iris_engine.notifications.hook_listeners import _HOOK_MAP
+
+    report = {'checked_at': time.time()}
+
+    # --- Hook listeners --------------------------------------------------
+    # `register_notification_listeners()` sets `_notifications_wrapped`
+    # on the module_handler module. If that's False, none of the fire
+    # sites will produce a notification, no matter what else is right.
+    try:
+        wrapped = bool(getattr(hook_listeners._mh, '_notifications_wrapped', False))
+    except Exception as exc:
+        wrapped = False
+        report['hook_listeners_error'] = str(exc)
+    report['hook_listeners'] = {
+        'wrapped': wrapped,
+        'mapped_hooks': sorted(_HOOK_MAP.keys()),
+        'mapped_hook_count': len(_HOOK_MAP),
+        'note': (
+            'call_modules_hook is monkey-patched at boot via '
+            'register_notification_listeners(). If wrapped=False, no '
+            'notifications will ever fire — check post_init.py:1366-1368 '
+            'and IRIS_INITIALIZE_IFACE env var.'
+        ),
+    }
+
+    # --- Socket namespace ------------------------------------------------
+    # flask-socketio stores per-namespace handler dicts on the server.
+    # Presence of '/notifications' in `handlers` means the decorators in
+    # notification_event_handlers.py actually ran. If it's missing, the
+    # frontend socket connection will get a namespace error and go dark.
+    try:
+        server_handlers = getattr(socket_io.server, 'handlers', {})
+        namespace_registered = '/notifications' in server_handlers
+        events = sorted(server_handlers.get('/notifications', {}).keys()) \
+            if namespace_registered else []
+    except Exception as exc:
+        namespace_registered = False
+        events = []
+        report['socket_namespace_error'] = str(exc)
+    report['socket_namespace'] = {
+        'registered': namespace_registered,
+        'events': events,
+        'note': (
+            'If registered=False, either register_notification_socket_handlers() '
+            "wasn't called in app/__init__.py or the import failed silently. "
+            'Namespace must exist for real-time bell updates; frontend falls '
+            'back to 30s polling but that only works if the REST feed works.'
+        ),
+    }
+
+    # --- Database --------------------------------------------------------
+    try:
+        insp = sa_inspect(db.engine)
+        table_names = set(insp.get_table_names())
+        notification_table = 'notification' in table_names
+        settings_table = 'notification_setting' in table_names
+        total_rows = (
+            db.session.query(Notification).count()
+            if notification_table else None
+        )
+        for_current_user = (
+            db.session.query(Notification)
+            .filter(Notification.user_id == iris_current_user.id)
+            .count()
+            if notification_table else None
+        )
+    except Exception as exc:
+        notification_table = None
+        settings_table = None
+        total_rows = None
+        for_current_user = None
+        report['db_error'] = str(exc)
+    report['db'] = {
+        'notification_table_exists': notification_table,
+        'notification_setting_table_exists': settings_table,
+        'total_notifications': total_rows,
+        'notifications_for_current_user': for_current_user,
+        'note': (
+            'If either table is missing, migration e7b1f4a8c920 never ran. '
+            'total_notifications==0 with wrapped=True and a recent mention '
+            "means the listener chose to skip (self-mention? user doesn't "
+            'exist?) — check the app log for _safe() catches.'
+        ),
+    }
+
+    # --- Settings for the current user -----------------------------------
+    # The most common "everything works but nothing arrives" cause is a
+    # setting where every in_app cell is False. Report as booleans grouped
+    # by event type so the caller can eyeball it.
+    try:
+        effective = get_effective_settings(iris_current_user.id)
+        admin = get_admin_settings()
+    except Exception as exc:
+        effective = None
+        admin = None
+        report['settings_error'] = str(exc)
+    report['settings'] = {
+        'event_types': list(EVENT_TYPES),
+        'channels': list(CHANNELS),
+        'effective_for_current_user': effective,
+        'admin_defaults': admin,
+        'note': (
+            'A row with in_app=False across every event will produce a bell '
+            'that never lights up. Note that admin defaults seed at boot via '
+            'seed_admin_defaults() — if admin_defaults is empty, that seed '
+            'never ran either.'
+        ),
+    }
+
+    # --- Recent rows for the caller --------------------------------------
+    # Confirms that at least SOMETHING is being written. If this is empty
+    # after triggering a mention, the listener path is broken. If this is
+    # populated but the bell shows 0, the frontend/socket path is broken.
+    try:
+        recent_rows = (
+            db.session.query(Notification)
+            .filter(Notification.user_id == iris_current_user.id)
+            .order_by(Notification.created_at.desc())
+            .limit(5)
+            .all()
+        )
+        recent = [
+            {
+                'id': r.id,
+                'event_type': r.event_type,
+                'title': r.title,
+                'created_at': r.created_at.isoformat() if r.created_at else None,
+                'read_at': r.read_at.isoformat() if r.read_at else None,
+            }
+            for r in recent_rows
+        ]
+    except Exception as exc:
+        recent = None
+        report['recent_error'] = str(exc)
+    report['recent'] = recent
+
+    # --- Overall verdict -------------------------------------------------
+    # Rolled-up boolean the caller can grep for.
+    healthy = bool(
+        report['hook_listeners']['wrapped']
+        and report['socket_namespace']['registered']
+        and report['db']['notification_table_exists']
+    )
+    report['healthy'] = healthy
+
+    return response_api_success(report)
 
 
 # ---------------------------------------------------------------------------

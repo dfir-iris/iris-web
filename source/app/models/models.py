@@ -490,6 +490,7 @@ class UserActivity(db.Model):
     id = Column(BigInteger, primary_key=True)
     user_id = Column(ForeignKey('user.id'), nullable=True)
     case_id = Column(ForeignKey('cases.case_id'), nullable=True)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id'), nullable=True)
     activity_date = Column(DateTime)
     activity_desc = Column(Text)
     user_input = Column(Boolean, default=False)
@@ -498,6 +499,7 @@ class UserActivity(db.Model):
 
     user = relationship('User')
     case = relationship('Cases')
+    war_room = relationship('WarRoom')
 
 
 class ServerSettings(db.Model):

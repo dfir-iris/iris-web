@@ -26,6 +26,7 @@ from app.models.cases import Cases
 from app.models.authorization import User
 from app.models.customers import Client
 from app.models.models import UserActivity
+from app.models.war_rooms import WarRoom
 
 
 def get_auto_activities(caseid):
@@ -257,12 +258,15 @@ def list_activities_paginated(
         page=1,
         per_page=25,
         accessible_case_ids=None,
+        accessible_war_room_ids=None,
         include_non_case=False,
         search_value=None,
         user_id=None,
         case_id=None,
+        war_room_id=None,
         user_ids=None,
         case_ids=None,
+        war_room_ids=None,
         date_from=None,
         date_to=None,
         is_from_api=None,
@@ -308,23 +312,42 @@ def list_activities_paginated(
 
     base = UserActivity.query.filter(UserActivity.display_in_ui == True)
 
-    if accessible_case_ids is not None:
-        # Empty list ⇒ no accessible cases. If the caller also wants
-        # non-case-related rows, allow only those; otherwise short-
-        # circuit to an empty page.
-        if not accessible_case_ids:
-            if include_non_case:
-                base = base.filter(UserActivity.case_id.is_(None))
-            else:
-                base = base.filter(False)
+    # Access scoping.
+    #
+    # A row surfaces to a non-admin caller when *any* of these hold:
+    #   * its `case_id` is in the caller's accessible-case list, OR
+    #   * its `war_room_id` is in the caller's accessible-war-room list, OR
+    #   * both are NULL and the caller opted into non-container rows
+    #     (`include_non_case=True`) — global events like login, saved
+    #     filter changes, organisation creation.
+    #
+    # Admin callers pass `accessible_case_ids=None` (no scope) — in that
+    # branch, `include_non_case=False` still means "hide global rows"
+    # (case OR war-room set); `include_non_case=True` means "show
+    # everything".
+    if accessible_case_ids is not None or accessible_war_room_ids is not None:
+        clauses = []
+        if accessible_case_ids:
+            clauses.append(UserActivity.case_id.in_(accessible_case_ids))
+        if accessible_war_room_ids:
+            clauses.append(UserActivity.war_room_id.in_(accessible_war_room_ids))
+        if include_non_case:
+            clauses.append(and_(
+                UserActivity.case_id.is_(None),
+                UserActivity.war_room_id.is_(None),
+            ))
+        if not clauses:
+            # Caller has no accessible cases and no accessible war rooms
+            # and didn't ask for global rows — short-circuit.
+            base = base.filter(False)
         else:
-            scope = UserActivity.case_id.in_(accessible_case_ids)
-            if include_non_case:
-                scope = scope | UserActivity.case_id.is_(None)
-            base = base.filter(scope)
+            base = base.filter(or_(*clauses))
     elif not include_non_case:
-        # Admin view but the caller doesn't want non-case rows.
-        base = base.filter(UserActivity.case_id.isnot(None))
+        # Admin view but the caller doesn't want global rows.
+        base = base.filter(or_(
+            UserActivity.case_id.isnot(None),
+            UserActivity.war_room_id.isnot(None),
+        ))
 
     if search_value:
         base = base.filter(UserActivity.activity_desc.ilike(f'%{search_value}%'))
@@ -334,6 +357,9 @@ def list_activities_paginated(
 
     if case_id is not None:
         base = base.filter(UserActivity.case_id == case_id)
+
+    if war_room_id is not None:
+        base = base.filter(UserActivity.war_room_id == war_room_id)
 
     # Multi-value filters. We accept the singular forms above too (legacy
     # callers) and additively intersect with the multi-value ones — that
@@ -347,6 +373,9 @@ def list_activities_paginated(
         # an admin filter on cases X+Y still respects a non-admin's
         # accessible-case window if both were passed.
         base = base.filter(UserActivity.case_id.in_(list(case_ids)))
+
+    if war_room_ids:
+        base = base.filter(UserActivity.war_room_id.in_(list(war_room_ids)))
 
     if date_from is not None:
         base = base.filter(UserActivity.activity_date >= date_from)
@@ -369,6 +398,7 @@ def list_activities_paginated(
     aggregated = base.with_entities(
         func.max(UserActivity.id).label('id'),
         UserActivity.case_id,
+        UserActivity.war_room_id,
         UserActivity.user_id,
         UserActivity.activity_desc,
         bucket,
@@ -378,19 +408,22 @@ def list_activities_paginated(
         func.count().label('occurrences'),
     ).group_by(
         UserActivity.case_id,
+        UserActivity.war_room_id,
         UserActivity.user_id,
         UserActivity.activity_desc,
         bucket,
     ).subquery()
 
-    # Re-attach friendly labels. We outer-join because user / case may
-    # be NULL (login events, global tasks; or users that were deleted
-    # after writing the row — UserActivity.user_id is nullable).
+    # Re-attach friendly labels. We outer-join because user / case / war
+    # room may be NULL (login events, global tasks; or users that were
+    # deleted after writing the row — UserActivity.user_id is nullable).
     listing = (
         UserActivity.query.session.query(
             aggregated.c.id,
             Cases.name.label('case_name'),
             aggregated.c.case_id,
+            WarRoom.name.label('war_room_name'),
+            aggregated.c.war_room_id,
             User.name.label('user_name'),
             aggregated.c.user_id,
             aggregated.c.activity_date,
@@ -401,6 +434,7 @@ def list_activities_paginated(
         )
         .outerjoin(User, User.id == aggregated.c.user_id)
         .outerjoin(Cases, Cases.case_id == aggregated.c.case_id)
+        .outerjoin(WarRoom, WarRoom.war_room_id == aggregated.c.war_room_id)
         .order_by(desc(aggregated.c.activity_date))
     )
 

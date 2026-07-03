@@ -25,7 +25,7 @@ from app.blueprints.iris_user import iris_current_user
 from app.models.models import UserActivity
 
 
-def track_activity(message, caseid=None, ctx_less=False, user_input=False, display_in_ui=True):
+def track_activity(message, caseid=None, war_room_id=None, ctx_less=False, user_input=False, display_in_ui=True):
     """
     Register a user activity in DB.
     :param message: Message to save as activity
@@ -42,16 +42,18 @@ def track_activity(message, caseid=None, ctx_less=False, user_input=False, displ
 
     try:
         ua.case_id = caseid if ctx_less is False else None
+        ua.war_room_id = war_room_id if ctx_less is False else None
     except Exception:
         pass
 
     ua.activity_date = datetime.utcnow()
     ua.activity_desc = message.capitalize()
 
+    scope = f"Case {caseid}" if caseid else (f"War room {war_room_id}" if war_room_id else "-")
     if iris_current_user.is_authenticated:
-        logger.info(f"{iris_current_user.user} [#{iris_current_user.id}] :: Case {caseid} :: {ua.activity_desc}")
+        logger.info(f"{iris_current_user.user} [#{iris_current_user.id}] :: {scope} :: {ua.activity_desc}")
     else:
-        logger.info(f"Anonymous :: Case {caseid} :: {ua.activity_desc}")
+        logger.info(f"Anonymous :: {scope} :: {ua.activity_desc}")
 
     ua.user_input = user_input
     ua.display_in_ui = display_in_ui

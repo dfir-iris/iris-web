@@ -61,6 +61,7 @@ def list_activities_endpoint():
     search_value = request.args.get('search', default=None, type=str)
     user_id = request.args.get('user_id', default=None, type=int)
     case_id = request.args.get('case_id', default=None, type=int)
+    war_room_id = request.args.get('war_room_id', default=None, type=int)
 
     raw_include = (request.args.get('include_non_case') or '').strip().lower()
     include_non_case = raw_include in ('1', 'true', 'yes', 'on')
@@ -85,6 +86,7 @@ def list_activities_endpoint():
 
     case_ids = _int_list('case_ids')
     user_ids = _int_list('user_ids')
+    war_room_ids = _int_list('war_room_ids')
 
     # Optional date window. We accept anything `datetime.fromisoformat`
     # understands (YYYY-MM-DD or full ISO with offset). Bad inputs are
@@ -130,8 +132,10 @@ def list_activities_endpoint():
         search_value=search_value,
         scope_user_id=user_id,
         case_id=case_id,
+        war_room_id=war_room_id,
         user_ids=user_ids,
         case_ids=case_ids,
+        war_room_ids=war_room_ids,
         date_from=date_from,
         date_to=date_to,
         is_from_api=is_from_api,

@@ -21,6 +21,7 @@ import re
 from sqlalchemy import and_, case, or_
 
 from app.db import db
+from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import (
     GroupWarRoomAccess,
     UserWarRoomAccess,
@@ -190,6 +191,7 @@ def war_room_archive(war_room_id, archived_by_id):
         war_room.archived_at = datetime.datetime.utcnow()
         war_room.archived_by_id = archived_by_id
         db.session.commit()
+        track_activity(f'archived war room "{war_room.name}"', war_room_id=war_room_id)
     return war_room
 
 
@@ -200,6 +202,7 @@ def war_room_unarchive(war_room_id):
         war_room.archived_at = None
         war_room.archived_by_id = None
         db.session.commit()
+        track_activity(f'unarchived war room "{war_room.name}"', war_room_id=war_room_id)
     return war_room
 
 
@@ -241,6 +244,8 @@ def war_room_create(name, description=None, state=None, severity_id=None,
     war_room_ensure_default_timeline(war_room.war_room_id,
                                      created_by_id=created_by_id)
 
+    track_activity(f'created war room "{war_room.name}"',
+                   war_room_id=war_room.war_room_id)
     return war_room
 
 
@@ -249,6 +254,7 @@ def war_room_update(war_room_id, name=None, description=None, state=None,
                     closed_by_id=None):
     war_room = war_room_get(war_room_id)
 
+    previous_state = war_room.state
     if name is not None:
         war_room.name = _validate_name(name)
     if description is not None:
@@ -272,14 +278,26 @@ def war_room_update(war_room_id, name=None, description=None, state=None,
         war_room.custom_attributes = custom_attributes
 
     db.session.commit()
+
+    if state is not None and war_room.state != previous_state:
+        track_activity(
+            f'changed war room "{war_room.name}" state from {previous_state} to {war_room.state}',
+            war_room_id=war_room_id,
+        )
+    else:
+        track_activity(f'updated war room "{war_room.name}"', war_room_id=war_room_id)
     return war_room
 
 
 def war_room_delete(war_room_id):
     war_room = war_room_get(war_room_id)
+    war_room_name = war_room.name
     # CASCADE on FKs drops every child row (chat, tasks, etc).
     db.session.delete(war_room)
     db.session.commit()
+    # war_room_id is intentionally omitted — the row is gone, so leaving
+    # the FK NULL keeps the audit entry from dangling on delete-cascade.
+    track_activity(f'deleted war room "{war_room_name}"')
 
 
 # ------------------------------------------------------------ Members ----
@@ -320,7 +338,8 @@ def war_room_add_member(war_room_id, user_id, role=None, added_by_id=None,
     existing = WarRoomMember.query.filter_by(
         war_room_id=war_room_id, user_id=user_id
     ).first()
-    if existing is None:
+    was_new = existing is None
+    if was_new:
         member = WarRoomMember()
         member.war_room_id = war_room_id
         member.user_id = user_id
@@ -334,6 +353,12 @@ def war_room_add_member(war_room_id, user_id, role=None, added_by_id=None,
     from app.business.war_rooms_access import set_user_war_room_access
     set_user_war_room_access(user_id, war_room_id, access_level)
 
+    verb = 'added' if was_new else 'updated'
+    track_activity(
+        f'{verb} war room member (user #{user_id}, role {role})',
+        war_room_id=war_room_id,
+    )
+
 
 def war_room_remove_member(war_room_id, user_id):
     WarRoomMember.query.filter_by(
@@ -343,6 +368,11 @@ def war_room_remove_member(war_room_id, user_id):
 
     from app.business.war_rooms_access import remove_user_war_room_access
     remove_user_war_room_access(user_id, war_room_id)
+
+    track_activity(
+        f'removed war room member (user #{user_id})',
+        war_room_id=war_room_id,
+    )
 
 
 # ----------------------------------------------------- Case attachment ---
@@ -431,6 +461,8 @@ def war_room_attach_case(war_room_id, case_id, attached_by_id=None, note=None):
     if case is None:
         raise BusinessProcessingError('Case not found')
 
+    war_room = war_room_get(war_room_id)
+
     existing = WarRoomCase.query.filter_by(
         war_room_id=war_room_id, case_id=case_id
     ).first()
@@ -448,16 +480,29 @@ def war_room_attach_case(war_room_id, case_id, attached_by_id=None, note=None):
     link.note = note
     db.session.add(link)
     db.session.commit()
+
+    track_activity(
+        f'attached case "{case.name}" to war room "{war_room.name}"',
+        caseid=case_id, war_room_id=war_room_id,
+    )
     return link
 
 
 def war_room_detach_case(war_room_id, case_id):
+    war_room = war_room_get(war_room_id)
+    case = Cases.query.filter_by(case_id=case_id).first()
     deleted = WarRoomCase.query.filter_by(
         war_room_id=war_room_id, case_id=case_id
     ).delete()
     db.session.commit()
     if not deleted:
         raise ObjectNotFoundError()
+
+    case_label = f'"{case.name}"' if case else f'#{case_id}'
+    track_activity(
+        f'detached case {case_label} from war room "{war_room.name}"',
+        caseid=case_id, war_room_id=war_room_id,
+    )
 
 
 def war_rooms_for_case(case_id):
