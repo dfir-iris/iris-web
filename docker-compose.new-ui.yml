@@ -131,6 +131,10 @@ services:
       - PROTOCOL_HEADER=x-forwarded-proto
       - HOST_HEADER=x-forwarded-host
       - NODE_ENV=production
+      # Disable adapter-node's 512K default so avatar (multi-MB) and
+      # datastore (multi-GB) uploads aren't truncated mid-stream — the
+      # per-endpoint caps live in nginx (client_max_body_size).
+      - BODY_SIZE_LIMIT=Infinity
     ports:
       - "5173:5173"
     networks:
