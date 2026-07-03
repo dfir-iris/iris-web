@@ -499,7 +499,11 @@ class UserActivity(db.Model):
 
     user = relationship('User')
     case = relationship('Cases')
-    war_room = relationship('WarRoom')
+    # No ORM `war_room` relationship on purpose: `app.models.war_rooms`
+    # isn't guaranteed to be imported at mapper-config time, and every
+    # consumer of this row joins WarRoom via an explicit Core outerjoin
+    # (see `activities_db.list_activities_paginated`). The FK column
+    # alone is enough for the audit-log use case.
 
 
 class ServerSettings(db.Model):
