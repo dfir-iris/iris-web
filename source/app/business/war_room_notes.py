@@ -7,6 +7,7 @@
 import datetime
 
 from app.db import db
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -48,6 +49,7 @@ def war_room_note_create(war_room_id, title, content=None, created_by_id=None):
     db.session.add(note)
     db.session.commit()
     track_activity(f'created war room note "{note.title}"', war_room_id=war_room_id)
+    note = call_modules_hook('on_postload_war_room_note_create', note)
     return note
 
 
@@ -62,6 +64,7 @@ def war_room_note_update(war_room_id, note_id, title=None, content=None,
     note.updated_by_id = updated_by_id
     db.session.commit()
     track_activity(f'updated war room note "{note.title}"', war_room_id=war_room_id)
+    note = call_modules_hook('on_postload_war_room_note_update', note)
     return note
 
 
@@ -71,3 +74,5 @@ def war_room_note_delete(war_room_id, note_id):
     db.session.delete(note)
     db.session.commit()
     track_activity(f'deleted war room note "{title}"', war_room_id=war_room_id)
+    call_modules_hook('on_postload_war_room_note_delete',
+                      {'war_room_id': war_room_id, 'note_id': note_id})

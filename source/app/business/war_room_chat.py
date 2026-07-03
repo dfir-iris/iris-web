@@ -21,6 +21,7 @@ import re
 from sqlalchemy import and_, desc
 
 from app.db import db
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.models.authorization import User
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -484,6 +485,7 @@ def create_message(war_room_id, author_id, body, kind=None,
     # rollouts).
     if kind == 'message':
         _fire_message_notifications(msg)
+    msg = call_modules_hook('on_postload_war_room_message_create', msg)
     return msg
 
 
@@ -507,6 +509,7 @@ def update_message(war_room_id, message_id, author_id, body):
     msg.body = _validate_body(body, 'message')
     msg.edited_at = datetime.datetime.utcnow()
     db.session.commit()
+    msg = call_modules_hook('on_postload_war_room_message_update', msg)
     return msg
 
 
@@ -519,6 +522,8 @@ def delete_message(war_room_id, message_id, author_id, is_admin=False):
     msg.deleted_at = datetime.datetime.utcnow()
     msg.body = None
     db.session.commit()
+    call_modules_hook('on_postload_war_room_message_delete',
+                      {'war_room_id': war_room_id, 'message_id': message_id})
 
 
 # ----- Reactions -----------------------------------------------------------
@@ -543,6 +548,11 @@ def toggle_reaction(war_room_id, message_id, user_id, emoji):
     if existing is not None:
         db.session.delete(existing)
         db.session.commit()
+        call_modules_hook('on_postload_war_room_reaction_toggle',
+                          {'war_room_id': war_room_id,
+                           'message_id': msg.message_id,
+                           'user_id': user_id, 'emoji': emoji,
+                           'added': False})
         return False
 
     row = WarRoomChatReaction()
@@ -551,6 +561,11 @@ def toggle_reaction(war_room_id, message_id, user_id, emoji):
     row.emoji = emoji
     db.session.add(row)
     db.session.commit()
+    call_modules_hook('on_postload_war_room_reaction_toggle',
+                      {'war_room_id': war_room_id,
+                       'message_id': msg.message_id,
+                       'user_id': user_id, 'emoji': emoji,
+                       'added': True})
     return True
 
 
@@ -729,6 +744,7 @@ def create_reply(war_room_id, parent_message_id, author_id, body, kind='message'
     db.session.commit()
 
     _fire_reply_notifications(msg, root.message_id)
+    msg = call_modules_hook('on_postload_war_room_reply_create', msg)
     return msg
 
 

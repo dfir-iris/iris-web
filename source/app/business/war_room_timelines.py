@@ -13,6 +13,7 @@ operator wrote inline OR a reference to an existing case event.
 import re
 
 from app.db import db
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -90,6 +91,7 @@ def create_timeline(war_room_id, name, description=None, color=None,
     db.session.add(t)
     db.session.commit()
     track_activity(f'created war room timeline "{t.name}"', war_room_id=war_room_id)
+    t = call_modules_hook('on_postload_war_room_timeline_create', t)
     return t
 
 
@@ -113,6 +115,7 @@ def update_timeline(war_room_id, timeline_id, name=None, description=None,
         t.color = _validate_color(color)
     db.session.commit()
     track_activity(f'updated war room timeline "{t.name}"', war_room_id=war_room_id)
+    t = call_modules_hook('on_postload_war_room_timeline_update', t)
     return t
 
 
@@ -124,6 +127,8 @@ def delete_timeline(war_room_id, timeline_id):
     db.session.delete(t)
     db.session.commit()
     track_activity(f'deleted war room timeline "{name}"', war_room_id=war_room_id)
+    call_modules_hook('on_postload_war_room_timeline_delete',
+                      {'war_room_id': war_room_id, 'timeline_id': timeline_id})
 
 
 # Events -------------------------------------------------------------------
@@ -184,6 +189,7 @@ def create_timeline_event(war_room_id, timeline_id, title=None, content=None,
     db.session.commit()
     label = row.title or (f'case event #{event_id}' if event_id else 'event')
     track_activity(f'added timeline event "{label}"', war_room_id=war_room_id)
+    row = call_modules_hook('on_postload_war_room_timeline_event_create', row)
     return row
 
 
@@ -239,6 +245,7 @@ def update_timeline_event(war_room_id, event_id, *, title=_UNSET, content=_UNSET
     db.session.commit()
     label = row.title or (f'case event #{row.event_id}' if row.event_id else f'event #{row.id}')
     track_activity(f'updated timeline event "{label}"', war_room_id=war_room_id)
+    row = call_modules_hook('on_postload_war_room_timeline_event_update', row)
     return row
 
 
@@ -248,3 +255,5 @@ def delete_timeline_event(war_room_id, event_id):
     db.session.delete(row)
     db.session.commit()
     track_activity(f'deleted timeline event "{label}"', war_room_id=war_room_id)
+    call_modules_hook('on_postload_war_room_timeline_event_delete',
+                      {'war_room_id': war_room_id, 'event_id': event_id})

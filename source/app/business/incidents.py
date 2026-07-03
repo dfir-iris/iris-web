@@ -24,6 +24,7 @@ from typing import Optional
 from app.business.access_controls import access_controls_user_has_customer_access
 from app.datamgmt.alerts.alerts_db import create_case_from_alerts
 from app.db import db
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import Alert
 from app.models.errors import BusinessProcessingError
@@ -90,6 +91,7 @@ def incidents_create(incident: Incident) -> Incident:
     add_obj_history_entry(incident, 'created', commit=True)
     track_activity(f'created incident #{incident.incident_id} - {incident.incident_title}', ctx_less=True)
     _enqueue_flow_evaluation(incident.incident_id)
+    incident = call_modules_hook('on_postload_incident_create', incident)
     return incident
 
 
@@ -174,6 +176,7 @@ def incidents_update(incident: Incident, changes: dict) -> Incident:
     db.session.commit()
     track_activity(f'updated incident #{incident.incident_id}', ctx_less=True)
     _enqueue_flow_evaluation(incident.incident_id)
+    incident = call_modules_hook('on_postload_incident_update', incident)
     return incident
 
 
@@ -182,6 +185,7 @@ def incidents_delete(incident: Incident) -> None:
     db.session.delete(incident)
     db.session.commit()
     track_activity(f'deleted incident #{identifier}', ctx_less=True)
+    call_modules_hook('on_postload_incident_delete', identifier)
 
 
 def incident_add_alerts(incident: Incident, alert_ids: Iterable[int]) -> Incident:
@@ -204,14 +208,23 @@ def incident_add_alerts(incident: Incident, alert_ids: Iterable[int]) -> Inciden
     if added_ids:
         add_obj_history_entry(incident, f'linked alerts: {added_ids}')
     db.session.commit()
+    if added_ids:
+        call_modules_hook('on_postload_incident_alert_add',
+                          {'incident_id': incident.incident_id,
+                           'alert_ids': added_ids})
     return incident
 
 
 def incident_remove_alert(incident: Incident, alert_id: int) -> Incident:
-    if any(a.alert_id == alert_id for a in incident.alerts):
+    was_linked = any(a.alert_id == alert_id for a in incident.alerts)
+    if was_linked:
         incident.alerts = [a for a in incident.alerts if a.alert_id != alert_id]
         add_obj_history_entry(incident, f'unlinked alert #{alert_id}')
     db.session.commit()
+    if was_linked:
+        call_modules_hook('on_postload_incident_alert_remove',
+                          {'incident_id': incident.incident_id,
+                           'alert_id': alert_id})
     return incident
 
 
@@ -245,6 +258,10 @@ def incident_escalate_to_case(incident: Incident, template_id: Optional[int] = N
         f'escalated incident #{incident.incident_id} to case #{case.case_id}',
         ctx_less=True,
     )
+    call_modules_hook('on_postload_incident_escalate',
+                      {'incident_id': incident.incident_id,
+                       'case_id': case.case_id},
+                      caseid=case.case_id)
     return case
 
 

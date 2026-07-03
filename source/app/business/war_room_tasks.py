@@ -13,6 +13,7 @@ coordination item without losing the link.
 import datetime
 
 from app.db import db
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -110,6 +111,7 @@ def war_room_task_create(war_room_id, title, description=None,
     db.session.add(task)
     db.session.commit()
     track_activity(f'created war room task "{task.title}"', war_room_id=war_room_id)
+    task = call_modules_hook('on_postload_war_room_task_create', task)
     return task
 
 
@@ -123,6 +125,7 @@ def war_room_task_update(war_room_id, task_id, **fields):
             setattr(task, f, fields[f])
     db.session.commit()
     track_activity(f'updated war room task "{task.title}"', war_room_id=war_room_id)
+    task = call_modules_hook('on_postload_war_room_task_update', task)
     return task
 
 
@@ -132,6 +135,7 @@ def war_room_task_close(war_room_id, task_id, closed_by_id=None):
     task.closed_by_id = closed_by_id
     db.session.commit()
     track_activity(f'closed war room task "{task.title}"', war_room_id=war_room_id)
+    task = call_modules_hook('on_postload_war_room_task_close', task)
     return task
 
 
@@ -141,6 +145,7 @@ def war_room_task_reopen(war_room_id, task_id):
     task.closed_by_id = None
     db.session.commit()
     track_activity(f'reopened war room task "{task.title}"', war_room_id=war_room_id)
+    task = call_modules_hook('on_postload_war_room_task_reopen', task)
     return task
 
 
@@ -150,3 +155,5 @@ def war_room_task_delete(war_room_id, task_id):
     db.session.delete(task)
     db.session.commit()
     track_activity(f'deleted war room task "{title}"', war_room_id=war_room_id)
+    call_modules_hook('on_postload_war_room_task_delete',
+                      {'war_room_id': war_room_id, 'task_id': task_id})

@@ -10,6 +10,7 @@ import json
 from sqlalchemy import desc, func
 
 from app.db import db
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -92,6 +93,7 @@ def sitrep_draft(war_room_id, title, body_md='', authored_by_id=None):
     db.session.commit()
     track_activity(f'drafted sitrep "{sit.title}" (v{sit.version})',
                    war_room_id=war_room_id)
+    sit = call_modules_hook('on_postload_war_room_sitrep_create', sit)
     return sit
 
 
@@ -111,6 +113,7 @@ def sitrep_update(war_room_id, sitrep_id, title=None, body_md=None):
     db.session.commit()
     track_activity(f'updated sitrep "{sit.title}" (v{sit.version})',
                    war_room_id=war_room_id)
+    sit = call_modules_hook('on_postload_war_room_sitrep_update', sit)
     return sit
 
 
@@ -129,6 +132,7 @@ def sitrep_publish(war_room_id, sitrep_id):
     db.session.commit()
     track_activity(f'published sitrep "{sit.title}" (v{sit.version})',
                    war_room_id=war_room_id)
+    sit = call_modules_hook('on_postload_war_room_sitrep_publish', sit)
     return sit
 
 
@@ -143,6 +147,8 @@ def sitrep_delete(war_room_id, sitrep_id):
     db.session.delete(sit)
     db.session.commit()
     track_activity(f'deleted sitrep {label}', war_room_id=war_room_id)
+    call_modules_hook('on_postload_war_room_sitrep_delete',
+                      {'war_room_id': war_room_id, 'sitrep_id': sitrep_id})
 
 
 def sitrep_as_markdown(sit):

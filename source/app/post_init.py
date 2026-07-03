@@ -573,6 +573,102 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_alert_comment_delete',
                 hook_description='Triggered on alert comment deletion, after commit in DB')
 
+    # --- War Room
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_create',
+                hook_description='Triggered on war room creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_update',
+                hook_description='Triggered on war room update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_delete',
+                hook_description='Triggered on war room deletion, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_archive',
+                hook_description='Triggered on war room archival, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_unarchive',
+                hook_description='Triggered on war room unarchival, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_member_add',
+                hook_description='Triggered on war room member addition, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_member_remove',
+                hook_description='Triggered on war room member removal, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_case_attach',
+                hook_description='Triggered on case attachment to a war room, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_case_detach',
+                hook_description='Triggered on case detachment from a war room, after commit in DB')
+
+    # --- War Room notes
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_note_create',
+                hook_description='Triggered on war room note creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_note_update',
+                hook_description='Triggered on war room note update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_note_delete',
+                hook_description='Triggered on war room note deletion, after commit in DB')
+
+    # --- War Room tasks
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_task_create',
+                hook_description='Triggered on war room task creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_task_update',
+                hook_description='Triggered on war room task update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_task_delete',
+                hook_description='Triggered on war room task deletion, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_task_close',
+                hook_description='Triggered on war room task close, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_task_reopen',
+                hook_description='Triggered on war room task reopen, after commit in DB')
+
+    # --- War Room chat
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_message_create',
+                hook_description='Triggered on war room chat message creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_message_update',
+                hook_description='Triggered on war room chat message update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_message_delete',
+                hook_description='Triggered on war room chat message deletion, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_reply_create',
+                hook_description='Triggered on war room thread reply creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_reaction_toggle',
+                hook_description='Triggered on war room chat reaction toggle, after commit in DB')
+
+    # --- War Room timelines
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_timeline_create',
+                hook_description='Triggered on war room timeline creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_timeline_update',
+                hook_description='Triggered on war room timeline update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_timeline_delete',
+                hook_description='Triggered on war room timeline deletion, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_timeline_event_create',
+                hook_description='Triggered on war room timeline event creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_timeline_event_update',
+                hook_description='Triggered on war room timeline event update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_timeline_event_delete',
+                hook_description='Triggered on war room timeline event deletion, after commit in DB')
+
+    # --- War Room sitreps
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_sitrep_create',
+                hook_description='Triggered on war room sitrep draft creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_sitrep_update',
+                hook_description='Triggered on war room sitrep update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_sitrep_publish',
+                hook_description='Triggered on war room sitrep publish, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_sitrep_delete',
+                hook_description='Triggered on war room sitrep deletion, after commit in DB')
+
+    # --- War Room datastore
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_datastore_file_create',
+                hook_description='Triggered on war room datastore file upload, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_datastore_file_delete',
+                hook_description='Triggered on war room datastore file deletion, after commit in DB')
+
+    # --- Incidents
+    create_safe(db.session, IrisHook, hook_name='on_postload_incident_create',
+                hook_description='Triggered on incident creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_incident_update',
+                hook_description='Triggered on incident update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_incident_delete',
+                hook_description='Triggered on incident deletion, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_incident_alert_add',
+                hook_description='Triggered on alert(s) linked to an incident, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_incident_alert_remove',
+                hook_description='Triggered on alert unlinked from an incident, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_incident_escalate',
+                hook_description='Triggered on incident escalation to a case, after commit in DB')
+
 
 def create_safe_languages():
     """Creates new Language objects if they do not already exist.

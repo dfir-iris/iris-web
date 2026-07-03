@@ -21,6 +21,7 @@ import re
 from sqlalchemy import and_, case, or_
 
 from app.db import db
+from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import (
     GroupWarRoomAccess,
@@ -192,6 +193,7 @@ def war_room_archive(war_room_id, archived_by_id):
         war_room.archived_by_id = archived_by_id
         db.session.commit()
         track_activity(f'archived war room "{war_room.name}"', war_room_id=war_room_id)
+        war_room = call_modules_hook('on_postload_war_room_archive', war_room)
     return war_room
 
 
@@ -203,6 +205,7 @@ def war_room_unarchive(war_room_id):
         war_room.archived_by_id = None
         db.session.commit()
         track_activity(f'unarchived war room "{war_room.name}"', war_room_id=war_room_id)
+        war_room = call_modules_hook('on_postload_war_room_unarchive', war_room)
     return war_room
 
 
@@ -246,6 +249,7 @@ def war_room_create(name, description=None, state=None, severity_id=None,
 
     track_activity(f'created war room "{war_room.name}"',
                    war_room_id=war_room.war_room_id)
+    war_room = call_modules_hook('on_postload_war_room_create', war_room)
     return war_room
 
 
@@ -286,6 +290,7 @@ def war_room_update(war_room_id, name=None, description=None, state=None,
         )
     else:
         track_activity(f'updated war room "{war_room.name}"', war_room_id=war_room_id)
+    war_room = call_modules_hook('on_postload_war_room_update', war_room)
     return war_room
 
 
@@ -298,6 +303,7 @@ def war_room_delete(war_room_id):
     # war_room_id is intentionally omitted — the row is gone, so leaving
     # the FK NULL keeps the audit entry from dangling on delete-cascade.
     track_activity(f'deleted war room "{war_room_name}"')
+    call_modules_hook('on_postload_war_room_delete', war_room_id)
 
 
 # ------------------------------------------------------------ Members ----
@@ -358,6 +364,10 @@ def war_room_add_member(war_room_id, user_id, role=None, added_by_id=None,
         f'{verb} war room member (user #{user_id}, role {role})',
         war_room_id=war_room_id,
     )
+    call_modules_hook('on_postload_war_room_member_add',
+                      {'war_room_id': war_room_id, 'user_id': user_id,
+                       'role': role, 'access_level': access_level,
+                       'is_new': was_new})
 
 
 def war_room_remove_member(war_room_id, user_id):
@@ -373,6 +383,8 @@ def war_room_remove_member(war_room_id, user_id):
         f'removed war room member (user #{user_id})',
         war_room_id=war_room_id,
     )
+    call_modules_hook('on_postload_war_room_member_remove',
+                      {'war_room_id': war_room_id, 'user_id': user_id})
 
 
 # ----------------------------------------------------- Case attachment ---
@@ -485,6 +497,7 @@ def war_room_attach_case(war_room_id, case_id, attached_by_id=None, note=None):
         f'attached case "{case.name}" to war room "{war_room.name}"',
         caseid=case_id, war_room_id=war_room_id,
     )
+    link = call_modules_hook('on_postload_war_room_case_attach', link, caseid=case_id)
     return link
 
 
@@ -503,6 +516,9 @@ def war_room_detach_case(war_room_id, case_id):
         f'detached case {case_label} from war room "{war_room.name}"',
         caseid=case_id, war_room_id=war_room_id,
     )
+    call_modules_hook('on_postload_war_room_case_detach',
+                      {'war_room_id': war_room_id, 'case_id': case_id},
+                      caseid=case_id)
 
 
 def war_rooms_for_case(case_id):
