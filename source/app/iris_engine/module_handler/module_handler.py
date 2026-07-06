@@ -423,6 +423,10 @@ def task_hook_wrapper(self, module_name, hook_name, hook_ui_name, data, init_use
     :param caseid: Case associated
     :return: A task status JSON task_success or task_failure
     """
+    # Reset session and connection pool inherited from parent process fork
+    db.session.remove()
+    db.engine.dispose()
+    
     try:
         # Data is serialized, so deserialized
         signature, pdata = data.encode("utf-8").split(b" ")
