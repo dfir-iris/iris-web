@@ -15,7 +15,7 @@ room; the latter is what this handler prevents.
 
 import logging
 
-from flask import request
+from flask import g, request
 from flask_socketio import emit
 from flask_socketio import join_room
 from flask_socketio import leave_room
@@ -23,6 +23,7 @@ from flask_socketio import leave_room
 from app import socket_io
 from app.blueprints.access_controls import is_user_authenticated
 from app.blueprints.iris_user import iris_current_user
+from app.business.auth import validate_auth_token
 
 
 logger = logging.getLogger(__name__)
@@ -31,21 +32,35 @@ logger = logging.getLogger(__name__)
 NAMESPACE = '/notifications'
 
 
+# `g.auth_user` set by the auth-payload fallback in `on_connect` doesn't
+# survive to subsequent events (each event gets its own request context),
+# so we mirror the authenticated user id per-sid. See `_current_user_id`.
+_sid_user_ids: dict[str, int] = {}
+
+
 def _current_user_id():
     """Return the current authenticated user's id, or None."""
     # `iris_current_user` is a LocalProxy — resolve to the underlying
     # user object before touching attributes so we don't blow up on
     # unauthenticated sessions.
     user = iris_current_user._get_current_object()  # type: ignore[attr-defined]
-    if user is None:
-        return None
-    return getattr(user, 'id', None)
+    if user is not None:
+        uid = getattr(user, 'id', None)
+        if uid:
+            return uid
+    return _sid_user_ids.get(getattr(request, 'sid', None))
 
 
 @socket_io.on('connect', namespace=NAMESPACE)
-def on_connect():
+def on_connect(auth):
     """Require auth at connect time so unauthenticated sockets never
     persist in the namespace. Returning False rejects the connection.
+
+    Auth resolution: session/header first, then fall back to the token
+    supplied via socket.io's `auth` handshake payload — the browser
+    strips custom headers on WS upgrade so a header-only path breaks
+    behind SSO proxies. Matches the pattern used by the `/collab`
+    namespace; see `collab_event_handlers.on_connect` for the writeup.
 
     We **auto-join** the caller's own user room here as part of the
     connect handshake — waiting for a follow-up `emit('join')` from
@@ -55,13 +70,38 @@ def on_connect():
     the room name is derived entirely from the authenticated session,
     the auto-join can't be abused to eavesdrop on someone else.
     """
-    if not is_user_authenticated(request):
+    user_id = None
+
+    if is_user_authenticated(request):
+        user_obj = iris_current_user._get_current_object()  # type: ignore[attr-defined]
+        user_id = getattr(user_obj, 'id', None) if user_obj else None
+
+    if user_id is None and isinstance(auth, dict):
+        token = auth.get('token')
+        if isinstance(token, str) and token:
+            user_data = validate_auth_token(token)
+            if user_data and not (
+                user_data.get('mfa_required') and not user_data.get('mfa_verified')
+            ):
+                g.auth_user = user_data
+                g.auth_token_user_id = user_data['user_id']
+                user_id = user_data['user_id']
+
+    if not user_id:
         return False
-    user_id = _current_user_id()
-    if user_id:
-        join_room(f'user-{user_id}')
-        logger.debug('notification namespace: user-%s joined on connect', user_id)
+
+    _sid_user_ids[request.sid] = user_id
+    join_room(f'user-{user_id}')
+    logger.debug('notification namespace: user-%s joined on connect', user_id)
     return True
+
+
+@socket_io.on('disconnect', namespace=NAMESPACE)
+def on_disconnect():
+    """Drop the per-sid identity so we don't leak entries as sockets
+    churn. Room membership is cleaned up by flask-socketio itself.
+    """
+    _sid_user_ids.pop(request.sid, None)
 
 
 @socket_io.on('join', namespace=NAMESPACE)
