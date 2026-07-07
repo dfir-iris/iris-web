@@ -55,9 +55,12 @@ from app.datamgmt.reporter.report_db import export_case_comments_json
 from app.datamgmt.reporter.report_db import export_case_notes_json
 from app.datamgmt.manage.manage_cases_db import get_filtered_cases
 from app.datamgmt.case.case_db import get_first_case_with_customer
+from app.models.alerts import Alert
+from app.models.alerts import AlertStatus
 from app.models.cases import Cases
 from app.models.cases import ReviewStatusList
 from app.models.customers import Client
+from app.models.incidents import Incident
 
 
 def cases_filter(current_user, pagination_parameters, name=None, case_identifiers=None, customer_identifier=None,
@@ -115,6 +118,102 @@ def cases_get_first_with_customer(client: Client) -> Cases:
 
 def cases_exists(identifier):
     return case_db_exists(identifier)
+
+
+# When an alert is unlinked from a case, its status is rolled back to
+# this seeded row so the alert re-enters the analyst queue rather than
+# staying flagged as Escalated/Merged forever. `Assigned` is the same
+# status the incident-status propagator moves alerts to on incident
+# `Open`, so linked and unlinked alerts converge on the same state.
+_RESET_ALERT_STATUS_NAME = 'Assigned'
+
+
+def _reset_alert_statuses(alerts):
+    """Flip a list of alerts to the "unlinked-from-case" status. No-op if
+    the seed row is missing so a missing seed doesn't 500 the unlink."""
+    if not alerts:
+        return
+    row = AlertStatus.query.filter_by(status_name=_RESET_ALERT_STATUS_NAME).first()
+    if row is None:
+        logger.warning(
+            'AlertStatus "%s" is not seeded; leaving alert statuses unchanged',
+            _RESET_ALERT_STATUS_NAME,
+        )
+        return
+    for alert in alerts:
+        if alert.alert_status_id != row.status_id:
+            alert.alert_status_id = row.status_id
+
+
+def case_unlink_alert(case: Cases, alert_id: int) -> Alert:
+    """Detach one alert from a case and reset the alert's status.
+
+    Case-scoped counterpart to the alert-side `PUT /alerts/{id}` cases
+    field. Keeping the endpoint on the case URL means access control
+    checks the case (which is the surface the analyst is acting from),
+    not the alert. Idempotent-ish: unlinking an already-unlinked alert
+    is a no-op that returns the alert.
+    """
+    alert = Alert.query.filter_by(alert_id=alert_id).first()
+    if alert is None:
+        raise ObjectNotFoundError()
+    if case not in alert.cases:
+        return alert
+    alert.cases = [c for c in alert.cases if c.case_id != case.case_id]
+    _reset_alert_statuses([alert])
+    add_obj_history_entry(alert, f'unlinked from case #{case.case_id}')
+    add_obj_history_entry(case, f'alert #{alert.alert_id} unlinked')
+    db.session.commit()
+    track_activity(
+        f'unlinked alert #{alert.alert_id} from case #{case.case_id}',
+        caseid=case.case_id,
+        ctx_less=False,
+    )
+    call_modules_hook('on_postload_alert_unmerge', alert, caseid=case.case_id)
+    return alert
+
+
+def case_unlink_incident(case: Cases) -> Incident | None:
+    """Reverse an incident->case escalation/merge in one shot.
+
+    Clears the incident's `incident_case_id`, flips the incident status
+    back to `Investigating`, detaches every member alert from the case,
+    and rolls each alert's status back to `Assigned`. Returns the
+    incident so the caller can render a "unlinked from #N" toast; None
+    when the case wasn't sourced from an incident (idempotent no-op).
+    """
+    incident = Incident.query.filter_by(incident_case_id=case.case_id).first()
+    if incident is None:
+        return None
+
+    # Detach each member alert from the case using the association
+    # collection directly — `case.alerts` is viewonly, so we mutate
+    # `alert.cases` instead. Snapshot the list first because we're
+    # modifying the collection we're iterating over.
+    detached_alerts = []
+    for alert in list(incident.alerts):
+        if any(c.case_id == case.case_id for c in alert.cases):
+            alert.cases = [c for c in alert.cases if c.case_id != case.case_id]
+            detached_alerts.append(alert)
+    _reset_alert_statuses(detached_alerts)
+
+    from app.business.incidents import resolve_status_id, INCIDENT_STATUS_INVESTIGATING
+
+    incident.incident_case_id = None
+    incident.incident_status_id = resolve_status_id(INCIDENT_STATUS_INVESTIGATING)
+    add_obj_history_entry(
+        incident, f'unlinked from case #{case.case_id} (moved back to Investigating)'
+    )
+    add_obj_history_entry(
+        case, f'incident #{incident.incident_id} unlinked'
+    )
+    db.session.commit()
+    track_activity(
+        f'unlinked incident #{incident.incident_id} from case #{case.case_id}',
+        caseid=case.case_id,
+        ctx_less=False,
+    )
+    return incident
 
 
 def cases_create(user, case: Cases, case_template_id) -> Cases:

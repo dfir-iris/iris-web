@@ -444,6 +444,103 @@ def incident_merge_to_case(incident: Incident, target_case_id: int,
     return case
 
 
+def incident_correlation_graph(incident: Incident) -> dict:
+    """Build a correlation graph (nodes + edges) for the incident.
+
+    Nodes are one of three kinds:
+      * `alert`  — one per member alert
+      * `ioc`    — deduplicated by (value, type_id) across every alert
+      * `asset`  — deduplicated by (name, type_id) across every alert
+    Edges connect each alert to every IOC / asset it carries. Dedup keys
+    let a single IOC/asset connect to multiple alerts, which is exactly
+    the correlation surface the graph exists to expose.
+
+    Node shape matches `_create_*_node` in `business/alerts.py` closely
+    enough that the frontend's `VisNetwork` component can render this
+    payload with no per-source branching.
+    """
+    nodes: list[dict] = []
+    edges: list[dict] = []
+
+    seen_iocs: dict[tuple[str, Optional[int]], str] = {}
+    seen_assets: dict[tuple[str, Optional[int]], str] = {}
+
+    for alert in incident.alerts:
+        alert_node_id = f'alert_{alert.alert_id}'
+        status_name = alert.status.status_name if alert.status else ''
+        is_closed = status_name in ('Closed', 'Merged', 'Escalated')
+        label_prefix = '[Closed] ' if is_closed else ''
+        nodes.append({
+            'id': alert_node_id,
+            'label': f'{label_prefix}{alert.alert_title}',
+            'title': alert.alert_description or alert.alert_title,
+            'group': 'alert',
+        })
+
+        for ioc in (alert.iocs or []):
+            key = (ioc.ioc_value or '', ioc.ioc_type_id)
+            node_id = seen_iocs.get(key)
+            if node_id is None:
+                node_id = f'ioc_{ioc.ioc_id}'
+                seen_iocs[key] = node_id
+                type_name = ioc.ioc_type.type_name if ioc.ioc_type else ''
+                title_bits = [
+                    f'<b>{ioc.ioc_value or ""}</b>',
+                ]
+                if type_name:
+                    title_bits.append(f'type: {type_name}')
+                if ioc.ioc_tags:
+                    title_bits.append(f'tags: {ioc.ioc_tags}')
+                nodes.append({
+                    'id': node_id,
+                    'label': ioc.ioc_value or f'ioc #{ioc.ioc_id}',
+                    'title': '<br>'.join(title_bits),
+                    'group': 'ioc',
+                })
+            edges.append({
+                'from': alert_node_id,
+                'to': node_id,
+                'dashes': True,
+            })
+
+        for asset in (alert.assets or []):
+            key = ((asset.asset_name or ''), asset.asset_type_id)
+            node_id = seen_assets.get(key)
+            if node_id is None:
+                node_id = f'asset_{asset.asset_id}'
+                seen_assets[key] = node_id
+                type_name = asset.asset_type.asset_name if asset.asset_type else ''
+                title_bits = [
+                    f'<b>{asset.asset_name or ""}</b>',
+                ]
+                if type_name:
+                    title_bits.append(f'type: {type_name}')
+                if asset.asset_ip:
+                    title_bits.append(f'ip: {asset.asset_ip}')
+                if asset.asset_domain:
+                    title_bits.append(f'domain: {asset.asset_domain}')
+                asset_node = {
+                    'id': node_id,
+                    'label': asset.asset_name or f'asset #{asset.asset_id}',
+                    'title': '<br>'.join(title_bits),
+                    'group': 'asset',
+                }
+                # Include the asset-type icon path if the referenced asset
+                # type carries one — mirrors what the alert graph does so
+                # the client can pick a matching image without a second
+                # lookup.
+                icon = getattr(asset.asset_type, 'asset_icon_not_compromised', None)
+                if icon:
+                    asset_node['image'] = f'/static/assets/img/graph/{icon}'
+                nodes.append(asset_node)
+            edges.append({
+                'from': alert_node_id,
+                'to': node_id,
+            })
+
+    return {'nodes': nodes, 'edges': edges}
+
+
 def incident_open_matching(customer_id: int, dedupe_key: str) -> Optional[Incident]:
     """Look up an open incident with the given dedupe key for stacking. Used by
     the rules engine when a rule action is create_incident and its dedupe key

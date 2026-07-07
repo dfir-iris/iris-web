@@ -37,8 +37,12 @@ from app.blueprints.rest.v2.incidents_routes.comments import (
 from app.blueprints.rest.v2.incidents_routes.investigation_progress import (
     incidents_investigation_progress_blueprint,
 )
+from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
+from app.business.cases import case_unlink_incident
+from app.business.cases import cases_get_by_identifier
 from app.business.incidents import incident_add_alerts
+from app.business.incidents import incident_correlation_graph
 from app.business.incidents import incident_escalate_to_case
 from app.business.incidents import incident_merge_to_case
 from app.business.incidents import incident_remove_alert
@@ -288,3 +292,71 @@ def merge(identifier):
         'incident_id': incident.incident_id,
         'case_id': case.case_id,
     })
+
+
+@incidents_blueprint.delete('/<int:identifier>/case')
+@ac_api_requires(Permissions.incidents_write)
+def unlink_case(identifier):
+    """Reverse an incident->case escalation/merge from the incident side.
+
+    Same behaviour as `DELETE /api/v2/cases/{case_id}/source-incident`
+    but rooted at the incident URL so the incident-detail page's
+    "Unlink from case" menu can hit it without knowing the case id.
+    Requires the caller to have write access to the target case — a
+    user who can't touch the case shouldn't be able to strip its
+    source-incident link either.
+    """
+    try:
+        incident = incidents_get(
+            iris_current_user,
+            session.get('permissions') or 0,
+            identifier,
+            fallback_customer_access=ac_current_user_has_customer_access,
+        )
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    if incident.incident_case_id is None:
+        return response_api_success(data={'unlinked': False})
+
+    linked_case_id = incident.incident_case_id
+    if not ac_fast_check_current_user_has_case_access(
+        linked_case_id, [CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=linked_case_id)
+
+    case = cases_get_by_identifier(linked_case_id)
+    try:
+        case_unlink_incident(case)
+    except BusinessProcessingError as exc:
+        return response_api_error(exc.get_message(), data=exc.get_data())
+
+    return response_api_success(data={
+        'unlinked': True,
+        'incident_id': incident.incident_id,
+    })
+
+
+@incidents_blueprint.get('/<int:identifier>/graph')
+@ac_api_requires()
+def graph(identifier):
+    """Correlation graph for an incident.
+
+    Returns `{nodes, edges}` linking every member alert to its IOCs and
+    assets, with IOC/asset nodes deduplicated across alerts so shared
+    indicators show as junction points — the analyst's whole reason for
+    looking at this view. Read-only, gated by incident (customer)
+    access; the payload only carries labels/titles/ids that a reader
+    already sees on the alerts tab, so no extra ACL is needed.
+    """
+    try:
+        incident = incidents_get(
+            iris_current_user,
+            session.get('permissions') or 0,
+            identifier,
+            fallback_customer_access=ac_current_user_has_customer_access,
+        )
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    return response_api_success(data=incident_correlation_graph(incident))

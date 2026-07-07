@@ -45,6 +45,8 @@ from app.blueprints.rest.v2.case_routes.events import case_events_blueprint
 from app.blueprints.rest.v2.case_routes.timelines import case_timelines_blueprint
 from app.blueprints.rest.v2.case_routes.datastore import case_datastore_blueprint
 from app.blueprints.iris_user import iris_current_user
+from app.business.cases import case_unlink_alert
+from app.business.cases import case_unlink_incident
 from app.business.cases import cases_create
 from app.business.cases import cases_close
 from app.business.cases import cases_delete
@@ -554,6 +556,65 @@ def get_case_source_incident(identifier):
         'incident_id': incident.incident_id,
         'incident_title': incident.incident_title,
         'incident_status': incident.status.status_name if incident.status else None,
+    })
+
+
+@cases_blueprint.delete('/<int:identifier>/alerts/<int:alert_id>')
+@ac_api_requires(Permissions.standard_user)
+def rest_v2_case_unlink_alert(identifier, alert_id):
+    """Detach one alert from this case and reset its status.
+
+    Case-scoped ACL: the caller must have full access to the case, which
+    is the object being mutated (alert.cases). We don't recheck alert
+    permissions — the case-membership relationship is symmetric, so
+    write on the case is enough to prune its own list.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    case = cases_get_by_identifier(identifier)
+    try:
+        case_unlink_alert(case, alert_id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as exc:
+        return response_api_error(exc.get_message(), data=exc.get_data())
+    return response_api_deleted()
+
+
+@cases_blueprint.delete('/<int:identifier>/source-incident')
+@ac_api_requires(Permissions.standard_user)
+def rest_v2_case_unlink_incident(identifier):
+    """Unlink the incident that produced this case.
+
+    Clears the incident's back-reference, moves it back to Investigating,
+    and detaches every member alert from the case. Alerts get their
+    status rolled back to Assigned so they re-appear in the analyst
+    queue. No-op (200 with `{unlinked: false}`) when the case wasn't
+    sourced from an incident.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    case = cases_get_by_identifier(identifier)
+    try:
+        incident = case_unlink_incident(case)
+    except BusinessProcessingError as exc:
+        return response_api_error(exc.get_message(), data=exc.get_data())
+
+    if incident is None:
+        return response_api_success(data={'unlinked': False})
+    return response_api_success(data={
+        'unlinked': True,
+        'incident_id': incident.incident_id,
     })
 
 
