@@ -8,7 +8,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.3.0
 flask-marshmallow==1.5.0
 Flask-Caching==2.4.0
-flask-cors==6.0.2
+flask-cors==6.0.5
 marshmallow==4.3.0
 marshmallow-sqlalchemy==1.5.0
 gunicorn==26.0.0
@@ -16,7 +16,7 @@ psycopg2-binary==2.9.12
 pyunpack==0.3
 packaging==26.2
 requests==2.31.0
-SQLAlchemy==2.0.49
+SQLAlchemy==2.0.51
 SQLAlchemy-ImageAttach==1.1.0
 SQLAlchemy-Utils==0.42.1
 urllib3==2.7.0
@@ -36,20 +36,20 @@ pycrdt>=0.14,<0.15
 # server markdown → source column) doesn't lose information at the
 # parser boundary.
 markdown-it-py>=3.0,<4
-alembic==1.18.4
-setuptools==81.0.0
+alembic==1.18.5
+setuptools==83.0.0
 python-dateutil==2.9.0.post0
 python-gnupg==0.5.6
 pyzipper==0.4.0
 PyJWT==2.13.0
-cryptography==48.0.0
+cryptography==49.0.0
 ldap3==2.9.1
 pyintelowl==5.1.0
-pyotp==2.9.0
+pyotp==2.10.0
 qrcode[pil]==8.2
 dictdiffer==0.9.0
 oic==1.7.0
-bleach==6.3.0
+bleach==6.4.0
 imap-tools==1.5.0
 
 https://github.com/dfir-iris/docx-generator/releases/download/v0.9.1/docx_generator-0.9.1-py3-none-any.whl
