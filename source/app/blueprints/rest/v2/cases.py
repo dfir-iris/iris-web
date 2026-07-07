@@ -523,6 +523,40 @@ def list_case_followers(identifier):
     ])
 
 
+@cases_blueprint.get('/<int:identifier>/source-incident')
+@ac_api_requires()
+def get_case_source_incident(identifier):
+    """Return the incident this case was created from, if any.
+
+    Mirrors the "linked alerts" chip in the case topbar: an analyst who
+    can read the case can see which incident it was escalated / merged
+    from. Read-only, gated by case read access — the incident row is
+    already visible to anyone with customer access, so exposing the
+    lookup by case id doesn't broaden the surface.
+
+    Returns 200 with `null` when the case has no source incident so the
+    frontend can conditionally render the chip without a 404.
+    """
+    from app.business.incidents import incidents_get_by_case
+
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    incident = incidents_get_by_case(identifier)
+    if incident is None:
+        return response_api_success(data=None)
+
+    return response_api_success(data={
+        'incident_id': incident.incident_id,
+        'incident_title': incident.incident_title,
+        'incident_status': incident.status.status_name if incident.status else None,
+    })
+
+
 @cases_blueprint.get('/<int:identifier>/war-rooms')
 @ac_api_requires()
 def list_case_war_rooms(identifier):

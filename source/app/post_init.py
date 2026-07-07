@@ -668,6 +668,8 @@ def create_safe_hooks():
                 hook_description='Triggered on alert unlinked from an incident, after commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_incident_escalate',
                 hook_description='Triggered on incident escalation to a case, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_incident_merge',
+                hook_description='Triggered on incident merge into an existing case, after commit in DB')
 
 
 def create_safe_languages():

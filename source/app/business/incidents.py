@@ -21,14 +21,19 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 
+from app.blueprints.iris_user import iris_current_user
 from app.business.access_controls import access_controls_user_has_customer_access
 from app.datamgmt.alerts.alerts_db import create_case_from_alerts
+from app.datamgmt.alerts.alerts_db import merge_alert_in_case
+from app.datamgmt.case.case_db import get_case
 from app.db import db
+from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.alerts import Alert
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
+from app.models.alerts import AlertStatus
 from app.models.incidents import Incident
 from app.models.incidents import IncidentStatus
 from app.util import add_obj_history_entry
@@ -82,6 +87,59 @@ def resolve_status_id(status_name: str) -> int:
 _status_id = resolve_status_id
 
 
+# Incident -> alert status mapping applied whenever the incident's status
+# is updated. Chosen so that the alert timeline mirrors what the analyst
+# is doing at the incident level:
+#   Open          -> "Assigned"      (someone owns this cluster)
+#   Investigating -> "In progress"   (active work)
+#   Dismissed     -> "Closed"        (no action taken)
+# The `Escalated` incident status is NOT in this map: the escalate/merge
+# flows already set alerts to `Escalated` (new case) or `Merged`
+# (existing case) explicitly, and letting the generic propagator run
+# afterwards would clobber that distinction.
+_INCIDENT_TO_ALERT_STATUS = {
+    INCIDENT_STATUS_OPEN: 'Assigned',
+    INCIDENT_STATUS_INVESTIGATING: 'In progress',
+    INCIDENT_STATUS_DISMISSED: 'Closed',
+}
+
+
+def _resolve_alert_status_id(status_name: str) -> Optional[int]:
+    """Look up an `AlertStatus.status_id` by name. Returns None (with a
+    log line) if the seed row is missing so the caller can degrade to a
+    no-op rather than 500ing on a status change."""
+    row = AlertStatus.query.filter_by(status_name=status_name).first()
+    if row is None:
+        from app.logger import logger
+        logger.warning('AlertStatus "%s" is not seeded; cannot propagate', status_name)
+        return None
+    return row.status_id
+
+
+def _propagate_status_to_alerts(incident: Incident, new_status_name: str) -> None:
+    """Push the incident's new status down to every member alert according to
+    `_INCIDENT_TO_ALERT_STATUS`. No-op for status transitions we don't map
+    (e.g. `Escalated` — see the mapping doc above). The caller is
+    responsible for committing; we only mutate ORM state so the outer
+    transaction stays a single commit."""
+    target_alert_status = _INCIDENT_TO_ALERT_STATUS.get(new_status_name)
+    if target_alert_status is None:
+        return
+    alert_status_id = _resolve_alert_status_id(target_alert_status)
+    if alert_status_id is None:
+        return
+    changed = 0
+    for alert in incident.alerts:
+        if alert.alert_status_id != alert_status_id:
+            alert.alert_status_id = alert_status_id
+            changed += 1
+    if changed:
+        add_obj_history_entry(
+            incident,
+            f'propagated status to {changed} alert(s) as {target_alert_status!r}',
+        )
+
+
 def incidents_create(incident: Incident) -> Incident:
     if incident.incident_status_id is None:
         incident.incident_status_id = _status_id(_STATUS_OPEN)
@@ -117,6 +175,16 @@ def incidents_get(user, permissions, identifier, fallback_customer_access=None) 
     ):
         raise ObjectNotFoundError()
     return incident
+
+
+def incidents_get_by_case(case_id: int) -> Optional[Incident]:
+    """Return the incident this case was created from (via escalate/merge),
+    or None if the case wasn't sourced from an incident. Powers the "back
+    to source incident" chip in the case topbar; callers must gate access
+    on the case, not the incident — anyone who can read the case can see
+    which incident it came from.
+    """
+    return Incident.query.filter_by(incident_case_id=case_id).first()
 
 
 def incidents_search(customer_id: Optional[int], status_id: Optional[int],
@@ -160,6 +228,10 @@ def incidents_update(incident: Incident, changes: dict) -> Incident:
         for key in _AUDITED_FIELDS
         if key in changes
     }
+    status_changed = (
+        'incident_status_id' in changes
+        and audit_before.get('incident_status_id') != changes['incident_status_id']
+    )
     for key, value in changes.items():
         setattr(incident, key, value)
     for key, label in _AUDITED_FIELDS.items():
@@ -173,6 +245,13 @@ def incidents_update(incident: Incident, changes: dict) -> Incident:
             incident,
             f'changed {label}: {old_value!r} -> {new_value!r}',
         )
+    # Cascade the incident's new status onto its member alerts (see
+    # `_INCIDENT_TO_ALERT_STATUS`). Skipped when the status didn't
+    # actually move so re-saving the same status doesn't spam alert
+    # history. `Escalated` is intentionally not in the mapping — the
+    # escalate/merge flows set alert status themselves.
+    if status_changed and incident.status is not None:
+        _propagate_status_to_alerts(incident, incident.status.status_name)
     db.session.commit()
     track_activity(f'updated incident #{incident.incident_id}', ctx_less=True)
     _enqueue_flow_evaluation(incident.incident_id)
@@ -240,18 +319,44 @@ def incident_escalate_to_case(incident: Incident, template_id: Optional[int] = N
     if not incident.alerts:
         raise BusinessProcessingError('Cannot escalate an incident with no alerts')
 
+    # `create_case_from_alerts` matches IOCs/assets by UUID, not id.
+    # Passing numeric ids here silently drops every IOC/asset from the
+    # linked case, which is the "escalation produces an empty case"
+    # behaviour we're fixing alongside the ACL grant below.
     case = create_case_from_alerts(
         alerts=list(incident.alerts),
-        iocs_list=[str(i.ioc_id) for a in incident.alerts for i in (a.iocs or [])],
-        assets_list=[str(a2.asset_id) for a in incident.alerts for a2 in (a.assets or [])],
+        iocs_list=[str(i.ioc_uuid) for a in incident.alerts for i in (a.iocs or [])],
+        assets_list=[str(a2.asset_uuid) for a in incident.alerts for a2 in (a.assets or [])],
         case_title=case_title or incident.incident_title,
         note=note or incident.incident_description or '',
         import_as_event=import_as_event,
         case_tags=case_tags,
         template_id=template_id,
     )
+
+    # Grant the escalating user access to the freshly created case. Without
+    # this the case row lives in the DB but is filtered out of every
+    # per-user query (`user_list_cases_view`), so from the analyst's point
+    # of view the escalation "consumes" a case id and produces nothing.
+    # Mirrors the alert-escalation flow in `alerts_routes.py:642`.
+    ac_set_new_case_access(iris_current_user, case.case_id, case.client_id)
+
+    # Fire the same post-create module hook and history entry the normal
+    # alert-escalate path fires — modules that react to new cases (SLA
+    # trackers, external syncs) shouldn't have to special-case incidents.
+    case = call_modules_hook('on_postload_case_create', case)
+    add_obj_history_entry(case, 'created')
+
     incident.incident_case_id = case.case_id
     incident.incident_status_id = _status_id(_STATUS_ESCALATED)
+    # Mark every member alert as Escalated so the alerts board reflects
+    # the incident-level decision. Uses the same seed-lookup helper the
+    # alert-escalate route uses (`alerts_routes.py:631`).
+    escalated_alert_id = _resolve_alert_status_id('Escalated')
+    if escalated_alert_id is not None:
+        for alert in incident.alerts:
+            if alert.alert_status_id != escalated_alert_id:
+                alert.alert_status_id = escalated_alert_id
     add_obj_history_entry(incident, f'escalated to case #{case.case_id}')
     db.session.commit()
     track_activity(
@@ -262,6 +367,80 @@ def incident_escalate_to_case(incident: Incident, template_id: Optional[int] = N
                       {'incident_id': incident.incident_id,
                        'case_id': case.case_id},
                       caseid=case.case_id)
+    return case
+
+
+def incident_merge_to_case(incident: Incident, target_case_id: int,
+                           note: Optional[str] = None, import_as_event: bool = False,
+                           case_tags: str = ''):
+    """Merge an incident's alerts into an already-existing case. Analogous to
+    the alerts-to-existing-case merge flow (`alerts_routes.py:667`), but
+    fanned out across every alert on the incident: each alert links to the
+    target case, its selected IOCs/assets get imported, and the incident
+    is marked Escalated + backpointed to the target case.
+
+    Same guardrails as escalate: re-merging a linked incident raises, and
+    an incident with no alerts has nothing to merge. The caller is
+    responsible for gating access to `target_case_id` — the request-layer
+    endpoint checks case access before calling in.
+    """
+    if incident.incident_case_id is not None:
+        raise BusinessProcessingError('Incident already linked to a case')
+    if not incident.alerts:
+        raise BusinessProcessingError('Cannot merge an incident with no alerts')
+
+    case = get_case(target_case_id)
+    if case is None:
+        raise BusinessProcessingError(f'Target case #{target_case_id} not found')
+    if case.client_id != incident.incident_customer_id:
+        raise BusinessProcessingError(
+            'Target case belongs to a different customer than the incident'
+        )
+
+    # Import every alert's IOCs and assets into the case. `merge_alert_in_case`
+    # dedupes by (value,type) for IOCs and (name,type) for assets so
+    # re-merging alerts that share indicators doesn't create duplicates.
+    alerts_snapshot = list(incident.alerts)
+    for alert in alerts_snapshot:
+        merge_alert_in_case(
+            alert=alert,
+            case=case,
+            iocs_list=[str(i.ioc_uuid) for i in (alert.iocs or [])],
+            assets_list=[str(a.asset_uuid) for a in (alert.assets or [])],
+            note=note or incident.incident_description or '',
+            import_as_event=import_as_event,
+            case_tags=case_tags,
+        )
+
+    incident.incident_case_id = case.case_id
+    incident.incident_status_id = _status_id(_STATUS_ESCALATED)
+    # Mark every member alert as Merged (not Escalated) — the alert-merge
+    # route does the same thing at `alerts_routes.py:710`.
+    merged_alert_id = _resolve_alert_status_id('Merged')
+    if merged_alert_id is not None:
+        for alert in incident.alerts:
+            if alert.alert_status_id != merged_alert_id:
+                alert.alert_status_id = merged_alert_id
+    add_obj_history_entry(incident, f'merged into case #{case.case_id}')
+    db.session.commit()
+    track_activity(
+        f'merged incident #{incident.incident_id} into case #{case.case_id}',
+        ctx_less=True,
+    )
+    # Best-effort hook fire. `call_modules_hook` raises when the hook name
+    # isn't seeded in `iris_hooks` (post_init seeds it on boot); we don't
+    # want a fresh install / mid-upgrade instance to 500 the whole merge
+    # because a module hook row hasn't landed yet. The merge itself is
+    # already committed above, so swallowing here just means module
+    # listeners miss THIS event — the operation is otherwise complete.
+    try:
+        call_modules_hook('on_postload_incident_merge',
+                          {'incident_id': incident.incident_id,
+                           'case_id': case.case_id},
+                          caseid=case.case_id)
+    except Exception:  # noqa: BLE001
+        from app.logger import logger
+        logger.exception('on_postload_incident_merge hook failed; merge already committed')
     return case
 
 

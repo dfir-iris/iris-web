@@ -37,9 +37,12 @@ from app.blueprints.rest.v2.incidents_routes.comments import (
 from app.blueprints.rest.v2.incidents_routes.investigation_progress import (
     incidents_investigation_progress_blueprint,
 )
+from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
 from app.business.incidents import incident_add_alerts
 from app.business.incidents import incident_escalate_to_case
+from app.business.incidents import incident_merge_to_case
 from app.business.incidents import incident_remove_alert
+from app.models.authorization import CaseAccessLevel
 from app.business.incidents import incidents_create
 from app.business.incidents import incidents_delete
 from app.business.incidents import incidents_get
@@ -230,6 +233,57 @@ def escalate(identifier):
         )
     except BusinessProcessingError as exc:
         return response_api_error(exc.get_message(), data=exc.get_data())
+    return response_api_success({
+        'incident_id': incident.incident_id,
+        'case_id': case.case_id,
+    })
+
+
+@incidents_blueprint.post('/<int:identifier>/merge')
+@ac_api_requires(Permissions.incidents_write)
+def merge(identifier):
+    """Merge an incident's alerts into an already-existing case.
+
+    Mirrors the alert-merge endpoint (`POST /alerts/merge/<alert_id>`) but
+    fanned across every alert on the incident. `target_case_id` in the body
+    picks the destination case; the caller must have full case access to
+    it (read-only isn't enough — merging mutates the case description,
+    IOCs, assets, and optionally the timeline).
+    """
+    try:
+        incident = incidents_get(
+            iris_current_user,
+            session.get('permissions') or 0,
+            identifier,
+            fallback_customer_access=ac_current_user_has_customer_access,
+        )
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    payload = request.get_json() or {}
+    target_case_id = payload.get('target_case_id')
+    if not isinstance(target_case_id, int):
+        return response_api_error('target_case_id (int) is required')
+
+    if not ac_fast_check_current_user_has_case_access(
+        target_case_id, [CaseAccessLevel.full_access]
+    ):
+        return response_api_error(
+            'Caller does not have write access to the target case',
+            data={'case_id': target_case_id},
+        )
+
+    try:
+        case = incident_merge_to_case(
+            incident,
+            target_case_id=target_case_id,
+            note=payload.get('note'),
+            import_as_event=bool(payload.get('import_as_event', False)),
+            case_tags=payload.get('case_tags', '') or '',
+        )
+    except BusinessProcessingError as exc:
+        return response_api_error(exc.get_message(), data=exc.get_data())
+
     return response_api_success({
         'incident_id': incident.incident_id,
         'case_id': case.case_id,
