@@ -51,6 +51,7 @@ Design constraints that shape the code:
 from __future__ import annotations
 
 import logging
+import re
 from typing import Iterable
 
 from markdown_it import MarkdownIt
@@ -94,12 +95,79 @@ def markdown_to_ydoc_update(md: str) -> bytes:
         MarkdownIt('commonmark', {'html': False, 'breaks': False})
         .enable('table')
     )
-    tokens = md_parser.parse(md or '')
+    # Some legacy imports concatenated an entire GFM table onto a single
+    # physical line ("| A | B | |---|---| | 1 | 2 | | 3 | 4 |"). markdown-it
+    # sees that as one paragraph and never emits table tokens. Un-flatten
+    # those single-liners into proper multi-line tables before parsing —
+    # cheap heuristic, safe for well-formed input.
+    tokens = md_parser.parse(_unflatten_pipe_tables(md or ''))
 
     with doc.transaction():
         _build_blocks_into(frag, tokens)
 
     return doc.get_update()
+
+
+def _unflatten_pipe_tables(md: str) -> str:
+    """Repair single-line GFM pipe tables produced by legacy exporters.
+
+    A well-formed table is `header | separator | row+`, each on its own
+    line. When an import concatenates them onto a single line — `| A | B
+    | |---|---| | 1 | 2 |` — markdown-it can't recognise it and drops
+    through to paragraph parsing. Users see pipes and dashes as literal
+    text.
+
+    Detection: a line that contains
+      * a `| --- | --- | ... |` separator segment, AND
+      * multiple `| ... | ... | ... |` groups
+    is almost certainly a flattened table. We split on ` | | ` (the
+    boundary the concatenation left between adjacent rows) and re-insert
+    line breaks so the standard GFM table rule can pick it back up.
+
+    Runs strictly per-line, so paragraphs and non-flat tables are
+    untouched. False positives are unlikely — inline pipes in normal
+    prose don't produce a `| --- | --- |` separator segment.
+    """
+    if '|' not in md or '---' not in md:
+        return md
+
+    separator_re = re.compile(r'\|(\s*:?-{2,}:?\s*\|)+')
+    # A row is `| cell | cell | ... |` with no internal newlines.
+    # We split on ` | | ` — the collapsed-out newline between rows —
+    # which reliably delimits rows in the pathological single-line
+    # shape without matching legitimate mid-row pipe pairs.
+    row_boundary_re = re.compile(r'\|\s*\|')
+
+    out_lines: list[str] = []
+    for line in md.split('\n'):
+        if separator_re.search(line) and row_boundary_re.search(line):
+            # Restore the newlines between adjacent `|...|` rows.
+            # `.strip()` on each piece removes the extra spaces the
+            # collapse left behind so the resulting rows look natural
+            # in the source column after a round-trip.
+            pieces = [p.strip() for p in row_boundary_re.split(line)]
+            # Each interior piece lost a leading `|` (the row-start)
+            # and a trailing `|` (the row-end) to the split. Re-add
+            # them so we emit valid GFM rows.
+            fixed: list[str] = []
+            for idx, p in enumerate(pieces):
+                if not p:
+                    continue
+                if idx > 0 and not p.startswith('|'):
+                    p = '| ' + p
+                if idx < len(pieces) - 1 and not p.endswith('|'):
+                    p = p + ' |'
+                fixed.append(p)
+            # Multi-line tables need a blank line separating them from
+            # the surrounding text — otherwise markdown-it fuses the
+            # first row with any prose immediately before it.
+            if out_lines and out_lines[-1].strip():
+                out_lines.append('')
+            out_lines.extend(fixed)
+            out_lines.append('')
+        else:
+            out_lines.append(line)
+    return '\n'.join(out_lines)
 
 
 def _build_blocks_into(container, tokens: list[Token]) -> None:
