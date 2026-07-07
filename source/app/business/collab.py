@@ -195,6 +195,17 @@ def resolve_doc(doc_name, user_id):
 # Snapshot storage — server-authoritative Y.Doc bytes.
 # ---------------------------------------------------------------------------
 
+# Bump this whenever `iris_engine.collab.render` grows a new block
+# type (tables, task lists, footnotes…). `ensure_snapshot` re-seeds
+# rows whose stored `seeder_version` is below the current value from
+# the up-to-date source column, so users don't stay stuck on the
+# previous parser's lossy output. Historical bumps:
+#   1 — GFM pipe tables (Jul 2026). The CommonMark parser silently
+#       dropped tables, so any legacy note with a table lost its
+#       tabular structure after the first open.
+_CURRENT_SEEDER_VERSION = 1
+
+
 def ensure_snapshot(doc_name, current_content):
     """Return the authoritative `y_state` bytes for `doc_name`, creating
     it from the source column if this is a first open.
@@ -204,19 +215,31 @@ def ensure_snapshot(doc_name, current_content):
       * The row's `y_state` is a non-empty Yjs update representing the
         current authoritative Y.Doc.
       * The one-time migration from markdown to Y.Doc happens exactly
-        once per document, atomically.
+        once per document, atomically — UNLESS the row's `seeder_version`
+        is below `_CURRENT_SEEDER_VERSION`, in which case we re-seed
+        from `current_content` so the doc picks up whatever the newer
+        parser can now express.
 
     The returned bytes are what we ship in `sync-init`. Every client
     hydrates from these bytes and only these bytes — there's no
     fallback path.
     """
     row = CollabDoc.query.filter_by(doc_name=doc_name).first()
-    if row is not None and row.y_state:
+    stored_version = getattr(row, 'seeder_version', None) if row is not None else None
+    is_current_version = stored_version == _CURRENT_SEEDER_VERSION
+    if row is not None and row.y_state and is_current_version:
         return bytes(row.y_state)
 
-    # First open of this doc (or a row exists with empty state — should
-    # only happen after a manual DB tampering, but we handle it the
-    # same way to be robust).
+    # Re-seed. Reaches this branch on:
+    #   * first open of a doc (`row is None`),
+    #   * DB tampering that emptied `y_state` (`not row.y_state`),
+    #   * or a seeder-version bump landing on an existing row
+    #     (`stored_version < _CURRENT_SEEDER_VERSION`).
+    # In the last case we DISCARD the stored y_state and re-parse
+    # the source column, because the old y_state was produced by a
+    # parser that couldn't represent the new block types — keeping
+    # it would leave users unable to see content they know is in
+    # `note.note_content` / `case.description` / etc.
     seed_md = current_content or ''
     seed_bytes = markdown_to_ydoc_update(seed_md)
 
@@ -225,12 +248,14 @@ def ensure_snapshot(doc_name, current_content):
             doc_name=doc_name,
             y_state=seed_bytes,
             content_md=seed_md,
+            seeder_version=_CURRENT_SEEDER_VERSION,
             last_flushed_at=datetime.datetime.utcnow(),
         )
         db.session.add(row)
     else:
         row.y_state = seed_bytes
         row.content_md = seed_md
+        row.seeder_version = _CURRENT_SEEDER_VERSION
         row.last_flushed_at = datetime.datetime.utcnow()
     db.session.commit()
     return seed_bytes

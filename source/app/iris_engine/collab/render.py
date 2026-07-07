@@ -83,7 +83,17 @@ def markdown_to_ydoc_update(md: str) -> bytes:
     frag = XmlFragment()
     doc[_PROSEMIRROR_FIELD] = frag
 
-    md_parser = MarkdownIt('commonmark', {'html': False, 'breaks': False})
+    # `commonmark` + explicit `enable('table')` gives us GFM pipe tables
+    # (thead/tbody/tr/th/td tokens) without pulling in the rest of the
+    # `gfm-like` preset — notably `linkify`, which requires the extra
+    # `linkify-it-py` dependency. Legacy notes and case summaries in
+    # production predate the CommonMark editor and often contain tables
+    # (findings, IOC lists, etc.); dropping them silently at the parser
+    # left users with pipes and dashes rendered as literal text.
+    md_parser = (
+        MarkdownIt('commonmark', {'html': False, 'breaks': False})
+        .enable('table')
+    )
     tokens = md_parser.parse(md or '')
 
     with doc.transaction():
@@ -183,11 +193,17 @@ def _build_blocks_into(container, tokens: list[Token]) -> None:
             i += 1
             continue
 
+        if t == 'table_open':
+            close_i = _find_close(tokens, i, 'table_close')
+            el = XmlElement('table')
+            container.children.append(el)
+            _build_table_rows_into(el, tokens[i + 1: close_i])
+            i = close_i + 1
+            continue
+
         # Anything else: skip. Unknown block tokens are almost always
-        # opener/closer noise (e.g. thead / tbody from table plugins
-        # we don't enable). Silently dropping them keeps the tree
-        # coherent; if we ever wire up tables via a markdown-it plugin
-        # we teach this switch about them here.
+        # opener/closer noise (thead/tbody are handled inside
+        # `_build_table_rows_into`; anything else falls here).
         i += 1
 
 
@@ -206,6 +222,77 @@ def _build_list_items_into(list_el, tokens: list[Token]) -> None:
         list_el.children.append(item)
         _build_blocks_into(item, tokens[i + 1: close_i])
         i = close_i + 1
+
+
+def _build_table_rows_into(table_el, tokens: list[Token]) -> None:
+    """Turn the interior of a GFM table (`table_open ... table_close`)
+    into `tableRow` / `tableHeader` / `tableCell` XmlElements matching
+    the TipTap Table extension's schema.
+
+    markdown-it wraps the row runs in `thead_open ... thead_close` and
+    `tbody_open ... tbody_close`; those wrappers are semantic-only in
+    our target schema (TipTap distinguishes header vs body cells at
+    the CELL level, not the section level), so we flatten them.
+
+    Each cell in the TipTap schema requires at least one block child.
+    We wrap the row's inline content in a `paragraph` — same shape
+    y-prosemirror produces when a user types into a fresh table.
+    """
+    i = 0
+    n = len(tokens)
+    while i < n:
+        tok = tokens[i]
+        # Skip thead/tbody wrappers — flat row list matches TipTap.
+        if tok.type in ('thead_open', 'thead_close', 'tbody_open', 'tbody_close'):
+            i += 1
+            continue
+        if tok.type != 'tr_open':
+            i += 1
+            continue
+        row_close = _find_close(tokens, i, 'tr_close')
+        row_el = XmlElement('tableRow')
+        table_el.children.append(row_el)
+        _build_table_cells_into(row_el, tokens[i + 1: row_close])
+        i = row_close + 1
+
+
+def _build_table_cells_into(row_el, tokens: list[Token]) -> None:
+    """Emit `tableHeader` or `tableCell` XmlElements for each th/td
+    inside a row. Each cell's inline content becomes a nested
+    `paragraph` — TipTap's Table cell requires at least one block
+    child, and paragraph is the neutral choice for text-only cells.
+
+    We deliberately DO NOT copy colspan/rowspan/colwidth here. GFM
+    pipe tables don't express those; a legacy note being migrated
+    into the collab doc is always a plain rectangular grid. If the
+    user later merges cells in the TipTap editor, y-prosemirror
+    writes the merge attrs into the XmlElement and they survive
+    subsequent flushes — this migration path just seeds the simplest
+    possible table.
+    """
+    i = 0
+    n = len(tokens)
+    while i < n:
+        tok = tokens[i]
+        if tok.type == 'th_open':
+            close_i = _find_close(tokens, i, 'th_close')
+            cell = XmlElement('tableHeader')
+            row_el.children.append(cell)
+            para = XmlElement('paragraph')
+            cell.children.append(para)
+            _build_inline_into(para, tokens[i + 1: close_i])
+            i = close_i + 1
+            continue
+        if tok.type == 'td_open':
+            close_i = _find_close(tokens, i, 'td_close')
+            cell = XmlElement('tableCell')
+            row_el.children.append(cell)
+            para = XmlElement('paragraph')
+            cell.children.append(para)
+            _build_inline_into(para, tokens[i + 1: close_i])
+            i = close_i + 1
+            continue
+        i += 1
 
 
 def _build_inline_into(block_el, inline_tokens: list[Token]) -> None:
@@ -457,9 +544,89 @@ def _render_block(node, lines: list[str], *, list_context) -> None:
         lines.append('')
         return
 
+    if tag == 'table':
+        _render_table(node, lines)
+        return
+
     # Unknown block: render nothing rather than crashing. Loud in the
     # log so a missing case here doesn't silently eat content.
     logger.warning('collab render: unknown block tag %r — skipped', tag)
+
+
+def _render_table(node, lines: list[str]) -> None:
+    """Render a `table` XmlElement as a GFM pipe table.
+
+    GFM requires the first row to be the header and the second row to
+    be a separator (`| --- | --- |`). TipTap's schema tags header cells
+    as `tableHeader` and body cells as `tableCell`, and doesn't require
+    the header to be the first row — but pipe syntax has no way to
+    express a mid-table header. We handle both shapes pragmatically:
+      * If the first row is all `tableHeader`, treat it as the header
+        and emit the separator after it (round-trip friendly).
+      * Otherwise, synthesise an empty header row above the data so
+        the output re-parses as a valid GFM table. This is lossy for
+        the visual "no header" shape, but the alternative is emitting
+        raw pipes that markdown-it will re-parse as a paragraph and
+        we lose the tabular structure entirely.
+
+    Cells are joined with pipes; internal pipes get escaped as `\\|`
+    to keep the row shape parseable. Multi-line cell content is
+    collapsed to a single line joined with `<br>` — GFM tables can't
+    contain block content between the pipes.
+    """
+    rows: list[tuple[bool, list[str]]] = []
+    for row in list(node.children):
+        if not isinstance(row, XmlElement) or row.tag != 'tableRow':
+            continue
+        cells: list[str] = []
+        all_headers = True
+        for cell in list(row.children):
+            if not isinstance(cell, XmlElement):
+                continue
+            if cell.tag not in ('tableHeader', 'tableCell'):
+                continue
+            if cell.tag != 'tableHeader':
+                all_headers = False
+            cell_lines: list[str] = []
+            for child in list(cell.children):
+                _render_block(child, cell_lines, list_context=None)
+            while cell_lines and cell_lines[-1] == '':
+                cell_lines.pop()
+            # GFM cells are single-line: join intra-cell breaks with
+            # `<br>`, and escape stray pipes so the row shape survives.
+            text = '<br>'.join(line.strip() for line in cell_lines if line is not None)
+            cells.append(text.replace('|', '\\|'))
+        rows.append((all_headers and bool(cells), cells))
+
+    if not rows:
+        return
+
+    # Column count: max cells across rows. Short rows get padded so
+    # every emitted line has the same pipe count (a GFM parser is
+    # forgiving here, but consistent output is easier on humans
+    # reading the raw source column).
+    cols = max(len(r[1]) for r in rows)
+    if cols == 0:
+        return
+
+    def _emit(cells: list[str]) -> None:
+        padded = cells + [''] * (cols - len(cells))
+        lines.append('| ' + ' | '.join(padded) + ' |')
+
+    if rows[0][0]:
+        _emit(rows[0][1])
+        lines.append('| ' + ' | '.join(['---'] * cols) + ' |')
+        body_start = 1
+    else:
+        # Header-less TipTap table → synthesise an empty header row so
+        # the output remains a valid GFM table when re-parsed.
+        _emit([''] * cols)
+        lines.append('| ' + ' | '.join(['---'] * cols) + ' |')
+        body_start = 0
+
+    for _, cells in rows[body_start:]:
+        _emit(cells)
+    lines.append('')
 
 
 def _render_list_item(node, lines: list[str], marker: str) -> None:

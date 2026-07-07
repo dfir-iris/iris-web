@@ -32,6 +32,7 @@ from sqlalchemy import BigInteger
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
 from sqlalchemy import LargeBinary
 from sqlalchemy import Text
 
@@ -46,6 +47,13 @@ class CollabDoc(db.Model):
     content_md = Column(Text, nullable=True)
     last_flushed_at = Column(DateTime, nullable=True)
     updated_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
+    # Seeder version. Bumped whenever `iris_engine.collab.render` grows
+    # a new block type (tables, task lists, etc.) — rows persisted by
+    # an older seeder are re-seeded from the source column on next open
+    # so users don't stay stuck on the previous parser's lossy output.
+    # See `_CURRENT_SEEDER_VERSION` in `business/collab.py` for the
+    # constant and the re-seed logic.
+    seeder_version = Column(Integer, nullable=True)
     # No ORM `updated_by` relationship intentionally: nothing in the
     # collab codepath reads it, and adding a string-name `relationship('User')`
     # risks the exact class of mapper-config-time resolution error that
