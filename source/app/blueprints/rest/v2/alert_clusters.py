@@ -31,62 +31,62 @@ from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.endpoints import response_api_success
-from app.blueprints.rest.v2.incidents_routes.comments import (
-    incidents_comments_blueprint,
+from app.blueprints.rest.v2.alert_clusters_routes.comments import (
+    alert_clusters_comments_blueprint,
 )
-from app.blueprints.rest.v2.incidents_routes.investigation_progress import (
-    incidents_investigation_progress_blueprint,
+from app.blueprints.rest.v2.alert_clusters_routes.investigation_progress import (
+    alert_clusters_investigation_progress_blueprint,
 )
 from app.blueprints.access_controls import ac_api_return_access_denied
 from app.blueprints.access_controls import ac_fast_check_current_user_has_case_access
-from app.business.cases import case_unlink_incident
+from app.business.cases import case_unlink_alert_cluster
 from app.business.cases import cases_get_by_identifier
-from app.business.incidents import incident_add_alerts
-from app.business.incidents import incident_correlation_graph
-from app.business.incidents import incident_escalate_to_case
-from app.business.incidents import incident_merge_to_case
-from app.business.incidents import incident_remove_alert
+from app.business.alert_clusters import alert_cluster_add_alerts
+from app.business.alert_clusters import alert_cluster_correlation_graph
+from app.business.alert_clusters import alert_cluster_escalate_to_case
+from app.business.alert_clusters import alert_cluster_merge_to_case
+from app.business.alert_clusters import alert_cluster_remove_alert
 from app.models.authorization import CaseAccessLevel
-from app.business.incidents import incidents_create
-from app.business.incidents import incidents_delete
-from app.business.incidents import incidents_get
-from app.business.incidents import incidents_search
-from app.business.incidents import incidents_update
+from app.business.alert_clusters import alert_clusters_create
+from app.business.alert_clusters import alert_clusters_delete
+from app.business.alert_clusters import alert_clusters_get
+from app.business.alert_clusters import alert_clusters_search
+from app.business.alert_clusters import alert_clusters_update
 from app.models.authorization import Permissions
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
-from app.schema.marshables import IncidentSchema
+from app.schema.marshables import AlertClusterSchema
 
 
 # Immutable-on-update fields (CVE class fixed by _ALERT_READONLY_UPDATE_FIELDS
-# on the alerts blueprint — re-attributing incident_customer_id would let a
-# user with write access to one tenant move an incident into another).
-_INCIDENT_READONLY_UPDATE_FIELDS = frozenset({
-    'incident_id',
-    'incident_customer_id',
-    'incident_creation_time',
-    'incident_case_id',
-    'incident_dedupe_key',
-    'incident_source_rule_id',
+# on the alerts blueprint — re-attributing cluster_customer_id would let a
+# user with write access to one tenant move a cluster into another).
+_CLUSTER_READONLY_UPDATE_FIELDS = frozenset({
+    'cluster_id',
+    'cluster_customer_id',
+    'cluster_creation_time',
+    'cluster_case_id',
+    'cluster_dedupe_key',
+    'cluster_source_rule_id',
 })
 
 
 def _strip_readonly(payload):
     if not isinstance(payload, dict):
         return payload
-    return {k: v for k, v in payload.items() if k not in _INCIDENT_READONLY_UPDATE_FIELDS}
+    return {k: v for k, v in payload.items() if k not in _CLUSTER_READONLY_UPDATE_FIELDS}
 
 
-incidents_blueprint = Blueprint('incidents_rest_v2', __name__, url_prefix='/incidents')
-incidents_blueprint.register_blueprint(incidents_investigation_progress_blueprint)
-incidents_blueprint.register_blueprint(incidents_comments_blueprint)
+alert_clusters_blueprint = Blueprint('alert_clusters_rest_v2', __name__, url_prefix='/alert-clusters')
+alert_clusters_blueprint.register_blueprint(alert_clusters_investigation_progress_blueprint)
+alert_clusters_blueprint.register_blueprint(alert_clusters_comments_blueprint)
 
-_schema = IncidentSchema()
+_schema = AlertClusterSchema()
 
 
-@incidents_blueprint.get('')
-@ac_api_requires(Permissions.incidents_read)
-def list_incidents():
+@alert_clusters_blueprint.get('')
+@ac_api_requires(Permissions.alert_clusters_read)
+def list_clusters():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 10, type=int)
 
@@ -94,7 +94,7 @@ def list_incidents():
     if ac_current_user_has_permission(Permissions.server_administrator):
         user_filter = None
 
-    paginated = incidents_search(
+    paginated = alert_clusters_search(
         customer_id=request.args.get('customer_id', type=int),
         status_id=request.args.get('status_id', type=int),
         title=request.args.get('title'),
@@ -106,29 +106,29 @@ def list_incidents():
     return response_api_paginated(_schema, paginated)
 
 
-@incidents_blueprint.post('')
-@ac_api_requires(Permissions.incidents_write)
-def create_incident():
+@alert_clusters_blueprint.post('')
+@ac_api_requires(Permissions.alert_clusters_write)
+def create_cluster():
     payload = request.get_json() or {}
     try:
-        incident = _schema.load(payload)
+        cluster = _schema.load(payload)
     except ValidationError as exc:
         return response_api_error('Data error', data=exc.messages)
-    if not ac_current_user_has_customer_access(incident.incident_customer_id):
-        return response_api_error('User not entitled to create incidents for the client')
+    if not ac_current_user_has_customer_access(cluster.cluster_customer_id):
+        return response_api_error('User not entitled to create clusters for the client')
 
     alert_ids = payload.get('alert_ids') or []
-    result = incidents_create(incident)
+    result = alert_clusters_create(cluster)
     if alert_ids:
-        incident_add_alerts(result, alert_ids)
+        alert_cluster_add_alerts(result, alert_ids)
     return response_api_created(_schema.dump(result))
 
 
-@incidents_blueprint.get('/<int:identifier>')
-@ac_api_requires(Permissions.incidents_read)
-def read_incident(identifier):
+@alert_clusters_blueprint.get('/<int:identifier>')
+@ac_api_requires(Permissions.alert_clusters_read)
+def read_cluster(identifier):
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -136,14 +136,14 @@ def read_incident(identifier):
         )
     except ObjectNotFoundError:
         return response_api_not_found()
-    return response_api_success(_schema.dump(incident))
+    return response_api_success(_schema.dump(cluster))
 
 
-@incidents_blueprint.put('/<int:identifier>')
-@ac_api_requires(Permissions.incidents_write)
-def update_incident(identifier):
+@alert_clusters_blueprint.put('/<int:identifier>')
+@ac_api_requires(Permissions.alert_clusters_write)
+def update_cluster(identifier):
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -154,18 +154,18 @@ def update_incident(identifier):
     payload = _strip_readonly(request.get_json() or {})
     try:
         # partial load lets the schema validate types without requiring all fields
-        _schema.load(payload, instance=incident, partial=True)
+        _schema.load(payload, instance=cluster, partial=True)
     except ValidationError as exc:
         return response_api_error('Data error', data=exc.messages)
-    result = incidents_update(incident, payload)
+    result = alert_clusters_update(cluster, payload)
     return response_api_success(_schema.dump(result))
 
 
-@incidents_blueprint.delete('/<int:identifier>')
-@ac_api_requires(Permissions.incidents_delete)
-def delete_incident(identifier):
+@alert_clusters_blueprint.delete('/<int:identifier>')
+@ac_api_requires(Permissions.alert_clusters_delete)
+def delete_cluster(identifier):
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -173,15 +173,15 @@ def delete_incident(identifier):
         )
     except ObjectNotFoundError:
         return response_api_not_found()
-    incidents_delete(incident)
+    alert_clusters_delete(cluster)
     return response_api_deleted()
 
 
-@incidents_blueprint.post('/<int:identifier>/alerts')
-@ac_api_requires(Permissions.incidents_write)
+@alert_clusters_blueprint.post('/<int:identifier>/alerts')
+@ac_api_requires(Permissions.alert_clusters_write)
 def add_alerts(identifier):
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -193,15 +193,15 @@ def add_alerts(identifier):
     alert_ids = payload.get('alert_ids') or []
     if not isinstance(alert_ids, list):
         return response_api_error('alert_ids must be a list of integers')
-    result = incident_add_alerts(incident, alert_ids)
+    result = alert_cluster_add_alerts(cluster, alert_ids)
     return response_api_success(_schema.dump(result))
 
 
-@incidents_blueprint.delete('/<int:identifier>/alerts/<int:alert_id>')
-@ac_api_requires(Permissions.incidents_write)
+@alert_clusters_blueprint.delete('/<int:identifier>/alerts/<int:alert_id>')
+@ac_api_requires(Permissions.alert_clusters_write)
 def remove_alert(identifier, alert_id):
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -209,15 +209,15 @@ def remove_alert(identifier, alert_id):
         )
     except ObjectNotFoundError:
         return response_api_not_found()
-    result = incident_remove_alert(incident, alert_id)
+    result = alert_cluster_remove_alert(cluster, alert_id)
     return response_api_success(_schema.dump(result))
 
 
-@incidents_blueprint.post('/<int:identifier>/escalate')
-@ac_api_requires(Permissions.incidents_write)
+@alert_clusters_blueprint.post('/<int:identifier>/escalate')
+@ac_api_requires(Permissions.alert_clusters_write)
 def escalate(identifier):
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -227,8 +227,8 @@ def escalate(identifier):
         return response_api_not_found()
     payload = request.get_json() or {}
     try:
-        case = incident_escalate_to_case(
-            incident,
+        case = alert_cluster_escalate_to_case(
+            cluster,
             template_id=payload.get('template_id'),
             case_title=payload.get('case_title'),
             note=payload.get('note'),
@@ -238,24 +238,24 @@ def escalate(identifier):
     except BusinessProcessingError as exc:
         return response_api_error(exc.get_message(), data=exc.get_data())
     return response_api_success({
-        'incident_id': incident.incident_id,
+        'cluster_id': cluster.cluster_id,
         'case_id': case.case_id,
     })
 
 
-@incidents_blueprint.post('/<int:identifier>/merge')
-@ac_api_requires(Permissions.incidents_write)
+@alert_clusters_blueprint.post('/<int:identifier>/merge')
+@ac_api_requires(Permissions.alert_clusters_write)
 def merge(identifier):
-    """Merge an incident's alerts into an already-existing case.
+    """Merge a cluster's alerts into an already-existing case.
 
     Mirrors the alert-merge endpoint (`POST /alerts/merge/<alert_id>`) but
-    fanned across every alert on the incident. `target_case_id` in the body
+    fanned across every alert on the cluster. `target_case_id` in the body
     picks the destination case; the caller must have full case access to
     it (read-only isn't enough — merging mutates the case description,
     IOCs, assets, and optionally the timeline).
     """
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -278,8 +278,8 @@ def merge(identifier):
         )
 
     try:
-        case = incident_merge_to_case(
-            incident,
+        case = alert_cluster_merge_to_case(
+            cluster,
             target_case_id=target_case_id,
             note=payload.get('note'),
             import_as_event=bool(payload.get('import_as_event', False)),
@@ -289,25 +289,25 @@ def merge(identifier):
         return response_api_error(exc.get_message(), data=exc.get_data())
 
     return response_api_success({
-        'incident_id': incident.incident_id,
+        'cluster_id': cluster.cluster_id,
         'case_id': case.case_id,
     })
 
 
-@incidents_blueprint.delete('/<int:identifier>/case')
-@ac_api_requires(Permissions.incidents_write)
+@alert_clusters_blueprint.delete('/<int:identifier>/case')
+@ac_api_requires(Permissions.alert_clusters_write)
 def unlink_case(identifier):
-    """Reverse an incident->case escalation/merge from the incident side.
+    """Reverse a cluster->case escalation/merge from the cluster side.
 
-    Same behaviour as `DELETE /api/v2/cases/{case_id}/source-incident`
-    but rooted at the incident URL so the incident-detail page's
+    Same behaviour as `DELETE /api/v2/cases/{case_id}/source-cluster`
+    but rooted at the cluster URL so the cluster-detail page's
     "Unlink from case" menu can hit it without knowing the case id.
     Requires the caller to have write access to the target case — a
     user who can't touch the case shouldn't be able to strip its
-    source-incident link either.
+    source-cluster link either.
     """
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -316,10 +316,10 @@ def unlink_case(identifier):
     except ObjectNotFoundError:
         return response_api_not_found()
 
-    if incident.incident_case_id is None:
+    if cluster.cluster_case_id is None:
         return response_api_success(data={'unlinked': False})
 
-    linked_case_id = incident.incident_case_id
+    linked_case_id = cluster.cluster_case_id
     if not ac_fast_check_current_user_has_case_access(
         linked_case_id, [CaseAccessLevel.full_access]
     ):
@@ -327,30 +327,30 @@ def unlink_case(identifier):
 
     case = cases_get_by_identifier(linked_case_id)
     try:
-        case_unlink_incident(case)
+        case_unlink_alert_cluster(case)
     except BusinessProcessingError as exc:
         return response_api_error(exc.get_message(), data=exc.get_data())
 
     return response_api_success(data={
         'unlinked': True,
-        'incident_id': incident.incident_id,
+        'cluster_id': cluster.cluster_id,
     })
 
 
-@incidents_blueprint.get('/<int:identifier>/graph')
+@alert_clusters_blueprint.get('/<int:identifier>/graph')
 @ac_api_requires()
 def graph(identifier):
-    """Correlation graph for an incident.
+    """Correlation graph for an alert cluster.
 
     Returns `{nodes, edges}` linking every member alert to its IOCs and
     assets, with IOC/asset nodes deduplicated across alerts so shared
     indicators show as junction points — the analyst's whole reason for
-    looking at this view. Read-only, gated by incident (customer)
+    looking at this view. Read-only, gated by cluster (customer)
     access; the payload only carries labels/titles/ids that a reader
     already sees on the alerts tab, so no extra ACL is needed.
     """
     try:
-        incident = incidents_get(
+        cluster = alert_clusters_get(
             iris_current_user,
             session.get('permissions') or 0,
             identifier,
@@ -359,4 +359,4 @@ def graph(identifier):
     except ObjectNotFoundError:
         return response_api_not_found()
 
-    return response_api_success(data=incident_correlation_graph(incident))
+    return response_api_success(data=alert_cluster_correlation_graph(cluster))

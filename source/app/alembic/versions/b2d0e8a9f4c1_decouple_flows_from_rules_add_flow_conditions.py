@@ -1,14 +1,14 @@
-"""Decouple investigation flows from incident rules.
+"""Decouple investigation flows from cluster rules.
 
 Flows now own their own matching conditions and can attach to alerts
-and/or incidents on their own — the `attach_flow` rule action is
-retired (rules only stack alerts into incidents). This migration adds:
+and/or alert clusters on their own — the `attach_flow` rule action is
+retired (rules only stack alerts into clusters). This migration adds:
 
-  * `investigation_flows.flow_target`     — 'alert' / 'incident' / 'both'
+  * `investigation_flows.flow_target`     — 'alert' / 'alert_cluster' / 'both'
   * `investigation_flows.flow_conditions` — JSONB, same DSL as rules
   * `investigation_flows.flow_priority`   — tie-breaker
-  * `incidents.incident_investigation_flow_id` — cached FK
-  * `incident_investigation_progress`     — per-incident check-off table
+  * `alert_clusters.cluster_investigation_flow_id` — cached FK
+  * `alert_cluster_investigation_progress`         — per-cluster check-off table
 
 Every step is guarded by `_has_table`/`_table_has_column` so the
 migration is idempotent — safe to re-run.
@@ -54,24 +54,24 @@ def _add_flow_columns():
         )
 
 
-def _add_incident_flow_column():
-    if _table_has_column('incidents', 'incident_investigation_flow_id'):
+def _add_cluster_flow_column():
+    if _table_has_column('alert_clusters', 'cluster_investigation_flow_id'):
         return
     op.add_column(
-        'incidents',
-        sa.Column('incident_investigation_flow_id', sa.BigInteger(),
+        'alert_clusters',
+        sa.Column('cluster_investigation_flow_id', sa.BigInteger(),
                   sa.ForeignKey('investigation_flows.flow_id'), nullable=True),
     )
 
 
-def _create_incident_investigation_progress():
-    if _has_table('incident_investigation_progress'):
+def _create_alert_cluster_investigation_progress():
+    if _has_table('alert_cluster_investigation_progress'):
         return
     op.create_table(
-        'incident_investigation_progress',
+        'alert_cluster_investigation_progress',
         sa.Column('id', sa.BigInteger(), primary_key=True),
-        sa.Column('incident_id', sa.BigInteger(),
-                  sa.ForeignKey('incidents.incident_id', ondelete='CASCADE'),
+        sa.Column('cluster_id', sa.BigInteger(),
+                  sa.ForeignKey('alert_clusters.cluster_id', ondelete='CASCADE'),
                   nullable=False, index=True),
         sa.Column('step_id', sa.BigInteger(),
                   sa.ForeignKey('investigation_flow_steps.step_id', ondelete='CASCADE'),
@@ -81,21 +81,21 @@ def _create_incident_investigation_progress():
         sa.Column('completed_at', sa.DateTime(), nullable=False,
                   server_default=sa.text('now()')),
         sa.Column('note', sa.Text(), nullable=True),
-        sa.UniqueConstraint('incident_id', 'step_id',
-                            name='uq_incident_investigation_progress_incident_step'),
+        sa.UniqueConstraint('cluster_id', 'step_id',
+                            name='uq_alert_cluster_investigation_progress_cluster_step'),
     )
 
 
 def upgrade():
     _add_flow_columns()
-    _add_incident_flow_column()
-    _create_incident_investigation_progress()
+    _add_cluster_flow_column()
+    _create_alert_cluster_investigation_progress()
 
 
 def downgrade():
-    op.drop_table('incident_investigation_progress')
-    if _table_has_column('incidents', 'incident_investigation_flow_id'):
-        op.drop_column('incidents', 'incident_investigation_flow_id')
+    op.drop_table('alert_cluster_investigation_progress')
+    if _table_has_column('alert_clusters', 'cluster_investigation_flow_id'):
+        op.drop_column('alert_clusters', 'cluster_investigation_flow_id')
     if _table_has_column('investigation_flows', 'flow_priority'):
         op.drop_column('investigation_flows', 'flow_priority')
     if _table_has_column('investigation_flows', 'flow_conditions'):

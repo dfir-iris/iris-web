@@ -29,17 +29,17 @@ from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
-from app.business.incident_rules import backfill_rule
-from app.business.incident_rules import rule_dry_run
-from app.business.incident_rules import rules_create
-from app.business.incident_rules import rules_delete
-from app.business.incident_rules import rules_get
-from app.business.incident_rules import rules_list
-from app.business.incident_rules import rules_update
+from app.business.cluster_rules import backfill_rule
+from app.business.cluster_rules import rule_dry_run
+from app.business.cluster_rules import rules_create
+from app.business.cluster_rules import rules_delete
+from app.business.cluster_rules import rules_get
+from app.business.cluster_rules import rules_list
+from app.business.cluster_rules import rules_update
 from app.models.authorization import Permissions
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
-from app.schema.marshables import IncidentRuleSchema
+from app.schema.marshables import ClusterRuleSchema
 
 
 # Fields the caller must never be able to set / mutate via the request
@@ -72,21 +72,21 @@ def _caller():
     return iris_current_user, ac_current_user_permissions_mask()
 
 
-incident_rules_blueprint = Blueprint('incident_rules_rest_v2', __name__, url_prefix='/incident-rules')
+cluster_rules_blueprint = Blueprint('cluster_rules_rest_v2', __name__, url_prefix='/cluster-rules')
 
-_schema = IncidentRuleSchema()
+_schema = ClusterRuleSchema()
 
 
-@incident_rules_blueprint.get('')
-@ac_api_requires(Permissions.incident_rules_read)
+@cluster_rules_blueprint.get('')
+@ac_api_requires(Permissions.cluster_rules_read)
 def list_rules():
     user, perms = _caller()
     rows = rules_list(user, perms)
     return response_api_success([_schema.dump(r) for r in rows])
 
 
-@incident_rules_blueprint.post('')
-@ac_api_requires(Permissions.incident_rules_write)
+@cluster_rules_blueprint.post('')
+@ac_api_requires(Permissions.cluster_rules_write)
 def create_rule():
     user, perms = _caller()
     payload = _strip_readonly(request.get_json() or {})
@@ -107,8 +107,8 @@ def create_rule():
     return response_api_created(_schema.dump(result))
 
 
-@incident_rules_blueprint.get('/<int:identifier>')
-@ac_api_requires(Permissions.incident_rules_read)
+@cluster_rules_blueprint.get('/<int:identifier>')
+@ac_api_requires(Permissions.cluster_rules_read)
 def read_rule(identifier):
     user, perms = _caller()
     try:
@@ -121,8 +121,8 @@ def read_rule(identifier):
     return response_api_success(_schema.dump(rule))
 
 
-@incident_rules_blueprint.put('/<int:identifier>')
-@ac_api_requires(Permissions.incident_rules_write)
+@cluster_rules_blueprint.put('/<int:identifier>')
+@ac_api_requires(Permissions.cluster_rules_write)
 def update_rule(identifier):
     user, perms = _caller()
     try:
@@ -149,8 +149,8 @@ def update_rule(identifier):
     return response_api_success(_schema.dump(result))
 
 
-@incident_rules_blueprint.delete('/<int:identifier>')
-@ac_api_requires(Permissions.incident_rules_write)
+@cluster_rules_blueprint.delete('/<int:identifier>')
+@ac_api_requires(Permissions.cluster_rules_write)
 def delete_rule(identifier):
     user, perms = _caller()
     try:
@@ -164,8 +164,8 @@ def delete_rule(identifier):
     return response_api_deleted()
 
 
-@incident_rules_blueprint.post('/<int:identifier>/test')
-@ac_api_requires(Permissions.incident_rules_read)
+@cluster_rules_blueprint.post('/<int:identifier>/test')
+@ac_api_requires(Permissions.cluster_rules_read)
 def test_rule(identifier):
     user, perms = _caller()
     try:
@@ -186,11 +186,11 @@ def test_rule(identifier):
     })
 
 
-@incident_rules_blueprint.post('/<int:identifier>/backfill')
-@ac_api_requires(Permissions.incident_rules_write)
+@cluster_rules_blueprint.post('/<int:identifier>/backfill')
+@ac_api_requires(Permissions.cluster_rules_write)
 def backfill(identifier):
     """Apply this rule's action to *historical* alerts. Alerts already
-    grouped into an incident are skipped so the rule can't hijack an
+    grouped into a cluster are skipped so the rule can't hijack an
     analyst's manual grouping. The dedupe / time-window logic keeps the
     operation idempotent — re-running produces no duplicates.
 

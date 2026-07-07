@@ -31,12 +31,12 @@ from app.logger import logger
 from app.models.alerts import Alert
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
-from app.models.incidents import Incident
+from app.models.alert_clusters import AlertCluster
+from app.models.investigation_flows import AlertClusterInvestigationProgress
 from app.models.investigation_flows import AlertInvestigationProgress
 from app.models.investigation_flows import FLOW_TARGET_ALERT
 from app.models.investigation_flows import FLOW_TARGET_BOTH
-from app.models.investigation_flows import FLOW_TARGET_INCIDENT
-from app.models.investigation_flows import IncidentInvestigationProgress
+from app.models.investigation_flows import FLOW_TARGET_CLUSTER
 from app.models.investigation_flows import InvestigationFlow
 from app.models.investigation_flows import InvestigationFlowStep
 
@@ -212,7 +212,7 @@ def alert_progress_record(alert: Alert, step_id: int, user_id: int,
     """Idempotent: re-checking the same step just updates the note + timestamp."""
     if not alert.alert_investigation_flow_id:
         raise BusinessProcessingError('Alert has no investigation flow attached')
-    # Caller-scope was already enforced when the Alert/Incident was
+    # Caller-scope was already enforced when the Alert/AlertCluster was
     # loaded upstream; the step lookup here is a data-integrity check
     # (step must belong to the entity's attached flow), so the unchecked
     # variant is correct.
@@ -250,34 +250,34 @@ def alert_progress_uncheck(alert: Alert, step_id: int) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Incident progress (mirror of the alert progress helpers)
+# Alert-cluster progress (mirror of the alert progress helpers)
 # ---------------------------------------------------------------------------
 
-def incident_progress_list(incident: Incident) -> List[IncidentInvestigationProgress]:
-    if not incident.incident_investigation_flow_id:
+def alert_cluster_progress_list(cluster: AlertCluster) -> List[AlertClusterInvestigationProgress]:
+    if not cluster.cluster_investigation_flow_id:
         return []
-    return IncidentInvestigationProgress.query.filter_by(
-        incident_id=incident.incident_id
+    return AlertClusterInvestigationProgress.query.filter_by(
+        cluster_id=cluster.cluster_id
     ).all()
 
 
-def incident_progress_record(incident: Incident, step_id: int, user_id: int,
-                             note: Optional[str] = None) -> IncidentInvestigationProgress:
-    if not incident.incident_investigation_flow_id:
-        raise BusinessProcessingError('Incident has no investigation flow attached')
-    # Caller-scope was already enforced when the Alert/Incident was
+def alert_cluster_progress_record(cluster: AlertCluster, step_id: int, user_id: int,
+                                  note: Optional[str] = None) -> AlertClusterInvestigationProgress:
+    if not cluster.cluster_investigation_flow_id:
+        raise BusinessProcessingError('Alert cluster has no investigation flow attached')
+    # Caller-scope was already enforced when the Alert/AlertCluster was
     # loaded upstream; the step lookup here is a data-integrity check
     # (step must belong to the entity's attached flow), so the unchecked
     # variant is correct.
     step = _flow_step_get_unchecked(step_id)
-    if step.flow_id != incident.incident_investigation_flow_id:
-        raise BusinessProcessingError("Step does not belong to the incident's flow")
-    row = IncidentInvestigationProgress.query.filter_by(
-        incident_id=incident.incident_id, step_id=step_id
+    if step.flow_id != cluster.cluster_investigation_flow_id:
+        raise BusinessProcessingError("Step does not belong to the cluster's flow")
+    row = AlertClusterInvestigationProgress.query.filter_by(
+        cluster_id=cluster.cluster_id, step_id=step_id
     ).first()
     if row is None:
-        row = IncidentInvestigationProgress(
-            incident_id=incident.incident_id,
+        row = AlertClusterInvestigationProgress(
+            cluster_id=cluster.cluster_id,
             step_id=step_id,
             completed_by_user_id=user_id,
             note=note,
@@ -292,9 +292,9 @@ def incident_progress_record(incident: Incident, step_id: int, user_id: int,
     return row
 
 
-def incident_progress_uncheck(incident: Incident, step_id: int) -> None:
-    row = IncidentInvestigationProgress.query.filter_by(
-        incident_id=incident.incident_id, step_id=step_id
+def alert_cluster_progress_uncheck(cluster: AlertCluster, step_id: int) -> None:
+    row = AlertClusterInvestigationProgress.query.filter_by(
+        cluster_id=cluster.cluster_id, step_id=step_id
     ).first()
     if row is None:
         return
@@ -304,11 +304,11 @@ def incident_progress_uncheck(incident: Incident, step_id: int) -> None:
 
 # ---------------------------------------------------------------------------
 # Flow evaluator — decides which flow (if any) to attach to a given
-# alert or incident, based on the flow's own `flow_conditions`.
+# alert or alert cluster, based on the flow's own `flow_conditions`.
 # ---------------------------------------------------------------------------
 
 def _flow_matches(flow: InvestigationFlow, model, entity_id: int) -> bool:
-    """Return True when the given entity (Alert or Incident) satisfies the
+    """Return True when the given entity (Alert or AlertCluster) satisfies the
     flow's conditions. Reuses `apply_custom_conditions` — same code path
     that backs the alert/case search filter — so the DSL never diverges
     from what users see when authoring conditions.
@@ -321,7 +321,7 @@ def _flow_matches(flow: InvestigationFlow, model, entity_id: int) -> bool:
         return False
     logic = conditions_payload.get('logic', 'and')
 
-    pk_col = model.alert_id if model is Alert else model.incident_id
+    pk_col = model.alert_id if model is Alert else model.cluster_id
     query = model.query.filter(pk_col == entity_id)
     try:
         query, extra = apply_custom_conditions(query, model, condition_list)
@@ -336,7 +336,7 @@ def _flow_matches(flow: InvestigationFlow, model, entity_id: int) -> bool:
 
 def _candidate_flows_for(target: str, customer_id: int) -> List[InvestigationFlow]:
     """Active flows visible for `customer_id` whose `flow_target` accepts
-    the given target ('alert' or 'incident'). Ordered by priority so the
+    the given target ('alert' or 'alert_cluster'). Ordered by priority so the
     first match wins."""
     accepted = (target, FLOW_TARGET_BOTH)
     rows = InvestigationFlow.query.filter(
@@ -366,13 +366,13 @@ def evaluate_flows_for_alert(alert_id: int) -> Optional[int]:
     return None
 
 
-def evaluate_flows_for_incident(incident_id: int) -> Optional[int]:
-    incident = Incident.query.filter_by(incident_id=incident_id).first()
-    if incident is None or incident.incident_investigation_flow_id is not None:
-        return incident.incident_investigation_flow_id if incident else None
-    for flow in _candidate_flows_for(FLOW_TARGET_INCIDENT, incident.incident_customer_id):
-        if _flow_matches(flow, Incident, incident_id):
-            incident.incident_investigation_flow_id = flow.flow_id
+def evaluate_flows_for_alert_cluster(cluster_id: int) -> Optional[int]:
+    cluster = AlertCluster.query.filter_by(cluster_id=cluster_id).first()
+    if cluster is None or cluster.cluster_investigation_flow_id is not None:
+        return cluster.cluster_investigation_flow_id if cluster else None
+    for flow in _candidate_flows_for(FLOW_TARGET_CLUSTER, cluster.cluster_customer_id):
+        if _flow_matches(flow, AlertCluster, cluster_id):
+            cluster.cluster_investigation_flow_id = flow.flow_id
             db.session.commit()
             return flow.flow_id
     return None
@@ -416,29 +416,29 @@ def _deploy_flow_to_model(flow: InvestigationFlow, model, fk_col,
 
 
 def deploy_flow(flow: InvestigationFlow) -> Tuple[int, int]:
-    """Back-fill this flow onto historical alerts and/or incidents whose
-    FK is empty. Returns `(alerts_attached, incidents_attached)`.
+    """Back-fill this flow onto historical alerts and/or alert clusters whose
+    FK is empty. Returns `(alerts_attached, clusters_attached)`.
 
     Only matches rows where no flow is already attached — we never
     overwrite an existing attachment because the analyst may have chosen
     it deliberately (or the pre-existing flow may already have progress
     check-offs against it that we'd orphan)."""
     alerts_attached = 0
-    incidents_attached = 0
+    clusters_attached = 0
     if flow.flow_target in (FLOW_TARGET_ALERT, FLOW_TARGET_BOTH):
         alerts_attached = _deploy_flow_to_model(
             flow, Alert,
             Alert.alert_investigation_flow_id, Alert.alert_customer_id, Alert.alert_id,
         )
-    if flow.flow_target in (FLOW_TARGET_INCIDENT, FLOW_TARGET_BOTH):
-        incidents_attached = _deploy_flow_to_model(
-            flow, Incident,
-            Incident.incident_investigation_flow_id,
-            Incident.incident_customer_id, Incident.incident_id,
+    if flow.flow_target in (FLOW_TARGET_CLUSTER, FLOW_TARGET_BOTH):
+        clusters_attached = _deploy_flow_to_model(
+            flow, AlertCluster,
+            AlertCluster.cluster_investigation_flow_id,
+            AlertCluster.cluster_customer_id, AlertCluster.cluster_id,
         )
     track_activity(
         f'deployed flow #{flow.flow_id} — alerts={alerts_attached}, '
-        f'incidents={incidents_attached}',
+        f'clusters={clusters_attached}',
         ctx_less=True,
     )
-    return alerts_attached, incidents_attached
+    return alerts_attached, clusters_attached

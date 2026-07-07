@@ -144,7 +144,7 @@ def access_controls_user_has_customer_scope(
     fallback_customer_access=None
 ):
     """Verify the caller can act on a resource declared with the given
-    `customer_scope` shape used by incident rules and investigation flows.
+    `customer_scope` shape used by cluster rules and investigation flows.
 
     Semantics — mirror the tenant-safety pattern used elsewhere:
       * `customer_scope == None` (a null-scope "global" resource) requires

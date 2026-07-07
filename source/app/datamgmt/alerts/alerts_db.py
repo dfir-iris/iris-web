@@ -65,7 +65,7 @@ from app.models.customers import Client
 from app.models.alerts import Alert
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertCaseAssociation
-from app.models.incidents import AlertIncidentAssociation
+from app.models.alert_clusters import AlertClusterAssociation
 from app.models.alerts import SimilarAlertsCache
 from app.models.alerts import AlertResolutionStatus
 from app.models.alerts import AlertSimilarity
@@ -120,12 +120,12 @@ def get_filtered_alerts(
         user_identifier: int | None,
         source_reference,
         custom_conditions: List[dict],
-        # `incident_id`:
-        #   * positive int → alerts attached to that incident
-        #   * -1           → alerts NOT attached to any incident
+        # `cluster_id`:
+        #   * positive int → alerts attached to that alert cluster
+        #   * -1           → alerts NOT attached to any cluster
         #                    (analyst filter "orphans only")
         #   * None         → no filter
-        incident_id: int | None = None,
+        cluster_id: int | None = None,
     ) -> Pagination:
     conditions = []
 
@@ -187,15 +187,15 @@ def get_filtered_alerts(
     if case_id is not None:
         conditions.append(Alert.cases.any(AlertCaseAssociation.case_id == case_id))
 
-    if incident_id is not None:
-        if incident_id == -1:
-            # Orphans: alerts with zero incident memberships. Analyst
+    if cluster_id is not None:
+        if cluster_id == -1:
+            # Orphans: alerts with zero cluster memberships. Analyst
             # uses this to spot anything not yet triaged into an
-            # incident container.
-            conditions.append(~Alert.incidents.any())
+            # alert cluster.
+            conditions.append(~Alert.clusters.any())
         else:
             conditions.append(
-                Alert.incidents.any(AlertIncidentAssociation.incident_id == incident_id)
+                Alert.clusters.any(AlertClusterAssociation.cluster_id == cluster_id)
             )
 
     if assets is not None:

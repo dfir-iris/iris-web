@@ -50,7 +50,7 @@ from app.models.alerts import AlertStatus
 from app.models.alerts import Severity
 from app.models.assets import AnalysisStatus
 from app.models.authorization import Permissions
-from app.models.incidents import IncidentStatus
+from app.models.alert_clusters import AlertClusterStatus
 from app.models.iocs import Tlp
 from app.models.models import EventCategory
 from app.models.models import TaskStatus
@@ -58,7 +58,7 @@ from app.schema.marshables import AlertResolutionSchema
 from app.schema.marshables import AlertStatusSchema
 from app.schema.marshables import AnalysisStatusSchema
 from app.schema.marshables import EventCategorySchema
-from app.schema.marshables import IncidentStatusSchema
+from app.schema.marshables import AlertClusterStatusSchema
 from app.schema.marshables import SeveritySchema
 from app.schema.marshables import TaskStatusSchema
 from app.schema.marshables import TlpSchema
@@ -161,14 +161,14 @@ alert_resolutions_blueprint = _build_readonly_blueprint(
     order_column='resolution_status_id',
 )
 
-# Incident statuses (Open / Investigating / Dismissed / Escalated) —
-# seeded at boot. Exposed here so the incident detail page can populate
+# Alert cluster statuses (Open / Investigating / Dismissed / Escalated) —
+# seeded at boot. Exposed here so the cluster detail page can populate
 # the status dropdown without hard-coding the four rows.
-incident_statuses_blueprint = _build_readonly_blueprint(
-    url_prefix='incident-statuses',
-    blueprint_name='incident_statuses_rest_v2',
-    model=IncidentStatus,
-    schema_factory=IncidentStatusSchema,
+alert_cluster_statuses_blueprint = _build_readonly_blueprint(
+    url_prefix='alert-cluster-statuses',
+    blueprint_name='alert_cluster_statuses_rest_v2',
+    model=AlertClusterStatus,
+    schema_factory=AlertClusterStatusSchema,
     search_columns=('status_name', 'status_description'),
     order_column='status_id',
 )
@@ -209,7 +209,7 @@ taxonomies_blueprint.register_blueprint(severities_blueprint)
 taxonomies_blueprint.register_blueprint(tlp_blueprint)
 taxonomies_blueprint.register_blueprint(alert_statuses_blueprint)
 taxonomies_blueprint.register_blueprint(alert_resolutions_blueprint)
-taxonomies_blueprint.register_blueprint(incident_statuses_blueprint)
+taxonomies_blueprint.register_blueprint(alert_cluster_statuses_blueprint)
 taxonomies_blueprint.register_blueprint(analysis_statuses_blueprint)
 taxonomies_blueprint.register_blueprint(event_categories_blueprint)
 taxonomies_blueprint.register_blueprint(task_statuses_blueprint)

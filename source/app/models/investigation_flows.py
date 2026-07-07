@@ -35,13 +35,13 @@ from app.db import db
 
 
 # `flow_target` values — a flow declares whether it applies to alerts,
-# incidents, or both. Rules used to decide flow attachment; that was
+# alert clusters, or both. Rules used to decide flow attachment; that was
 # consolidated into the flow itself so there's one place to look for
 # "when does this flow apply".
 FLOW_TARGET_ALERT = 'alert'
-FLOW_TARGET_INCIDENT = 'incident'
+FLOW_TARGET_CLUSTER = 'alert_cluster'
 FLOW_TARGET_BOTH = 'both'
-FLOW_TARGETS = (FLOW_TARGET_ALERT, FLOW_TARGET_INCIDENT, FLOW_TARGET_BOTH)
+FLOW_TARGETS = (FLOW_TARGET_ALERT, FLOW_TARGET_CLUSTER, FLOW_TARGET_BOTH)
 
 
 class InvestigationFlow(db.Model):
@@ -55,18 +55,18 @@ class InvestigationFlow(db.Model):
     flow_is_active = Column(Boolean, nullable=False, default=True, server_default=text('true'))
     # null → all customers; otherwise list of client_id ints
     flow_customer_scope = Column(JSONB, nullable=True)
-    # Which entities this flow can attach to: 'alert' / 'incident' / 'both'.
+    # Which entities this flow can attach to: 'alert' / 'alert_cluster' / 'both'.
     # See FLOW_TARGET_* constants.
     flow_target = Column(Text, nullable=False,
                          server_default=text("'alert'"), default=FLOW_TARGET_ALERT)
-    # Match conditions — same DSL shape as `IncidentRule.rule_conditions`
+    # Match conditions — same DSL shape as `ClusterRule.rule_conditions`
     # (`{"logic": "and", "conditions": [{field, operator, value}, ...]}`)
     # evaluated by `app.datamgmt.filtering.apply_custom_conditions`.
     # A flow with an empty condition list never auto-attaches; use
     # /deploy against manual selection or wait for a rule to expand.
     flow_conditions = Column(JSONB, nullable=False, server_default=text("'{\"logic\":\"and\",\"conditions\":[]}'::jsonb"))
     # Priority for tie-breaking when multiple flows match the same entity;
-    # lower = higher priority, matching the incident-rules convention.
+    # lower = higher priority, matching the cluster-rules convention.
     flow_priority = Column(Integer, nullable=False, default=100, server_default=text('100'))
     flow_created_by = Column(ForeignKey('user.id'), nullable=True)
     flow_created_at = Column(DateTime, nullable=False, server_default=text('now()'))
@@ -112,26 +112,26 @@ class AlertInvestigationProgress(db.Model):
     completed_by = relationship('User', foreign_keys=[completed_by_user_id])
 
 
-class IncidentInvestigationProgress(db.Model):
-    """Per-incident, per-step check-off. Mirrors AlertInvestigationProgress
-    but scoped to an incident so the incident-level checklist is fully
+class AlertClusterInvestigationProgress(db.Model):
+    """Per-cluster, per-step check-off. Mirrors AlertInvestigationProgress
+    but scoped to an alert cluster so the cluster-level checklist is fully
     independent of any member alert's checklist — an analyst working the
-    incident as a whole may cover steps that no single alert has yet."""
-    __tablename__ = 'incident_investigation_progress'
+    cluster as a whole may cover steps that no single alert has yet."""
+    __tablename__ = 'alert_cluster_investigation_progress'
     __table_args__ = (
-        UniqueConstraint('incident_id', 'step_id',
-                         name='uq_incident_investigation_progress_incident_step'),
+        UniqueConstraint('cluster_id', 'step_id',
+                         name='uq_alert_cluster_investigation_progress_cluster_step'),
     )
 
     id = Column(BigInteger, primary_key=True)
-    incident_id = Column(ForeignKey('incidents.incident_id', ondelete='CASCADE'),
-                         nullable=False, index=True)
+    cluster_id = Column(ForeignKey('alert_clusters.cluster_id', ondelete='CASCADE'),
+                        nullable=False, index=True)
     step_id = Column(ForeignKey('investigation_flow_steps.step_id', ondelete='CASCADE'),
                      nullable=False)
     completed_by_user_id = Column(ForeignKey('user.id'), nullable=False)
     completed_at = Column(DateTime, nullable=False, server_default=text('now()'))
     note = Column(Text)
 
-    incident = relationship('Incident')
+    cluster = relationship('AlertCluster')
     step = relationship('InvestigationFlowStep')
     completed_by = relationship('User', foreign_keys=[completed_by_user_id])

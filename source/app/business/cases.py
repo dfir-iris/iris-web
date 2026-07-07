@@ -60,7 +60,7 @@ from app.models.alerts import AlertStatus
 from app.models.cases import Cases
 from app.models.cases import ReviewStatusList
 from app.models.customers import Client
-from app.models.incidents import Incident
+from app.models.alert_clusters import AlertCluster
 
 
 def cases_filter(current_user, pagination_parameters, name=None, case_identifiers=None, customer_identifier=None,
@@ -123,7 +123,7 @@ def cases_exists(identifier):
 # When an alert is unlinked from a case, its status is rolled back to
 # this seeded row so the alert re-enters the analyst queue rather than
 # staying flagged as Escalated/Merged forever. `Assigned` is the same
-# status the incident-status propagator moves alerts to on incident
+# status the cluster-status propagator moves alerts to on cluster
 # `Open`, so linked and unlinked alerts converge on the same state.
 _RESET_ALERT_STATUS_NAME = 'Assigned'
 
@@ -173,17 +173,17 @@ def case_unlink_alert(case: Cases, alert_id: int) -> Alert:
     return alert
 
 
-def case_unlink_incident(case: Cases) -> Incident | None:
-    """Reverse an incident->case escalation/merge in one shot.
+def case_unlink_alert_cluster(case: Cases) -> AlertCluster | None:
+    """Reverse a cluster->case escalation/merge in one shot.
 
-    Clears the incident's `incident_case_id`, flips the incident status
+    Clears the cluster's `cluster_case_id`, flips the cluster status
     back to `Investigating`, detaches every member alert from the case,
     and rolls each alert's status back to `Assigned`. Returns the
-    incident so the caller can render a "unlinked from #N" toast; None
-    when the case wasn't sourced from an incident (idempotent no-op).
+    cluster so the caller can render a "unlinked from #N" toast; None
+    when the case wasn't sourced from a cluster (idempotent no-op).
     """
-    incident = Incident.query.filter_by(incident_case_id=case.case_id).first()
-    if incident is None:
+    cluster = AlertCluster.query.filter_by(cluster_case_id=case.case_id).first()
+    if cluster is None:
         return None
 
     # Detach each member alert from the case using the association
@@ -191,29 +191,29 @@ def case_unlink_incident(case: Cases) -> Incident | None:
     # `alert.cases` instead. Snapshot the list first because we're
     # modifying the collection we're iterating over.
     detached_alerts = []
-    for alert in list(incident.alerts):
+    for alert in list(cluster.alerts):
         if any(c.case_id == case.case_id for c in alert.cases):
             alert.cases = [c for c in alert.cases if c.case_id != case.case_id]
             detached_alerts.append(alert)
     _reset_alert_statuses(detached_alerts)
 
-    from app.business.incidents import resolve_status_id, INCIDENT_STATUS_INVESTIGATING
+    from app.business.alert_clusters import resolve_status_id, CLUSTER_STATUS_INVESTIGATING
 
-    incident.incident_case_id = None
-    incident.incident_status_id = resolve_status_id(INCIDENT_STATUS_INVESTIGATING)
+    cluster.cluster_case_id = None
+    cluster.cluster_status_id = resolve_status_id(CLUSTER_STATUS_INVESTIGATING)
     add_obj_history_entry(
-        incident, f'unlinked from case #{case.case_id} (moved back to Investigating)'
+        cluster, f'unlinked from case #{case.case_id} (moved back to Investigating)'
     )
     add_obj_history_entry(
-        case, f'incident #{incident.incident_id} unlinked'
+        case, f'alert cluster #{cluster.cluster_id} unlinked'
     )
     db.session.commit()
     track_activity(
-        f'unlinked incident #{incident.incident_id} from case #{case.case_id}',
+        f'unlinked alert cluster #{cluster.cluster_id} from case #{case.case_id}',
         caseid=case.case_id,
         ctx_less=False,
     )
-    return incident
+    return cluster
 
 
 def cases_create(user, case: Cases, case_template_id) -> Cases:

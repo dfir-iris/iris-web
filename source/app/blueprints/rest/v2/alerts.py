@@ -142,7 +142,7 @@ class AlertsOperations:
             page,
             per_page,
             request.args.get('sort'),
-            request.args.get('incident_id', type=int),
+            request.args.get('cluster_id', type=int),
         )
 
         if filtered_alerts is None:

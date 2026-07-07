@@ -45,8 +45,8 @@ from app.blueprints.rest.v2.war_rooms.root import war_rooms_blueprint
 from app.blueprints.rest.v2.notifications import notifications_blueprint
 from app.blueprints.rest.v2.notifications import admin_notifications_blueprint
 from app.blueprints.rest.v2.mail import mail_blueprint
-from app.blueprints.rest.v2.incidents import incidents_blueprint
-from app.blueprints.rest.v2.incident_rules import incident_rules_blueprint
+from app.blueprints.rest.v2.alert_clusters import alert_clusters_blueprint
+from app.blueprints.rest.v2.cluster_rules import cluster_rules_blueprint
 from app.blueprints.rest.v2.investigation_flows import investigation_flows_blueprint
 
 
@@ -81,6 +81,6 @@ rest_v2_blueprint.register_blueprint(war_rooms_blueprint)
 rest_v2_blueprint.register_blueprint(notifications_blueprint)
 rest_v2_blueprint.register_blueprint(admin_notifications_blueprint)
 rest_v2_blueprint.register_blueprint(mail_blueprint)
-rest_v2_blueprint.register_blueprint(incidents_blueprint)
-rest_v2_blueprint.register_blueprint(incident_rules_blueprint)
+rest_v2_blueprint.register_blueprint(alert_clusters_blueprint)
+rest_v2_blueprint.register_blueprint(cluster_rules_blueprint)
 rest_v2_blueprint.register_blueprint(investigation_flows_blueprint)

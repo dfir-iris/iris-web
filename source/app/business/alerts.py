@@ -44,7 +44,7 @@ from app.models.errors import ObjectNotFoundError
 def alerts_search(start_date, end_date, source_start_date, source_end_date, title, description,
                   status, severity, owner, source, tags, case_identifier, customer_identifier, classification, alert_identifiers,
                   assets, iocs, resolution_status, source_reference, custom_conditions, user_identifier_filter, page, per_page, sort,
-                  incident_identifier=None):
+                  cluster_identifier=None):
 
     return get_filtered_alerts(
         start_date,
@@ -71,7 +71,7 @@ def alerts_search(start_date, end_date, source_start_date, source_end_date, titl
         user_identifier_filter,
         source_reference,
         custom_conditions,
-        incident_id=incident_identifier,
+        cluster_id=cluster_identifier,
     )
 
 
@@ -106,10 +106,10 @@ def _enqueue_rule_evaluation(alert_id: int) -> None:
     """Fire the async rule evaluator. Import is deferred so a broken/
     unregistered Celery worker doesn't crash the request path — the
     ImportError branch logs and swallows so alert ingestion still
-    succeeds even if the incident-rules feature is disabled or the
+    succeeds even if the cluster-rules feature is disabled or the
     worker module fails to load."""
     try:
-        from app.iris_engine.incident_rules.tasks import evaluate_alert_rules
+        from app.iris_engine.cluster_rules.tasks import evaluate_alert_rules
         evaluate_alert_rules.delay(alert_id)
     except Exception:  # noqa: BLE001 — rule evaluation must never block alert ingestion
         from app.logger import logger

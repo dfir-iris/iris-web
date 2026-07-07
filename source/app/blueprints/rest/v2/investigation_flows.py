@@ -226,7 +226,7 @@ def delete_step(flow_id, step_id):
 @investigation_flows_blueprint.post('/<int:identifier>/deploy')
 @ac_api_requires(Permissions.investigation_flows_write)
 def deploy(identifier):
-    """Back-fill this flow onto historical alerts / incidents whose
+    """Back-fill this flow onto historical alerts / alert clusters whose
     investigation-flow FK is empty and whose contents match the flow's
     own conditions. Returns per-target attach counts.
 
@@ -242,9 +242,9 @@ def deploy(identifier):
         )
     except ObjectNotFoundError:
         return response_api_not_found()
-    alerts_attached, incidents_attached = deploy_flow(flow)
+    alerts_attached, clusters_attached = deploy_flow(flow)
     return response_api_success({
         'flow_id': flow.flow_id,
         'alerts_attached': alerts_attached,
-        'incidents_attached': incidents_attached,
+        'clusters_attached': clusters_attached,
     })

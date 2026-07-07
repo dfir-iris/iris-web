@@ -24,7 +24,7 @@ from typing import Optional
 
 from app.business.access_controls import access_controls_user_accessible_customers
 from app.business.access_controls import access_controls_user_has_customer_scope
-from app.business.incidents import incident_open_matching
+from app.business.alert_clusters import alert_cluster_open_matching
 from app.datamgmt.filtering import apply_custom_conditions
 from app.datamgmt.filtering import combine_conditions
 from app.db import db
@@ -33,9 +33,9 @@ from app.logger import logger
 from app.models.alerts import Alert
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
-from app.models.incident_rules import IncidentRule
-from app.models.incident_rules import RULE_ACTION_CREATE_INCIDENT
-from app.models.incidents import Incident
+from app.models.cluster_rules import ClusterRule
+from app.models.cluster_rules import RULE_ACTION_CREATE_CLUSTER
+from app.models.alert_clusters import AlertCluster
 
 
 # ---------------------------------------------------------------------------
@@ -49,19 +49,19 @@ from app.models.incidents import Incident
 # MUST NOT be called from route handlers.
 # ---------------------------------------------------------------------------
 
-def _rules_get_unchecked(identifier: int) -> IncidentRule:
-    rule = IncidentRule.query.filter_by(rule_id=identifier).first()
+def _rules_get_unchecked(identifier: int) -> ClusterRule:
+    rule = ClusterRule.query.filter_by(rule_id=identifier).first()
     if not rule:
         raise ObjectNotFoundError()
     return rule
 
 
-def rules_create(user, permissions, rule: IncidentRule,
-                 fallback_customer_access=None) -> IncidentRule:
+def rules_create(user, permissions, rule: ClusterRule,
+                 fallback_customer_access=None) -> ClusterRule:
     """Persist a new rule after verifying the caller can act on every
     customer the rule targets. A caller trying to create a rule scoped to
     a tenant they can't see (or a null-scope global rule without
-    server_administrator) is rejected — otherwise `incident_rules_write`
+    server_administrator) is rejected — otherwise `cluster_rules_write`
     would double as customer-elevation."""
     if not access_controls_user_has_customer_scope(
         user, permissions, rule.rule_customer_scope,
@@ -73,12 +73,12 @@ def rules_create(user, permissions, rule: IncidentRule,
         )
     db.session.add(rule)
     db.session.commit()
-    track_activity(f'created incident rule "{rule.rule_name}"')
+    track_activity(f'created cluster rule "{rule.rule_name}"')
     return rule
 
 
 def rules_get(user, permissions, identifier: int,
-              fallback_customer_access=None) -> IncidentRule:
+              fallback_customer_access=None) -> ClusterRule:
     """Fetch a rule + verify the caller has access to it. Raises
     `ObjectNotFoundError` rather than a distinct forbidden error so a
     caller can't enumerate rule ids across tenants by watching for a
@@ -92,7 +92,7 @@ def rules_get(user, permissions, identifier: int,
     return rule
 
 
-def rules_list(user, permissions) -> List[IncidentRule]:
+def rules_list(user, permissions) -> List[ClusterRule]:
     """List rules visible to the caller.
 
       * `server_administrator` sees every rule (null-scope + all tenants).
@@ -104,8 +104,8 @@ def rules_list(user, permissions) -> List[IncidentRule]:
     Ordering matches the evaluator so the UI reads in the same order the
     engine would fire them."""
     accessible = access_controls_user_accessible_customers(user, permissions)
-    query = IncidentRule.query.order_by(
-        IncidentRule.rule_priority.asc(), IncidentRule.rule_id.asc()
+    query = ClusterRule.query.order_by(
+        ClusterRule.rule_priority.asc(), ClusterRule.rule_id.asc()
     )
     if accessible is None:  # server_administrator
         return query.all()
@@ -118,8 +118,8 @@ def rules_list(user, permissions) -> List[IncidentRule]:
     ]
 
 
-def rules_update(user, permissions, rule: IncidentRule, changes: dict,
-                 fallback_customer_access=None) -> IncidentRule:
+def rules_update(user, permissions, rule: ClusterRule, changes: dict,
+                 fallback_customer_access=None) -> ClusterRule:
     """Apply `changes` after verifying the caller can act on both the
     rule's *current* scope AND its *incoming* scope. Skipping either
     check would let a caller who can only see tenant A pivot a rule
@@ -143,25 +143,25 @@ def rules_update(user, permissions, rule: IncidentRule, changes: dict,
         setattr(rule, key, value)
     rule.rule_updated_at = datetime.utcnow()
     db.session.commit()
-    track_activity(f'updated incident rule "{rule.rule_name}"')
+    track_activity(f'updated cluster rule "{rule.rule_name}"')
     return rule
 
 
-def rules_delete(rule: IncidentRule) -> None:
+def rules_delete(rule: ClusterRule) -> None:
     """Delete a rule. Caller-scope check is done by whichever getter
     fetched `rule` — routes must load rules through `rules_get(user, ...)`
     before delete."""
     name = rule.rule_name
     db.session.delete(rule)
     db.session.commit()
-    track_activity(f'deleted incident rule "{name}"')
+    track_activity(f'deleted cluster rule "{name}"')
 
 
 # ---------------------------------------------------------------------------
 # Evaluation
 # ---------------------------------------------------------------------------
 
-def _rule_matches_alert(rule: IncidentRule, alert_id: int) -> bool:
+def _rule_matches_alert(rule: ClusterRule, alert_id: int) -> bool:
     """A rule matches when there exists exactly one Alert row whose PK is
     `alert_id` and that also satisfies `rule.rule_conditions`. We reuse
     `apply_custom_conditions` — the exact code path that already backs
@@ -183,11 +183,11 @@ def _rule_matches_alert(rule: IncidentRule, alert_id: int) -> bool:
     return db.session.query(query.exists()).scalar()
 
 
-def _dedupe_key(alert: Alert, rule: IncidentRule) -> str:
+def _dedupe_key(alert: Alert, rule: ClusterRule) -> str:
     """Deterministic key from the rule's `group_by` fields on the alert plus
     the rule id and a time bucket. Alerts landing in the same bucket + same
-    group values stack into one incident; the bucket rolls forward with
-    `time_window_seconds` so the incident stops accepting new alerts once
+    group values stack into one cluster; the bucket rolls forward with
+    `time_window_seconds` so the cluster stops accepting new alerts once
     the window closes."""
     conditions_payload = rule.rule_conditions or {}
     group_by = conditions_payload.get('group_by') or []
@@ -204,10 +204,10 @@ def _dedupe_key(alert: Alert, rule: IncidentRule) -> str:
     return hashlib.sha256(raw.encode('utf-8')).hexdigest()
 
 
-def _apply_create_incident(rule: IncidentRule, alert: Alert) -> Optional[Incident]:
+def _apply_create_cluster(rule: ClusterRule, alert: Alert) -> Optional[AlertCluster]:
     config = rule.rule_action_config or {}
     dedupe_key = _dedupe_key(alert, rule)
-    existing = incident_open_matching(alert.alert_customer_id, dedupe_key)
+    existing = alert_cluster_open_matching(alert.alert_customer_id, dedupe_key)
     if existing is not None:
         if alert.alert_id not in {a.alert_id for a in existing.alerts}:
             existing.alerts.append(alert)
@@ -216,25 +216,25 @@ def _apply_create_incident(rule: IncidentRule, alert: Alert) -> Optional[Inciden
 
     title_template = config.get('title_template') or f'Auto-created by rule: {rule.rule_name}'
     title = title_template.replace('{alert_title}', alert.alert_title or '')
-    incident = Incident(
-        incident_title=title[:2048],
-        incident_description=config.get('description'),
-        incident_customer_id=alert.alert_customer_id,
-        incident_severity_id=alert.alert_severity_id,
-        incident_source_rule_id=rule.rule_id,
-        incident_dedupe_key=dedupe_key,
-        incident_creation_time=datetime.utcnow(),
+    cluster = AlertCluster(
+        cluster_title=title[:2048],
+        cluster_description=config.get('description'),
+        cluster_customer_id=alert.alert_customer_id,
+        cluster_severity_id=alert.alert_severity_id,
+        cluster_source_rule_id=rule.rule_id,
+        cluster_dedupe_key=dedupe_key,
+        cluster_creation_time=datetime.utcnow(),
     )
     # Deferred import to avoid a cycle at module import time. Public
     # names (no leading underscore) so Ruff doesn't flag cross-module
     # private imports.
-    from app.business.incidents import INCIDENT_STATUS_OPEN, resolve_status_id
-    incident.incident_status_id = resolve_status_id(INCIDENT_STATUS_OPEN)
-    db.session.add(incident)
+    from app.business.alert_clusters import CLUSTER_STATUS_OPEN, resolve_status_id
+    cluster.cluster_status_id = resolve_status_id(CLUSTER_STATUS_OPEN)
+    db.session.add(cluster)
     db.session.flush()
-    incident.alerts.append(alert)
+    cluster.alerts.append(alert)
     db.session.commit()
-    return incident
+    return cluster
 
 
 def evaluate_rules_for_alert(alert_id: int) -> dict:
@@ -246,10 +246,10 @@ def evaluate_rules_for_alert(alert_id: int) -> dict:
     if alert is None:
         return {'alert_id': alert_id, 'matched_rules': [], 'skipped': 'alert_not_found'}
 
-    candidates = IncidentRule.query.filter(
-        IncidentRule.rule_is_active.is_(True)
+    candidates = ClusterRule.query.filter(
+        ClusterRule.rule_is_active.is_(True)
     ).order_by(
-        IncidentRule.rule_priority.asc(), IncidentRule.rule_id.asc()
+        ClusterRule.rule_priority.asc(), ClusterRule.rule_id.asc()
     ).all()
 
     applied = []
@@ -260,12 +260,12 @@ def evaluate_rules_for_alert(alert_id: int) -> dict:
         if not _rule_matches_alert(rule, alert.alert_id):
             continue
         try:
-            if rule.rule_action_type == RULE_ACTION_CREATE_INCIDENT:
-                incident = _apply_create_incident(rule, alert)
+            if rule.rule_action_type == RULE_ACTION_CREATE_CLUSTER:
+                cluster = _apply_create_cluster(rule, alert)
                 applied.append({
                     'rule_id': rule.rule_id,
-                    'action': RULE_ACTION_CREATE_INCIDENT,
-                    'incident_id': incident.incident_id if incident else None,
+                    'action': RULE_ACTION_CREATE_CLUSTER,
+                    'cluster_id': cluster.cluster_id if cluster else None,
                 })
             # Flow attachment lives in the flow evaluator — see
             # `app.business.investigation_flows.evaluate_flows_for_alert`.
@@ -276,7 +276,7 @@ def evaluate_rules_for_alert(alert_id: int) -> dict:
     return {'alert_id': alert_id, 'matched_rules': applied}
 
 
-def rule_dry_run(rule: IncidentRule, sample_days: int = 7, limit: int = 50) -> List[int]:
+def rule_dry_run(rule: ClusterRule, sample_days: int = 7, limit: int = 50) -> List[int]:
     """Return alert IDs that would match this rule against the last N days
     of alerts. Used by the settings UI to preview a rule before saving it.
     Read-only; does not run the actions."""
@@ -301,20 +301,20 @@ def rule_dry_run(rule: IncidentRule, sample_days: int = 7, limit: int = 50) -> L
     return [r.alert_id for r in rows]
 
 
-def backfill_rule(rule: IncidentRule, sample_days: int = 30) -> dict:
-    """Apply this rule's `create_incident` action to *historical* alerts —
+def backfill_rule(rule: ClusterRule, sample_days: int = 30) -> dict:
+    """Apply this rule's `create_cluster` action to *historical* alerts —
     matching alerts from the last `sample_days` days that aren't already
-    attached to the incident this rule would create. The dedupe key /
-    time-window logic in `_apply_create_incident` makes this naturally
+    attached to the cluster this rule would create. The dedupe key /
+    time-window logic in `_apply_create_cluster` makes this naturally
     idempotent — re-running the same back-fill won't produce duplicate
-    incidents.
+    clusters.
 
-    Skips alerts that are already members of ANY incident to avoid
+    Skips alerts that are already members of ANY cluster to avoid
     dragging an analyst's manually-curated grouping under a rule they
     didn't consent to. Returns per-outcome counts for the UI toast.
     """
-    if rule.rule_action_type != RULE_ACTION_CREATE_INCIDENT:
-        return {'attached': 0, 'skipped_already_in_incident': 0, 'errors': 0}
+    if rule.rule_action_type != RULE_ACTION_CREATE_CLUSTER:
+        return {'attached': 0, 'skipped_already_in_cluster': 0, 'errors': 0}
 
     since = datetime.utcnow() - timedelta(days=max(1, sample_days))
     conditions_payload = rule.rule_conditions or {}
@@ -329,7 +329,7 @@ def backfill_rule(rule: IncidentRule, sample_days: int = 30) -> dict:
         query, extra = apply_custom_conditions(query, Alert, condition_list)
     except Exception as exc:
         logger.warning(f'Back-fill for rule #{rule.rule_id} failed to compile: {exc}')
-        return {'attached': 0, 'skipped_already_in_incident': 0, 'errors': 1}
+        return {'attached': 0, 'skipped_already_in_cluster': 0, 'errors': 1}
     combined = combine_conditions(extra, logic)
     if combined is not None:
         query = query.filter(combined)
@@ -337,17 +337,17 @@ def backfill_rule(rule: IncidentRule, sample_days: int = 30) -> dict:
     attached = 0
     skipped = 0
     errors = 0
-    # Materialise once — the create-incident action commits, which
+    # Materialise once — the create-cluster action commits, which
     # would otherwise invalidate a streaming query cursor mid-iteration.
     matches = query.order_by(Alert.alert_creation_time.asc()).all()
     for alert in matches:
         # Respect analyst intent: leave alerts alone if they're already
-        # grouped into an incident (manually or by an earlier rule).
-        if alert.incidents:
+        # grouped into a cluster (manually or by an earlier rule).
+        if alert.clusters:
             skipped += 1
             continue
         try:
-            _apply_create_incident(rule, alert)
+            _apply_create_cluster(rule, alert)
             attached += 1
         except Exception as exc:
             db.session.rollback()
@@ -357,7 +357,7 @@ def backfill_rule(rule: IncidentRule, sample_days: int = 30) -> dict:
             errors += 1
     return {
         'attached': attached,
-        'skipped_already_in_incident': skipped,
+        'skipped_already_in_cluster': skipped,
         'errors': errors,
         'considered': len(matches),
     }

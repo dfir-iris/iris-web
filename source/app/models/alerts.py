@@ -78,7 +78,7 @@ class Alert(db.Model):
     investigation_flow = relationship('InvestigationFlow', foreign_keys=[alert_investigation_flow_id])
 
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
-    incidents = relationship('Incident', secondary='alert_incident_association', back_populates='alerts')
+    clusters = relationship('AlertCluster', secondary='alert_cluster_association', back_populates='alerts')
     comments = relationship('Comments', back_populates='alert', cascade='all, delete-orphan')
 
     assets = relationship('CaseAssets', secondary=alert_assets_association, back_populates='alerts')

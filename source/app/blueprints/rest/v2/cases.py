@@ -46,7 +46,7 @@ from app.blueprints.rest.v2.case_routes.timelines import case_timelines_blueprin
 from app.blueprints.rest.v2.case_routes.datastore import case_datastore_blueprint
 from app.blueprints.iris_user import iris_current_user
 from app.business.cases import case_unlink_alert
-from app.business.cases import case_unlink_incident
+from app.business.cases import case_unlink_alert_cluster
 from app.business.cases import cases_create
 from app.business.cases import cases_close
 from app.business.cases import cases_delete
@@ -525,21 +525,21 @@ def list_case_followers(identifier):
     ])
 
 
-@cases_blueprint.get('/<int:identifier>/source-incident')
+@cases_blueprint.get('/<int:identifier>/source-alert-cluster')
 @ac_api_requires()
-def get_case_source_incident(identifier):
-    """Return the incident this case was created from, if any.
+def get_case_source_alert_cluster(identifier):
+    """Return the alert cluster this case was created from, if any.
 
     Mirrors the "linked alerts" chip in the case topbar: an analyst who
-    can read the case can see which incident it was escalated / merged
-    from. Read-only, gated by case read access — the incident row is
+    can read the case can see which cluster it was escalated / merged
+    from. Read-only, gated by case read access — the cluster row is
     already visible to anyone with customer access, so exposing the
     lookup by case id doesn't broaden the surface.
 
-    Returns 200 with `null` when the case has no source incident so the
+    Returns 200 with `null` when the case has no source cluster so the
     frontend can conditionally render the chip without a 404.
     """
-    from app.business.incidents import incidents_get_by_case
+    from app.business.alert_clusters import alert_clusters_get_by_case
 
     if not cases_exists(identifier):
         return response_api_not_found()
@@ -548,14 +548,14 @@ def get_case_source_incident(identifier):
     ):
         return ac_api_return_access_denied(caseid=identifier)
 
-    incident = incidents_get_by_case(identifier)
-    if incident is None:
+    cluster = alert_clusters_get_by_case(identifier)
+    if cluster is None:
         return response_api_success(data=None)
 
     return response_api_success(data={
-        'incident_id': incident.incident_id,
-        'incident_title': incident.incident_title,
-        'incident_status': incident.status.status_name if incident.status else None,
+        'cluster_id': cluster.cluster_id,
+        'cluster_title': cluster.cluster_title,
+        'cluster_status': cluster.status.status_name if cluster.status else None,
     })
 
 
@@ -586,16 +586,16 @@ def rest_v2_case_unlink_alert(identifier, alert_id):
     return response_api_deleted()
 
 
-@cases_blueprint.delete('/<int:identifier>/source-incident')
+@cases_blueprint.delete('/<int:identifier>/source-alert-cluster')
 @ac_api_requires(Permissions.standard_user)
-def rest_v2_case_unlink_incident(identifier):
-    """Unlink the incident that produced this case.
+def rest_v2_case_unlink_alert_cluster(identifier):
+    """Unlink the alert cluster that produced this case.
 
-    Clears the incident's back-reference, moves it back to Investigating,
+    Clears the cluster's back-reference, moves it back to Investigating,
     and detaches every member alert from the case. Alerts get their
     status rolled back to Assigned so they re-appear in the analyst
     queue. No-op (200 with `{unlinked: false}`) when the case wasn't
-    sourced from an incident.
+    sourced from a cluster.
     """
     if not cases_exists(identifier):
         return response_api_not_found()
@@ -606,15 +606,15 @@ def rest_v2_case_unlink_incident(identifier):
 
     case = cases_get_by_identifier(identifier)
     try:
-        incident = case_unlink_incident(case)
+        cluster = case_unlink_alert_cluster(case)
     except BusinessProcessingError as exc:
         return response_api_error(exc.get_message(), data=exc.get_data())
 
-    if incident is None:
+    if cluster is None:
         return response_api_success(data={'unlinked': False})
     return response_api_success(data={
         'unlinked': True,
-        'incident_id': incident.incident_id,
+        'cluster_id': cluster.cluster_id,
     })
 
 

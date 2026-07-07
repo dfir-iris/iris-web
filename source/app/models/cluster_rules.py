@@ -33,7 +33,7 @@ from sqlalchemy.orm import relationship
 from app.db import db
 
 
-RULE_ACTION_CREATE_INCIDENT = 'create_incident'
+RULE_ACTION_CREATE_CLUSTER = 'create_cluster'
 
 # The `attach_flow` action was removed — investigation flows now own
 # their own matching conditions (`InvestigationFlow.flow_conditions`),
@@ -42,8 +42,8 @@ RULE_ACTION_CREATE_INCIDENT = 'create_incident'
 # should switch to reading `InvestigationFlow.flow_conditions` instead.
 
 
-class IncidentRule(db.Model):
-    __tablename__ = 'incident_rules'
+class ClusterRule(db.Model):
+    __tablename__ = 'cluster_rules'
 
     rule_id = Column(BigInteger, primary_key=True)
     rule_uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False,

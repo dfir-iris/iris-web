@@ -53,7 +53,7 @@ from app.models.assets import AnalysisStatus
 from app.models.alerts import Severity
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertResolutionStatus
-from app.models.incidents import IncidentStatus
+from app.models.alert_clusters import AlertClusterStatus
 from app.models.authorization import CaseAccessLevel
 from app.models.authorization import Group
 from app.models.authorization import User
@@ -655,21 +655,21 @@ def create_safe_hooks():
     create_safe(db.session, IrisHook, hook_name='on_postload_war_room_datastore_file_delete',
                 hook_description='Triggered on war room datastore file deletion, after commit in DB')
 
-    # --- Incidents
-    create_safe(db.session, IrisHook, hook_name='on_postload_incident_create',
-                hook_description='Triggered on incident creation, after commit in DB')
-    create_safe(db.session, IrisHook, hook_name='on_postload_incident_update',
-                hook_description='Triggered on incident update, after commit in DB')
-    create_safe(db.session, IrisHook, hook_name='on_postload_incident_delete',
-                hook_description='Triggered on incident deletion, after commit in DB')
-    create_safe(db.session, IrisHook, hook_name='on_postload_incident_alert_add',
-                hook_description='Triggered on alert(s) linked to an incident, after commit in DB')
-    create_safe(db.session, IrisHook, hook_name='on_postload_incident_alert_remove',
-                hook_description='Triggered on alert unlinked from an incident, after commit in DB')
-    create_safe(db.session, IrisHook, hook_name='on_postload_incident_escalate',
-                hook_description='Triggered on incident escalation to a case, after commit in DB')
-    create_safe(db.session, IrisHook, hook_name='on_postload_incident_merge',
-                hook_description='Triggered on incident merge into an existing case, after commit in DB')
+    # --- Alert clusters
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_cluster_create',
+                hook_description='Triggered on alert cluster creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_cluster_update',
+                hook_description='Triggered on alert cluster update, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_cluster_delete',
+                hook_description='Triggered on alert cluster deletion, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_cluster_alert_add',
+                hook_description='Triggered on alert(s) linked to an alert cluster, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_cluster_alert_remove',
+                hook_description='Triggered on alert unlinked from an alert cluster, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_cluster_escalate',
+                hook_description='Triggered on alert cluster escalation to a case, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_alert_cluster_merge',
+                hook_description='Triggered on alert cluster merge into an existing case, after commit in DB')
 
 
 def create_safe_languages():
@@ -815,16 +815,16 @@ def create_safe_alert_status():
     create_safe(db.session, AlertStatus, status_name='Escalated', status_description="Alert converted to a new case")
 
 
-def create_safe_incident_status():
-    """Seed the IncidentStatus lookup. Idempotent — safe to re-run at boot."""
-    create_safe(db.session, IncidentStatus, status_name='Open',
-                status_description='Incident is open and receiving alerts')
-    create_safe(db.session, IncidentStatus, status_name='Investigating',
-                status_description='Incident is being investigated by an analyst')
-    create_safe(db.session, IncidentStatus, status_name='Dismissed',
-                status_description='Incident closed with no further action')
-    create_safe(db.session, IncidentStatus, status_name='Escalated',
-                status_description='Incident escalated to a case')
+def create_safe_alert_cluster_status():
+    """Seed the AlertClusterStatus lookup. Idempotent — safe to re-run at boot."""
+    create_safe(db.session, AlertClusterStatus, status_name='Open',
+                status_description='Alert cluster is open and receiving alerts')
+    create_safe(db.session, AlertClusterStatus, status_name='Investigating',
+                status_description='Alert cluster is being investigated by an analyst')
+    create_safe(db.session, AlertClusterStatus, status_name='Dismissed',
+                status_description='Alert cluster closed with no further action')
+    create_safe(db.session, AlertClusterStatus, status_name='Escalated',
+                status_description='Alert cluster escalated to a case')
 
 
 def create_safe_evidence_types():
@@ -1433,8 +1433,8 @@ class PostInit:
                 self._logger.info("Creating base alert status")
                 create_safe_alert_status()
 
-                self._logger.info("Creating base incident status")
-                create_safe_incident_status()
+                self._logger.info("Creating base alert cluster status")
+                create_safe_alert_cluster_status()
 
                 self._logger.info("Creating base evidence types")
                 create_safe_evidence_types()
@@ -1473,10 +1473,10 @@ class PostInit:
                 self._logger.info("Registering mail Celery tasks + beat schedule")
                 import app.iris_engine.mail  # noqa: F401  side-effects only
 
-                # Register the incident-rules evaluator so the Celery worker
+                # Register the cluster-rules evaluator so the Celery worker
                 # discovers it at boot. Import for side-effects only.
-                self._logger.info("Registering incident-rules Celery tasks")
-                import app.iris_engine.incident_rules  # noqa: F401  side-effects only
+                self._logger.info("Registering cluster-rules Celery tasks")
+                import app.iris_engine.cluster_rules  # noqa: F401  side-effects only
 
                 # Create initial authorization model, administrative user, and customer
                 self._logger.info("Creating initial authorisation model")

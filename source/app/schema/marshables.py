@@ -84,14 +84,14 @@ from app.models.alerts import Alert
 from app.models.alerts import Severity
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertResolutionStatus
-from app.models.incidents import Incident
-from app.models.incidents import IncidentStatus
-from app.models.incident_rules import IncidentRule
-from app.models.incident_rules import RULE_ACTION_CREATE_INCIDENT
+from app.models.alert_clusters import AlertCluster
+from app.models.alert_clusters import AlertClusterStatus
+from app.models.cluster_rules import ClusterRule
+from app.models.cluster_rules import RULE_ACTION_CREATE_CLUSTER
 from app.models.investigation_flows import InvestigationFlow
 from app.models.investigation_flows import InvestigationFlowStep
 from app.models.investigation_flows import AlertInvestigationProgress
-from app.models.investigation_flows import IncidentInvestigationProgress
+from app.models.investigation_flows import AlertClusterInvestigationProgress
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -2370,7 +2370,7 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     assets = ma.Nested(CaseAssetsSchema, many=True, exclude=['alerts'])
     resolution_status = ma.Nested(AlertResolutionSchema)
     cases = fields.Pluck(AlertCaseSchema, 'case_id', many=True, required=False)
-    incidents = fields.Method('_incident_ids', dump_only=True)
+    clusters = fields.Method('_cluster_ids', dump_only=True)
     investigation_flow = fields.Method('_flow_summary', dump_only=True)
 
     class Meta:
@@ -2380,8 +2380,8 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
         load_instance = True
         unknown = EXCLUDE
 
-    def _incident_ids(self, alert: Alert):
-        return [i.incident_id for i in (alert.incidents or [])]
+    def _cluster_ids(self, alert: Alert):
+        return [c.cluster_id for c in (alert.clusters or [])]
 
     def _flow_summary(self, alert: Alert):
         flow = alert.investigation_flow
@@ -2782,15 +2782,15 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
         return data
 
 
-class IncidentStatusSchema(ma.SQLAlchemyAutoSchema):
+class AlertClusterStatusSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = IncidentStatus
+        model = AlertClusterStatus
         load_instance = True
         unknown = EXCLUDE
 
 
-class IncidentSchema(ma.SQLAlchemyAutoSchema):
-    status = ma.Nested(IncidentStatusSchema, dump_only=True)
+class AlertClusterSchema(ma.SQLAlchemyAutoSchema):
+    status = ma.Nested(AlertClusterStatusSchema, dump_only=True)
     severity = ma.Nested(SeveritySchema, dump_only=True)
     customer = ma.Nested(CustomerSchema, dump_only=True)
     owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'], dump_only=True)
@@ -2799,25 +2799,25 @@ class IncidentSchema(ma.SQLAlchemyAutoSchema):
     source_rule = fields.Method('_source_rule_summary', dump_only=True)
 
     class Meta:
-        model = Incident
+        model = AlertCluster
         include_relationships = True
         include_fk = True
         load_instance = True
         unknown = EXCLUDE
 
-    def _alert_ids(self, incident: Incident):
-        return [a.alert_id for a in (incident.alerts or [])]
+    def _alert_ids(self, cluster: AlertCluster):
+        return [a.alert_id for a in (cluster.alerts or [])]
 
-    def _flow_summary(self, incident: Incident):
-        flow = incident.investigation_flow
+    def _flow_summary(self, cluster: AlertCluster):
+        flow = cluster.investigation_flow
         if not flow:
             return None
         return {'flow_id': flow.flow_id, 'flow_name': flow.flow_name}
 
-    def _source_rule_summary(self, incident: Incident):
-        # Surface the rule that created the incident so the detail page can
-        # link back to /settings/incident-rules for auditability.
-        rule = incident.source_rule
+    def _source_rule_summary(self, cluster: AlertCluster):
+        # Surface the rule that created the cluster so the detail page can
+        # link back to /settings/cluster-rules for auditability.
+        rule = cluster.source_rule
         if not rule:
             return None
         return {'rule_id': rule.rule_id, 'rule_name': rule.rule_name}
@@ -2872,9 +2872,9 @@ def _validate_rule_conditions(payload):
         raise ValidationError('rule_conditions.group_by must be a list of field names')
 
 
-class IncidentRuleSchema(ma.SQLAlchemyAutoSchema):
+class ClusterRuleSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
-        model = IncidentRule
+        model = ClusterRule
         include_fk = True
         load_instance = True
         unknown = EXCLUDE
@@ -2886,10 +2886,10 @@ class IncidentRuleSchema(ma.SQLAlchemyAutoSchema):
         action = data.get('rule_action_type')
         # The historical `attach_flow` action was removed — flows now own
         # their own conditions (see InvestigationFlow.flow_conditions), so
-        # the only remaining rule action is stacking alerts into incidents.
-        if action is not None and action != RULE_ACTION_CREATE_INCIDENT:
+        # the only remaining rule action is stacking alerts into clusters.
+        if action is not None and action != RULE_ACTION_CREATE_CLUSTER:
             raise ValidationError(
-                f'rule_action_type must be {RULE_ACTION_CREATE_INCIDENT}'
+                f'rule_action_type must be {RULE_ACTION_CREATE_CLUSTER}'
             )
         scope = data.get('rule_customer_scope')
         if scope is not None and (not isinstance(scope, list)
@@ -2927,7 +2927,7 @@ class InvestigationFlowSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def _validate(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        # Reuse the same conditions validator as incident rules so the DSL
+        # Reuse the same conditions validator as cluster rules so the DSL
         # semantics stay identical across features. `flow_conditions` may
         # be omitted (an empty condition list is the default), but a
         # payload that includes it must be well-formed.
@@ -2968,11 +2968,11 @@ class AlertInvestigationProgressSchema(ma.SQLAlchemyAutoSchema):
         unknown = EXCLUDE
 
 
-class IncidentInvestigationProgressSchema(ma.SQLAlchemyAutoSchema):
+class AlertClusterInvestigationProgressSchema(ma.SQLAlchemyAutoSchema):
     completed_by = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login'], dump_only=True)
 
     class Meta:
-        model = IncidentInvestigationProgress
+        model = AlertClusterInvestigationProgress
         include_fk = True
         load_instance = True
         unknown = EXCLUDE
