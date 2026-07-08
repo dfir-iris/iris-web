@@ -26,6 +26,9 @@ from app.models.authorization import User
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.models.war_rooms import WarRoomChatMessage
+from app.models.war_rooms import WarRoomChatPoll
+from app.models.war_rooms import WarRoomChatPollOption
+from app.models.war_rooms import WarRoomChatPollVote
 from app.models.war_rooms import WarRoomChatReaction
 from app.models.war_rooms import WarRoomThreadFollower
 
@@ -98,6 +101,41 @@ def _threads_supported():
     return supported
 
 
+_PIN_SUPPORTED = None
+
+
+def _pin_supported():
+    """Probe whether the `is_pinned` column exists on this DB.
+
+    Same rolling-upgrade rationale as `_threads_supported` — an install
+    that hasn't run the pin migration still gets a working chat stream;
+    pin features just go dark until the migration lands.
+    """
+    global _PIN_SUPPORTED
+    if _PIN_SUPPORTED is True:
+        return True
+    try:
+        from sqlalchemy import text as _text
+        with db.engine.connect() as conn:
+            conn.execute(
+                _text('SELECT is_pinned FROM war_room_chat_message LIMIT 0')
+            )
+        supported = True
+    except Exception as e:
+        from app.logger import logger
+        pgcode = getattr(getattr(e, 'orig', None), 'pgcode', None)
+        if pgcode == '42703':
+            logger.info('Pin support disabled: is_pinned column missing')
+        else:
+            logger.exception(
+                'Pin support probe failed unexpectedly (pgcode=%s)', pgcode
+            )
+        return False
+    if supported:
+        _PIN_SUPPORTED = True
+    return supported
+
+
 _VALID_KINDS = {
     'message', 'system',
     'task_assigned', 'task_completed',
@@ -111,6 +149,11 @@ _VALID_KINDS = {
     # `priority` flags a banner-style row stamped when the operator flips
     # the war room into a hotter posture via `/priority` or `/state`.
     'priority',
+    # `poll` hosts an inline poll (question + options + votes). The
+    # poll body lives in `WarRoomChatPoll`; the chat row acts as the
+    # anchor in the stream so the row's `created_at` and thread
+    # placement stay consistent with every other kind.
+    'poll',
 }
 
 
@@ -385,6 +428,7 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
     # before any row could be returned. We probe the schema once and
     # cache the result.
     threads_on = _threads_supported()
+    pin_on = _pin_supported()
     columns = [
         WarRoomChatMessage.message_id,
         WarRoomChatMessage.war_room_id,
@@ -400,6 +444,8 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
             WarRoomChatMessage.parent_message_id,
             WarRoomChatMessage.thread_title,
         ]
+    if pin_on:
+        columns.append(WarRoomChatMessage.is_pinned)
     columns += [
         WarRoomChatMessage.created_at,
         WarRoomChatMessage.edited_at,
@@ -524,6 +570,37 @@ def delete_message(war_room_id, message_id, author_id, is_admin=False):
     db.session.commit()
     call_modules_hook('on_postload_war_room_message_delete',
                       {'war_room_id': war_room_id, 'message_id': message_id})
+
+
+def set_message_pin(war_room_id, message_id, is_pinned, actor_id, is_admin=False):
+    """Toggle the sticky-pin flag on a chat message.
+
+    Anyone with war-room write access can pin/unpin — pinning isn't a
+    destructive act (delete/edit are author-only) so we don't gate to
+    the author. If we later grow a per-war-room role model that
+    distinguishes 'member' from 'moderator' this is the place to
+    tighten the check. `actor_id`/`is_admin` are threaded through for
+    future permission work and for the `track_activity` bookkeeping.
+    """
+    msg = get_message(war_room_id, message_id)
+    if msg.deleted_at is not None:
+        raise BusinessProcessingError('Cannot pin a deleted message')
+    if msg.kind not in ('message', 'pin', 'decision', 'note'):
+        # System rows (task_assigned, case_attached, sitrep_published,
+        # poll, …) aren't pinnable — they're already elevated via
+        # `kind` and cluttering the pin list with them would defeat
+        # the point.
+        raise BusinessProcessingError(
+            f'Messages of kind {msg.kind!r} cannot be pinned'
+        )
+    msg.is_pinned = bool(is_pinned)
+    db.session.commit()
+    call_modules_hook('on_postload_war_room_message_pin',
+                      {'war_room_id': war_room_id,
+                       'message_id': message_id,
+                       'is_pinned': msg.is_pinned,
+                       'actor_id': actor_id})
+    return msg
 
 
 # ----- Reactions -----------------------------------------------------------
@@ -761,24 +838,28 @@ def list_replies(war_room_id, root_message_id, limit=None):
         limit = _PAGE_DEFAULT
     limit = min(int(limit), _PAGE_MAX)
     root = _get_root_message(war_room_id, root_message_id)
+    pin_on = _pin_supported()
+    columns = [
+        WarRoomChatMessage.message_id,
+        WarRoomChatMessage.war_room_id,
+        WarRoomChatMessage.author_id,
+        WarRoomChatMessage.body,
+        WarRoomChatMessage.kind,
+        WarRoomChatMessage.ref_type,
+        WarRoomChatMessage.ref_id,
+        WarRoomChatMessage.ref_case_id,
+        WarRoomChatMessage.parent_message_id,
+        WarRoomChatMessage.thread_title,
+        WarRoomChatMessage.created_at,
+        WarRoomChatMessage.edited_at,
+        WarRoomChatMessage.deleted_at,
+        User.user.label('author_login'),
+        User.name.label('author_name'),
+    ]
+    if pin_on:
+        columns.append(WarRoomChatMessage.is_pinned)
     q = (
-        db.session.query(
-            WarRoomChatMessage.message_id,
-            WarRoomChatMessage.war_room_id,
-            WarRoomChatMessage.author_id,
-            WarRoomChatMessage.body,
-            WarRoomChatMessage.kind,
-            WarRoomChatMessage.ref_type,
-            WarRoomChatMessage.ref_id,
-            WarRoomChatMessage.ref_case_id,
-            WarRoomChatMessage.parent_message_id,
-            WarRoomChatMessage.thread_title,
-            WarRoomChatMessage.created_at,
-            WarRoomChatMessage.edited_at,
-            WarRoomChatMessage.deleted_at,
-            User.user.label('author_login'),
-            User.name.label('author_name'),
-        )
+        db.session.query(*columns)
         .outerjoin(User, User.id == WarRoomChatMessage.author_id)
         .filter(WarRoomChatMessage.war_room_id == war_room_id)
         .filter(WarRoomChatMessage.parent_message_id == root.message_id)
@@ -807,6 +888,7 @@ def list_trace_log(war_room_id, limit=None):
     limit = min(int(limit), _PAGE_MAX)
 
     threads_on = _threads_supported()
+    pin_on = _pin_supported()
     columns = [
         WarRoomChatMessage.message_id,
         WarRoomChatMessage.war_room_id,
@@ -828,13 +910,31 @@ def list_trace_log(war_room_id, limit=None):
     # trace-worthy message is by definition a top-level one anyway.
     if threads_on:
         columns.append(WarRoomChatMessage.parent_message_id)
+    if pin_on:
+        columns.append(WarRoomChatMessage.is_pinned)
+
+    from sqlalchemy import or_
+    filters = [
+        WarRoomChatMessage.war_room_id == war_room_id,
+        WarRoomChatMessage.deleted_at.is_(None),
+    ]
+    if pin_on:
+        # Trace-worthy = system rows we already flagged as "keep me"
+        # (decisions/pins/notes) OR any regular message an analyst
+        # explicitly pinned. Union rather than two queries to keep
+        # the ORDER BY LIMIT correct across both sources.
+        filters.append(or_(
+            WarRoomChatMessage.kind.in_(_TRACE_KINDS),
+            WarRoomChatMessage.is_pinned.is_(True),
+        ))
+    else:
+        # Pre-migration DBs: only the system-row kinds count as trace-worthy.
+        filters.append(WarRoomChatMessage.kind.in_(_TRACE_KINDS))
 
     q = (
         db.session.query(*columns)
         .outerjoin(User, User.id == WarRoomChatMessage.author_id)
-        .filter(WarRoomChatMessage.war_room_id == war_room_id)
-        .filter(WarRoomChatMessage.kind.in_(_TRACE_KINDS))
-        .filter(WarRoomChatMessage.deleted_at.is_(None))
+        .filter(*filters)
         .order_by(desc(WarRoomChatMessage.created_at), desc(WarRoomChatMessage.message_id))
         .limit(limit)
     )
@@ -1094,6 +1194,342 @@ def _fire_reply_notifications(msg, root_message_id):
         import logging
         logging.getLogger(__name__).exception(
             'war-room reply notification failed')
+
+
+# ----- Polls ---------------------------------------------------------------
+
+_POLL_QUESTION_MAX = 512
+_POLL_OPTION_MAX_LEN = 256
+_POLL_OPTIONS_MIN = 2
+_POLL_OPTIONS_MAX = 20
+
+
+def _validate_poll_options(options):
+    """Normalise + validate the option-label list from the client.
+
+    Raises `BusinessProcessingError` on shape violations; returns the
+    trimmed list otherwise. Ordering is preserved — the caller
+    persists options with `sort_order` matching their index in the
+    returned list."""
+    if not isinstance(options, list):
+        raise BusinessProcessingError('options must be a list of strings')
+    if not (_POLL_OPTIONS_MIN <= len(options) <= _POLL_OPTIONS_MAX):
+        raise BusinessProcessingError(
+            f'A poll must have between {_POLL_OPTIONS_MIN} '
+            f'and {_POLL_OPTIONS_MAX} options'
+        )
+    cleaned = []
+    for opt in options:
+        if not isinstance(opt, str):
+            raise BusinessProcessingError('Each option must be a string')
+        s = opt.strip()
+        if not s:
+            raise BusinessProcessingError('Option labels cannot be empty')
+        if len(s) > _POLL_OPTION_MAX_LEN:
+            raise BusinessProcessingError(
+                f'Option labels must be at most {_POLL_OPTION_MAX_LEN} characters'
+            )
+        cleaned.append(s)
+    return cleaned
+
+
+def _parse_closes_at(raw):
+    """Parse a client-supplied `closes_at` deadline string.
+
+    None / empty string → no deadline. Otherwise expects ISO-8601.
+    Naive datetimes are treated as UTC (matches the rest of the
+    codebase's `datetime.utcnow` usage)."""
+    if raw is None or raw == '':
+        return None
+    if isinstance(raw, datetime.datetime):
+        return raw
+    if not isinstance(raw, str):
+        raise BusinessProcessingError('closes_at must be an ISO date string')
+    try:
+        return datetime.datetime.fromisoformat(raw.replace('Z', '+00:00'))
+    except ValueError:
+        raise BusinessProcessingError('closes_at must be an ISO date string')
+
+
+def poll_is_closed(poll: WarRoomChatPoll) -> bool:
+    """A poll is closed if it was manually closed OR its deadline has
+    passed. Called from every vote path so the truth is centralised."""
+    if poll.closed_at is not None:
+        return True
+    if poll.closes_at is not None and poll.closes_at <= datetime.datetime.utcnow():
+        return True
+    return False
+
+
+def _get_poll(war_room_id: int, poll_id: int) -> WarRoomChatPoll:
+    poll = (
+        WarRoomChatPoll.query
+        .filter_by(poll_id=poll_id, war_room_id=war_room_id)
+        .first()
+    )
+    if poll is None:
+        raise ObjectNotFoundError()
+    return poll
+
+
+def create_poll(war_room_id, author_id, question, options,
+                is_multi_select=False, is_anonymous=False, closes_at=None):
+    """Create a poll + its companion chat message in one commit.
+
+    The chat message is `kind='poll'` with `ref_type='chat_poll'` and
+    `ref_id=<poll_id>`. The route layer emits `message:new` after this
+    returns so the stream broadcast fires through the existing path —
+    no separate `poll:created` event is strictly required, but we
+    also emit `poll:created` for clients that want to react to poll
+    creation specifically (e.g. jump to it, seed a local cache)."""
+    if not isinstance(question, str) or not question.strip():
+        raise BusinessProcessingError('Poll question is required')
+    question = question.strip()
+    if len(question) > _POLL_QUESTION_MAX:
+        raise BusinessProcessingError(
+            f'Poll question must be at most {_POLL_QUESTION_MAX} characters'
+        )
+    labels = _validate_poll_options(options)
+    parsed_closes_at = _parse_closes_at(closes_at)
+    if parsed_closes_at is not None and parsed_closes_at <= datetime.datetime.utcnow():
+        raise BusinessProcessingError('closes_at must be in the future')
+
+    poll = WarRoomChatPoll()
+    poll.war_room_id = war_room_id
+    poll.author_id = author_id
+    poll.question = question
+    poll.is_multi_select = bool(is_multi_select)
+    poll.is_anonymous = bool(is_anonymous)
+    poll.closes_at = parsed_closes_at
+    db.session.add(poll)
+    db.session.flush()  # get poll.poll_id before inserting options + message
+
+    for idx, label in enumerate(labels):
+        opt = WarRoomChatPollOption()
+        opt.poll_id = poll.poll_id
+        opt.label = label
+        opt.sort_order = idx
+        db.session.add(opt)
+
+    # Companion chat message. `body` intentionally left empty — the
+    # frontend renders the poll card from the poll payload, not from
+    # the message body. Keeping `body` NULL means the stream fallback
+    # renderer produces nothing awkward if the poll card doesn't load.
+    msg = WarRoomChatMessage()
+    msg.war_room_id = war_room_id
+    msg.author_id = author_id
+    msg.kind = 'poll'
+    msg.body = None
+    msg.ref_type = 'chat_poll'
+    db.session.add(msg)
+    db.session.flush()
+    msg.ref_id = poll.poll_id
+    poll.chat_message_id = msg.message_id
+    db.session.commit()
+
+    call_modules_hook('on_postload_war_room_poll_create',
+                      {'war_room_id': war_room_id,
+                       'poll_id': poll.poll_id,
+                       'message_id': msg.message_id})
+    return msg, poll
+
+
+def vote_on_poll(war_room_id, poll_id, user_id, option_ids):
+    """Cast/replace a user's votes on a poll.
+
+    For single-select polls, `option_ids` must be exactly one — the
+    existing vote (if any) is atomically replaced by the new one.
+    For multi-select polls, `option_ids` is the FULL desired set —
+    votes not in the list are removed, votes in the list are added
+    (idempotent). Passing `[]` clears the user's votes entirely.
+
+    Rejects if the poll is closed or if any id doesn't belong to it.
+    """
+    if not isinstance(option_ids, list):
+        raise BusinessProcessingError('option_ids must be a list of integers')
+
+    poll = _get_poll(war_room_id, poll_id)
+    if poll_is_closed(poll):
+        raise BusinessProcessingError('Poll is closed for voting')
+
+    # Coerce + dedupe. Ints only; non-numeric silently dropped so a
+    # client bug doesn't 400 the whole request.
+    wanted: set[int] = set()
+    for raw in option_ids:
+        try:
+            wanted.add(int(raw))
+        except (TypeError, ValueError):
+            continue
+
+    if not poll.is_multi_select and len(wanted) > 1:
+        raise BusinessProcessingError(
+            'This is a single-select poll; only one option may be chosen'
+        )
+
+    # Validate every requested option belongs to this poll — cheap
+    # single-query check, keeps us from ballot-stuffing across polls.
+    valid_option_ids = {
+        row.option_id for row in
+        WarRoomChatPollOption.query
+        .filter(WarRoomChatPollOption.poll_id == poll.poll_id,
+                WarRoomChatPollOption.option_id.in_(wanted))
+        .with_entities(WarRoomChatPollOption.option_id)
+        .all()
+    } if wanted else set()
+    if wanted != valid_option_ids:
+        raise BusinessProcessingError('One or more option ids are invalid for this poll')
+
+    # Snapshot the user's current votes across ANY option in this
+    # poll. Anything not in `wanted` gets removed; anything in
+    # `wanted` and not already present gets added.
+    existing_option_ids = {
+        row.option_id for row in
+        db.session.query(WarRoomChatPollVote.option_id)
+        .join(WarRoomChatPollOption,
+              WarRoomChatPollOption.option_id == WarRoomChatPollVote.option_id)
+        .filter(WarRoomChatPollOption.poll_id == poll.poll_id,
+                WarRoomChatPollVote.user_id == user_id)
+        .all()
+    }
+
+    to_remove = existing_option_ids - wanted
+    to_add = wanted - existing_option_ids
+
+    if to_remove:
+        WarRoomChatPollVote.query.filter(
+            WarRoomChatPollVote.option_id.in_(to_remove),
+            WarRoomChatPollVote.user_id == user_id,
+        ).delete(synchronize_session=False)
+
+    for opt_id in to_add:
+        vote = WarRoomChatPollVote()
+        vote.option_id = opt_id
+        vote.user_id = user_id
+        db.session.add(vote)
+
+    db.session.commit()
+    call_modules_hook('on_postload_war_room_poll_vote',
+                      {'war_room_id': war_room_id,
+                       'poll_id': poll.poll_id,
+                       'user_id': user_id,
+                       'added': list(to_add), 'removed': list(to_remove)})
+    return poll
+
+
+def close_poll(war_room_id, poll_id, user_id, is_admin=False):
+    """Manually close a poll. Author or admin only. Idempotent."""
+    poll = _get_poll(war_room_id, poll_id)
+    if poll.author_id != user_id and not is_admin:
+        raise BusinessProcessingError(
+            'Only the poll author or an admin can close a poll'
+        )
+    if poll.closed_at is None:
+        poll.closed_at = datetime.datetime.utcnow()
+        db.session.commit()
+        call_modules_hook('on_postload_war_room_poll_close',
+                          {'war_room_id': war_room_id,
+                           'poll_id': poll.poll_id,
+                           'closed_by': user_id})
+    return poll
+
+
+def get_poll_state(war_room_id, poll_id, viewer_id):
+    """Return the poll + option tallies for a viewer.
+
+    Voter identity is stripped when `poll.is_anonymous=true`; only
+    the aggregate `vote_count` is returned per option. Non-anonymous
+    polls return per-option `voters: [{user_id, name}]` so the UI
+    can render "voted by …" chips.
+
+    `my_votes` is always the viewer's own option ids — even on
+    anonymous polls the viewer sees their own selections."""
+    poll = _get_poll(war_room_id, poll_id)
+
+    # One join per option to fetch its votes + voter identity in a
+    # single query. Cheap because polls have at most 20 options each.
+    from sqlalchemy import func
+    counts = dict(
+        db.session.query(
+            WarRoomChatPollOption.option_id,
+            func.count(WarRoomChatPollVote.option_id),
+        )
+        .outerjoin(WarRoomChatPollVote,
+                   WarRoomChatPollVote.option_id == WarRoomChatPollOption.option_id)
+        .filter(WarRoomChatPollOption.poll_id == poll.poll_id)
+        .group_by(WarRoomChatPollOption.option_id)
+        .all()
+    )
+
+    # Viewer's own selections — anonymous polls still show these
+    # (a user always knows what they clicked).
+    my_votes = [
+        row.option_id for row in
+        db.session.query(WarRoomChatPollVote.option_id)
+        .join(WarRoomChatPollOption,
+              WarRoomChatPollOption.option_id == WarRoomChatPollVote.option_id)
+        .filter(WarRoomChatPollOption.poll_id == poll.poll_id,
+                WarRoomChatPollVote.user_id == viewer_id)
+        .all()
+    ]
+
+    voters_by_option: dict[int, list] = {}
+    if not poll.is_anonymous:
+        rows = (
+            db.session.query(
+                WarRoomChatPollVote.option_id,
+                User.id, User.user, User.name,
+            )
+            .join(WarRoomChatPollOption,
+                  WarRoomChatPollOption.option_id == WarRoomChatPollVote.option_id)
+            .join(User, User.id == WarRoomChatPollVote.user_id)
+            .filter(WarRoomChatPollOption.poll_id == poll.poll_id)
+            .all()
+        )
+        for opt_id, uid, login, name in rows:
+            voters_by_option.setdefault(opt_id, []).append({
+                'user_id': uid,
+                'user_login': login,
+                'user_name': name,
+            })
+
+    options_out = []
+    for opt in poll.options:
+        entry = {
+            'option_id': opt.option_id,
+            'label': opt.label,
+            'sort_order': opt.sort_order,
+            'vote_count': int(counts.get(opt.option_id, 0)),
+        }
+        if not poll.is_anonymous:
+            entry['voters'] = voters_by_option.get(opt.option_id, [])
+        options_out.append(entry)
+
+    return {
+        'poll_id': poll.poll_id,
+        'war_room_id': poll.war_room_id,
+        'author_id': poll.author_id,
+        'question': poll.question,
+        'is_multi_select': poll.is_multi_select,
+        'is_anonymous': poll.is_anonymous,
+        'closes_at': poll.closes_at.isoformat() if poll.closes_at else None,
+        'closed_at': poll.closed_at.isoformat() if poll.closed_at else None,
+        'is_closed': poll_is_closed(poll),
+        'chat_message_id': poll.chat_message_id,
+        'created_at': poll.created_at.isoformat() if poll.created_at else None,
+        'my_votes': my_votes,
+        'options': options_out,
+    }
+
+
+def get_poll_by_message_id(war_room_id, message_id):
+    """Look up the poll hosted by a `kind='poll'` chat message. Used
+    by the list-messages serializer to inline the poll payload so the
+    SPA doesn't need a second RPC per poll on stream load."""
+    return (
+        WarRoomChatPoll.query
+        .filter_by(war_room_id=war_room_id, chat_message_id=message_id)
+        .first()
+    )
 
 
 # ----- Activity ingest -----------------------------------------------------

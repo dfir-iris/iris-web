@@ -364,6 +364,14 @@ class WarRoomChatMessage(db.Model):
     created_at = Column(DateTime, nullable=False, server_default=text('now()'))
     edited_at = Column(DateTime, nullable=True)
     deleted_at = Column(DateTime, nullable=True)
+    # Analyst-toggled sticky flag. Pinned messages surface in the
+    # sidebar "Decisions & Pins" list next to the existing pin-kind
+    # system rows and get a small pin badge inline in the stream.
+    # Kept as a Boolean column rather than a separate table because
+    # pin state is a per-message single-bit toggle and shows up in the
+    # message serializer every read — a join would be gratuitous.
+    is_pinned = Column(Boolean, nullable=False, default=False,
+                       server_default=text('false'))
 
     war_room = relationship('WarRoom')
     author = relationship('User')
@@ -409,6 +417,105 @@ class WarRoomChatReaction(db.Model):
                      nullable=False)
     emoji = Column(String(32), nullable=False)
     created_at = Column(DateTime, nullable=False, server_default=text('now()'))
+
+
+class WarRoomChatPoll(db.Model):
+    """A poll posted inline in the war-room chat stream.
+
+    Every poll has a companion `WarRoomChatMessage` with `kind='poll'`
+    that hosts it in the stream (via `chat_message_id`); deleting the
+    message soft-deletes the stream entry but keeps the poll audit
+    trail via `ON DELETE SET NULL`. The poll row itself is only
+    removed when the war room is deleted (CASCADE on `war_room_id`).
+
+    `is_anonymous` is a display-side toggle — vote rows still carry
+    `user_id` so the app can enforce "one vote per user in a
+    single-select poll" and "user can retract their own vote". The
+    REST serializer strips voter identity on read for anonymous
+    polls; a separate admin-audit endpoint can still surface it if a
+    war-room admin needs to investigate ballot-stuffing.
+    """
+    __tablename__ = 'war_room_chat_poll'
+
+    poll_id = Column(BigInteger, primary_key=True)
+    war_room_id = Column(BigInteger,
+                         ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    author_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
+    question = Column(Text, nullable=False)
+    is_multi_select = Column(Boolean, nullable=False, default=False,
+                             server_default=text('false'))
+    is_anonymous = Column(Boolean, nullable=False, default=False,
+                          server_default=text('false'))
+    # Optional deadline. NULL means "no auto-close"; a value in the
+    # past means the poll is closed for new votes (business layer
+    # rejects new votes past the deadline).
+    closes_at = Column(DateTime, nullable=True)
+    # Set once the poll is manually closed by author/admin or a vote
+    # attempt observed the deadline had passed and lazy-closed it.
+    closed_at = Column(DateTime, nullable=True)
+    # Backref to the stream message that hosts the poll UI. `SET NULL`
+    # so soft-deleting the chat row leaves the poll audit trail intact.
+    chat_message_id = Column(BigInteger,
+                             ForeignKey('war_room_chat_message.message_id',
+                                        ondelete='SET NULL'),
+                             nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=text('now()'))
+
+    war_room = relationship('WarRoom')
+    author = relationship('User')
+    chat_message = relationship('WarRoomChatMessage', foreign_keys=[chat_message_id])
+    options = relationship('WarRoomChatPollOption',
+                           back_populates='poll',
+                           cascade='all, delete-orphan',
+                           order_by='WarRoomChatPollOption.sort_order')
+
+
+class WarRoomChatPollOption(db.Model):
+    """One selectable answer on a poll.
+
+    `sort_order` is client-controlled so the composer's drag-reorder
+    UX has a stable representation; the business layer only enforces
+    uniqueness of the option's parent poll (via cascading FK) and
+    doesn't police the numeric range.
+    """
+    __tablename__ = 'war_room_chat_poll_option'
+
+    option_id = Column(BigInteger, primary_key=True)
+    poll_id = Column(BigInteger,
+                     ForeignKey('war_room_chat_poll.poll_id', ondelete='CASCADE'),
+                     nullable=False, index=True)
+    label = Column(Text, nullable=False)
+    sort_order = Column(Integer, nullable=False,
+                        default=0, server_default=text('0'))
+
+    poll = relationship('WarRoomChatPoll', back_populates='options')
+    votes = relationship('WarRoomChatPollVote',
+                         back_populates='option',
+                         cascade='all, delete-orphan')
+
+
+class WarRoomChatPollVote(db.Model):
+    """A single user's vote for a single option.
+
+    Composite PK `(option_id, user_id)` — same user can NOT vote for
+    the same option twice (idempotent toggle instead), but multi-select
+    polls allow N rows per user across different options in the same
+    poll. Single-select is enforced in the business layer by
+    delete-existing-then-insert on vote.
+    """
+    __tablename__ = 'war_room_chat_poll_vote'
+
+    option_id = Column(BigInteger,
+                       ForeignKey('war_room_chat_poll_option.option_id',
+                                  ondelete='CASCADE'),
+                       primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'),
+                     primary_key=True, nullable=False)
+    voted_at = Column(DateTime, nullable=False, server_default=text('now()'))
+
+    option = relationship('WarRoomChatPollOption', back_populates='votes')
+    user = relationship('User')
 
 
 class WarRoomTask(db.Model):

@@ -26,10 +26,14 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_read
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_write
+from app.business.war_room_chat import close_poll
 from app.business.war_room_chat import create_message
+from app.business.war_room_chat import create_poll
 from app.business.war_room_chat import create_reply
 from app.business.war_room_chat import delete_message
 from app.business.war_room_chat import follow_thread
+from app.business.war_room_chat import get_poll_by_message_id
+from app.business.war_room_chat import get_poll_state
 from app.business.war_room_chat import list_followed_thread_ids
 from app.business.war_room_chat import list_trace_log
 from app.business.war_room_chat import list_messages
@@ -37,10 +41,12 @@ from app.business.war_room_chat import list_reactions
 from app.business.war_room_chat import list_replies
 from app.business.war_room_chat import list_thread_roots
 from app.business.war_room_chat import parse_slash
+from app.business.war_room_chat import set_message_pin
 from app.business.war_room_chat import set_thread_title
 from app.business.war_room_chat import toggle_reaction
 from app.business.war_room_chat import unfollow_thread
 from app.business.war_room_chat import update_message
+from app.business.war_room_chat import vote_on_poll
 from app.models.authorization import Permissions
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
@@ -51,8 +57,16 @@ war_rooms_chat_blueprint = Blueprint(
 )
 
 
-def _serialize(row, reactions=None):
-    return {
+def _serialize(row, reactions=None, viewer_id=None):
+    """Wire shape for a chat row.
+
+    `viewer_id` is threaded through for poll hydration — `my_votes`
+    on a `kind='poll'` message needs to be the viewer's own votes,
+    not the author's. Legacy call sites that don't pass it get an
+    empty `my_votes` in the poll payload, which is a harmless
+    downgrade (the SPA can refetch with `GET /polls/<id>` if it
+    cares about the caller-specific view)."""
+    payload = {
         'message_id': row.message_id,
         'war_room_id': row.war_room_id,
         'author_id': row.author_id,
@@ -73,11 +87,34 @@ def _serialize(row, reactions=None):
         # `thread_title` is set only when an operator named the topic.
         'parent_message_id': getattr(row, 'parent_message_id', None),
         'thread_title': getattr(row, 'thread_title', None),
+        # `is_pinned` may be absent on databases predating the column —
+        # `getattr` fallback lets the route survive a boot where the
+        # migration hasn't been applied yet.
+        'is_pinned': bool(getattr(row, 'is_pinned', False)),
         'created_at': row.created_at.isoformat() if row.created_at else None,
         'edited_at': row.edited_at.isoformat() if row.edited_at else None,
         'deleted_at': row.deleted_at.isoformat() if row.deleted_at else None,
         'reactions': reactions or [],
     }
+
+    # Inline the poll payload on poll-kind messages so the stream
+    # loads without a second RPC per poll. `get_poll_by_message_id`
+    # is a single indexed lookup; `get_poll_state` runs a small
+    # aggregation query — cheap for the "at most 20 options per
+    # poll" the composer enforces. Tolerates the pre-migration
+    # database via a defensive try/except: an ImportError-shaped
+    # failure would land here if the poll models aren't loaded yet.
+    if row.kind == 'poll' and getattr(row, 'war_room_id', None):
+        try:
+            poll = get_poll_by_message_id(row.war_room_id, row.message_id)
+            if poll is not None:
+                payload['poll'] = get_poll_state(
+                    row.war_room_id, poll.poll_id, viewer_id
+                )
+        except Exception:  # noqa: BLE001 — poll hydration must not 500 the stream
+            payload['poll'] = None
+
+    return payload
 
 
 def _emit_socket(war_room_id, event_name, payload):
@@ -126,8 +163,9 @@ def list_chat(war_room_id):
     rows = list_messages(war_room_id, before=before, limit=limit,
                          kinds=kinds, case_ids=case_ids, search=search)
     reactions = list_reactions([r.message_id for r in rows])
+    viewer_id = iris_current_user.id
     return response_api_success(
-        data=[_serialize(r, reactions.get(r.message_id)) for r in rows]
+        data=[_serialize(r, reactions.get(r.message_id), viewer_id) for r in rows]
     )
 
 
@@ -515,6 +553,37 @@ def remove_chat(war_room_id, message_id):
     return response_api_deleted()
 
 
+@war_rooms_chat_blueprint.patch('/<int:message_id>/pin')
+@ac_api_requires()
+def pin_chat(war_room_id, message_id):
+    """Toggle the sticky-pin flag on a chat message.
+
+    Body: `{"is_pinned": bool}`. War-room write required — pinning
+    isn't destructive so we don't gate to the author (unlike
+    edit/delete). Emits a `message:pin` socket event so other
+    clients in the room flip the badge without a full stream reload.
+    """
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    raw = request.get_json()
+    if not isinstance(raw, dict) or 'is_pinned' not in raw:
+        return response_api_error('is_pinned (bool) is required')
+    is_admin = ac_current_user_has_permission(Permissions.server_administrator)
+    try:
+        set_message_pin(war_room_id, message_id, bool(raw['is_pinned']),
+                        iris_current_user.id, is_admin)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    _emit_socket(war_room_id, 'message:pin',
+                 {'message_id': message_id,
+                  'is_pinned': bool(raw['is_pinned'])})
+    return response_api_success({'message_id': message_id,
+                                 'is_pinned': bool(raw['is_pinned'])})
+
+
 # ----- Threads -------------------------------------------------------------
 
 
@@ -573,7 +642,9 @@ def list_trace(war_room_id):
         return err
     limit = request.args.get('limit', type=int)
     rows = list_trace_log(war_room_id, limit=limit)
-    return response_api_success(data=[_serialize(r) for r in rows])
+    return response_api_success(
+        data=[_serialize(r, viewer_id=iris_current_user.id) for r in rows]
+    )
 
 
 @war_rooms_chat_blueprint.get('/<int:message_id>/replies')
@@ -588,8 +659,9 @@ def list_message_replies(war_room_id, message_id):
     except ObjectNotFoundError:
         return response_api_not_found()
     reactions = list_reactions([r.message_id for r in rows])
+    viewer_id = iris_current_user.id
     return response_api_success(
-        data=[_serialize(r, reactions.get(r.message_id)) for r in rows]
+        data=[_serialize(r, reactions.get(r.message_id), viewer_id) for r in rows]
     )
 
 
@@ -727,3 +799,110 @@ def post_reaction(war_room_id, message_id):
         'emoji': emoji, 'added': added,
     })
     return response_api_success({'message_id': message_id, 'added': added})
+
+
+# ----- Polls ---------------------------------------------------------------
+#
+# A poll is posted inline in the stream as a `kind='poll'` chat
+# message with `ref_type='chat_poll'` + `ref_id=<poll_id>`. Voting
+# and closing are separate endpoints under `/polls/<id>` to keep the
+# blueprint's action surface obvious; poll creation reuses the
+# `POST /` message endpoint's `message:new` broadcast so subscribed
+# clients fold the new poll into the stream without a separate
+# poll:created listener path — the extra `poll:created` event is
+# fired anyway for clients that specifically care.
+
+
+@war_rooms_chat_blueprint.post('/polls')
+@ac_api_requires()
+def create_poll_route(war_room_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    raw = request.get_json()
+    if not isinstance(raw, dict):
+        return response_api_error('Invalid request')
+    try:
+        msg, poll = create_poll(
+            war_room_id,
+            author_id=iris_current_user.id,
+            question=raw.get('question'),
+            options=raw.get('options') or [],
+            is_multi_select=bool(raw.get('is_multi_select', False)),
+            is_anonymous=bool(raw.get('is_anonymous', False)),
+            closes_at=raw.get('closes_at'),
+        )
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    # Two broadcasts: the standard `message:new` so subscribed
+    # streams append the row without extra logic, and a dedicated
+    # `poll:created` so clients that specifically track polls (e.g.
+    # for a future "open polls" widget) don't have to filter on
+    # `message:new` payloads themselves.
+    _emit_socket(war_room_id, 'message:new', {'message_id': msg.message_id})
+    _emit_socket(war_room_id, 'poll:created', {
+        'poll_id': poll.poll_id, 'message_id': msg.message_id,
+    })
+    return response_api_created({
+        'message_id': msg.message_id,
+        'poll_id': poll.poll_id,
+    })
+
+
+@war_rooms_chat_blueprint.get('/polls/<int:poll_id>')
+@ac_api_requires()
+def get_poll_route(war_room_id, poll_id):
+    err = require_war_room_read(war_room_id)
+    if err is not None:
+        return err
+    try:
+        state = get_poll_state(war_room_id, poll_id, iris_current_user.id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    return response_api_success(state)
+
+
+@war_rooms_chat_blueprint.post('/polls/<int:poll_id>/vote')
+@ac_api_requires()
+def post_poll_vote(war_room_id, poll_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    raw = request.get_json()
+    if not isinstance(raw, dict):
+        return response_api_error('Invalid request')
+    try:
+        vote_on_poll(war_room_id, poll_id, iris_current_user.id,
+                     raw.get('option_ids') or [])
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    _emit_socket(war_room_id, 'poll:voted', {
+        'poll_id': poll_id, 'user_id': iris_current_user.id,
+    })
+    # Return the fresh state so the caller can update its UI
+    # atomically without a follow-up GET. Other viewers rely on the
+    # socket broadcast to trigger their own refetch.
+    return response_api_success(
+        get_poll_state(war_room_id, poll_id, iris_current_user.id)
+    )
+
+
+@war_rooms_chat_blueprint.post('/polls/<int:poll_id>/close')
+@ac_api_requires()
+def post_poll_close(war_room_id, poll_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    is_admin = ac_current_user_has_permission(Permissions.server_administrator)
+    try:
+        close_poll(war_room_id, poll_id, iris_current_user.id, is_admin)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    _emit_socket(war_room_id, 'poll:closed', {'poll_id': poll_id})
+    return response_api_success(
+        get_poll_state(war_room_id, poll_id, iris_current_user.id)
+    )
