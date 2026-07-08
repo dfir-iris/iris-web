@@ -70,6 +70,7 @@ from app.models.errors import ObjectNotFoundError
 from app.blueprints.rest.v2.war_rooms.chat import war_rooms_chat_blueprint
 from app.blueprints.rest.v2.war_rooms.datastore import war_rooms_datastore_blueprint
 from app.blueprints.rest.v2.war_rooms.notes import war_rooms_notes_blueprint
+from app.blueprints.rest.v2.war_rooms.notes_folders import war_rooms_notes_folders_blueprint
 from app.blueprints.rest.v2.war_rooms.sitreps import war_rooms_sitreps_blueprint
 from app.blueprints.rest.v2.war_rooms.tasks import war_rooms_tasks_blueprint
 from app.blueprints.rest.v2.war_rooms.timelines import war_rooms_timelines_blueprint
@@ -81,6 +82,7 @@ war_rooms_blueprint = Blueprint(
 war_rooms_blueprint.register_blueprint(war_rooms_chat_blueprint)
 war_rooms_blueprint.register_blueprint(war_rooms_tasks_blueprint)
 war_rooms_blueprint.register_blueprint(war_rooms_notes_blueprint)
+war_rooms_blueprint.register_blueprint(war_rooms_notes_folders_blueprint)
 war_rooms_blueprint.register_blueprint(war_rooms_timelines_blueprint)
 war_rooms_blueprint.register_blueprint(war_rooms_sitreps_blueprint)
 war_rooms_blueprint.register_blueprint(war_rooms_datastore_blueprint)

@@ -362,6 +362,38 @@ class WarRoomTask(db.Model):
     source_case = relationship('Cases')
 
 
+class WarRoomNoteFolder(db.Model):
+    """Folder in a war-room notes tree.
+
+    Self-referencing adjacency-list tree scoped to a single war room —
+    same shape as `NoteDirectory` for case notes, but with the friendlier
+    "folder" name (case-notes inherited "directory" from the legacy
+    `notes_group` table; this is greenfield so we pick the term the UI
+    actually uses).
+
+    Deletion is CASCADE at the DB level for `war_room_id` and
+    `parent_id`, but the business layer walks the subtree explicitly so
+    it can also purge the child notes (whose `folder_id` FK has no
+    cascade — see `WarRoomNote.folder_id` below).
+    """
+    __tablename__ = 'war_room_note_folder'
+
+    id = Column(BigInteger, primary_key=True)
+    name = Column(Text, nullable=False)
+    war_room_id = Column(BigInteger,
+                         ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    parent_id = Column(BigInteger,
+                       ForeignKey('war_room_note_folder.id', ondelete='CASCADE'),
+                       nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=text('now()'))
+    updated_at = Column(DateTime, nullable=False, server_default=text('now()'))
+
+    parent = relationship('WarRoomNoteFolder',
+                          remote_side=[id], backref='subfolders')
+    war_room = relationship('WarRoom')
+
+
 class WarRoomNote(db.Model):
     """Note pinned to a war room.
 
@@ -377,14 +409,48 @@ class WarRoomNote(db.Model):
                          nullable=False, index=True)
     title = Column(Text, nullable=False)
     content = Column(Text, nullable=True)
+    # Nullable so root-level notes (no folder) are valid. No cascade —
+    # `war_room_notes_db.delete_folder()` walks the subtree and deletes
+    # child notes explicitly so revision history is torn down with them.
+    folder_id = Column(BigInteger,
+                       ForeignKey('war_room_note_folder.id'), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text('now()'))
     updated_at = Column(DateTime, nullable=False, server_default=text('now()'))
     created_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
     updated_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
 
     war_room = relationship('WarRoom')
+    folder = relationship('WarRoomNoteFolder', backref='notes')
     created_by = relationship('User', foreign_keys=[created_by_id])
     updated_by = relationship('User', foreign_keys=[updated_by_id])
+    versions = relationship('WarRoomNoteRevision',
+                            back_populates='note',
+                            cascade='all, delete-orphan')
+
+
+class WarRoomNoteRevision(db.Model):
+    """Immutable snapshot of a war-room note.
+
+    Written by the business layer on every content-changing update
+    (dedup: skipped when title+content match the latest revision), plus
+    once on create as revision #1. `restore_revision` snapshots the
+    current state as a new revision before overwriting, so restore is
+    itself undoable. Mirrors `NoteRevisions` for case notes.
+    """
+    __tablename__ = 'war_room_note_revision'
+
+    revision_id = Column(BigInteger, primary_key=True)
+    note_id = Column(BigInteger,
+                     ForeignKey('war_room_note.note_id', ondelete='CASCADE'),
+                     nullable=False, index=True)
+    revision_number = Column(Integer, nullable=False)
+    title = Column(Text, nullable=True)
+    content = Column(Text, nullable=True)
+    revised_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
+    revised_at = Column(DateTime, nullable=False, server_default=text('now()'))
+
+    note = relationship('WarRoomNote', back_populates='versions')
+    revised_by = relationship('User', foreign_keys=[revised_by_id])
 
 
 class WarRoomSitRep(db.Model):
