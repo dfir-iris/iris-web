@@ -6,7 +6,9 @@
 <div class="modal-body">
 
         <div class="container col-md-12">
-        <form method="post" action="" id="form_new_asset_type" enctype="multipart/form-data">
+        <form method="post" action="" id="form_new_asset_type" enctype="multipart/form-data"
+              data-current-nc="{{ assettype.asset_icon_not_compromised if assettype and assettype.asset_icon_not_compromised else '' }}"
+              data-current-c="{{ assettype.asset_icon_compromised if assettype and assettype.asset_icon_compromised else '' }}">
             <div class="col-md-12 col-lg-12 col-sm-12">
                 {{ form.hidden_tag() }}
                 <div class="form-group">
@@ -68,14 +70,5 @@
             </div>
         </form>
     </div>
-
-<script>
-    if (typeof init_asset_type_icon_selects === 'function') {
-        init_asset_type_icon_selects(
-            "{{ assettype.asset_icon_not_compromised if assettype and assettype.asset_icon_not_compromised else '' }}",
-            "{{ assettype.asset_icon_compromised if assettype and assettype.asset_icon_compromised else '' }}"
-        );
-    }
-</script>
 
 </div>

@@ -5,6 +5,7 @@ function add_asset_type() {
              ajax_notify_error(xhr, url);
              return false;
         }
+        init_asset_type_icon_selects('', '');
         $('#form_new_asset_type').submit("click", function (event) {
 
 
@@ -154,6 +155,10 @@ function assettype_detail(asset_id) {
              ajax_notify_error(xhr, url);
              return false;
         }
+
+        var nc = $('#form_new_asset_type').data('current-nc') || '';
+        var c = $('#form_new_asset_type').data('current-c') || '';
+        init_asset_type_icon_selects(nc, c);
 
         $('#form_new_asset_type').submit("click", function (event) {
             event.preventDefault();
