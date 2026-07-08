@@ -148,6 +148,9 @@ def view_assets(cur_id):
         if fpath_c is None:
             fpath_c = _resolve_existing_icon(request.form.get('existing_icon_compromised'))
 
+        if request.form.get('use_same_icon') and fpath_nc is not None:
+            fpath_c = fpath_nc
+
         if fpath_nc is not None:
             asset_sc.asset_icon_not_compromised = fpath_nc
         if fpath_c is not None:
@@ -178,6 +181,9 @@ def add_assets():
         fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
         if fpath_c is None:
             fpath_c = _resolve_existing_icon(request.form.get('existing_icon_compromised'))
+
+        if request.form.get('use_same_icon') and fpath_nc is not None:
+            fpath_c = fpath_nc
 
         if fpath_nc is not None:
             asset_sc.asset_icon_not_compromised = fpath_nc
