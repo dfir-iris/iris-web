@@ -49,6 +49,7 @@ def _list_graph_icons():
                 })
     except OSError:
         pass
+    icons.sort(key=lambda i: i['name'].lower())
     return icons
 
 
