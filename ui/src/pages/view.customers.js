@@ -113,6 +113,15 @@ function refresh_client_users(customer_id) {
         })
 }
 
+// Sanitize only for the 'display' render type — DataTables also calls
+// render() with 'sort'/'filter'/'type' to build its internal index, and
+// those should compare against the raw value rather than the
+// HTML-encoded one, or search/sort silently stops matching values that
+// contain HTML-significant characters.
+function safeTextRender(data, type) {
+    return type === 'display' ? sanitizeHTML(data) : data;
+}
+
 $(document).ready(function() {
 
     let customer_id = $('#customer_id').val();
@@ -134,16 +143,12 @@ $(document).ready(function() {
             },
             {
                 "data": "user_name",
-                "render": function(data, type, row) {
-                    return sanitizeHTML(data);
-                }
+                "render": safeTextRender
 
             },
             {
                 "data": "user_login",
-                "render": function(data, type, row) {
-                    return sanitizeHTML(data);
-                }
+                "render": safeTextRender
             },
             {
                 "data": "is_service_account",
@@ -160,28 +165,24 @@ $(document).ready(function() {
         "columns": [
             {
                 "data": "asset_name",
-                "render": function(data, type, row) {
-                    return sanitizeHTML(data);
-                }
+                "render": safeTextRender
             },
             {
                 "data": "asset_description",
-                "render": function(data, type, row) {
-                    return sanitizeHTML(data);
-                }
-
+                "render": safeTextRender
             },
             {
                 "data": "asset_type",
                 "render": function(data, type, row) {
-                    return sanitizeHTML(data.asset_name);
+                    if (!data) {
+                        return '';
+                    }
+                    return type === 'display' ? sanitizeHTML(data.asset_name) : data.asset_name;
                 }
             },
             {
                 "data": "asset_ip",
-                "render": function(data, type, row) {
-                    return sanitizeHTML(data);
-                }
+                "render": safeTextRender
             },
             {
                 "data": "case_id",
@@ -241,7 +242,7 @@ $(document).ready(function() {
                         a_anchor.text(data);
                         return a_anchor.prop('outerHTML');
                     }
-                    return sanitizeHTML(data);
+                    return data;
                 }
             },
             {
@@ -253,17 +254,19 @@ $(document).ready(function() {
             {
                 "data": "state",
                 "render": function(data, type, row) {
-                    if (data !== null) {
-                        return data.state_name;
-                    } else {
+                    if (data === null) {
                         return 'Unknown';
                     }
+                    return type === 'display' ? sanitizeHTML(data.state_name) : data.state_name;
                 }
             },
             {
                 "data": "owner",
                 "render": function(data, type, row) {
-                    return data.user_name;
+                    if (!data) {
+                        return '';
+                    }
+                    return type === 'display' ? sanitizeHTML(data.user_name) : data.user_name;
                 }
             }
         ],
