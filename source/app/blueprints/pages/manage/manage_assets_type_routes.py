@@ -35,6 +35,23 @@ manage_assets_type_blueprint = Blueprint('manage_assets_type',
                                          template_folder='templates')
 
 
+def _list_graph_icons():
+    """List the icons available in the graph assets directory so they can be reused."""
+    graph_dir = os.path.join(app.config['APP_PATH'], app.config['ASSET_SHOW_PATH'].strip(os.path.sep))
+    allowed_ext = ('.png', '.svg')
+    icons = []
+    try:
+        for fn in os.listdir(graph_dir):
+            if fn.lower().endswith(allowed_ext) and os.path.isfile(os.path.join(graph_dir, fn)):
+                icons.append({
+                    'name': fn,
+                    'path': os.path.join(app.config['ASSET_SHOW_PATH'], fn),
+                })
+    except OSError:
+        pass
+    return icons
+
+
 @manage_assets_type_blueprint.route('/manage/asset-type/update/<int:cur_id>/modal', methods=['GET'])
 @ac_requires(Permissions.server_administrator, no_cid_required=True)
 def view_assets_modal(cur_id, caseid, url_redir):
@@ -53,7 +70,7 @@ def view_assets_modal(cur_id, caseid, url_redir):
     setattr(asset, 'asset_icon_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_compromised))
     setattr(asset, 'asset_icon_not_compromised_path', os.path.join(app.config['ASSET_SHOW_PATH'], asset.asset_icon_not_compromised))
 
-    return render_template("modal_add_asset_type.html", form=form, assettype=asset)
+    return render_template("modal_add_asset_type.html", form=form, assettype=asset, icons=_list_graph_icons())
 
 
 @manage_assets_type_blueprint.route('/manage/asset-type/add/modal', methods=['GET'])
@@ -63,4 +80,4 @@ def add_assets_modal(caseid, url_redir):
         return redirect(url_for('manage_assets.manage_assets', cid=caseid))
     form = AddAssetForm()
 
-    return render_template("modal_add_asset_type.html", form=form, assettype=None)
+    return render_template("modal_add_asset_type.html", form=form, assettype=None, icons=_list_graph_icons())

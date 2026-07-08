@@ -5,7 +5,7 @@ function add_asset_type() {
              ajax_notify_error(xhr, url);
              return false;
         }
-        init_asset_type_icon_selects('', '');
+        init_asset_type_icon_selects();
         $('#form_new_asset_type').submit("click", function (event) {
 
 
@@ -90,59 +90,44 @@ function refresh_asset_table() {
   notify_success("Refreshed");
 }
 
-/* Populate the "choose existing icon" dropdowns in the asset type modal.
-   current_nc / current_c are the asset type's currently assigned icon filenames (if any). */
-function init_asset_type_icon_selects(current_nc, current_c) {
-    $.getJSON(`/manage/asset-type/icons${case_param()}`, function (icons) {
-        function fmtIcon(opt) {
-            if (!opt.id) {
-                return opt.text;
-            }
-            return $('<span><img src="' + opt.path + '" style="width:1.5em;height:1.5em;margin-right:0.5em">' + opt.text + '</span>');
+/* Initialise the "choose existing icon" selectpickers in the asset type modal.
+   Options are rendered server-side; this just wires up selection <-> hidden input. */
+function init_asset_type_icon_selects() {
+    $('#existing_icon_not_compromised_select').selectpicker({
+        liveSearch: true,
+        liveSearchPlaceholder: 'Search icons...',
+        style: 'btn-outline-white'
+    }).on('changed.bs.select', function () {
+        var val = $(this).val();
+        $('#existing_icon_not_compromised').val(val || '');
+        if (val) {
+            $('#asset_icon_not_compromised').val('');
         }
+    });
 
-        function buildOptions(selected) {
-            var data = [{ id: '', text: '-- Upload new --' }];
-            icons.forEach(function (i) {
-                data.push({ id: i.name, text: i.name, path: i.path, selected: (i.name === selected) });
-            });
-            return data;
+    $('#existing_icon_compromised_select').selectpicker({
+        liveSearch: true,
+        liveSearchPlaceholder: 'Search icons...',
+        style: 'btn-outline-white'
+    }).on('changed.bs.select', function () {
+        var val = $(this).val();
+        $('#existing_icon_compromised').val(val || '');
+        if (val) {
+            $('#asset_icon_compromised').val('');
         }
+    });
 
-        $('#existing_icon_not_compromised_select').select2({
-            data: buildOptions(current_nc),
-            templateResult: fmtIcon,
-            templateSelection: fmtIcon,
-            width: '100%'
-        }).on('change', function () {
-            $('#existing_icon_not_compromised').val($(this).val());
-            if ($(this).val()) {
-                $('#asset_icon_not_compromised').val('');
-            }
-        });
-
-        $('#existing_icon_compromised_select').select2({
-            data: buildOptions(current_c),
-            templateResult: fmtIcon,
-            templateSelection: fmtIcon,
-            width: '100%'
-        }).on('change', function () {
-            $('#existing_icon_compromised').val($(this).val());
-            if ($(this).val()) {
-                $('#asset_icon_compromised').val('');
-            }
-        });
-
-        $('#asset_icon_not_compromised').on('change', function () {
-            if (this.value) {
-                $('#existing_icon_not_compromised_select').val('').trigger('change');
-            }
-        });
-        $('#asset_icon_compromised').on('change', function () {
-            if (this.value) {
-                $('#existing_icon_compromised_select').val('').trigger('change');
-            }
-        });
+    $('#asset_icon_not_compromised').on('change', function () {
+        if (this.value) {
+            $('#existing_icon_not_compromised_select').selectpicker('val', '');
+            $('#existing_icon_not_compromised').val('');
+        }
+    });
+    $('#asset_icon_compromised').on('change', function () {
+        if (this.value) {
+            $('#existing_icon_compromised_select').selectpicker('val', '');
+            $('#existing_icon_compromised').val('');
+        }
     });
 }
 
@@ -156,9 +141,7 @@ function assettype_detail(asset_id) {
              return false;
         }
 
-        var nc = $('#form_new_asset_type').data('current-nc') || '';
-        var c = $('#form_new_asset_type').data('current-c') || '';
-        init_asset_type_icon_selects(nc, c);
+        init_asset_type_icon_selects();
 
         $('#form_new_asset_type').submit("click", function (event) {
             event.preventDefault();
