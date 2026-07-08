@@ -624,6 +624,14 @@ def create_safe_hooks():
                 hook_description='Triggered on war room thread reply creation, after commit in DB')
     create_safe(db.session, IrisHook, hook_name='on_postload_war_room_reaction_toggle',
                 hook_description='Triggered on war room chat reaction toggle, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_message_pin',
+                hook_description='Triggered on war room chat message pin/unpin, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_poll_create',
+                hook_description='Triggered on war room chat poll creation, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_poll_vote',
+                hook_description='Triggered on war room chat poll vote, after commit in DB')
+    create_safe(db.session, IrisHook, hook_name='on_postload_war_room_poll_close',
+                hook_description='Triggered on war room chat poll close, after commit in DB')
 
     # --- War Room timelines
     create_safe(db.session, IrisHook, hook_name='on_postload_war_room_timeline_create',
