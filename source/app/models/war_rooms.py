@@ -186,6 +186,13 @@ class WarRoomTimelineEvent(db.Model):
     free-form entry the operator authored inline in the war room. The
     `case_id`/`event_id` pair is nullable for that reason; when both are
     null, `title` and `event_date` are the source of truth.
+
+    Feature parity with `CasesEvent`: this row can carry a source label,
+    a machine-raw payload, comma-separated tags, a triage flag, and a
+    self-referencing parent for tree rendering. Assets and IOCs attach
+    through the `war_room_timeline_event_assets` / `..._iocs` M2M
+    tables. Comments hang off the row via a nullable FK on the shared
+    `Comments` table (see `models/comments.py`).
     """
     __tablename__ = 'war_room_timeline_event'
     __table_args__ = (
@@ -197,9 +204,20 @@ class WarRoomTimelineEvent(db.Model):
     )
 
     id = Column(BigInteger, primary_key=True)
+    # Public identifier used by share links. Case events grew one for
+    # the same reason — a stable-across-renames external URL that
+    # doesn't require the client to know the numeric id.
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable=False,
+                  server_default=text('gen_random_uuid()'), unique=True)
     timeline_id = Column(BigInteger,
                          ForeignKey('war_room_timeline.timeline_id', ondelete='CASCADE'),
                          nullable=False, index=True)
+    # Self-ref for parent/child tree rendering. `SET NULL` on parent
+    # delete so an orphaned child stays in the timeline rather than
+    # cascading away — user's decision to promote it later.
+    parent_id = Column(BigInteger,
+                       ForeignKey('war_room_timeline_event.id', ondelete='SET NULL'),
+                       nullable=True)
     case_id = Column(BigInteger,
                      ForeignKey('cases.case_id', ondelete='SET NULL'),
                      nullable=True)
@@ -208,10 +226,28 @@ class WarRoomTimelineEvent(db.Model):
                       nullable=True)
     title = Column(Text, nullable=True)
     content = Column(Text, nullable=True)
+    # Machine-original payload for evidence trail — kept alongside the
+    # human-readable `content` so an analyst can always drop back to
+    # the untouched source. Matches `CasesEvent.event_raw`.
+    raw = Column(Text, nullable=True)
+    # Free-text source label (e.g. "Suricata", "Firewall"). Rendered as
+    # an uppercase caption in the event card metadata row.
+    source = Column(Text, nullable=True)
+    # Comma-separated tags. Same wire shape as `CasesEvent.event_tags`;
+    # the frontend splits on `,` before rendering as `#foo` pills.
+    tags = Column(Text, nullable=True)
+    # Triage flag — red flag icon in the metadata row when set. No
+    # semantics beyond "someone marked this important".
+    is_flagged = Column(Boolean, nullable=False, default=False,
+                        server_default=text('false'))
     event_date = Column(DateTime, nullable=True)
     event_tz = Column(String(16), nullable=True)
     color = Column(String(7), nullable=True)
     category = Column(String(64), nullable=True)
+    # JSONB audit trail written by `add_obj_history_entry`. Same shape
+    # as the case-notes / alert-cluster modification history so the
+    # existing history dialog can render both without branching.
+    modification_history = Column(JSONB, nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text('now()'))
     created_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
 
@@ -219,6 +255,59 @@ class WarRoomTimelineEvent(db.Model):
     case = relationship('Cases')
     event = relationship('CasesEvent')
     created_by = relationship('User')
+    parent = relationship('WarRoomTimelineEvent',
+                          remote_side=[id], backref='children')
+
+
+class WarRoomTimelineEventAsset(db.Model):
+    """M2M — pin an asset from any case to a war-room timeline event.
+
+    Mirrors `CaseEventsAssets`. War-room events aren't case-scoped, so
+    the `case_id` column present on the case-side row is dropped here;
+    the linked case is inferable from `case_assets.case_id` if callers
+    need it. Cascading DELETE on `event_id` cleans up automatically
+    when the parent event goes away.
+    """
+    __tablename__ = 'war_room_timeline_event_assets'
+    __table_args__ = (
+        UniqueConstraint('event_id', 'asset_id',
+                         name='uq_war_room_timeline_event_asset'),
+    )
+
+    id = Column(BigInteger, primary_key=True)
+    event_id = Column(BigInteger,
+                      ForeignKey('war_room_timeline_event.id', ondelete='CASCADE'),
+                      nullable=False, index=True)
+    asset_id = Column(BigInteger,
+                      ForeignKey('case_assets.asset_id', ondelete='CASCADE'),
+                      nullable=False)
+
+    event = relationship('WarRoomTimelineEvent', backref='asset_links')
+    asset = relationship('CaseAssets')
+
+
+class WarRoomTimelineEventIoc(db.Model):
+    """M2M — pin an IOC from any case to a war-room timeline event.
+
+    Mirrors `CaseEventsIoc` with the same rationale as
+    `WarRoomTimelineEventAsset` — no redundant `case_id`, cascading
+    delete on event removal."""
+    __tablename__ = 'war_room_timeline_event_iocs'
+    __table_args__ = (
+        UniqueConstraint('event_id', 'ioc_id',
+                         name='uq_war_room_timeline_event_ioc'),
+    )
+
+    id = Column(BigInteger, primary_key=True)
+    event_id = Column(BigInteger,
+                      ForeignKey('war_room_timeline_event.id', ondelete='CASCADE'),
+                      nullable=False, index=True)
+    ioc_id = Column(BigInteger,
+                    ForeignKey('ioc.ioc_id', ondelete='CASCADE'),
+                    nullable=False)
+
+    event = relationship('WarRoomTimelineEvent', backref='ioc_links')
+    ioc = relationship('Ioc')
 
 
 class WarRoomChatMessage(db.Model):

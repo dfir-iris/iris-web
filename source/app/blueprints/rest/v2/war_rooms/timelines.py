@@ -22,9 +22,16 @@ from app.business.war_room_timelines import (
     create_timeline_event,
     delete_timeline,
     delete_timeline_event,
+    duplicate_event,
+    event_asset_ids,
+    event_children_count,
+    event_ioc_ids,
     get_timeline,
     list_timeline_events,
     list_timelines,
+    set_event_assets,
+    set_event_iocs,
+    toggle_event_flag,
     update_timeline,
     update_timeline_event,
 )
@@ -52,20 +59,42 @@ def _serialize_timeline(t):
 
 
 def _serialize_event(e):
+    """Wire shape for a native war-room event.
+
+    Matches the case-timeline event card's expectations — the card
+    reads `uuid`, `source`, `raw`, `tags`, `is_flagged`, plus the
+    hydrated `assets` / `iocs` id lists and the `children_count` badge.
+    `war_room_source` is intentionally omitted here (native events);
+    the projection layer sets it to `'case'` on case-sourced rows so
+    the frontend can discriminate. Per-event comments aren't part of
+    the war-room event surface — war-room chat plays that role.
+    """
     return {
         'id': e.id,
+        # `uuid` may be absent on databases predating the column —
+        # `getattr` fallback lets the route survive a boot where the
+        # migration hasn't been run yet. Same for the other new fields.
+        'uuid': str(getattr(e, 'uuid', '') or ''),
         'timeline_id': e.timeline_id,
+        'parent_id': getattr(e, 'parent_id', None),
         'case_id': e.case_id,
         'event_id': e.event_id,
         'title': e.title,
         'content': e.content,
+        'raw': getattr(e, 'raw', None),
+        'source': getattr(e, 'source', None),
+        'tags': getattr(e, 'tags', None),
+        'is_flagged': bool(getattr(e, 'is_flagged', False)),
         'event_date': e.event_date.isoformat() if e.event_date else None,
         'event_tz': e.event_tz,
         'color': e.color,
-        # `category` may be absent on databases predating the column —
-        # tolerate that so the route still returns valid JSON when the
-        # migration hasn't been run yet.
         'category': getattr(e, 'category', None),
+        'modification_history': getattr(e, 'modification_history', None),
+        # Hydrated read-side extras. Kept as arrays / ints so the
+        # frontend's derived-state code can spot changes cheaply.
+        'assets': event_asset_ids(e.id),
+        'iocs': event_ioc_ids(e.id),
+        'children_count': event_children_count(e.id),
         'created_at': e.created_at.isoformat() if e.created_at else None,
         'created_by_id': e.created_by_id,
     }
@@ -189,6 +218,13 @@ def add_event(war_room_id, timeline_id):
             category=raw.get('category'),
             case_id=raw.get('case_id'),
             event_id=raw.get('event_id'),
+            source=raw.get('source'),
+            raw=raw.get('raw'),
+            tags=raw.get('tags'),
+            is_flagged=bool(raw.get('is_flagged', False)),
+            parent_id=raw.get('parent_id'),
+            asset_ids=raw.get('asset_ids'),
+            ioc_ids=raw.get('ioc_ids'),
             created_by_id=iris_current_user.id,
         )
     except ObjectNotFoundError:
@@ -214,8 +250,13 @@ def patch_event(war_room_id, event_id):
     if not isinstance(raw, dict):
         return response_api_error('Invalid request')
     kwargs = {}
+    # Only fields the client actually included are forwarded — the
+    # business layer's sentinel-based partial-update contract needs
+    # "omitted" to be distinguishable from "cleared". `is_flagged`
+    # accepts either a bool or something coerceable to one.
     for key in ('title', 'content', 'event_tz', 'color', 'category',
-                'timeline_id'):
+                'timeline_id', 'source', 'raw', 'tags', 'is_flagged',
+                'parent_id', 'asset_ids', 'ioc_ids'):
         if key in raw:
             kwargs[key] = raw[key]
     if 'event_date' in raw:
@@ -243,3 +284,71 @@ def remove_event(war_room_id, event_id):
     except ObjectNotFoundError:
         return response_api_not_found()
     return response_api_deleted()
+
+
+@war_rooms_timelines_blueprint.post('/events/<int:event_id>/flag')
+@ac_api_requires()
+def flag_event(war_room_id, event_id):
+    """Toggle the triage flag on an event. No body — one click, server
+    flips the boolean and returns the fresh row."""
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    try:
+        row = toggle_event_flag(war_room_id, event_id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    return response_api_success(_serialize_event(row))
+
+
+@war_rooms_timelines_blueprint.post('/events/<int:event_id>/duplicate')
+@ac_api_requires()
+def duplicate_event_route(war_room_id, event_id):
+    """Shallow-copy an event onto the same timeline. Convenience for the
+    three-dot menu; the frontend could POST the fields itself but this
+    keeps the "copy" affordance a one-click operation."""
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    try:
+        row = duplicate_event(war_room_id, event_id,
+                              created_by_id=iris_current_user.id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    return response_api_created(_serialize_event(row))
+
+
+@war_rooms_timelines_blueprint.put('/events/<int:event_id>/assets')
+@ac_api_requires()
+def replace_event_assets(war_room_id, event_id):
+    """Replace the event's asset associations with the given id list.
+    Passing `[]` detaches everything; missing / non-list body → 400."""
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    raw = request.get_json()
+    ids = raw.get('asset_ids') if isinstance(raw, dict) else None
+    if not isinstance(ids, list):
+        return response_api_error('asset_ids must be a list of integers')
+    try:
+        set_event_assets(war_room_id, event_id, ids)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    return response_api_success({'asset_ids': event_asset_ids(event_id)})
+
+
+@war_rooms_timelines_blueprint.put('/events/<int:event_id>/iocs')
+@ac_api_requires()
+def replace_event_iocs(war_room_id, event_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    raw = request.get_json()
+    ids = raw.get('ioc_ids') if isinstance(raw, dict) else None
+    if not isinstance(ids, list):
+        return response_api_error('ioc_ids must be a list of integers')
+    try:
+        set_event_iocs(war_room_id, event_id, ids)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    return response_api_success({'ioc_ids': event_ioc_ids(event_id)})
