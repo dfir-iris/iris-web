@@ -254,7 +254,7 @@ $(document).ready(function() {
             {
                 "data": "state",
                 "render": function(data, type, row) {
-                    if (data === null) {
+                    if (!data) {
                         return 'Unknown';
                     }
                     return type === 'display' ? sanitizeHTML(data.state_name) : data.state_name;
