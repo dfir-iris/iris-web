@@ -19,46 +19,38 @@
                     {{ form.asset_description(class='form-control',  autocomplete="off") }}
                 </div>
                 <div class="row ml-2">
-                {% if assettype.asset_icon_not_compromised %}
                     <div class="form-group col-2">
-                        <label for="asset_icon_not_compromised" class="mr-4">Preview</label>
+                        {% if assettype and assettype.asset_icon_not_compromised %}
+                        <label class="mr-4">Current</label>
                         <div id="asset_icon_not_compromised">
                             <img style="width:2em;height:2em" src="{{ assettype.asset_icon_not_compromised_path }}">
                         </div>
+                        {% endif %}
                     </div>
                     <div class="form-group col">
-                        <label for="asset_icon_compromised" class="mr-4">Asset Icon - not compromised
-                        </label>
+                        <label class="mr-4">Asset Icon - not compromised (choose existing)</label>
+                        <select id="existing_icon_not_compromised_select" class="form-control" style="width:100%"></select>
+                        <input type="hidden" name="existing_icon_not_compromised" id="existing_icon_not_compromised">
+                        <label class="mr-4 mt-2">Or upload a new one</label>
                         {{ form.asset_icon_not_compromised(class='form-control',type='file', accept='.svg, .png') }}
                     </div>
-                {% else %}
-                    <div class="form-group col">
-                        <label for="asset_icon_compromised" class="mr-4">Asset Icon - not compromised
-                        </label>
-                        {{ form.asset_icon_not_compromised(class='form-control',type='file', required='false', value=assettype.asset_icon_not_compromised, accept='.svg, .png') }}
-                    </div>
-                {% endif %}
                 </div>
                 <div class="row ml-2">
-                    {% if assettype.asset_icon_compromised %}
-                        <div class="form-group col-2">
-                            <label for="asset_icon_compromised" class="mr-4">Preview</label>
-                            <div id="asset_icon_compromised">
-                                <img style="width:2em;height:2em" src="{{ assettype.asset_icon_compromised_path }}">
-                            </div>
+                    <div class="form-group col-2">
+                        {% if assettype and assettype.asset_icon_compromised %}
+                        <label class="mr-4">Current</label>
+                        <div id="asset_icon_compromised">
+                            <img style="width:2em;height:2em" src="{{ assettype.asset_icon_compromised_path }}">
                         </div>
-                        <div class="form-group col">
-                            <label for="asset_icon_compromised" class="mr-4">Asset Icon - compromised
-                            </label>
-                            {{ form.asset_icon_compromised(class='form-control',type='file', accept='.svg, .png') }}
-                        </div>
-                    {% else %}
-                        <div class="form-group col">
-                            <label for="asset_icon_compromised" class="mr-4">Asset Icon - compromised
-                            </label>
-                            {{ form.asset_icon_compromised(class='form-control', type='file', required='false', value=assettype.asset_icon_compromised, accept='.svg, .png') }}
-                        </div>
-                    {% endif %}
+                        {% endif %}
+                    </div>
+                    <div class="form-group col">
+                        <label class="mr-4">Asset Icon - compromised (choose existing)</label>
+                        <select id="existing_icon_compromised_select" class="form-control" style="width:100%"></select>
+                        <input type="hidden" name="existing_icon_compromised" id="existing_icon_compromised">
+                        <label class="mr-4 mt-2">Or upload a new one</label>
+                        {{ form.asset_icon_compromised(class='form-control', type='file', accept='.svg, .png') }}
+                    </div>
                 </div>
 
             {% if assettype.asset_id %}
@@ -76,5 +68,14 @@
             </div>
         </form>
     </div>
+
+<script>
+    if (typeof init_asset_type_icon_selects === 'function') {
+        init_asset_type_icon_selects(
+            "{{ assettype.asset_icon_not_compromised if assettype and assettype.asset_icon_not_compromised else '' }}",
+            "{{ assettype.asset_icon_compromised if assettype and assettype.asset_icon_compromised else '' }}"
+        );
+    }
+</script>
 
 </div>
