@@ -36,13 +36,31 @@ manage_assets_type_blueprint = Blueprint('manage_assets_type',
 
 
 def _list_graph_icons():
-    """List the icons available in the graph assets directory so they can be reused."""
+    """List the icons available in the graph assets directory so they can be reused.
+
+    Default icons are regular files with a .png/.svg extension. Uploaded custom icons are
+    stored under a random name (no extension) in the asset store path and symlinked into the
+    graph directory, so they are detected via their symlink target.
+    """
     graph_dir = os.path.join(app.config['APP_PATH'], app.config['ASSET_SHOW_PATH'].strip(os.path.sep))
+    store_dir = os.path.abspath(app.config['ASSET_STORE_PATH'])
     allowed_ext = ('.png', '.svg')
     icons = []
     try:
         for fn in os.listdir(graph_dir):
-            if fn.lower().endswith(allowed_ext) and os.path.isfile(os.path.join(graph_dir, fn)):
+            full = os.path.join(graph_dir, fn)
+            if not os.path.isfile(full):
+                continue
+            lower = fn.lower()
+            is_icon = lower.endswith(allowed_ext)
+            if not is_icon and os.path.islink(full):
+                # Custom uploaded icon: symlink (random name, no extension) into the store path
+                try:
+                    if os.path.abspath(os.path.realpath(full)).startswith(store_dir):
+                        is_icon = True
+                except OSError:
+                    pass
+            if is_icon:
                 icons.append({
                     'name': fn,
                     'path': os.path.join(app.config['ASSET_SHOW_PATH'], fn),
