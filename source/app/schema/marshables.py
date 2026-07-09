@@ -43,6 +43,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
 from app.business.customers import customers_exists_another_with_same_name
 from app.db import db
 from app import ma
@@ -161,13 +162,32 @@ def store_icon(file):
     if not allowed_file_icon(file.filename):
         return None, 'Icon filetype is not allowed'
 
-    filename = get_random_string(18)
+    # Preserve the original (sanitized) filename so icons are recognizable when reused.
+    original = secure_filename(file.filename)
+    if not original or '.' not in original:
+        original = get_random_string(18)
+    base, ext = original.rsplit('.', 1)
+    ext = ext.lower()
+
+    store_dir = current_app.config['ASSET_STORE_PATH']
+    show_dir = os.path.join(current_app.config['APP_PATH'],
+                            current_app.config['ASSET_SHOW_PATH'].strip(os.path.sep))
+
+    def _icon_path(candidate: str):
+        return (os.path.join(store_dir, candidate), os.path.join(show_dir, candidate))
+
+    filename = f"{base}.{ext}"
+    store_fullpath, show_fullpath = _icon_path(filename)
+    counter = 1
+    while os.path.exists(store_fullpath) or os.path.lexists(show_fullpath):
+        filename = f"{base}_{counter}.{ext}"
+        store_fullpath, show_fullpath = _icon_path(filename)
+        counter += 1
 
     try:
-        store_fullpath = os.path.join(current_app.config['ASSET_STORE_PATH'], filename)
-        show_fullpath = os.path.join(current_app.config['APP_PATH'],
-                                     current_app.config['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
         file.save(store_fullpath)
+        if os.path.lexists(show_fullpath):
+            os.unlink(show_fullpath)
         os.symlink(store_fullpath, show_fullpath)
 
     except Exception as e:
