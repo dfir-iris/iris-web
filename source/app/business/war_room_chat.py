@@ -31,6 +31,7 @@ from app.models.war_rooms import WarRoomChatPollOption
 from app.models.war_rooms import WarRoomChatPollVote
 from app.models.war_rooms import WarRoomChatReaction
 from app.models.war_rooms import WarRoomThreadFollower
+from app.models.war_rooms import WarRoomTopic
 
 
 _BODY_MAX_LEN = 16_384
@@ -133,6 +134,44 @@ def _pin_supported():
         return False
     if supported:
         _PIN_SUPPORTED = True
+    return supported
+
+
+_TOPICS_SUPPORTED = None
+
+
+def _topics_supported():
+    """Probe whether the topics schema exists on this DB.
+
+    Same rolling-upgrade rationale as `_threads_supported` — an install
+    that hasn't run the topics migration still gets a working chat
+    stream; topic features just go dark until the migration lands.
+    """
+    global _TOPICS_SUPPORTED
+    if _TOPICS_SUPPORTED is True:
+        return True
+    try:
+        from sqlalchemy import text as _text
+        with db.engine.connect() as conn:
+            conn.execute(
+                _text('SELECT topic_id FROM war_room_chat_message LIMIT 0')
+            )
+            conn.execute(
+                _text('SELECT topic_id FROM war_room_topic LIMIT 0')
+            )
+        supported = True
+    except Exception as e:
+        from app.logger import logger
+        pgcode = getattr(getattr(e, 'orig', None), 'pgcode', None)
+        if pgcode in ('42703', '42P01'):
+            logger.info('Topics disabled: schema not migrated yet')
+        else:
+            logger.exception(
+                'Topics support probe failed unexpectedly (pgcode=%s)', pgcode
+            )
+        return False
+    if supported:
+        _TOPICS_SUPPORTED = True
     return supported
 
 
@@ -352,7 +391,7 @@ def _fetch_live_case_activities(war_room_id, before_dt, limit,
 
 
 def list_messages(war_room_id, before=None, limit=None, kinds=None,
-                  case_ids=None, search=None):
+                  case_ids=None, search=None, topic_ids=None):
     """Return the next page of the war-room stream, newest first.
 
     Two sources are merged at read time:
@@ -429,6 +468,7 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
     # cache the result.
     threads_on = _threads_supported()
     pin_on = _pin_supported()
+    topics_on = _topics_supported()
     columns = [
         WarRoomChatMessage.message_id,
         WarRoomChatMessage.war_room_id,
@@ -446,6 +486,8 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
         ]
     if pin_on:
         columns.append(WarRoomChatMessage.is_pinned)
+    if topics_on:
+        columns.append(WarRoomChatMessage.topic_id)
     columns += [
         WarRoomChatMessage.created_at,
         WarRoomChatMessage.edited_at,
@@ -477,6 +519,26 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
         q = q.filter(WarRoomChatMessage.kind.in_(list(kinds)))
     if case_ids:
         q = q.filter(WarRoomChatMessage.ref_case_id.in_(list(case_ids)))
+    if topics_on and topic_ids is not None:
+        # Empty list means "no topics selected" — return nothing rather
+        # than an unfiltered stream, which would be a confusing UX.
+        if not topic_ids:
+            return []
+        # Selecting Main also matches messages with NULL topic_id (which
+        # are implicitly on Main). Non-Main topics only match by id.
+        main = (
+            WarRoomTopic.query
+            .filter_by(war_room_id=war_room_id, is_main=True)
+            .with_entities(WarRoomTopic.topic_id)
+            .first()
+        )
+        main_id = main.topic_id if main else None
+        wants_main = main_id is not None and main_id in topic_ids
+        from sqlalchemy import or_ as _or
+        clauses = [WarRoomChatMessage.topic_id.in_(list(topic_ids))]
+        if wants_main:
+            clauses.append(WarRoomChatMessage.topic_id.is_(None))
+        q = q.filter(_or(*clauses))
     # Free-text filter: ILIKE against the message body. Soft-deleted
     # rows drop out here too, because their body is nulled at delete
     # time and NULL doesn't match `LIKE`. Overfetch is fine — the merge
@@ -508,9 +570,28 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
 
 
 def create_message(war_room_id, author_id, body, kind=None,
-                   ref_type=None, ref_id=None, ref_case_id=None):
+                   ref_type=None, ref_id=None, ref_case_id=None,
+                   topic_id=None):
     kind = _validate_kind(kind)
     body = _validate_body(body, kind)
+
+    # Only trust `topic_id` when the schema supports it AND the topic
+    # belongs to this war room and isn't archived. NULL falls through
+    # to Main.
+    resolved_topic_id = None
+    if topic_id is not None and _topics_supported():
+        topic = (
+            WarRoomTopic.query
+            .filter_by(war_room_id=war_room_id, topic_id=topic_id)
+            .first()
+        )
+        if topic is None:
+            raise BusinessProcessingError('Unknown topic')
+        if topic.archived_at is not None:
+            raise BusinessProcessingError(
+                'Cannot post to an archived topic'
+            )
+        resolved_topic_id = topic.topic_id
 
     msg = WarRoomChatMessage()
     msg.war_room_id = war_room_id
@@ -520,6 +601,8 @@ def create_message(war_room_id, author_id, body, kind=None,
     msg.ref_type = ref_type
     msg.ref_id = ref_id
     msg.ref_case_id = ref_case_id
+    if resolved_topic_id is not None:
+        msg.topic_id = resolved_topic_id
     db.session.add(msg)
     db.session.commit()
 
@@ -1530,6 +1613,156 @@ def get_poll_by_message_id(war_room_id, message_id):
         .filter_by(war_room_id=war_room_id, chat_message_id=message_id)
         .first()
     )
+
+
+# ----- Topics --------------------------------------------------------------
+
+_TOPIC_NAME_MAX_LEN = 80
+_MAIN_TOPIC_NAME = 'Main'
+
+
+def _validate_topic_name(name):
+    if not isinstance(name, str):
+        raise BusinessProcessingError('Topic name must be a string')
+    stripped = name.strip()
+    if not stripped:
+        raise BusinessProcessingError('Topic name is required')
+    if len(stripped) > _TOPIC_NAME_MAX_LEN:
+        raise BusinessProcessingError(
+            f'Topic name must be at most {_TOPIC_NAME_MAX_LEN} characters'
+        )
+    return stripped
+
+
+def get_or_create_main_topic(war_room_id):
+    """Return the war-room's Main topic, materialising it on first use.
+
+    Main is created lazily so freshly-migrated rooms don't need a
+    backfill. All non-topic messages (`topic_id IS NULL`) are treated
+    as Main by the read path even before this row exists.
+    """
+    if not _topics_supported():
+        return None
+    row = (
+        WarRoomTopic.query
+        .filter_by(war_room_id=war_room_id, is_main=True)
+        .first()
+    )
+    if row is not None:
+        return row
+    row = WarRoomTopic()
+    row.war_room_id = war_room_id
+    row.name = _MAIN_TOPIC_NAME
+    row.is_main = True
+    db.session.add(row)
+    try:
+        db.session.commit()
+    except Exception:
+        # A concurrent request may have created it first — surface
+        # whatever the DB now holds.
+        db.session.rollback()
+        row = (
+            WarRoomTopic.query
+            .filter_by(war_room_id=war_room_id, is_main=True)
+            .first()
+        )
+    return row
+
+
+def list_topics(war_room_id, include_archived=True):
+    """Return every topic on the war room, Main first, then live, then
+    archived. Non-archived first within each group, ordered by name.
+    """
+    if not _topics_supported():
+        return []
+    # Ensure Main exists so the SPA sidebar always has a landing lane.
+    get_or_create_main_topic(war_room_id)
+    rows = (
+        WarRoomTopic.query
+        .filter_by(war_room_id=war_room_id)
+        .order_by(
+            desc(WarRoomTopic.is_main),
+            WarRoomTopic.archived_at.isnot(None),
+            WarRoomTopic.name,
+        )
+        .all()
+    )
+    if not include_archived:
+        rows = [r for r in rows if r.archived_at is None]
+    return rows
+
+
+def create_topic(war_room_id, name, user_id):
+    """Create a new (non-main) topic — or return the existing one if the
+    name (case-insensitive) already exists. Archived rows with the same
+    name are unarchived and reused.
+    """
+    if not _topics_supported():
+        raise BusinessProcessingError(
+            'Topics are not enabled on this server yet — '
+            'apply the latest migrations.'
+        )
+    name = _validate_topic_name(name)
+    # Case-insensitive collision check — the DB unique index is
+    # case-sensitive, so we normalise here.
+    existing = (
+        WarRoomTopic.query
+        .filter(WarRoomTopic.war_room_id == war_room_id)
+        .filter(WarRoomTopic.name.ilike(name))
+        .first()
+    )
+    if existing is not None:
+        if existing.archived_at is not None:
+            existing.archived_at = None
+            db.session.commit()
+        return existing
+    # Make sure Main is materialised — cheap and keeps the sidebar
+    # ordering consistent when the operator creates their first
+    # extra topic.
+    get_or_create_main_topic(war_room_id)
+    row = WarRoomTopic()
+    row.war_room_id = war_room_id
+    row.name = name
+    row.is_main = False
+    row.created_by_id = user_id
+    db.session.add(row)
+    db.session.commit()
+    return row
+
+
+def get_topic(war_room_id, topic_id):
+    row = (
+        WarRoomTopic.query
+        .filter_by(war_room_id=war_room_id, topic_id=topic_id)
+        .first()
+    )
+    if row is None:
+        raise ObjectNotFoundError()
+    return row
+
+
+def archive_topic(war_room_id, topic_id):
+    """Soft-archive a topic. Main can never be archived. Idempotent."""
+    row = get_topic(war_room_id, topic_id)
+    if row.is_main:
+        raise BusinessProcessingError('The Main topic cannot be archived')
+    if row.archived_at is None:
+        row.archived_at = datetime.datetime.utcnow()
+        db.session.commit()
+    return row
+
+
+def unarchive_topic(war_room_id, topic_id):
+    """Restore an archived topic. Idempotent — a no-op if the topic is
+    already live."""
+    row = get_topic(war_room_id, topic_id)
+    if row.is_main:
+        # Main is never archived; nothing to do.
+        return row
+    if row.archived_at is not None:
+        row.archived_at = None
+        db.session.commit()
+    return row
 
 
 # ----- Activity ingest -----------------------------------------------------

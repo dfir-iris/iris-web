@@ -26,10 +26,12 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_read
 from app.blueprints.rest.v2.war_rooms.access import require_war_room_write
+from app.business.war_room_chat import archive_topic
 from app.business.war_room_chat import close_poll
 from app.business.war_room_chat import create_message
 from app.business.war_room_chat import create_poll
 from app.business.war_room_chat import create_reply
+from app.business.war_room_chat import create_topic
 from app.business.war_room_chat import delete_message
 from app.business.war_room_chat import follow_thread
 from app.business.war_room_chat import get_poll_by_message_id
@@ -40,10 +42,12 @@ from app.business.war_room_chat import list_messages
 from app.business.war_room_chat import list_reactions
 from app.business.war_room_chat import list_replies
 from app.business.war_room_chat import list_thread_roots
+from app.business.war_room_chat import list_topics
 from app.business.war_room_chat import parse_slash
 from app.business.war_room_chat import set_message_pin
 from app.business.war_room_chat import set_thread_title
 from app.business.war_room_chat import toggle_reaction
+from app.business.war_room_chat import unarchive_topic
 from app.business.war_room_chat import unfollow_thread
 from app.business.war_room_chat import update_message
 from app.business.war_room_chat import vote_on_poll
@@ -91,6 +95,9 @@ def _serialize(row, reactions=None, viewer_id=None):
         # `getattr` fallback lets the route survive a boot where the
         # migration hasn't been applied yet.
         'is_pinned': bool(getattr(row, 'is_pinned', False)),
+        # `topic_id` mirrors the same pre-migration guard as `is_pinned`.
+        # NULL is normal — it means the message is on Main.
+        'topic_id': getattr(row, 'topic_id', None),
         'created_at': row.created_at.isoformat() if row.created_at else None,
         'edited_at': row.edited_at.isoformat() if row.edited_at else None,
         'deleted_at': row.deleted_at.isoformat() if row.deleted_at else None,
@@ -115,6 +122,20 @@ def _serialize(row, reactions=None, viewer_id=None):
             payload['poll'] = None
 
     return payload
+
+
+def _serialize_topic(row):
+    return {
+        'topic_id': row.topic_id,
+        'war_room_id': row.war_room_id,
+        'name': row.name,
+        'is_main': bool(row.is_main),
+        'created_by_id': row.created_by_id,
+        'created_at': row.created_at.isoformat() if row.created_at else None,
+        'archived_at': (
+            row.archived_at.isoformat() if row.archived_at else None
+        ),
+    }
 
 
 def _emit_socket(war_room_id, event_name, payload):
@@ -160,8 +181,17 @@ def list_chat(war_room_id):
         except ValueError:
             return response_api_error('Invalid case_ids')
 
+    topic_ids_raw = request.args.get('topic_ids', type=str)
+    topic_ids = None
+    if topic_ids_raw is not None:
+        try:
+            topic_ids = [int(x) for x in topic_ids_raw.split(',') if x.strip()]
+        except ValueError:
+            return response_api_error('Invalid topic_ids')
+
     rows = list_messages(war_room_id, before=before, limit=limit,
-                         kinds=kinds, case_ids=case_ids, search=search)
+                         kinds=kinds, case_ids=case_ids, search=search,
+                         topic_ids=topic_ids)
     reactions = list_reactions([r.message_id for r in rows])
     viewer_id = iris_current_user.id
     return response_api_success(
@@ -364,6 +394,29 @@ def _resolve_slash(war_room_id, cmd, rest):
             'sitrep', sit.sitrep_id, None,
         )
 
+    if cmd == 'topic':
+        # `/topic <name>` — create (or switch to) a top-level topic.
+        # Rides through the normal system-message pipeline with a
+        # sentinel `ref_type` so the post handler can create the topic
+        # in the same request and echo its id back to the caller.
+        from app.business.war_room_chat import _topics_supported
+        if not _topics_supported():
+            raise BusinessProcessingError(
+                'Topics are not enabled on this server yet — '
+                'apply the latest migrations.'
+            )
+        name = rest.strip()
+        if not name:
+            raise BusinessProcessingError('Usage: /topic <name>')
+        if len(name) > 80:
+            raise BusinessProcessingError(
+                'Topic name must be at most 80 characters'
+            )
+        # Sentinel `ref_type` is consumed by post_chat which calls
+        # `create_topic` and appends the topic id onto the response.
+        return ('system', f'Opened topic #{name}',
+                '__create_topic__', None, None)
+
     if cmd == 'thread':
         # `/thread <title>` — open a named topic the team can rally
         # replies under. The resolved row becomes a normal `message` with
@@ -391,7 +444,7 @@ def _resolve_slash(war_room_id, cmd, rest):
     if cmd in ('help', '?'):
         body = (
             'Commands: /note /pin /decision /attach /detach /task /assign '
-            '/sitrep /summary /state /priority /thread'
+            '/sitrep /summary /state /priority /thread /topic'
         )
         return ('system', body, None, None, None)
 
@@ -442,6 +495,15 @@ def post_chat(war_room_id):
     body = raw.get('body')
     if not isinstance(body, str):
         return response_api_error('body is required')
+    # Optional `topic_id` — the currently-selected topic in the SPA.
+    # NULL means Main. The business layer validates ownership /
+    # archived state and raises `BusinessProcessingError` on mismatch.
+    posted_topic_id = raw.get('topic_id')
+    if posted_topic_id is not None:
+        try:
+            posted_topic_id = int(posted_topic_id)
+        except (TypeError, ValueError):
+            return response_api_error('Invalid topic_id')
 
     slash = parse_slash(body)
     if slash is not None:
@@ -484,18 +546,48 @@ def post_chat(war_room_id):
             wants_thread = ref_type == '__set_thread_title__'
             if wants_thread:
                 ref_type = None
+            # `/topic <name>` uses a symmetrical sentinel — we create
+            # the topic first, drop the message on it (so the "Opened
+            # topic #X" system row is anchored under it), and echo the
+            # new topic id back so the SPA can auto-switch its view.
+            wants_topic = ref_type == '__create_topic__'
+            created_topic = None
+            if wants_topic:
+                ref_type = None
+                # The topic name is the tail of the resolved body — we
+                # parsed it into the "Opened topic #<name>" template.
+                topic_name = body.split('#', 1)[1] if '#' in body else body
+                try:
+                    created_topic = create_topic(
+                        war_room_id, topic_name, iris_current_user.id
+                    )
+                except BusinessProcessingError as e:
+                    return response_api_error(e.get_message())
+            # Slash-command system rows normally sit on the posted topic
+            # (defaulting to the current view). `/topic` anchors its
+            # system row on the newly-created topic instead so the
+            # "Opened topic #X" line is the first row in the new view.
+            slash_topic_id = (
+                created_topic.topic_id if created_topic is not None
+                else posted_topic_id
+            )
             try:
                 msg = create_message(
                     war_room_id, iris_current_user.id, body,
                     kind=kind, ref_type=ref_type, ref_id=ref_id,
-                    ref_case_id=ref_case_id,
+                    ref_case_id=ref_case_id, topic_id=slash_topic_id,
                 )
                 if wants_thread:
                     set_thread_title(war_room_id, msg.message_id, body)
             except BusinessProcessingError as e:
                 return response_api_error(e.get_message())
             _emit_socket(war_room_id, 'message:new', {'message_id': msg.message_id})
-            return response_api_created({'message_id': msg.message_id, 'kind': msg.kind})
+            payload = {'message_id': msg.message_id, 'kind': msg.kind}
+            if created_topic is not None:
+                payload['topic'] = _serialize_topic(created_topic)
+                _emit_socket(war_room_id, 'topic:new',
+                             {'topic_id': created_topic.topic_id})
+            return response_api_created(payload)
 
         # Unknown command. Returning an explicit 400 — instead of
         # falling through to `create_message(body)` and storing the
@@ -508,7 +600,8 @@ def post_chat(war_room_id):
         )
 
     try:
-        msg = create_message(war_room_id, iris_current_user.id, body)
+        msg = create_message(war_room_id, iris_current_user.id, body,
+                             topic_id=posted_topic_id)
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 
@@ -582,6 +675,68 @@ def pin_chat(war_room_id, message_id):
                   'is_pinned': bool(raw['is_pinned'])})
     return response_api_success({'message_id': message_id,
                                  'is_pinned': bool(raw['is_pinned'])})
+
+
+# ----- Topics --------------------------------------------------------------
+
+
+@war_rooms_chat_blueprint.get('/topics')
+@ac_api_requires()
+def list_topics_route(war_room_id):
+    err = require_war_room_read(war_room_id)
+    if err is not None:
+        return err
+    rows = list_topics(war_room_id, include_archived=True)
+    return response_api_success(data=[_serialize_topic(r) for r in rows])
+
+
+@war_rooms_chat_blueprint.post('/topics')
+@ac_api_requires()
+def create_topic_route(war_room_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    raw = request.get_json()
+    if not isinstance(raw, dict):
+        return response_api_error('Invalid request')
+    try:
+        row = create_topic(war_room_id, raw.get('name'), iris_current_user.id)
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    _emit_socket(war_room_id, 'topic:new', {'topic_id': row.topic_id})
+    return response_api_created(_serialize_topic(row))
+
+
+@war_rooms_chat_blueprint.post('/topics/<int:topic_id>/archive')
+@ac_api_requires()
+def archive_topic_route(war_room_id, topic_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    try:
+        row = archive_topic(war_room_id, topic_id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    _emit_socket(war_room_id, 'topic:archive', {'topic_id': topic_id})
+    return response_api_success(_serialize_topic(row))
+
+
+@war_rooms_chat_blueprint.post('/topics/<int:topic_id>/unarchive')
+@ac_api_requires()
+def unarchive_topic_route(war_room_id, topic_id):
+    err = require_war_room_write(war_room_id)
+    if err is not None:
+        return err
+    try:
+        row = unarchive_topic(war_room_id, topic_id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message())
+    _emit_socket(war_room_id, 'topic:unarchive', {'topic_id': topic_id})
+    return response_api_success(_serialize_topic(row))
 
 
 # ----- Threads -------------------------------------------------------------

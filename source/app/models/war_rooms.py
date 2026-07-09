@@ -310,6 +310,39 @@ class WarRoomTimelineEventIoc(db.Model):
     ioc = relationship('Ioc')
 
 
+class WarRoomTopic(db.Model):
+    """A named partition of the chat stream — a Slack-channel-like slice.
+
+    Every war room has exactly one `is_main=True` topic that cannot be
+    renamed or archived; it's the default landing lane and the fallback
+    for messages whose topic was archived. All other topics are user-
+    created via the `+` button or `/topic <name>` slash command.
+
+    Archiving is soft (`archived_at`): archived topics stay visible in
+    a separate sidebar section and remain readable, but the composer
+    refuses new messages targeting them and rename is blocked.
+    """
+    __tablename__ = 'war_room_topic'
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'name',
+                         name='uq_war_room_topic_name'),
+    )
+
+    topic_id = Column(BigInteger, primary_key=True)
+    war_room_id = Column(BigInteger,
+                         ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    name = Column(String(80), nullable=False)
+    is_main = Column(Boolean, nullable=False, default=False,
+                     server_default=text('false'))
+    created_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=text('now()'))
+    archived_at = Column(DateTime, nullable=True)
+
+    war_room = relationship('WarRoom')
+    created_by = relationship('User')
+
+
 class WarRoomChatMessage(db.Model):
     """A single entry in the war room chat stream.
 
@@ -339,6 +372,13 @@ class WarRoomChatMessage(db.Model):
     ref_id = Column(BigInteger, nullable=True)
     ref_case_id = Column(BigInteger, ForeignKey('cases.case_id', ondelete='SET NULL'),
                          nullable=True, index=True)
+    # Topic partition. NULL means the message belongs to the war room's
+    # Main topic — we don't require a row on Main during transitional
+    # deployments, and the read path treats NULL and Main-id
+    # equivalently. Non-NULL points at a `war_room_topic` row.
+    topic_id = Column(BigInteger,
+                      ForeignKey('war_room_topic.topic_id', ondelete='SET NULL'),
+                      nullable=True, index=True)
     # Threading. `parent_message_id` is nullable: a row with NULL parent
     # is a top-level stream message; a row pointing at another message
     # is a reply hanging off that root. Two-level only — replies can
