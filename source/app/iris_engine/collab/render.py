@@ -100,12 +100,72 @@ def markdown_to_ydoc_update(md: str) -> bytes:
     # sees that as one paragraph and never emits table tokens. Un-flatten
     # those single-liners into proper multi-line tables before parsing —
     # cheap heuristic, safe for well-formed input.
-    tokens = md_parser.parse(_unflatten_pipe_tables(md or ''))
+    #
+    # `_rewrite_legacy_case_urls` runs FIRST so old IRIS v2.4.29 URLs
+    # (`/case/iocs?cid=X&ioc_id=Y`, `/case?cid=X`, …) get rewritten to the
+    # new SvelteKit path form before the tokens are frozen into the Y.Doc.
+    # Without this the raw column keeps the old URLs forever after the
+    # first collab open, since the Y.Doc becomes the source of truth.
+    tokens = md_parser.parse(_unflatten_pipe_tables(_rewrite_legacy_case_urls(md or '')))
 
     with doc.transaction():
         _build_blocks_into(frag, tokens)
 
     return doc.get_update()
+
+
+_LEGACY_CASE_SUBPATH_ID_PARAM = {
+    'iocs': 'ioc_id',
+    'assets': 'asset_id',
+    'tasks': 'id',           # v2.4 tasks used `id=`, not `task_id=`
+    'notes': 'note_id',
+    'evidences': 'evidence_id',
+}
+
+_LEGACY_CASE_SUBPATH_RE = re.compile(
+    r'/case/(iocs|assets|tasks|notes|evidences|timeline)(\?[^)\s"\'<>]*)'
+)
+_LEGACY_CASE_BARE_RE = re.compile(r'/case(\?[^)\s"\'<>]*)')
+_LEGACY_CID_RE = re.compile(r'[?&]cid=(\d+)')
+
+
+def _rewrite_legacy_case_urls(md: str) -> str:
+    """Rewrite IRIS v2.4.29 flat-query case URLs to the SvelteKit v2 tree.
+
+    Mirrors `iris-frontend/src/lib/components/common/MarkDown/legacy-content.ts`
+    — kept intentionally byte-identical in behaviour so a document rewritten
+    server-side matches what the frontend normalizer would produce. Runs
+    before the tokens are seeded into the Y.Doc so old links don't get
+    locked into collaborative state.
+    """
+    if '/case' not in md or 'cid=' not in md:
+        return md
+
+    def _subpath(match: re.Match) -> str:
+        section = match.group(1)
+        query = match.group(2)
+        cid_match = _LEGACY_CID_RE.search(query)
+        if not cid_match:
+            return match.group(0)
+        cid = cid_match.group(1)
+        if section == 'timeline':
+            return f'/case/{cid}/timeline'
+        id_param = _LEGACY_CASE_SUBPATH_ID_PARAM.get(section)
+        if not id_param:
+            return match.group(0)
+        id_match = re.search(rf'[?&]{id_param}=(\d+)', query)
+        if not id_match:
+            return f'/case/{cid}/{section}'
+        return f'/case/{cid}/{section}/{id_match.group(1)}'
+
+    def _bare(match: re.Match) -> str:
+        cid_match = _LEGACY_CID_RE.search(match.group(1))
+        if not cid_match:
+            return match.group(0)
+        return f'/case/{cid_match.group(1)}'
+
+    out = _LEGACY_CASE_SUBPATH_RE.sub(_subpath, md)
+    return _LEGACY_CASE_BARE_RE.sub(_bare, out)
 
 
 def _unflatten_pipe_tables(md: str) -> str:
