@@ -142,6 +142,34 @@ def get_random_string(length: int) -> str:
     return result_str
 
 
+def _is_valid_icon_content(file_storage: FileStorage) -> bool:
+    """Validate the file content against its declared icon type (magic bytes).
+
+    PNG is verified by its signature. SVG is XML text, so we check it starts with an
+    XML/SVG declaration. The stream is rewound so the caller can still save it.
+    Returns True if the content matches a supported icon type.
+    """
+    try:
+        header = file_storage.stream.read(512)
+        file_storage.stream.seek(0)
+    except Exception:
+        return False
+
+    if header.startswith(b'\x89PNG\r\n\x1a\n'):
+        return True
+
+    try:
+        text = header.decode('utf-8', errors='strict')
+    except UnicodeDecodeError:
+        return False
+
+    stripped = text.lstrip('\ufeff').lstrip()
+    if stripped.startswith('<?xml') or stripped.startswith('<svg'):
+        return True
+
+    return False
+
+
 def store_icon(file):
     """Stores an icon file.
 
@@ -161,6 +189,9 @@ def store_icon(file):
 
     if not allowed_file_icon(file.filename):
         return None, 'Icon filetype is not allowed'
+
+    if not _is_valid_icon_content(file):
+        return None, 'Icon content does not match an allowed filetype'
 
     # Preserve the original (sanitized) filename so icons are recognizable when reused.
     original = secure_filename(file.filename)
