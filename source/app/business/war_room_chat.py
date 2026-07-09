@@ -972,6 +972,7 @@ def list_trace_log(war_room_id, limit=None):
 
     threads_on = _threads_supported()
     pin_on = _pin_supported()
+    topics_on = _topics_supported()
     columns = [
         WarRoomChatMessage.message_id,
         WarRoomChatMessage.war_room_id,
@@ -995,6 +996,12 @@ def list_trace_log(war_room_id, limit=None):
         columns.append(WarRoomChatMessage.parent_message_id)
     if pin_on:
         columns.append(WarRoomChatMessage.is_pinned)
+    # Trace entries carry their topic so the SPA can auto-switch the
+    # stream filter when the operator clicks the sidebar entry —
+    # otherwise a decision posted into a topic the operator isn't
+    # currently viewing looks like a dead click.
+    if topics_on:
+        columns.append(WarRoomChatMessage.topic_id)
 
     from sqlalchemy import or_
     filters = [
