@@ -676,7 +676,7 @@ class AssetTypeSchema(ma.SQLAlchemyAutoSchema):
             ValidationError: If the file storage is not valid or its filetype is not allowed.
 
         """
-        if not file_storage.filename:
+        if not file_storage or not file_storage.filename:
             return None
 
         fpath, message = store_icon(file_storage)
