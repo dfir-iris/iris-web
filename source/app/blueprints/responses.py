@@ -39,10 +39,23 @@ def page_not_found(e):
     return render_template('pages/error-404.html', template_folder=TEMPLATE_PATH), 404
 
 
-def response(status, data=None):
-    if data is not None:
-        data = json.dumps(data, cls=AlchemyEncoder)
-    return app.response_class(response=data, status=status, mimetype='application/json')
+_UNSET = object()
+
+
+def response(status, data=_UNSET):
+    # Always serialize when the caller passed *anything* — including
+    # `None`, which must reach the client as the JSON literal `null`,
+    # not an empty body. The old `data is not None` guard silently
+    # produced empty response bodies labelled as JSON, breaking every
+    # caller that returned `response_api_success(data=None)` (source
+    # alert cluster lookup is the trigger, but the pattern is used in
+    # several places). `_UNSET` preserves the "no body at all" path
+    # for the tiny minority of callers that genuinely want that.
+    if data is _UNSET:
+        body = None
+    else:
+        body = json.dumps(data, cls=AlchemyEncoder)
+    return app.response_class(response=body, status=status, mimetype='application/json')
 
 
 def response_error(msg, data=None, status=400):
