@@ -69,8 +69,14 @@ def list_assets():
     data = []
     for row in assets:
         row_dict = row._asdict()
-        row_dict['asset_icon_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_compromised'])
-        row_dict['asset_icon_not_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_not_compromised'])
+        row_dict['asset_icon_compromised_path'] = (
+            os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_compromised'])
+            if row_dict['asset_icon_compromised'] else ''
+        )
+        row_dict['asset_icon_not_compromised_path'] = (
+            os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_not_compromised'])
+            if row_dict['asset_icon_not_compromised'] else ''
+        )
         data.append(row_dict)
 
     # Return the assets
@@ -151,6 +157,11 @@ def view_assets(cur_id):
         if request.form.get('use_same_icon') and fpath_nc is not None:
             fpath_c = fpath_nc
 
+        if fpath_nc is None:
+            fpath_nc = _resolve_existing_icon('question-mark.png')
+        if fpath_c is None:
+            fpath_c = _resolve_existing_icon('ioc_question-mark.png')
+
         if fpath_nc is not None:
             asset_sc.asset_icon_not_compromised = fpath_nc
         if fpath_c is not None:
@@ -184,6 +195,11 @@ def add_assets():
 
         if request.form.get('use_same_icon') and fpath_nc is not None:
             fpath_c = fpath_nc
+
+        if fpath_nc is None:
+            fpath_nc = _resolve_existing_icon('question-mark.png')
+        if fpath_c is None:
+            fpath_c = _resolve_existing_icon('ioc_question-mark.png')
 
         if fpath_nc is not None:
             asset_sc.asset_icon_not_compromised = fpath_nc
