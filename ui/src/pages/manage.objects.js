@@ -7,9 +7,15 @@ function add_asset_type() {
         }
         init_asset_type_icon_selects();
         $('#form_new_asset_type').submit("click", function (event) {
-
-
             event.preventDefault();
+
+            if (!$('#use_same_icon').is(':checked')
+                && !$('#asset_icon_compromised').val()
+                && !$('#existing_icon_compromised').val()) {
+                notify_error("Please either check \"Use the same icon for compromised\" or select/upload an icon for the compromised state.");
+                return false;
+            }
+
             var formData = new FormData(this);
 
             $.ajax({
@@ -161,6 +167,16 @@ function assettype_detail(asset_id) {
 
         $('#form_new_asset_type').submit("click", function (event) {
             event.preventDefault();
+
+            var hasExistingIcon = $('.card.card-body').eq(1).find('span.text-muted').text().trim() === 'Current:';
+            if (!$('#use_same_icon').is(':checked')
+                && !$('#asset_icon_compromised').val()
+                && !$('#existing_icon_compromised').val()
+                && !hasExistingIcon) {
+                notify_error("Please either check \"Use the same icon for compromised\" or select/upload an icon for the compromised state.");
+                return false;
+            }
+
             var formData = new FormData(this);
 
             $.ajax({
