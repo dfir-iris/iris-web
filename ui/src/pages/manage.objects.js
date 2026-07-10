@@ -9,11 +9,13 @@ function add_asset_type() {
         $('#form_new_asset_type').submit("click", function (event) {
             event.preventDefault();
 
-            if (!$('#use_same_icon').is(':checked')
-                && !$('#asset_icon_compromised').val()
-                && !$('#existing_icon_compromised').val()) {
-                notify_error("Please either check \"Use the same icon for compromised\" or select/upload an icon for the compromised state.");
-                return false;
+            if (!$('#use_same_icon').is(':checked')) {
+                var ncOk = $('#asset_icon_not_compromised').val() || $('#existing_icon_not_compromised').val();
+                var cOk = $('#asset_icon_compromised').val() || $('#existing_icon_compromised').val();
+                if (!ncOk || !cOk) {
+                    notify_error("Please either check \"Use the same icon for compromised\" or select/upload an icon for both states.");
+                    return false;
+                }
             }
 
             var formData = new FormData(this);
@@ -168,13 +170,15 @@ function assettype_detail(asset_id) {
         $('#form_new_asset_type').submit("click", function (event) {
             event.preventDefault();
 
-            var hasExistingIcon = $('.card.card-body').eq(1).find('span.text-muted').text().trim() === 'Current:';
-            if (!$('#use_same_icon').is(':checked')
-                && !$('#asset_icon_compromised').val()
-                && !$('#existing_icon_compromised').val()
-                && !hasExistingIcon) {
-                notify_error("Please either check \"Use the same icon for compromised\" or select/upload an icon for the compromised state.");
-                return false;
+            if (!$('#use_same_icon').is(':checked')) {
+                var ncOk = $('#asset_icon_not_compromised').val() || $('#existing_icon_not_compromised').val();
+                var cOk = $('#asset_icon_compromised').val() || $('#existing_icon_compromised').val();
+                var hasNc = $('.card.card-body').eq(0).find('span.text-muted').text().trim() === 'Current:';
+                var hasC = $('.card.card-body').eq(1).find('span.text-muted').text().trim() === 'Current:';
+                if (!(ncOk || hasNc) || !(cOk || hasC)) {
+                    notify_error("Please either check \"Use the same icon for compromised\" or select/upload an icon for both states.");
+                    return false;
+                }
             }
 
             var formData = new FormData(this);
