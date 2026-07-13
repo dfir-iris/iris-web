@@ -13,7 +13,9 @@ let last_ping = 0;
 let cid = null;
 let previousNoteTitle = null;
 let timer = null;
-let timeout = 5000;
+const NOTE_AUTOSAVE_TIMEOUT_MS = 10000;
+let note_detail_seqnote_detail_seq = 0;
+let note_dirty = false;
 
 
 const preventFormDefaultBehaviourOnSubmit = (event) => {
@@ -374,17 +376,33 @@ function note_revision_delete(_item, _rev) {
 /* Fetch the edit modal with content from server */
 async function note_detail(id) {
 
+    // Cancel any pending autosave so it cannot fire against the next note.
+    if (timer) { clearTimeout(timer); timer = null; }
+
+    // Flush the note we are leaving, if any editor is loaded and dirty.
+    // Called fire-and-forget (not awaited) — save_note() issues an async POST.
+    // The DOM still references the outgoing note at this point, so save_note()
+    // reads the correct note_id and editor content.
+    if (note_dirty && note_editor !== undefined && note_editor !== null) {
+        save_note();
+    }
+
+    const my_seq = ++note_detail_seq;
+
     get_request_api(`/case/notes/${id}`)
     .done((data) => {
+        if (my_seq !== note_detail_seq) return;   // stale response — drop it
+
         if (data.status === 'success') {
-            let timer;
-            let timeout = 10000;
-            $('#form_note').keyup(function(){
+            $('#form_note').off('keyup').keyup(function(){
                 if(timer) {
                      clearTimeout(timer);
                 }
-                if (ppl_viewing.size <= 1) {
-                    timer = setTimeout(save_note, timeout);
+                if (ppl_viewing.size <= 1 && note_dirty) {
+                    const armed_id = id;
+                    timer = setTimeout(() => {
+                        if ($('#currentNoteIDLabel').data('note_id') === armed_id) save_note();
+                    }, NOTE_AUTOSAVE_TIMEOUT_MS);
                 }
             });
 
@@ -411,6 +429,7 @@ async function note_detail(id) {
             note_editor.focus();
 
             note_editor.setValue(data.data.note_content, -1);
+            note_dirty = false;
             $('#currentNoteTitle').text(data.data.note_title);
             previousNoteTitle = data.data.note_title;
             $('#currentNoteIDLabel').text(`#${data.data.note_id} - ${data.data.note_uuid}`)
@@ -419,6 +438,7 @@ async function note_detail(id) {
             note_editor.on( "change", function( e ) {
                 if( last_applied_change != e && note_editor.curOp && note_editor.curOp.command.name) {
                     console.log('Change detected - signaling teammates');
+                    note_dirty = true;
                     collaborator.change( JSON.stringify(e), note_id ) ;
                 }
                 }, false
@@ -442,11 +462,16 @@ async function note_detail(id) {
             $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
 
             let ed_details = $('#editor_detail');
-            ed_details.keyup(function(){
+            ed_details.off('keyup').keyup(function(){
                 if(timer) {
                      clearTimeout(timer);
                 }
-                timer = setTimeout(save_note, timeout);
+                if (note_dirty) {
+                    const armed_id = id;
+                    timer = setTimeout(() => {
+                        if ($('#currentNoteIDLabel').data('note_id') === armed_id) save_note();
+                    }, NOTE_AUTOSAVE_TIMEOUT_MS);
+                }
             });
             ed_details.off('paste');
             ed_details.on('paste', (event) => {
@@ -532,6 +557,7 @@ function save_note() {
     data_sent['custom_attributes'] = attributes;
 
     post_request_api('/case/notes/update/'+ n_id, JSON.stringify(data_sent), false, undefined, cid, function() {
+        if (n_id !== $('#currentNoteIDLabel').data('note_id')) return;
         $('#btn_save_note').text("Error saving!").removeClass('btn-success').addClass('btn-danger').removeClass('btn-danger');
         $('#last_saved > i').attr('class', "fa-solid fa-file-circle-xmark");
         $('#last_saved').addClass('btn-danger').removeClass('btn-success');
@@ -540,10 +566,17 @@ function save_note() {
         if (api_request_failed(data)) {
             return;
         }
+        // Guard: only update UI if this note is still the active one.
+        // (save_note is called fire-and-forget on note switch; the response
+        //  may arrive after the user has already switched to another note.)
+        if (n_id !== $('#currentNoteIDLabel').data('note_id')) return;
+
         $('#btn_save_note').text("Saved").addClass('btn-success').removeClass('btn-danger').removeClass('btn-warning');
         $('#last_saved').removeClass('btn-danger').addClass('btn-success');
         $("#content_last_saved_by").text('Last saved by you');
         $('#last_saved > i').attr('class', "fa-solid fa-file-circle-check");
+
+        note_dirty = false;
 
         collaborator.save(n_id);
 
