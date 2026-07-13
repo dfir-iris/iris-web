@@ -45,6 +45,7 @@ from app.models.authorization import WarRoomAccessLevel
 from app.models.cases import Cases
 from app.models.collab import CollabDoc
 from app.models.models import Notes
+from app.models.war_rooms import WarRoom
 from app.models.war_rooms import WarRoomNote
 from app.models.war_rooms import WarRoomSitRep
 
@@ -70,7 +71,7 @@ class DocResolutionError(Exception):
 # Doc kinds we recognise. Any doc_name whose prefix isn't in this map is
 # rejected up-front — keeps the socket handler from spawning arbitrary
 # rooms based on client input.
-_DOC_KINDS = {'note', 'case-summary', 'war-room-note', 'sitrep'}
+_DOC_KINDS = {'note', 'case-summary', 'war-room-note', 'war-room-summary', 'sitrep'}
 
 
 def _parse_doc_name(doc_name):
@@ -168,6 +169,23 @@ def resolve_doc(doc_name, user_id):
                 'can_read': read_level is not None,
                 'can_write': write_level is not None,
                 'current_content': wrn.content}
+
+    if kind == 'war-room-summary':
+        room = WarRoom.query.filter_by(war_room_id=obj_id).first()
+        if room is None:
+            return {'kind': kind, 'id': obj_id, 'exists': False,
+                    'can_read': False, 'can_write': False,
+                    'current_content': None}
+        write_level = _war_room_access_check(
+            user_id, room.war_room_id, [WarRoomAccessLevel.full_access],
+        )
+        read_level = write_level or _war_room_access_check(
+            user_id, room.war_room_id, [WarRoomAccessLevel.read_only],
+        )
+        return {'kind': kind, 'id': obj_id, 'exists': True,
+                'can_read': read_level is not None,
+                'can_write': write_level is not None,
+                'current_content': room.description}
 
     if kind == 'sitrep':
         sit = WarRoomSitRep.query.filter_by(sitrep_id=obj_id).first()
@@ -370,6 +388,16 @@ def flush_to_source(doc_name):
         db.session.commit()
         track_activity(f'updated war room note "{wrn.title}"',
                        war_room_id=wrn.war_room_id)
+        return
+
+    if kind == 'war-room-summary':
+        room = WarRoom.query.filter_by(war_room_id=obj_id).first()
+        if room is None or room.description == new_content:
+            return
+        room.description = new_content
+        db.session.commit()
+        track_activity(f'updated war room summary',
+                       war_room_id=room.war_room_id)
         return
 
     if kind == 'sitrep':
