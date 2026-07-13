@@ -1,9 +1,5 @@
 
 <p align="center">
-    <img src="ui/public/assets/img/logo.ico" />
-</p>
-
-<p align="center">
   Incident Response Investigation System
   <br>
   <i>Current Version v2.5.0-beta.1</i>
@@ -33,48 +29,56 @@ Iris is a web collaborative platform aiming to help incident responders sharing 
 
 
 ## Getting started
-It is divided in two main parts, IrisWeb and IrisModules.   
- - IrisWeb is the web application which contains the core of
-Iris (web interface, database management, etc). 
- - IrisModules are extensions of the core that allow third parties to process
-data via Iris (eg enrich IOCs with MISP and VT, upload and injection of EVTX into Splunk). 
- 
-IrisWeb can work without any modules though defaults ones are preinstalled. Head to ``Manage > Modules`` in the UI 
-to configure and enable them. 
+
+Starting with v3, IRIS ships as three coordinated repos:
+
+- **iris-web** — this repo, the meta / umbrella. Owns the docker-compose stack, top-level docs, release orchestration.
+- **[iris-backend](https://github.com/dfir-iris/iris-backend)** — Python/Flask API and workers.
+- **[iris-frontend](https://github.com/dfir-iris/iris-frontend)** — SvelteKit UI.
+
+The backend and frontend are wired into iris-web as git submodules. `docker compose up` pulls pre-built images from `ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend}` — no build step, no submodule init required for pull-only deployments.
 
 ### Running Iris
-To ease the installation and upgrades, Iris is shipped in Docker containers. Thanks to Docker compose, 
-it can be ready in a few minutes.  
 
 ``` bash
-#  Clone the iris-web repository
-git clone https://github.com/dfir-iris/iris-web.git
+# Clone with submodules — only needed if you plan to build locally.
+git clone --recursive https://github.com/dfir-iris/iris-web.git
 cd iris-web
 
-# Checkout to the last tagged version 
+# Optional: pin to the last tagged version
 git checkout v2.5.0-beta.1
-# Copy the environment file 
-cp .env.model .env
 
-# Pull the dockers
-docker compose pull
+# Copy and edit the environment template — set POSTGRES_PASSWORD,
+# POSTGRES_ADMIN_PASSWORD, IRIS_SECRET_KEY, IRIS_SECURITY_PASSWORD_SALT,
+# and IRIS_HOSTNAME at minimum.
+cp .env.example .env
 
-# Run IRIS 
-docker compose up
+# Pull images from ghcr.io and start
+docker compose up -d
 ```
 
-Iris shall be available on the host interface, port 443, protocol HTTPS - ``https://<your_instance_ip>``.  
-By default, an ``administrator`` account is created. The password is printed in stdout the very first time Iris is started. It won't be printed anymore after that.  
-``WARNING :: post_init :: create_safe_admin :: >>>`` can be searched in the logs of the `webapp` docker to find the password.  
-The initial password can be set via the [configuration](https://docs.dfir-iris.org/operations/configuration/).   
+IRIS is now available at ``https://<IRIS_HOSTNAME>`` (default: `https://localhost`, port 443).
 
-Iris is split on 5 Docker services, each with a different role.
+By default, an ``administrator`` account is created. The password is printed to stdout the very first time IRIS starts.
+``WARNING :: post_init :: create_safe_admin :: >>>`` can be searched in the logs of the `iris_app` container to find it, or you can pre-set it via `IRIS_ADM_PASSWORD` in `.env`.
 
-- ``app``: The core, including web server, DB management, module management etc.
-- ``db``: A PostgresSQL database
-- ``RabbitMQ``: A RabbitMQ engine to handle jobs queuing and processing
-- ``worker``: Jobs handler relying on RabbitMQ
-- ``nginx``: A NGINX reverse proxy
+The stack runs six services:
+
+- ``app``: Flask API + web server (image: `iris-backend`)
+- ``worker``: Celery jobs handler (image: `iris-backend`)
+- ``db``: PostgreSQL (image: `iris-db`)
+- ``rabbitmq``: broker for Celery
+- ``nginx``: TLS termination + reverse proxy (image: `iris-nginx`)
+- ``frontend``: SvelteKit SSR (image: `iris-frontend`)
+
+### Building locally
+
+To build images from the submodules instead of pulling:
+
+``` bash
+git submodule update --init --recursive
+./scripts/dev-up.sh              # equivalent to `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`
+```
 
 ### Configuration
 There are three different options for configuring the settings and credentials: Azure Key Vault, Environment Variables and Configuration Files. This is also the order of priority, if a settings is not set it will fall back on the next option.

@@ -1,71 +1,191 @@
-#  IRIS Source Code
-#  contact@dfir-iris.org
+#  IRIS V3 — meta-repo docker-compose (pull-only, production default)
 #
-#  This program is free software; you can redistribute it and/or
-#  modify it under the terms of the GNU Lesser General Public
-#  License as published by the Free Software Foundation; either
-#  version 3 of the License, or (at your option) any later version.
+#  Pulls pre-built images from ghcr.io/dfir-iris. To build locally
+#  from the submodules, overlay docker-compose.build.yml:
 #
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-#  Lesser General Public License for more details.
+#      docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 #
-#  You should have received a copy of the GNU Lesser General Public License
-#  along with this program; if not, write to the Free Software Foundation,
-#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#  Or use scripts/dev-up.sh which wraps that.
 
 services:
   rabbitmq:
-    extends:
-      file: docker-compose.base.yml
-      service: rabbitmq
+    image: rabbitmq:3-management-alpine
+    container_name: iris_rabbitmq
+    user: rabbitmq
+    networks:
+      - iris_backend
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity || exit 1
+      start_period: 60s
+      start_interval: 1s
     restart: always
-
 
   db:
-    extends:
-      file: docker-compose.base.yml
-      service: db
-    image: ${DB_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_db}:${DB_IMAGE_TAG:-v2.5.0-beta.1}
-    build: docker/db/
+    image: ghcr.io/dfir-iris/iris-db:${IRIS_VERSION:-v2.5.0-beta.1}
+    container_name: iris_db
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_DB
+      # PG18's Docker image refuses to use a directory mounted directly
+      # as PGDATA (it expects the version-prefixed layout from
+      # pg_ctlcluster). Pointing PGDATA at a sub-path inside the
+      # mounted volume sidesteps that check.
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    networks:
+      - iris_backend
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres -d iris_db || exit 1
+      start_period: 60s
+      start_interval: 1s
     restart: always
-
 
   app:
-    extends:
-      file: docker-compose.base.yml
-      service: app
-    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-v2.5.0-beta.1}
-    build:
-      context: .
-      dockerfile: docker/webApp/Dockerfile
+    image: ghcr.io/dfir-iris/iris-backend:${IRIS_VERSION:-v2.5.0-beta.1}
+    container_name: iris_app
+    command: ["./iris-entrypoint.sh", "iriswebapp"]
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - LOG_LEVEL
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_SERVER
+      - POSTGRES_PORT
+      - IRIS_SECRET_KEY
+      - IRIS_SECURITY_PASSWORD_SALT
+      # REPLACE the default trust store — the bundle must include
+      # system roots too. Opt in by exporting in .env.
+      - REQUESTS_CA_BUNDLE
+      - SSL_CERT_FILE
+    volumes:
+      - ./certificates/:/home/iris/certificates/:ro
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
+      - ./certificates/ca-bundle/:/etc/iris-ca/:ro
+      - iris-downloads:/home/iris/downloads
+      - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
+    networks:
+      - iris_backend
+      - iris_frontend
+    healthcheck:
+      test: curl --head --fail http://localhost:8000 || exit 1
+      start_period: 60s
+      start_interval: 1s
     restart: always
-
 
   worker:
-    extends:
-      file: docker-compose.base.yml
-      service: worker
-    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-v2.5.0-beta.1}
-    build:
-      context: .
-      dockerfile: docker/webApp/Dockerfile
+    image: ghcr.io/dfir-iris/iris-backend:${IRIS_VERSION:-v2.5.0-beta.1}
+    container_name: iris_worker
+    command:
+      [
+        "./wait-for-iriswebapp.sh",
+        "app:8000",
+        "./iris-entrypoint.sh",
+        "iris-worker",
+      ]
+    depends_on:
+      app:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_ADMIN_USER
+      - POSTGRES_ADMIN_PASSWORD
+      - POSTGRES_SERVER
+      - POSTGRES_PORT
+      - IRIS_SECRET_KEY
+      - IRIS_SECURITY_PASSWORD_SALT
+      - IRIS_WORKER
+      - LOG_LEVEL
+      - REQUESTS_CA_BUNDLE
+      - SSL_CERT_FILE
+    volumes:
+      - ./certificates/:/home/iris/certificates/:ro
+      - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
+      - ./certificates/ca-bundle/:/etc/iris-ca/:ro
+      - iris-downloads:/home/iris/downloads
+      - user_templates:/home/iris/user_templates
+      - server_data:/home/iris/server_data
+    networks:
+      - iris_backend
+    healthcheck:
+      test: celery -A app.celery inspect ping || exit 1
+      start_period: 60s
+      start_interval: 1s
     restart: always
-
 
   nginx:
-    extends:
-      file: docker-compose.base.yml
-      service: nginx
-    image: ${NGINX_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_nginx}:${NGINX_IMAGE_TAG:-v2.5.0-beta.1}
-    build:
-      context: docker/nginx/
-      args:
-        NGINX_CONF_GID: 1234
-        NGINX_CONF_FILE: nginx.conf
+    image: ghcr.io/dfir-iris/iris-nginx:${IRIS_VERSION:-v2.5.0-beta.1}
+    container_name: iris_nginx
+    depends_on:
+      app:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      worker:
+        condition: service_healthy
+    environment:
+      - IRIS_UPSTREAM_SERVER
+      - IRIS_UPSTREAM_PORT
+      - IRIS_FRONTEND_SERVER
+      - IRIS_FRONTEND_PORT
+      - INTERFACE_HTTPS_PORT
+      - SERVER_NAME=${SERVER_NAME:-${IRIS_HOSTNAME:-}}
+      - CERT_FILENAME
+      - KEY_FILENAME
+      - IRIS_AUTHENTICATION_TYPE
+      - IRIS_CERT_RELOAD_INTERVAL=${IRIS_CERT_RELOAD_INTERVAL:-60}
+    ports:
+      - "${INTERFACE_HTTPS_PORT:-443}:${INTERFACE_HTTPS_PORT:-443}"
+    volumes:
+      - "./certificates/web_certificates/:/www/certs/:ro"
+    networks:
+      - iris_frontend
     restart: always
 
+  frontend:
+    image: ghcr.io/dfir-iris/iris-frontend:${IRIS_VERSION:-v2.5.0-beta.1}
+    container_name: iris_frontend
+    environment:
+      - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-https://${IRIS_HOSTNAME:-127.0.0.1}}
+      - PUBLIC_INTERNAL_API_URL=http://${IRIS_UPSTREAM_SERVER:-app}:${IRIS_UPSTREAM_PORT:-8000}
+      - PUBLIC_USE_MOCK_API_DATA=false
+      # ORIGIN gates SvelteKit's CSRF check in production. Must match
+      # the external URL the user hits.
+      - ORIGIN=${ORIGIN:-https://${IRIS_HOSTNAME:-127.0.0.1}}
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
+      - NODE_ENV=production
+      # Disable adapter-node's 512K default so avatar (multi-MB) and
+      # datastore (multi-GB) uploads aren't truncated mid-stream — the
+      # per-endpoint caps live in nginx (client_max_body_size).
+      - BODY_SIZE_LIMIT=Infinity
+    networks:
+      - iris_backend
+      - iris_frontend
+    healthcheck:
+      test: wget --spider -q http://localhost:5173/ || exit 1
+      start_period: 30s
+      start_interval: 1s
+    restart: always
 
 volumes:
   iris-downloads:
@@ -78,4 +198,3 @@ networks:
     name: iris_backend
   iris_frontend:
     name: iris_frontend
-

@@ -1,0 +1,35 @@
+#  IRIS V3 — build overlay
+#
+#  Overrides the pull-only image refs in docker-compose.yml with
+#  build blocks pointing at the submodules. Use for local dev:
+#
+#      docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+#
+#  Requires the submodules to be checked out:
+#      git submodule update --init --recursive
+
+services:
+  db:
+    build:
+      context: ./iris-backend/docker/db
+
+  app:
+    build:
+      context: ./iris-backend
+      dockerfile: docker/webApp/Dockerfile
+
+  worker:
+    build:
+      context: ./iris-backend
+      dockerfile: docker/webApp/Dockerfile
+
+  nginx:
+    build:
+      context: ./iris-backend/docker/nginx
+      args:
+        NGINX_CONF_GID: 1234
+        NGINX_CONF_FILE: nginx-newui.conf
+
+  frontend:
+    build:
+      context: ./iris-frontend
