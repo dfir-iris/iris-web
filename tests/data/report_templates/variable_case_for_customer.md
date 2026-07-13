@@ -1,1 +1,0 @@
-{{ case.for_customer }}
