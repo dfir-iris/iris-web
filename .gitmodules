@@ -1,8 +1,0 @@
-[submodule "iris-frontend"]
-	path = iris-frontend
-	url = git@github.com:dfir-iris/iris-frontend.git
-	branch = master
-[submodule "iris-backend"]
-	path = iris-backend
-	url = git@github.com:dfir-iris/iris-backend.git
-	branch = develop
