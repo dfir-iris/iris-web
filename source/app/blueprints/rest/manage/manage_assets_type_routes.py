@@ -69,12 +69,50 @@ def list_assets():
     data = []
     for row in assets:
         row_dict = row._asdict()
-        row_dict['asset_icon_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_compromised'])
-        row_dict['asset_icon_not_compromised_path'] = os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_not_compromised'])
+        row_dict['asset_icon_compromised_path'] = (
+            os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_compromised'])
+            if row_dict['asset_icon_compromised'] else ''
+        )
+        row_dict['asset_icon_not_compromised_path'] = (
+            os.path.join(app.config['ASSET_SHOW_PATH'], row_dict['asset_icon_not_compromised'])
+            if row_dict['asset_icon_not_compromised'] else ''
+        )
         data.append(row_dict)
 
     # Return the assets
     return response_success("", data=data)
+
+
+def _resolve_existing_icon(name):
+    """Return a valid existing icon filename to reuse, or None if it does not exist
+    on disk in the graph assets directory."""
+    if not name:
+        return None
+    graph_dir = os.path.join(app.config['APP_PATH'], app.config['ASSET_SHOW_PATH'].strip(os.path.sep))
+    candidate = os.path.basename(str(name))
+    if candidate and os.path.isfile(os.path.join(graph_dir, candidate)):
+        return candidate
+    return None
+
+
+@manage_assets_type_rest_blueprint.route('/manage/asset-type/icons', methods=['GET'])
+@ac_api_requires()
+def list_icons():
+    """List the icons available in the graph assets directory so they can be reused
+    when creating or updating an asset type."""
+    graph_dir = os.path.join(app.config['APP_PATH'], app.config['ASSET_SHOW_PATH'].strip(os.path.sep))
+    allowed_ext = ('.png', '.svg')
+    icons = []
+    try:
+        for fn in os.listdir(graph_dir):
+            if fn.lower().endswith(allowed_ext) and os.path.isfile(os.path.join(graph_dir, fn)):
+                icons.append({
+                    'name': fn,
+                    'path': os.path.join(app.config['ASSET_SHOW_PATH'], fn),
+                })
+    except OSError:
+        pass
+    return response_success("", data=icons)
 
 
 @manage_assets_type_rest_blueprint.route('/manage/asset-type/<int:cur_id>', methods=['GET'])
@@ -109,8 +147,15 @@ def view_assets(cur_id):
         asset_sc = asset_schema.load(_filter_asset_type_form(request.form), instance=asset_type)
         fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
                                                 'asset_icon_not_compromised')
+        if fpath_nc is None:
+            fpath_nc = _resolve_existing_icon(request.form.get('existing_icon_not_compromised'))
 
         fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
+        if fpath_c is None:
+            fpath_c = _resolve_existing_icon(request.form.get('existing_icon_compromised'))
+
+        if request.form.get('use_same_icon') and fpath_nc is not None:
+            fpath_c = fpath_nc
 
         if fpath_nc is not None:
             asset_sc.asset_icon_not_compromised = fpath_nc
@@ -136,8 +181,15 @@ def add_assets():
         asset_sc = asset_schema.load(_filter_asset_type_form(request.form))
         fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
                                                 'asset_icon_not_compromised')
+        if fpath_nc is None:
+            fpath_nc = _resolve_existing_icon(request.form.get('existing_icon_not_compromised'))
 
         fpath_c = asset_schema.load_store_icon(request.files.get('asset_icon_compromised'), 'asset_icon_compromised')
+        if fpath_c is None:
+            fpath_c = _resolve_existing_icon(request.form.get('existing_icon_compromised'))
+
+        if request.form.get('use_same_icon') and fpath_nc is not None:
+            fpath_c = fpath_nc
 
         if fpath_nc is not None:
             asset_sc.asset_icon_not_compromised = fpath_nc

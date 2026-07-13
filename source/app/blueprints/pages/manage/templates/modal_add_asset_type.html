@@ -18,47 +18,69 @@
                     <label for="asset_description" class="placeholder">Asset Type description</label>
                     {{ form.asset_description(class='form-control',  autocomplete="off") }}
                 </div>
-                <div class="row ml-2">
-                {% if assettype.asset_icon_not_compromised %}
-                    <div class="form-group col-2">
-                        <label for="asset_icon_not_compromised" class="mr-4">Preview</label>
-                        <div id="asset_icon_not_compromised">
-                            <img style="width:2em;height:2em" src="{{ assettype.asset_icon_not_compromised_path }}">
-                        </div>
+                <div class="card card-body mb-2">
+                    <h6 class="card-title">Icon - not compromised</h6>
+                    {% if assettype and assettype.asset_icon_not_compromised %}
+                    <div class="mb-2">
+                        <span class="text-muted">Current:</span>
+                        <img style="width:2em;height:2em" src="{{ assettype.asset_icon_not_compromised_path }}">
                     </div>
-                    <div class="form-group col">
-                        <label for="asset_icon_compromised" class="mr-4">Asset Icon - not compromised
-                        </label>
-                        {{ form.asset_icon_not_compromised(class='form-control',type='file', accept='.svg, .png') }}
-                    </div>
-                {% else %}
-                    <div class="form-group col">
-                        <label for="asset_icon_compromised" class="mr-4">Asset Icon - not compromised
-                        </label>
-                        {{ form.asset_icon_not_compromised(class='form-control',type='file', required='false', value=assettype.asset_icon_not_compromised, accept='.svg, .png') }}
-                    </div>
-                {% endif %}
-                </div>
-                <div class="row ml-2">
-                    {% if assettype.asset_icon_compromised %}
-                        <div class="form-group col-2">
-                            <label for="asset_icon_compromised" class="mr-4">Preview</label>
-                            <div id="asset_icon_compromised">
-                                <img style="width:2em;height:2em" src="{{ assettype.asset_icon_compromised_path }}">
-                            </div>
-                        </div>
-                        <div class="form-group col">
-                            <label for="asset_icon_compromised" class="mr-4">Asset Icon - compromised
-                            </label>
-                            {{ form.asset_icon_compromised(class='form-control',type='file', accept='.svg, .png') }}
-                        </div>
-                    {% else %}
-                        <div class="form-group col">
-                            <label for="asset_icon_compromised" class="mr-4">Asset Icon - compromised
-                            </label>
-                            {{ form.asset_icon_compromised(class='form-control', type='file', required='false', value=assettype.asset_icon_compromised, accept='.svg, .png') }}
-                        </div>
                     {% endif %}
+                    <div class="form-group">
+                        <label>Choose an existing icon</label>
+                        <select id="existing_icon_not_compromised_select" class="selectpicker form-control"
+                                data-live-search="true" data-none-selected-text="-- Upload new --"
+                                title="Choose existing icon">
+                            {% for icon in icons %}
+                            <option value="{{ icon.name }}"
+                                    {% if assettype and assettype.asset_icon_not_compromised == icon.name %}selected{% endif %}
+                                    data-content="<img src='{{ icon.path }}' style='width:1.6em;height:1.6em;margin-right:.5em'/> {{ icon.name }}">{{ icon.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="hidden" name="existing_icon_not_compromised" id="existing_icon_not_compromised">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label>Or upload a new icon</label>
+                        <div class="custom-file">
+                            {{ form.asset_icon_not_compromised(class='custom-file-input', type='file', accept='.svg, .png', id='asset_icon_not_compromised') }}
+                            <label class="custom-file-label" for="asset_icon_not_compromised">Choose file</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-check mb-2">
+                    <label class="form-check-label">
+                        <input type="checkbox" id="use_same_icon" name="use_same_icon">
+                        <span class="form-check-sign">Use the same icon for "compromised" as for "not compromised"</span>
+                    </label>
+                </div>
+                <div class="card card-body mb-2">
+                    <h6 class="card-title">Icon - compromised</h6>
+                    {% if assettype and assettype.asset_icon_compromised %}
+                    <div class="mb-2">
+                        <span class="text-muted">Current:</span>
+                        <img style="width:2em;height:2em" src="{{ assettype.asset_icon_compromised_path }}">
+                    </div>
+                    {% endif %}
+                    <div class="form-group">
+                        <label>Choose an existing icon</label>
+                        <select id="existing_icon_compromised_select" class="selectpicker form-control"
+                                data-live-search="true" data-none-selected-text="-- Upload new --"
+                                title="Choose existing icon">
+                            {% for icon in icons %}
+                            <option value="{{ icon.name }}"
+                                    {% if assettype and assettype.asset_icon_compromised == icon.name %}selected{% endif %}
+                                    data-content="<img src='{{ icon.path }}' style='width:1.6em;height:1.6em;margin-right:.5em'/> {{ icon.name }}">{{ icon.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="hidden" name="existing_icon_compromised" id="existing_icon_compromised">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label>Or upload a new icon</label>
+                        <div class="custom-file">
+                            {{ form.asset_icon_compromised(class='custom-file-input', type='file', accept='.svg, .png', id='asset_icon_compromised') }}
+                            <label class="custom-file-label" for="asset_icon_compromised">Choose file</label>
+                        </div>
+                    </div>
                 </div>
 
             {% if assettype.asset_id %}
