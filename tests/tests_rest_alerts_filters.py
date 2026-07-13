@@ -56,7 +56,7 @@ class TestsRestAlertsFilters(TestCase):
 
             }
         }
-        response = self._subject.create('/api/v2/alerts-filters', body)
+        response = self._subject.create('/api/v2/alerts/filters', body)
         self.assertEqual(201, response.status_code)
 
     def test_create_alert_filter_should_return_400_when_filter_data_is_missing(self):
@@ -66,7 +66,7 @@ class TestsRestAlertsFilters(TestCase):
             'filter_name': 'filter name',
             'filter_description': 'filter description',
         }
-        response = self._subject.create('/api/v2/alerts-filters', body)
+        response = self._subject.create('/api/v2/alerts/filters', body)
         self.assertEqual(400, response.status_code)
 
     def test_create_alert_filter_should_return_filter_type(self):
@@ -96,7 +96,7 @@ class TestsRestAlertsFilters(TestCase):
 
             }
         }
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         self.assertEqual(filter_type, response['filter_type'])
 
     def test_create_alert_filter_should_return_filter_name(self):
@@ -126,7 +126,7 @@ class TestsRestAlertsFilters(TestCase):
 
             }
         }
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         self.assertEqual(filter_name, response['filter_name'])
 
     def test_create_alert_filter_should_return_in_filter_data_alert_title(self):
@@ -156,7 +156,7 @@ class TestsRestAlertsFilters(TestCase):
 
             }
         }
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         self.assertEqual(alert_title, response['filter_data']['alert_title'])
 
     def test_get_alert_filter_should_return_200(self):
@@ -186,9 +186,9 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
-        response = self._subject.get(f'/api/v2/alerts-filters/{identifier}')
+        response = self._subject.get(f'/api/v2/alerts/filters/{identifier}')
         self.assertEqual(200, response.status_code)
 
     def test_get_alert_filter_should_return_filter_name(self):
@@ -219,13 +219,13 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
-        response = self._subject.get(f'/api/v2/alerts-filters/{identifier}').json()
+        response = self._subject.get(f'/api/v2/alerts/filters/{identifier}').json()
         self.assertEqual(filter_name, response['filter_name'])
 
     def test_get_alert_filter_should_return_404_when_alert_filter_not_found(self):
-        response = self._subject.get(f'/api/v2/alerts-filters/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        response = self._subject.get(f'/api/v2/alerts/filters/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_get_alert_filter_should_return_404_when_user_has_not_created_alert_filter(self):
@@ -256,9 +256,9 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
-        response = user.get(f'/api/v2/alerts-filters/{identifier}')
+        response = user.get(f'/api/v2/alerts/filters/{identifier}')
         self.assertEqual(404, response.status_code)
 
     def test_update_alert_filter_should_return_200(self):
@@ -288,12 +288,12 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
         body = {
             'filter_name': 'filter name',
         }
-        response = self._subject.update(f'/api/v2/alerts-filters/{identifier}', body)
+        response = self._subject.update(f'/api/v2/alerts/filters/{identifier}', body)
         self.assertEqual(200, response.status_code)
 
     def test_update_alert_filter_should_return_filter_name(self):
@@ -324,12 +324,12 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
         body = {
             'filter_name': filter_name,
         }
-        response = self._subject.update(f'/api/v2/alerts-filters/{identifier}', body).json()
+        response = self._subject.update(f'/api/v2/alerts/filters/{identifier}', body).json()
         self.assertEqual(filter_name, response['filter_name'])
 
     def test_update_alert_filter_should_return_filter_description(self):
@@ -360,12 +360,12 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
         body = {
             'filter_description': filter_description,
         }
-        response = self._subject.update(f'/api/v2/alerts-filters/{identifier}', body).json()
+        response = self._subject.update(f'/api/v2/alerts/filters/{identifier}', body).json()
         self.assertEqual(filter_description, response['filter_description'])
 
     def test_update_alert_filter_should_return_filter_type(self):
@@ -396,12 +396,12 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
         body = {
             'filter_type': filter_type,
         }
-        response = self._subject.update(f'/api/v2/alerts-filters/{identifier}', body).json()
+        response = self._subject.update(f'/api/v2/alerts/filters/{identifier}', body).json()
         self.assertEqual(filter_type, response['filter_type'])
 
     def test_update_alert_filter_should_return_filter_data_alert_title(self):
@@ -432,12 +432,12 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
         body = {
             'filter_data':  {'alert_title': alert_title},
         }
-        response = self._subject.update(f'/api/v2/alerts-filters/{identifier}', body).json()
+        response = self._subject.update(f'/api/v2/alerts/filters/{identifier}', body).json()
         self.assertEqual(alert_title, response['filter_data']['alert_title'])
 
     def test_update_alert_filter_should_return_404_when_alert_filter_is_not_found(self):
@@ -466,11 +466,11 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         body = {
             'filter_data':  {'alert_title': 'alert_title'},
         }
-        response = self._subject.update(f'/api/v2/alerts-filters/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}', body)
+        response = self._subject.update(f'/api/v2/alerts/filters/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}', body)
         self.assertEqual(404, response.status_code)
 
     def test_delete_alert_filter_should_return_204(self):
@@ -500,13 +500,13 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
-        response = self._subject.delete(f'/api/v2/alerts-filters/{identifier}')
+        response = self._subject.delete(f'/api/v2/alerts/filters/{identifier}')
         self.assertEqual(204, response.status_code)
 
     def test_delete_alert_filter_should_return_404_when_alert_not_found(self):
-        response = self._subject.delete(f'/api/v2/alerts-filters/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
+        response = self._subject.delete(f'/api/v2/alerts/filters/{_IDENTIFIER_FOR_NONEXISTENT_OBJECT}')
         self.assertEqual(404, response.status_code)
 
     def test_get_alert_filter_should_return_404_after_delete_alert_filter(self):
@@ -536,10 +536,10 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
-        self._subject.delete(f'/api/v2/alerts-filters/{identifier}')
-        response = self._subject.get(f'/api/v2/alerts-filters/{identifier}')
+        self._subject.delete(f'/api/v2/alerts/filters/{identifier}')
+        response = self._subject.get(f'/api/v2/alerts/filters/{identifier}')
         self.assertEqual(404, response.status_code)
 
     def test_update_alert_filter_should_return_400(self):
@@ -569,10 +569,10 @@ class TestsRestAlertsFilters(TestCase):
             }
         }
 
-        response = self._subject.create('/api/v2/alerts-filters', body).json()
+        response = self._subject.create('/api/v2/alerts/filters', body).json()
         identifier = response['filter_id']
         body = {
             'filter_name': 1,
         }
-        response = self._subject.update(f'/api/v2/alerts-filters/{identifier}', body)
+        response = self._subject.update(f'/api/v2/alerts/filters/{identifier}', body)
         self.assertEqual(400, response.status_code)

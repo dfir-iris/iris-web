@@ -24,8 +24,11 @@ from app.business.access_controls import access_controls_user_has_customer_acces
 from app.db import db
 from app import socket_io
 from app.models.alerts import Alert
+from app.models.alerts import AlertStatus
+from app.models.cases import Cases
 from app.models.iocs import Ioc
 from app.models.assets import CaseAssets
+from app.blueprints.iris_user import iris_current_user
 from app.datamgmt.alerts.alerts_db import cache_similar_alert
 from app.datamgmt.alerts.alerts_db import delete_similar_alert_cache
 from app.datamgmt.alerts.alerts_db import delete_related_alerts_cache
@@ -35,9 +38,16 @@ from app.datamgmt.alerts.alerts_db import get_filtered_alerts
 from app.datamgmt.alerts.alerts_db import get_related_alerts_details
 from app.datamgmt.alerts.alerts_db import get_assets_with_cases
 from app.datamgmt.alerts.alerts_db import get_iocs_with_cases
+from app.datamgmt.alerts.alerts_db import create_case_from_alert
+from app.datamgmt.alerts.alerts_db import create_case_from_alerts
+from app.datamgmt.alerts.alerts_db import merge_alert_in_case
+from app.datamgmt.alerts.alerts_db import unmerge_alert_from_case
+from app.datamgmt.case.case_db import get_case
+from app.iris_engine.access_control.utils import ac_set_new_case_access
 from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.util import add_obj_history_entry
+from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 
 
@@ -364,3 +374,182 @@ def alerts_delete(alert: Alert):
 
     call_modules_hook('on_postload_alert_delete', alert.alert_id)
     track_activity(f'delete alert #{alert.alert_id}', ctx_less=True)
+
+
+def _resolve_alert_status_id(status_name: str) -> Optional[int]:
+    row = AlertStatus.query.filter_by(status_name=status_name).first()
+    return row.status_id if row else None
+
+
+def alerts_escalate(alert: Alert, iocs_import_list: Optional[list] = None,
+                    assets_import_list: Optional[list] = None, note: Optional[str] = None,
+                    import_as_event: bool = False, case_tags: Optional[str] = None,
+                    case_title: Optional[str] = None,
+                    case_template_id: Optional[int] = None) -> Cases:
+    escalated_id = _resolve_alert_status_id('Escalated')
+    if escalated_id is not None:
+        alert.alert_status_id = escalated_id
+    db.session.commit()
+
+    case = create_case_from_alert(
+        alert,
+        iocs_list=iocs_import_list,
+        assets_list=assets_import_list,
+        note=note,
+        import_as_event=import_as_event,
+        case_tags=case_tags,
+        case_title=case_title,
+        template_id=case_template_id,
+    )
+    if not case:
+        raise BusinessProcessingError('Failed to create case from alert')
+
+    ac_set_new_case_access(iris_current_user, case.case_id, case.client_id)
+    case = call_modules_hook('on_postload_case_create', case)
+
+    add_obj_history_entry(case, 'created')
+    track_activity(f'new case {case.name} created from alert', ctx_less=True)
+    add_obj_history_entry(alert, f'Alert escalated to case #{case.case_id}')
+    call_modules_hook('on_postload_alert_escalate', alert)
+
+    return case
+
+
+def alerts_merge(alert: Alert, target_case_id: int,
+                 iocs_import_list: Optional[list] = None,
+                 assets_import_list: Optional[list] = None, note: Optional[str] = None,
+                 import_as_event: bool = False,
+                 case_tags: Optional[str] = None) -> Cases:
+    case = get_case(target_case_id)
+    if case is None:
+        raise ObjectNotFoundError()
+
+    merged_id = _resolve_alert_status_id('Merged')
+    if merged_id is not None:
+        alert.alert_status_id = merged_id
+    db.session.commit()
+
+    merge_alert_in_case(
+        alert,
+        case,
+        iocs_list=iocs_import_list,
+        assets_list=assets_import_list,
+        note=note,
+        import_as_event=import_as_event,
+        case_tags=case_tags,
+    )
+    call_modules_hook('on_postload_alert_merge', alert, caseid=target_case_id)
+
+    track_activity(f'merge alert #{alert.alert_id} into existing case #{target_case_id}',
+                   caseid=target_case_id)
+    add_obj_history_entry(alert, f'Alert merged into existing case #{target_case_id}')
+    return case
+
+
+def alerts_unmerge(alert: Alert, target_case_id: int) -> tuple[Alert, str]:
+    case = get_case(target_case_id)
+    if case is None:
+        raise ObjectNotFoundError()
+
+    success, message = unmerge_alert_from_case(alert, case)
+    if not success:
+        raise BusinessProcessingError(message)
+
+    track_activity(f'unmerge alert #{alert.alert_id} from case #{target_case_id}',
+                   caseid=target_case_id)
+    add_obj_history_entry(alert, f'Alert unmerged from case #{target_case_id}')
+    call_modules_hook('on_postload_alert_unmerge', alert)
+    return alert, message
+
+
+def alerts_batch_merge(alert_ids: list, target_case_id: int,
+                       iocs_import_list: Optional[list] = None,
+                       assets_import_list: Optional[list] = None, note: Optional[str] = None,
+                       import_as_event: bool = False,
+                       case_tags: Optional[str] = None) -> Cases:
+    case = get_case(target_case_id)
+    if case is None:
+        raise ObjectNotFoundError()
+
+    merged_id = _resolve_alert_status_id('Merged')
+
+    for alert_id in alert_ids:
+        alert = get_alert_by_id(alert_id)
+        if not alert:
+            continue
+
+        if merged_id is not None:
+            alert.alert_status_id = merged_id
+        db.session.commit()
+
+        merge_alert_in_case(
+            alert,
+            case,
+            iocs_list=iocs_import_list,
+            assets_list=assets_import_list,
+            note=None,
+            import_as_event=import_as_event,
+            case_tags=case_tags,
+        )
+        add_obj_history_entry(alert, f'Alert merged into existing case #{target_case_id}')
+        call_modules_hook('on_postload_alert_merge', alert)
+
+    if note:
+        case.description += (
+            f"\n\n### Escalation note\n\n{note}\n\n"
+            if case.description else f"\n\n{note}\n\n"
+        )
+        db.session.commit()
+
+    track_activity(f'batched merge alerts {alert_ids} into existing case #{target_case_id}',
+                   caseid=target_case_id)
+    return case
+
+
+def alerts_batch_escalate(alert_ids: list,
+                          iocs_import_list: Optional[list] = None,
+                          assets_import_list: Optional[list] = None,
+                          note: Optional[str] = None, import_as_event: bool = False,
+                          case_tags: Optional[str] = None,
+                          case_title: Optional[str] = None,
+                          case_template_id: Optional[int] = None) -> Cases:
+    # NOTE: the legacy route marked alerts as "Merged" here (see
+    # alerts_routes.py:906). Preserved verbatim to avoid altering behavior
+    # in this migration; if it should be "Escalated", that's a separate fix.
+    merged_id = _resolve_alert_status_id('Merged')
+
+    alerts_list = []
+    for alert_id in alert_ids:
+        alert = get_alert_by_id(alert_id)
+        if not alert:
+            continue
+
+        if merged_id is not None:
+            alert.alert_status_id = merged_id
+        db.session.commit()
+        alert = call_modules_hook('on_postload_alert_escalate', alert)
+        alerts_list.append(alert)
+
+    case = create_case_from_alerts(
+        alerts_list,
+        iocs_import_list,
+        assets_import_list,
+        case_title,
+        note,
+        import_as_event,
+        case_tags,
+        case_template_id,
+    )
+    if not case:
+        raise BusinessProcessingError('Failed to create case from alerts')
+
+    ac_set_new_case_access(iris_current_user, case.case_id, case.client_id)
+    case = call_modules_hook('on_postload_case_create', case)
+
+    add_obj_history_entry(case, 'created')
+    track_activity(f'new case {case.name} created from alerts', caseid=case.case_id)
+
+    for alert in alerts_list:
+        add_obj_history_entry(alert, f'Alert escalated into new case #{case.case_id}')
+
+    return case

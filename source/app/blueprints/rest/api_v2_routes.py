@@ -36,7 +36,6 @@ from app.blueprints.rest.v2.tags import tags_blueprint
 from app.blueprints.rest.v2.tasks import tasks_blueprint
 from app.blueprints.rest.v2.profile import profile_blueprint
 from app.blueprints.rest.v2.search import search_blueprint
-from app.blueprints.rest.v2.alerts_filters import alerts_filters_blueprint
 from app.blueprints.rest.v2.avatars import admin_avatar_blueprint
 from app.blueprints.rest.v2.avatars import me_avatar_blueprint
 from app.blueprints.rest.v2.avatars import users_public_blueprint
@@ -70,7 +69,6 @@ rest_v2_blueprint.register_blueprint(manage_v2_blueprint)
 rest_v2_blueprint.register_blueprint(tags_blueprint)
 rest_v2_blueprint.register_blueprint(profile_blueprint)
 rest_v2_blueprint.register_blueprint(search_blueprint)
-rest_v2_blueprint.register_blueprint(alerts_filters_blueprint)
 rest_v2_blueprint.register_blueprint(cases_filters_blueprint)
 rest_v2_blueprint.register_blueprint(users_public_blueprint)
 rest_v2_blueprint.register_blueprint(me_avatar_blueprint)

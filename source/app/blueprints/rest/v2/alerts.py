@@ -35,16 +35,30 @@ from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.v2.alerts_routes.comments import alerts_comments_blueprint
 from app.blueprints.rest.v2.alerts_routes.investigation_progress import alerts_investigation_progress_blueprint
 from app.blueprints.iris_user import iris_current_user
+from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.business.alerts import alerts_search
-from app.models.authorization import Permissions
-from app.schema.marshables import AlertSchema
-from app.schema.marshables import IocSchema
-from app.schema.marshables import CaseAssetsSchema
 from app.business.alerts import alerts_create
 from app.business.alerts import alerts_get
 from app.business.alerts import alerts_update
 from app.business.alerts import alerts_delete
 from app.business.alerts import alerts_get_related
+from app.business.alerts import alerts_escalate
+from app.business.alerts import alerts_merge
+from app.business.alerts import alerts_unmerge
+from app.business.alerts import alerts_batch_escalate
+from app.business.alerts import alerts_batch_merge
+from app.business.alerts_filters import alert_filter_add
+from app.business.alerts_filters import alert_filter_get
+from app.business.alerts_filters import alert_filter_update
+from app.business.alerts_filters import alert_filter_delete
+from app.business.alerts_filters import alert_filter_list
+from app.datamgmt.alerts.alerts_db import get_alert_by_id
+from app.models.authorization import Permissions
+from app.schema.marshables import AlertSchema
+from app.schema.marshables import CaseSchema
+from app.schema.marshables import IocSchema
+from app.schema.marshables import CaseAssetsSchema
+from app.schema.marshables import SavedFilterSchema
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 
@@ -344,3 +358,291 @@ def delete_alert(identifier):
 @ac_api_requires(Permissions.alerts_read)
 def get_related_alerts(identifier):
     return alerts_operations.get_related_alerts(identifier)
+
+
+@alerts_blueprint.post('/escalate/<int:identifier>')
+@ac_api_requires(Permissions.alerts_write)
+def escalate_alert(identifier):
+    alert = get_alert_by_id(identifier)
+    if not alert:
+        return response_api_not_found()
+
+    if not ac_current_user_has_customer_access(alert.alert_customer_id):
+        return response_api_error('User not entitled to escalate alerts for the client')
+
+    data = request.get_json() or {}
+    try:
+        case = alerts_escalate(
+            alert,
+            iocs_import_list=data.get('iocs_import_list'),
+            assets_import_list=data.get('assets_import_list'),
+            note=data.get('note'),
+            import_as_event=data.get('import_as_event'),
+            case_tags=data.get('case_tags'),
+            case_title=data.get('case_title'),
+            case_template_id=data.get('case_template_id'),
+        )
+        return response_api_success(CaseSchema().dump(case))
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
+
+
+@alerts_blueprint.post('/merge/<int:identifier>')
+@ac_api_requires(Permissions.alerts_write)
+def merge_alert(identifier):
+    data = request.get_json() or {}
+    target_case_id = data.get('target_case_id')
+    if target_case_id is None:
+        return response_api_error('No target case id provided')
+
+    alert = get_alert_by_id(identifier)
+    if not alert:
+        return response_api_not_found()
+
+    if not ac_current_user_has_customer_access(alert.alert_customer_id):
+        return response_api_error('User not entitled to merge alerts for the client')
+    if not check_ua_case_client(iris_current_user.id, target_case_id):
+        return response_api_error('User not entitled to merge alerts for the case')
+
+    try:
+        case = alerts_merge(
+            alert,
+            target_case_id=target_case_id,
+            iocs_import_list=data.get('iocs_import_list'),
+            assets_import_list=data.get('assets_import_list'),
+            note=data.get('note'),
+            import_as_event=data.get('import_as_event'),
+            case_tags=data.get('case_tags'),
+        )
+        return response_api_success(CaseSchema().dump(case))
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
+
+
+@alerts_blueprint.post('/unmerge/<int:identifier>')
+@ac_api_requires(Permissions.alerts_write)
+def unmerge_alert(identifier):
+    data = request.get_json() or {}
+    target_case_id = data.get('target_case_id')
+    if target_case_id is None:
+        return response_api_error('No target case id provided')
+
+    alert = get_alert_by_id(identifier)
+    if not alert:
+        return response_api_not_found()
+
+    if not ac_current_user_has_customer_access(alert.alert_customer_id):
+        return response_api_error('User not entitled to unmerge alerts for the client')
+    if not check_ua_case_client(iris_current_user.id, target_case_id):
+        return response_api_error('User not entitled to unmerge alerts for the case')
+
+    try:
+        alert, _message = alerts_unmerge(alert, target_case_id=target_case_id)
+        return response_api_success(AlertSchema().dump(alert))
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
+
+
+@alerts_blueprint.post('/batch/escalate')
+@ac_api_requires(Permissions.alerts_write)
+def batch_escalate_alerts():
+    data = request.get_json() or {}
+    alert_ids_raw = data.get('alert_ids')
+    if not alert_ids_raw:
+        return response_api_error('No alert ids provided')
+
+    try:
+        alert_ids = parse_comma_separated_identifiers(alert_ids_raw)
+    except ValueError:
+        return response_api_error('Invalid alert id')
+
+    # Customer-access gate for every requested alert. The legacy route did
+    # this inside the loop; hoisting it here keeps the business layer clean
+    # and prevents partial escalation before permission denial.
+    for alert_id in alert_ids:
+        alert = get_alert_by_id(alert_id)
+        if alert and not ac_current_user_has_customer_access(alert.alert_customer_id):
+            return response_api_error('User not entitled to escalate alerts for the client')
+
+    try:
+        case = alerts_batch_escalate(
+            alert_ids,
+            iocs_import_list=data.get('iocs_import_list'),
+            assets_import_list=data.get('assets_import_list'),
+            note=data.get('note'),
+            import_as_event=data.get('import_as_event'),
+            case_tags=data.get('case_tags'),
+            case_title=data.get('case_title'),
+            case_template_id=data.get('case_template_id'),
+        )
+        return response_api_success(CaseSchema().dump(case))
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
+
+
+@alerts_blueprint.post('/batch/merge')
+@ac_api_requires(Permissions.alerts_write)
+def batch_merge_alerts():
+    data = request.get_json() or {}
+    target_case_id = data.get('target_case_id')
+    if target_case_id is None:
+        return response_api_error('No target case id provided')
+
+    alert_ids_raw = data.get('alert_ids')
+    if not alert_ids_raw:
+        return response_api_error('No alert ids provided')
+
+    try:
+        alert_ids = parse_comma_separated_identifiers(alert_ids_raw)
+    except ValueError:
+        return response_api_error('Invalid alert id')
+
+    if not check_ua_case_client(iris_current_user.id, target_case_id):
+        return response_api_error('User not entitled to merge alerts for the case')
+
+    for alert_id in alert_ids:
+        alert = get_alert_by_id(alert_id)
+        if alert and not ac_current_user_has_customer_access(alert.alert_customer_id):
+            return response_api_error('User not entitled to merge alerts for the client')
+
+    try:
+        case = alerts_batch_merge(
+            alert_ids,
+            target_case_id=target_case_id,
+            iocs_import_list=data.get('iocs_import_list'),
+            assets_import_list=data.get('assets_import_list'),
+            note=data.get('note'),
+            import_as_event=data.get('import_as_event'),
+            case_tags=data.get('case_tags'),
+        )
+        return response_api_success(CaseSchema().dump(case))
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as e:
+        return response_api_error(e.get_message(), data=e.get_data())
+
+
+# ---------------------------------------------------------------------------
+# Saved alert filters — previously mounted at /api/v2/alerts-filters. Moved
+# under /api/v2/alerts/filters so the entire alert surface lives under a
+# single prefix.
+# ---------------------------------------------------------------------------
+
+
+class AlertsFiltersOperations:
+    def __init__(self):
+        self._schema = SavedFilterSchema()
+        self._schema_many = SavedFilterSchema(many=True)
+
+    def _load(self, request_data, **kwargs):
+        return self._schema.load(request_data, **kwargs)
+
+    def create(self):
+        request_data = request.get_json()
+        request_data['created_by'] = iris_current_user.id
+
+        try:
+            new_saved_filter = self._load(request_data)
+            alert_filter_add(new_saved_filter)
+            return response_api_created(self._schema.dump(new_saved_filter))
+        except ValidationError as e:
+            return response_api_error('Data error', e.messages)
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def list(self):
+        try:
+            filter_type = request.args.get('filter_type', 'alerts')
+            include_public = request.args.get('include_public', '1') == '1'
+
+            items = alert_filter_list(
+                iris_current_user,
+                filter_type=filter_type,
+                include_public=include_public,
+            )
+            return response_api_success(self._schema_many.dump(items))
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def get(self, identifier):
+        try:
+            saved_filter = alert_filter_get(iris_current_user, identifier)
+            return response_api_success(self._schema.dump(saved_filter))
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def put(self, identifier):
+        request_data = request.get_json() or {}
+        # Pin the owner so a client can't move a filter under another user via
+        # mass-assignment. See the notes in the original alerts_filters module.
+        request_data['created_by'] = iris_current_user.id
+
+        try:
+            saved_filter = alert_filter_get(iris_current_user, identifier)
+            if saved_filter.created_by != iris_current_user.id:
+                return response_api_not_found()
+            new_saved_filter = self._load(request_data, instance=saved_filter, partial=True)
+            alert_filter_update()
+            return response_api_success(self._schema.dump(new_saved_filter))
+        except ValidationError as e:
+            return response_api_error('Data error', data=e.messages)
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    @staticmethod
+    def delete(identifier):
+        try:
+            saved_filter = alert_filter_get(iris_current_user, identifier)
+            if saved_filter.created_by != iris_current_user.id:
+                return response_api_not_found()
+            alert_filter_delete(saved_filter)
+            return response_api_deleted()
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+
+alerts_filters_blueprint = Blueprint('alerts_filters_rest_v2', __name__, url_prefix='/filters')
+alerts_filters_operations = AlertsFiltersOperations()
+
+
+@alerts_filters_blueprint.post('')
+@ac_api_requires()
+def create_alert_filter():
+    return alerts_filters_operations.create()
+
+
+@alerts_filters_blueprint.get('')
+@ac_api_requires()
+def list_alert_filters():
+    return alerts_filters_operations.list()
+
+
+@alerts_filters_blueprint.get('/<int:identifier>')
+@ac_api_requires()
+def get_alert_filter(identifier):
+    return alerts_filters_operations.get(identifier)
+
+
+@alerts_filters_blueprint.put('/<int:identifier>')
+@ac_api_requires()
+def update_alert_filter(identifier):
+    return alerts_filters_operations.put(identifier)
+
+
+@alerts_filters_blueprint.delete('/<int:identifier>')
+@ac_api_requires()
+def delete_alert_filter(identifier):
+    return alerts_filters_operations.delete(identifier)
+
+
+alerts_blueprint.register_blueprint(alerts_filters_blueprint)

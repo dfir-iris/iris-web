@@ -421,6 +421,7 @@ def alerts_update_route(alert_id) -> Response:
 
 
 @alerts_rest_blueprint.route('/alerts/batch/update', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/alerts/{identifier} (repeated per alert)')
 @ac_api_requires(Permissions.alerts_write)
 def alerts_batch_update_route() -> Response:
     """
@@ -500,6 +501,7 @@ def alerts_batch_update_route() -> Response:
 
 
 @alerts_rest_blueprint.route('/alerts/batch/delete', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/alerts/{identifier} (repeated per alert)')
 @ac_api_requires(Permissions.alerts_delete)
 def alerts_batch_delete_route() -> Response:
     """
@@ -592,6 +594,7 @@ def alerts_delete_route(alert_id) -> Response:
 
 
 @alerts_rest_blueprint.route('/alerts/escalate/<int:alert_id>', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/alerts/escalate/{identifier}')
 @ac_api_requires(Permissions.alerts_write)
 def alerts_escalate_route(alert_id) -> Response:
     """
@@ -663,6 +666,7 @@ def alerts_escalate_route(alert_id) -> Response:
 
 
 @alerts_rest_blueprint.route('/alerts/merge/<int:alert_id>', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/alerts/merge/{identifier}')
 @ac_api_requires(Permissions.alerts_write)
 def alerts_merge_route(alert_id) -> Response:
     """
@@ -730,6 +734,7 @@ def alerts_merge_route(alert_id) -> Response:
 
 
 @alerts_rest_blueprint.route('/alerts/unmerge/<int:alert_id>', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/alerts/unmerge/{identifier}')
 @ac_api_requires(Permissions.alerts_write)
 def alerts_unmerge_route(alert_id) -> Response:
     """
@@ -786,6 +791,7 @@ def alerts_unmerge_route(alert_id) -> Response:
 
 
 @alerts_rest_blueprint.route('/alerts/batch/merge', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/alerts/batch/merge')
 @ac_api_requires(Permissions.alerts_write)
 def alerts_batch_merge_route() -> Response:
     """
@@ -863,6 +869,7 @@ def alerts_batch_merge_route() -> Response:
 
 
 @alerts_rest_blueprint.route('/alerts/batch/escalate', methods=['POST'])
+@endpoint_deprecated('POST', '/api/v2/alerts/batch/escalate')
 @ac_api_requires(Permissions.alerts_write)
 def alerts_batch_escalate_route() -> Response:
     """
@@ -966,6 +973,7 @@ def alert_comments_get(alert_id):
 
 
 @alerts_rest_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/delete', methods=['POST'])
+@endpoint_deprecated('DELETE', '/api/v2/alerts/{alert_identifier}/comments/{identifier}')
 @ac_api_requires(Permissions.alerts_write)
 def alert_comment_delete(alert_id, com_id):
     """
@@ -1029,6 +1037,7 @@ def alert_comment_get(alert_id, com_id):
 
 
 @alerts_rest_blueprint.route('/alerts/<int:alert_id>/comments/<int:com_id>/edit', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/alerts/{alert_identifier}/comments/{identifier}')
 @ac_api_requires(Permissions.alerts_write)
 def alert_comment_edit(alert_id, com_id):
     """
