@@ -62,6 +62,8 @@ from app.schema.marshables import SavedFilterSchema
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 
+import copy
+
 
 # Fields that must be immutable on alert update. See GHSA-8hwq-v6vm-9grr
 # / SBA-ADV-20260128-05 / CWE-863 — re-attributing alert_customer_id lets
@@ -266,6 +268,7 @@ class AlertsOperations:
                 identifier,
                 fallback_customer_access=ac_current_user_has_customer_access
             )
+            pristine_alert = copy.copy(alert)  # shallow copy for ongoing comparison
             # Drop fields the caller must not be allowed to change on update
             # (GHSA-8hwq-v6vm-9grr / SBA-ADV-20260128-05 / CWE-863). The
             # customer_id is the worst: re-attributing an alert to a
@@ -276,7 +279,7 @@ class AlertsOperations:
             activity_data = []
 
             for key, value in request_data.items():
-                old_value = getattr(alert, key, None)
+                old_value = getattr(pristine_alert, key, None)
 
                 if type(old_value) is int:
                     old_value = str(old_value)
@@ -293,7 +296,7 @@ class AlertsOperations:
 
             if request_data.get('alert_owner_id') == "-1" or request_data.get('alert_owner_id') == -1:
                 updated_alert.alert_owner_id = None
-            result = alerts_update(alert, updated_alert, activity_data)
+            result = alerts_update(pristine_alert, updated_alert, activity_data)
             return response_api_success(self._schema.dump(result))
 
         except ValidationError as e:
