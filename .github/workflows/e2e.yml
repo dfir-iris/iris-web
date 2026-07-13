@@ -1,0 +1,141 @@
+name: End-to-end tests
+
+# Runs the SvelteKit UI Playwright suite (kept in iris-frontend/e2e) against
+# a full V3 stack brought up by this repo's docker-compose.yml.
+#
+# Triggers:
+#   - Manual (workflow_dispatch)
+#   - Nightly at 03:00 UTC (flake detection against latest pinned tags)
+#   - Push to the meta-repo's default branch
+#   - repository_dispatch (sub-repo-published) — fired by iris-backend or
+#     iris-frontend after they publish a new image; the payload names the
+#     branch and SHA of the sub-repo that triggered the fan-in.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *'
+  repository_dispatch:
+    types: [sub-repo-published]
+  push:
+    branches: [develop, main]
+
+jobs:
+  e2e:
+    name: Playwright against live stack
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Check out iris-web with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Log which sub-repo triggered us (if dispatched)
+        if: github.event_name == 'repository_dispatch'
+        env:
+          SOURCE_REPO: ${{ github.event.client_payload.repo }}
+          SOURCE_BRANCH: ${{ github.event.client_payload.branch }}
+          SOURCE_SHA: ${{ github.event.client_payload.sha }}
+        run: |
+          echo "Triggered by: repo=$SOURCE_REPO branch=$SOURCE_BRANCH sha=$SOURCE_SHA"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: iris-frontend/package-lock.json
+
+      - name: Log into GHCR (packages are private)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compose .env
+        env:
+          POSTGRES_PASSWORD: ${{ secrets.E2E_POSTGRES_PASSWORD }}
+          POSTGRES_ADMIN_PASSWORD: ${{ secrets.E2E_POSTGRES_ADMIN_PASSWORD }}
+          IRIS_SECRET_KEY: ${{ secrets.E2E_IRIS_SECRET_KEY }}
+          IRIS_SECURITY_PASSWORD_SALT: ${{ secrets.E2E_IRIS_SECURITY_PASSWORD_SALT }}
+          IRIS_ADM_PASSWORD: ${{ secrets.E2E_IRIS_ADM_PASSWORD }}
+          IRIS_ADM_API_KEY: ${{ secrets.E2E_IRIS_ADM_API_KEY }}
+        run: |
+          cp .env.example .env
+          {
+            echo ""
+            echo "# CI overrides"
+            echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD"
+            echo "POSTGRES_ADMIN_PASSWORD=$POSTGRES_ADMIN_PASSWORD"
+            echo "IRIS_SECRET_KEY=$IRIS_SECRET_KEY"
+            echo "IRIS_SECURITY_PASSWORD_SALT=$IRIS_SECURITY_PASSWORD_SALT"
+            echo "IRIS_ADM_USERNAME=administrator"
+            echo "IRIS_ADM_PASSWORD=$IRIS_ADM_PASSWORD"
+            echo "IRIS_ADM_API_KEY=$IRIS_ADM_API_KEY"
+            echo "IRIS_HOSTNAME=localhost"
+          } >> .env
+
+      - name: Pull stack images
+        run: docker compose pull
+
+      - name: Bring stack up
+        run: docker compose up -d --wait
+
+      - name: Inspect stack on failure
+        if: ${{ failure() }}
+        run: |
+          docker compose ps --all
+          docker compose logs --tail=200
+
+      - name: Install Playwright browsers
+        working-directory: iris-frontend
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium firefox
+
+      - name: Run Playwright
+        working-directory: iris-frontend
+        env:
+          PLAYWRIGHT_BASE_URL: https://localhost
+          IRIS_E2E_USERNAME: administrator
+          IRIS_E2E_PASSWORD: ${{ secrets.E2E_IRIS_ADM_PASSWORD }}
+          IRIS_E2E_API_KEY: ${{ secrets.E2E_IRIS_ADM_API_KEY }}
+        run: npx playwright test
+
+      - name: Capture container logs
+        if: ${{ always() }}
+        run: |
+          mkdir -p artifacts
+          docker compose logs > artifacts/docker-compose.log 2>&1 || true
+
+      - name: Upload Playwright report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: iris-frontend/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload Playwright junit
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-junit
+          path: iris-frontend/playwright-junit.xml
+          if-no-files-found: ignore
+
+      - name: Upload container logs
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-compose-logs
+          path: artifacts/docker-compose.log
+          if-no-files-found: ignore
+
+      - name: Tear down stack
+        if: ${{ always() }}
+        run: docker compose down -v
