@@ -26,6 +26,47 @@ def _validate_title(title):
     return title.strip()[:512]
 
 
+def _fire_mention_notifications(note, actor_id, is_update):
+    """Notify war-room members mentioned in a note.
+
+    Silent on failure — a broken notification pipeline must not fail a
+    note write."""
+    try:
+        from app.iris_engine.notifications.mentions import resolve_mentions_to_user_ids
+        from app.iris_engine.notifications.service import notify_many
+        from app.models.war_rooms import WarRoomMember
+
+        mentioned = resolve_mentions_to_user_ids(note.content, note.war_room_id)
+        if not mentioned:
+            return
+
+        member_ids = {
+            row.user_id for row in
+            WarRoomMember.query
+            .filter(WarRoomMember.war_room_id == note.war_room_id)
+            .filter(WarRoomMember.user_id.in_(mentioned))
+            .all()
+        }
+        if not member_ids:
+            return
+
+        verb = 'updated' if is_update else 'created'
+        notify_many(
+            user_ids=list(member_ids),
+            event_type='mention',
+            title=f'You were mentioned in a war-room note',
+            body=f'{verb}: {note.title}',
+            link=f'/war-rooms/{note.war_room_id}/notes?note={note.note_id}',
+            source_type='war_room_note',
+            source_id=note.note_id,
+            exclude_user_ids=[actor_id] if actor_id else [],
+        )
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception(
+            'war-room note mention notification failed')
+
+
 def _resolve_folder_id(war_room_id, folder_id):
     """Coerce a folder-id payload to `None | int` and enforce that the
     folder (if given) belongs to the same war room. Keeps notes from
@@ -74,6 +115,7 @@ def war_room_note_create(war_room_id, title, content=None,
     write_revision(created_by_id, note)
     db.session.commit()
     track_activity(f'created war room note "{note.title}"', war_room_id=war_room_id)
+    _fire_mention_notifications(note, created_by_id, is_update=False)
     note = call_modules_hook('on_postload_war_room_note_create', note)
     return note
 
@@ -87,6 +129,7 @@ def war_room_note_update(war_room_id, note_id, title=None, content=None,
     distinguish "don't change the folder" (omit) from "move to root"
     (pass `None` explicitly)."""
     note = war_room_note_get(war_room_id, note_id)
+    prior_content = note.content
     if title is not None:
         note.title = _validate_title(title)
     if content is not None:
@@ -101,6 +144,10 @@ def war_room_note_update(war_room_id, note_id, title=None, content=None,
     write_revision(updated_by_id, note)
     db.session.commit()
     track_activity(f'updated war room note "{note.title}"', war_room_id=war_room_id)
+    # Only fire when the body actually changed — pure title / folder edits
+    # shouldn't re-page every mentioned user.
+    if content is not None and content != prior_content:
+        _fire_mention_notifications(note, updated_by_id, is_update=True)
     note = call_modules_hook('on_postload_war_room_note_update', note)
     return note
 

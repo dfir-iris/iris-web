@@ -150,6 +150,56 @@ class WarRoomMember(db.Model):
     added_by = relationship('User', foreign_keys=[added_by_id])
 
 
+class WarRoomTeam(db.Model):
+    """Named team scoped to a single war room.
+
+    Teams are per-war-room groupings used for @-mentions. Any war-room
+    member can see and @ any team; membership in the team drives the
+    notification fan-out. Deleting the room cascades the teams.
+    """
+    __tablename__ = 'war_room_team'
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'name', name='uq_war_room_team_name'),
+    )
+
+    team_id = Column(BigInteger, primary_key=True)
+    war_room_id = Column(BigInteger,
+                         ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False, index=True)
+    name = Column(String(80), nullable=False)
+    description = Column(Text, nullable=True)
+    color = Column(String(7), nullable=True)
+    created_at = Column(DateTime, nullable=False, server_default=text('now()'))
+    created_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
+
+    war_room = relationship('WarRoom')
+    created_by = relationship('User')
+
+
+class WarRoomTeamMember(db.Model):
+    """Membership of a war-room team.
+
+    A user must be a WarRoomMember of the same war room to be added to
+    a team — enforced at the business layer.
+    """
+    __tablename__ = 'war_room_team_member'
+    __table_args__ = (
+        UniqueConstraint('team_id', 'user_id', name='uq_war_room_team_member'),
+    )
+
+    team_id = Column(BigInteger,
+                     ForeignKey('war_room_team.team_id', ondelete='CASCADE'),
+                     primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'),
+                     primary_key=True, nullable=False)
+    added_at = Column(DateTime, nullable=False, server_default=text('now()'))
+    added_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
+
+    team = relationship('WarRoomTeam', backref='members')
+    user = relationship('User', foreign_keys=[user_id])
+    added_by = relationship('User', foreign_keys=[added_by_id])
+
+
 class WarRoomTimeline(db.Model):
     """Named timeline on a war room.
 
@@ -412,6 +462,13 @@ class WarRoomChatMessage(db.Model):
     # message serializer every read — a join would be gratuitous.
     is_pinned = Column(Boolean, nullable=False, default=False,
                        server_default=text('false'))
+    # Inline file attachments — list of `{file_id, filename, mime_type,
+    # size_bytes}` referencing `war_room_datastore_file` rows in the same
+    # war room. NULL / empty list = no attachments. Denormalised (rather
+    # than a join table) because the render path always fetches the
+    # message + its attachments together and messages carry at most a
+    # handful of files.
+    attachments = Column(JSONB, nullable=True)
 
     war_room = relationship('WarRoom')
     author = relationship('User')
@@ -588,6 +645,13 @@ class WarRoomTask(db.Model):
     closed_at = Column(DateTime, nullable=True)
     closed_by_id = Column(BigInteger, ForeignKey('user.id'), nullable=True)
     tags = Column(Text, nullable=True)
+    # Single-level subtasks: a task may point at another task in the
+    # same war room. "No grand-children" is enforced by the business
+    # layer; the FK stays simple.
+    parent_task_id = Column(BigInteger,
+                            ForeignKey('war_room_task.task_id',
+                                       ondelete='CASCADE'),
+                            nullable=True)
     custom_attributes = Column(JSONB, nullable=True)
 
     war_room = relationship('WarRoom')
@@ -596,6 +660,8 @@ class WarRoomTask(db.Model):
     created_by = relationship('User', foreign_keys=[created_by_id])
     closed_by = relationship('User', foreign_keys=[closed_by_id])
     source_case = relationship('Cases')
+    parent = relationship('WarRoomTask', remote_side=[task_id],
+                          backref='subtasks')
 
 
 class WarRoomNoteFolder(db.Model):

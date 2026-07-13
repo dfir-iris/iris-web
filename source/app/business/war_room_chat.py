@@ -569,11 +569,66 @@ def list_messages(war_room_id, before=None, limit=None, kinds=None,
     return merged[:limit]
 
 
+def _resolve_attachments(war_room_id, file_ids):
+    """Turn a raw list of `file_id`s from the client into the JSONB
+    payload we store on the chat message.
+
+    Every `file_id` must resolve to a `WarRoomDatastoreFile` row in the
+    same war room — cross-room file references are rejected. Order is
+    preserved so the UI can render the attachments in the order the
+    operator dropped them.
+    """
+    if not file_ids:
+        return None
+    if not isinstance(file_ids, list):
+        raise BusinessProcessingError('file_ids must be a list')
+    normalised = []
+    for raw in file_ids:
+        try:
+            normalised.append(int(raw))
+        except (TypeError, ValueError):
+            raise BusinessProcessingError('file_ids must be integers')
+    if not normalised:
+        return None
+
+    from app.models.war_rooms import WarRoomDatastoreFile
+    rows = (
+        WarRoomDatastoreFile.query
+        .filter(WarRoomDatastoreFile.war_room_id == war_room_id)
+        .filter(WarRoomDatastoreFile.file_id.in_(normalised))
+        .all()
+    )
+    by_id = {r.file_id: r for r in rows}
+    payload = []
+    for fid in normalised:
+        row = by_id.get(fid)
+        if row is None:
+            raise BusinessProcessingError(
+                f'File #{fid} does not belong to this war room'
+            )
+        payload.append({
+            'file_id': row.file_id,
+            'filename': row.filename,
+            'mime_type': row.mime_type,
+            'size_bytes': int(row.size_bytes) if row.size_bytes is not None else 0,
+        })
+    return payload
+
+
 def create_message(war_room_id, author_id, body, kind=None,
                    ref_type=None, ref_id=None, ref_case_id=None,
-                   topic_id=None):
+                   topic_id=None, file_ids=None):
     kind = _validate_kind(kind)
-    body = _validate_body(body, kind)
+    attachments = _resolve_attachments(war_room_id, file_ids)
+    # Body is only required when there are no attachments — an
+    # attachment-only message is a valid post (drop an image, hit send).
+    if kind == 'message' and attachments and not (isinstance(body, str) and body.strip()):
+        # Skip the strict "message body required" check by validating
+        # with `system` semantics; the row still ends up `kind='message'`
+        # but the body may be blank because the payload is in the file.
+        body = _validate_body(body, 'system')
+    else:
+        body = _validate_body(body, kind)
 
     # Only trust `topic_id` when the schema supports it AND the topic
     # belongs to this war room and isn't archived. NULL falls through
@@ -603,6 +658,14 @@ def create_message(war_room_id, author_id, body, kind=None,
     msg.ref_case_id = ref_case_id
     if resolved_topic_id is not None:
         msg.topic_id = resolved_topic_id
+    if attachments is not None:
+        # Guard against a database that hasn't applied the attachments
+        # migration yet — silently drop the payload rather than 500 on
+        # `AttributeError` from the ORM.
+        try:
+            msg.attachments = attachments
+        except Exception:
+            pass
     db.session.add(msg)
     db.session.commit()
 
@@ -1188,11 +1251,11 @@ def _fire_message_notifications(msg):
     replies (see `_fire_reply_notifications`).
     """
     try:
-        from app.iris_engine.notifications.mentions import extract_mentioned_user_ids
+        from app.iris_engine.notifications.mentions import resolve_mentions_to_user_ids
         from app.iris_engine.notifications.service import notify_many
         from app.models.war_rooms import WarRoomMember
 
-        mentioned = extract_mentioned_user_ids(msg.body)
+        mentioned = resolve_mentions_to_user_ids(msg.body, msg.war_room_id)
         if not mentioned:
             return
 
@@ -1230,7 +1293,7 @@ def _fire_message_notifications(msg):
 def _fire_reply_notifications(msg, root_message_id):
     """Notify thread followers + mentions on a new reply."""
     try:
-        from app.iris_engine.notifications.mentions import extract_mentioned_user_ids
+        from app.iris_engine.notifications.mentions import resolve_mentions_to_user_ids
         from app.iris_engine.notifications.service import notify_many
 
         # 1. Thread followers (excluding the author)
@@ -1255,7 +1318,7 @@ def _fire_reply_notifications(msg, root_message_id):
 
         # 2. Mentions inside the reply (independent from follow —
         # mentioning a non-follower still pings them).
-        mentioned = extract_mentioned_user_ids(msg.body)
+        mentioned = resolve_mentions_to_user_ids(msg.body, msg.war_room_id)
         if mentioned:
             from app.models.war_rooms import WarRoomMember
             member_ids = {

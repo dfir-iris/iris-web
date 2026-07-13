@@ -102,6 +102,10 @@ def _serialize(row, reactions=None, viewer_id=None):
         'edited_at': row.edited_at.isoformat() if row.edited_at else None,
         'deleted_at': row.deleted_at.isoformat() if row.deleted_at else None,
         'reactions': reactions or [],
+        # Inline file attachments. May be missing on databases predating
+        # the migration or on virtual UserActivity rows — default to an
+        # empty list so the SPA can always iterate.
+        'attachments': list(getattr(row, 'attachments', None) or []),
     }
 
     # Inline the poll payload on poll-kind messages so the stream
@@ -493,8 +497,15 @@ def post_chat(war_room_id):
     if not isinstance(raw, dict):
         return response_api_error('Invalid request')
     body = raw.get('body')
+    file_ids = raw.get('file_ids') or []
     if not isinstance(body, str):
-        return response_api_error('body is required')
+        # An attachment-only post is legal — coerce a missing body to
+        # empty string; `create_message` will accept it when
+        # `file_ids` is non-empty.
+        if file_ids:
+            body = ''
+        else:
+            return response_api_error('body is required')
     # Optional `topic_id` — the currently-selected topic in the SPA.
     # NULL means Main. The business layer validates ownership /
     # archived state and raises `BusinessProcessingError` on mismatch.
@@ -601,7 +612,8 @@ def post_chat(war_room_id):
 
     try:
         msg = create_message(war_room_id, iris_current_user.id, body,
-                             topic_id=posted_topic_id)
+                             topic_id=posted_topic_id,
+                             file_ids=file_ids)
     except BusinessProcessingError as e:
         return response_api_error(e.get_message())
 

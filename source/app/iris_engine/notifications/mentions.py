@@ -47,6 +47,17 @@ _MENTION_SPAN_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Team-kind mention span. Same shape as the user variant but keyed on
+# `data-kind="team"`. Team IDs are war-room-scoped, so callers MUST
+# resolve them via `war_room_team_member_user_ids(war_room_id, ...)` to
+# avoid leaking notifications across rooms.
+_TEAM_MENTION_SPAN_RE = re.compile(
+    r"<span\b(?=[^>]*\bdata-mention\b)"
+    r"(?=[^>]*\bdata-kind=[\"']team[\"'])"
+    r"[^>]*?\bdata-id=[\"'](?P<id>\d+)[\"']",
+    re.IGNORECASE,
+)
+
 # Legacy `@handle` matcher. Only used when the content contains NO
 # mention spans (i.e. pre-mention-node notes) — otherwise a chip like
 # `@John Doe` would double-count via both parsers. The character class
@@ -125,6 +136,81 @@ def resolve_user_handles(handles: Iterable[str]) -> Set[int]:
         .all()
     )
     return {r.id for r in rows}
+
+
+def extract_mentioned_team_ids(content: Optional[str]) -> Set[int]:
+    """Return the set of team IDs mentioned in `content`.
+
+    Team IDs are scoped to their war room; the caller is responsible
+    for scoping the resolved team IDs to a specific war room when
+    expanding them to user IDs.
+    """
+    if not content:
+        return set()
+    ids: Set[int] = set()
+    for m in _TEAM_MENTION_SPAN_RE.finditer(content):
+        try:
+            ids.add(int(m.group('id')))
+        except (TypeError, ValueError):
+            continue
+    return ids
+
+
+def _resolve_team_names_to_ids(names: Iterable[str], war_room_id: int) -> Set[int]:
+    """Resolve `@team-name` plaintext tokens against `WarRoomTeam.name`.
+
+    Case-insensitive, war-room-scoped. Unknown names silently drop out.
+    Used only from the plaintext fallback path in `resolve_mentions_to_user_ids`
+    where the chat composer emits `@name` rather than a structured span.
+    """
+    normalised = {n.strip().lower() for n in names if n and n.strip()}
+    if not normalised:
+        return set()
+    from app.models.war_rooms import WarRoomTeam
+    rows = (
+        db.session.query(WarRoomTeam.team_id)
+        .filter(WarRoomTeam.war_room_id == war_room_id)
+        .filter(func.lower(WarRoomTeam.name).in_(normalised))
+        .all()
+    )
+    return {r.team_id for r in rows}
+
+
+def resolve_mentions_to_user_ids(content: Optional[str],
+                                 war_room_id: int) -> Set[int]:
+    """Union of user IDs from both user-mentions and team-mention expansion.
+
+    Team IDs found in `content` are scoped to `war_room_id` — team IDs
+    that don't belong to this war room contribute nobody. Direct user
+    mentions are returned as-is; membership scoping is the caller's job
+    (see `_fire_message_notifications` for the war-room-member filter).
+
+    Plaintext `@name` fallback also resolves team names for war-room
+    content, which is where the chat composer emits plain `@name` tokens
+    rather than structured spans.
+    """
+    if not content:
+        return set()
+
+    user_ids = extract_mentioned_user_ids(content)
+    team_ids = extract_mentioned_team_ids(content)
+
+    # Plaintext fallback: only run when the content had NO structured
+    # user spans (same short-circuit as `extract_mentioned_user_ids`).
+    # For plain `@handle` tokens, try user resolution first, then fall
+    # through to team-name resolution for any unresolved handles.
+    has_user_spans = bool(_MENTION_SPAN_RE.search(content))
+    if not has_user_spans:
+        handles = {m.group('handle')
+                   for m in _LEGACY_MENTION_RE.finditer(content)}
+        if handles:
+            team_ids = team_ids | _resolve_team_names_to_ids(handles, war_room_id)
+
+    if team_ids:
+        # Local import to avoid a business-layer import loop at module load.
+        from app.business.war_room_teams import war_room_team_member_user_ids
+        user_ids = user_ids | war_room_team_member_user_ids(war_room_id, team_ids)
+    return user_ids
 
 
 def resolve_user_handle(handle: str) -> Optional[int]:
