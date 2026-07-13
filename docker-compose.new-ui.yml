@@ -112,7 +112,7 @@ services:
     # install` on boot — the image carries everything it needs.
     build:
       context: ${IRIS_SVELTEKIT_FRONTEND_DIR:-../iris-frontend}
-      dockerfile: ${IRIS_FRONTEND_DOCKERFILE:-../iris-web/docker/frontend/Dockerfile}
+      dockerfile: ${IRIS_FRONTEND_DOCKERFILE:-Dockerfile}
     image: iris_frontend:newui
     profiles: ["new-ui"]
     container_name: iris_sveltekit_frontend
