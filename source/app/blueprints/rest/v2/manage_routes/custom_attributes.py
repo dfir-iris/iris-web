@@ -180,3 +180,36 @@ def update_custom_attribute(identifier: int) -> Response:
     )
 
     return response_api_success(_serialize(row))
+
+
+@custom_attributes_blueprint.post('/validate')
+@ac_api_requires(Permissions.server_administrator)
+def validate_custom_attribute() -> Response:
+    """Dry-run the schema validator without mutating anything.
+
+    The SPA calls this from the edit modal so admins can see the
+    exact per-field error list before committing (the PUT would run
+    `update_all_attributes` and back-fill every existing row, which
+    is expensive — surfacing validation errors early avoids paying
+    that cost only to be rejected).
+
+    Body: `{"attribute_content": <object | JSON string>}`.
+    Returns `{ok: bool, logs: [...]}` — `logs` is empty on success.
+    """
+    if not request.is_json:
+        return response_api_error('Invalid request')
+
+    body = request.get_json() or {}
+    raw_content = body.get('attribute_content')
+    if raw_content is None:
+        return response_api_error('Missing attribute_content')
+
+    if isinstance(raw_content, (dict, list)):
+        encoded = json.dumps(raw_content)
+    elif isinstance(raw_content, str):
+        encoded = raw_content
+    else:
+        return response_api_error('attribute_content must be a string or JSON object')
+
+    _parsed, logs = validate_attribute(encoded)
+    return response_api_success({'ok': not logs, 'logs': logs})
