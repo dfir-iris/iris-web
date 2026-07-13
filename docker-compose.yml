@@ -27,7 +27,7 @@ services:
     extends:
       file: docker-compose.base.yml
       service: db
-    image: ${DB_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_db}:${DB_IMAGE_TAG:-v2.4.20}
+    image: ${DB_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_db}:${DB_IMAGE_TAG:-v2.5.0-beta.1}
     build: docker/db/
     restart: always
 
@@ -36,7 +36,7 @@ services:
     extends:
       file: docker-compose.base.yml
       service: app
-    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-v2.4.20}
+    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-v2.5.0-beta.1}
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
@@ -47,7 +47,7 @@ services:
     extends:
       file: docker-compose.base.yml
       service: worker
-    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-v2.4.20}
+    image: ${APP_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_app}:${APP_IMAGE_TAG:-v2.5.0-beta.1}
     build:
       context: .
       dockerfile: docker/webApp/Dockerfile
@@ -58,7 +58,7 @@ services:
     extends:
       file: docker-compose.base.yml
       service: nginx
-    image: ${NGINX_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_nginx}:${NGINX_IMAGE_TAG:-v2.4.20}
+    image: ${NGINX_IMAGE_NAME:-ghcr.io/dfir-iris/iriswebapp_nginx}:${NGINX_IMAGE_TAG:-v2.5.0-beta.1}
     build:
       context: docker/nginx/
       args:
