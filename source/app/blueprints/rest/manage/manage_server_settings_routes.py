@@ -31,6 +31,7 @@ from app.iris_engine.utils.tracker import track_activity
 from app.models.authorization import Permissions
 from app.schema.marshables import ServerSettingsSchema
 from app.blueprints.access_controls import ac_api_requires
+from app.blueprints.rest.endpoints import endpoint_deprecated
 from app.blueprints.responses import response_error
 from app.blueprints.responses import response_success
 from dictdiffer import diff
@@ -39,6 +40,7 @@ manage_server_settings_rest_blueprint = Blueprint('manage_server_settings_rest',
 
 
 @manage_server_settings_rest_blueprint.route('/manage/server/backups/make-db', methods=['GET'])
+@endpoint_deprecated('POST', '/api/v2/manage/server/backups/db')
 @ac_api_requires(Permissions.server_administrator)
 def manage_make_db_backup():
 
@@ -53,6 +55,7 @@ def manage_make_db_backup():
 
 
 @manage_server_settings_rest_blueprint.route('/manage/settings/update', methods=['POST'])
+@endpoint_deprecated('PUT', '/api/v2/manage/server/settings')
 @ac_api_requires(Permissions.server_administrator)
 def manage_update_settings():
     if not request.is_json:

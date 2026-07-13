@@ -30,6 +30,13 @@ services:
       - POSTGRES_ADMIN_USER
       - POSTGRES_ADMIN_PASSWORD
       - POSTGRES_DB
+      # PG18's Docker image refuses to use a directory mounted directly
+      # as PGDATA (it expects the version-prefixed layout from
+      # pg_ctlcluster). Pointing PGDATA at a sub-path inside the
+      # mounted volume sidesteps that check and keeps the on-disk
+      # layout the same across the project's bind mounts / named
+      # volumes regardless of host.
+      - PGDATA=/var/lib/postgresql/data/pgdata
     networks:
       - iris_backend
     volumes:
@@ -41,6 +48,25 @@ services:
     volumes:
       - ./certificates/:/home/iris/certificates/:ro
       - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
+      # Operator-supplied CA bundle for outbound TLS from the Python
+      # processes (Keycloak discovery, OIDC token endpoint, LDAPS,
+      # webhook integrations, ...).
+      #
+      # IMPORTANT: REQUESTS_CA_BUNDLE / SSL_CERT_FILE replace the
+      # default trust store rather than augmenting it, so the file
+      # mounted at /etc/iris-ca/extra-ca.crt MUST be a full bundle:
+      # your internal CA chain CONCATENATED with the system root
+      # bundle (e.g. /etc/ssl/certs/ca-certificates.crt on the host).
+      #
+      # On the host:
+      #   mkdir -p iris-web/certificates/ca-bundle
+      #   cat /etc/ssl/certs/ca-certificates.crt \
+      #       /path/to/internal-ca-chain.pem \
+      #       > iris-web/certificates/ca-bundle/extra-ca.crt
+      #
+      # Leave it absent / empty to keep the container's default trust
+      # store (Python will then refuse certs signed by private CAs).
+      - ./certificates/ca-bundle/:/etc/iris-ca/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -59,6 +85,18 @@ services:
       - POSTGRES_PORT
       - IRIS_SECRET_KEY
       - IRIS_SECURITY_PASSWORD_SALT
+      # Point Python's `requests` library AND the stdlib `ssl` module
+      # at an operator-supplied bundle so it trusts chains for
+      # internal services (Keycloak, LDAPS, etc.). The bundle must
+      # include the system roots too — these env vars REPLACE the
+      # default trust store, not add to it.
+      #
+      # Unset by default — only opt in by exporting REQUESTS_CA_BUNDLE
+      # in iris-web/.env, e.g.:
+      #   REQUESTS_CA_BUNDLE=/etc/iris-ca/extra-ca.crt
+      #   SSL_CERT_FILE=/etc/iris-ca/extra-ca.crt
+      - REQUESTS_CA_BUNDLE
+      - SSL_CERT_FILE
     networks:
       - iris_backend
       - iris_frontend
@@ -75,6 +113,7 @@ services:
     volumes:
       - ./certificates/:/home/iris/certificates/:ro
       - ./certificates/ldap/:/iriswebapp/certificates/ldap/:ro
+      - ./certificates/ca-bundle/:/etc/iris-ca/:ro
       - iris-downloads:/home/iris/downloads
       - user_templates:/home/iris/user_templates
       - server_data:/home/iris/server_data
@@ -95,6 +134,10 @@ services:
       - IRIS_SECURITY_PASSWORD_SALT
       - IRIS_WORKER
       - LOG_LEVEL
+      # See the `app` service: REPLACES the default trust store. Set
+      # in iris-web/.env to opt in.
+      - REQUESTS_CA_BUNDLE
+      - SSL_CERT_FILE
     networks:
       - iris_backend
 
@@ -106,10 +149,19 @@ services:
       - IRIS_FRONTEND_SERVER
       - IRIS_FRONTEND_PORT
       - INTERFACE_HTTPS_PORT
-      - SERVER_NAME
+      # SERVER_NAME still takes precedence when set. If unset, the
+      # entrypoint falls back to IRIS_HOSTNAME so operators only
+      # declare the hostname once.
+      - SERVER_NAME=${SERVER_NAME:-${IRIS_HOSTNAME:-}}
+      # CERT_FILENAME / KEY_FILENAME still take precedence when set.
+      # When unset, the entrypoint autodetects certbot's standard
+      # fullchain.pem / privkey.pem pair under /www/certs/.
       - CERT_FILENAME
       - KEY_FILENAME
       - IRIS_AUTHENTICATION_TYPE
+      # Poll interval (seconds) for the cert-reload watcher. Set to 0
+      # to disable auto-reload on cert change.
+      - IRIS_CERT_RELOAD_INTERVAL=${IRIS_CERT_RELOAD_INTERVAL:-60}
     networks:
       - iris_frontend
     ports:

@@ -72,8 +72,19 @@ def run_migrations_online():
             connection=connection, target_metadata=target_metadata
         )
 
-        #with context.begin_transaction(): -- Fixes stuck transaction. Need more info on that
-        context.run_migrations()
+        # `context.begin_transaction()` wraps the migrations in a
+        # transaction that alembic commits (updating alembic_version)
+        # on success. Without this block, "Will assume transactional
+        # DDL" still applies — Postgres wraps every DDL statement in
+        # a transaction — but nothing commits it, so the whole
+        # upgrade rolls back when the connection closes. The
+        # observable symptom is a log line saying "Running upgrade
+        # X -> Y" followed by no schema change and no
+        # alembic_version update. Old migrations that survived in
+        # this repo did so under an earlier env.py that had this
+        # wrapper.
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():

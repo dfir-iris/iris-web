@@ -74,9 +74,16 @@ class Events:
             event_assets = request_data.get('event_assets')
             event_iocs = request_data.get('event_iocs')
             sync_iocs_assets = request_data.get('event_sync_iocs_assets', False)
+            timeline_ids = request_data.get('timeline_ids')
 
-            event = events_create(case_identifier, event, event_category_id, event_assets, event_iocs, sync_iocs_assets)
+            event = events_create(case_identifier, event, event_category_id, event_assets,
+                                  event_iocs, sync_iocs_assets, timeline_ids=timeline_ids)
             result = self._schema.dump(event)
+            # Stamp the timeline membership on the response so the SPA
+            # doesn't need a second round-trip to know where the event
+            # ended up.
+            from app.business.case_timelines import get_event_timeline_ids
+            result['timeline_ids'] = get_event_timeline_ids(event.event_id)
             notify(case_identifier, 'events', 'updated', event.event_id, object_data=result)
 
             return response_api_created(result)
@@ -95,6 +102,8 @@ class Events:
                 return ac_api_return_access_denied(caseid=event.case_id)
 
             result = self._schema.dump(event)
+            from app.business.case_timelines import get_event_timeline_ids
+            result['timeline_ids'] = get_event_timeline_ids(event.event_id)
             return response_api_success(result)
         except ObjectNotFoundError:
             return response_api_not_found()
@@ -119,10 +128,14 @@ class Events:
             event_assets = request_data.get('event_assets')
             event_iocs = request_data.get('event_iocs')
             event_sync_iocs_assets = request_data.get('event_sync_iocs_assets')
+            timeline_ids = request_data.get('timeline_ids')
 
-            event = events_update(event, event_category_id, event_assets, event_iocs, event_sync_iocs_assets)
+            event = events_update(event, event_category_id, event_assets, event_iocs,
+                                  event_sync_iocs_assets, timeline_ids=timeline_ids)
 
             result = self._schema.dump(event)
+            from app.business.case_timelines import get_event_timeline_ids
+            result['timeline_ids'] = get_event_timeline_ids(event.event_id)
             notify(case_identifier, 'events', 'updated', identifier, object_data=result)
 
             return response_api_success(result)

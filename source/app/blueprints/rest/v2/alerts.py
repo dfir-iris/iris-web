@@ -33,6 +33,7 @@ from app.blueprints.rest.endpoints import response_api_not_found
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.parsing import parse_comma_separated_identifiers
 from app.blueprints.rest.v2.alerts_routes.comments import alerts_comments_blueprint
+from app.blueprints.rest.v2.alerts_routes.investigation_progress import alerts_investigation_progress_blueprint
 from app.blueprints.iris_user import iris_current_user
 from app.business.alerts import alerts_search
 from app.models.authorization import Permissions
@@ -46,6 +47,24 @@ from app.business.alerts import alerts_delete
 from app.business.alerts import alerts_get_related
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
+
+
+# Fields that must be immutable on alert update. See GHSA-8hwq-v6vm-9grr
+# / SBA-ADV-20260128-05 / CWE-863 — re-attributing alert_customer_id lets
+# a user with write access to one tenant move an alert under a tenant they
+# cannot see; alert_id is the primary key; alert_creation_time is audit
+# integrity (set once at creation).
+_ALERT_READONLY_UPDATE_FIELDS = frozenset({
+    'alert_id',
+    'alert_customer_id',
+    'alert_creation_time',
+})
+
+
+def _strip_readonly_alert_fields(payload):
+    if not isinstance(payload, dict):
+        return payload
+    return {k: v for k, v in payload.items() if k not in _ALERT_READONLY_UPDATE_FIELDS}
 
 
 class AlertsOperations:
@@ -122,7 +141,8 @@ class AlertsOperations:
             user_identifier_filter,
             page,
             per_page,
-            request.args.get('sort')
+            request.args.get('sort'),
+            request.args.get('cluster_id', type=int),
         )
 
         if filtered_alerts is None:
@@ -232,7 +252,12 @@ class AlertsOperations:
                 identifier,
                 fallback_customer_access=ac_current_user_has_customer_access
             )
-            request_data = request.get_json()
+            # Drop fields the caller must not be allowed to change on update
+            # (GHSA-8hwq-v6vm-9grr / SBA-ADV-20260128-05 / CWE-863). The
+            # customer_id is the worst: re-attributing an alert to a
+            # customer the caller cannot see hides it from the rightful
+            # owner and plants it under another tenant's view.
+            request_data = _strip_readonly_alert_fields(request.get_json())
             updated_alert = self._schema.load(request_data, instance=alert, partial=True)
             activity_data = []
 
@@ -280,6 +305,7 @@ class AlertsOperations:
 
 alerts_blueprint = Blueprint('alerts_rest_v2', __name__, url_prefix='/alerts')
 alerts_blueprint.register_blueprint(alerts_comments_blueprint)
+alerts_blueprint.register_blueprint(alerts_investigation_progress_blueprint)
 
 alerts_operations = AlertsOperations()
 

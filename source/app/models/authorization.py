@@ -21,15 +21,18 @@ import secrets
 import uuid
 from flask_login import UserMixin
 from sqlalchemy import BigInteger
+from sqlalchemy import DateTime
 from sqlalchemy import JSON
 from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
+from sqlalchemy import LargeBinary
 from sqlalchemy import String
 from sqlalchemy import Text
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -64,6 +67,34 @@ class Permissions(enum.Enum):
 
     activities_read = 0x400
     all_activities_read = 0x800
+
+    custom_dashboards_read = 0x1000
+    custom_dashboards_write = 0x2000
+    custom_dashboards_share = 0x4000
+
+    war_rooms_read = 0x8000
+    war_rooms_write = 0x10000
+    war_rooms_create = 0x20000
+
+    alert_clusters_read = 0x40000
+    alert_clusters_write = 0x80000
+    alert_clusters_delete = 0x100000
+
+    cluster_rules_read = 0x200000
+    cluster_rules_write = 0x400000
+
+    investigation_flows_read = 0x800000
+    investigation_flows_write = 0x1000000
+
+
+class WarRoomAccessLevel(enum.Enum):
+    deny_all = 0x1
+    read_only = 0x2
+    full_access = 0x4
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
 
 
 class Organisation(db.Model):
@@ -222,6 +253,20 @@ class User(UserMixin, db.Model):
     mfa_secrets = Column(Text, nullable=True)
     webauthn_credentials = Column(JSON, nullable=True)
     mfa_setup_complete = Column(Boolean(), default=False)
+    # Avatar storage. `avatar_blob` is the normalised 256x256 PNG
+    # served by `/api/v2/users/<id>/avatar`; `avatar_mime` is the
+    # MIME used for the Content-Type header on that response;
+    # `avatar_updated_at` powers both the ETag and `Last-Modified`
+    # so clients revalidate cheaply.
+    avatar_blob = Column(LargeBinary, nullable=True)
+    avatar_mime = Column(String(64), nullable=True)
+    avatar_updated_at = Column(DateTime, nullable=True)
+
+    # Free-form per-user preferences bag. Keyed by feature namespace
+    # (e.g. `war_room_stream` for the chat sidebar filter selection)
+    # so we can add more preferences later without new migrations.
+    # See migration d8e3f1a90c17.
+    preferences = Column(JSONB, nullable=True)
 
     groups = relationship('Group', secondary='user_group', viewonly=True)
     permissions = relationship('Group', secondary='user_group', viewonly=True)
@@ -254,6 +299,73 @@ class User(UserMixin, db.Model):
         db.session.commit()
 
         return self
+
+
+class UserFollowedCase(db.Model):
+    __tablename__ = 'user_followed_case'
+    __table_args__ = (
+        UniqueConstraint('user_id', 'case_id', name='uq_user_followed_case_user_case'),
+    )
+
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'),
+                     primary_key=True, nullable=False)
+    case_id = Column(BigInteger, ForeignKey('cases.case_id', ondelete='CASCADE'),
+                     primary_key=True, nullable=False)
+    created_at = Column(DateTime, nullable=False, server_default=text("now()"))
+
+    user = relationship('User')
+
+
+class UserWarRoomAccess(db.Model):
+    __tablename__ = "user_war_room_access"
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'user_id', name='uq_user_war_room_access_room_user'),
+    )
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    user = relationship('User')
+
+
+class GroupWarRoomAccess(db.Model):
+    __tablename__ = "group_war_room_access"
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'group_id', name='uq_group_war_room_access_room_group'),
+    )
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    group_id = Column(BigInteger, ForeignKey('groups.group_id', ondelete='CASCADE'), nullable=False)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    group = relationship('Group')
+
+
+class UserWarRoomEffectiveAccess(db.Model):
+    """Cached effective access per (user, war_room).
+
+    Mirrors `UserCaseEffectiveAccess` so list-queries can be answered
+    with a single indexed lookup instead of recomputing the
+    user→group→war_room precedence chain on every request.
+    """
+    __tablename__ = "user_war_room_effective_access"
+    __table_args__ = (
+        UniqueConstraint('war_room_id', 'user_id',
+                         name='uq_user_war_room_effective_access_room_user'),
+    )
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    user_id = Column(BigInteger, ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id', ondelete='CASCADE'),
+                         nullable=False)
+    access_level = Column(BigInteger, nullable=False)
+
+    user = relationship('User')
 
 
 def ac_flag_match_mask(flag, mask):

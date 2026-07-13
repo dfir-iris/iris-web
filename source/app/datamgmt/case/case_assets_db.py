@@ -37,6 +37,7 @@ from app.models.comments import AssetComments
 from app.models.assets import CompromiseStatus
 from app.models.assets import AssetsType
 from app.models.assets import CaseAssets
+from app.models.customers import Client
 from app.models.assets import AnalysisStatus
 from app.models.iocs import Ioc
 from app.models.models import IocAssetLink
@@ -376,3 +377,34 @@ def get_asset_by_name(asset_name, caseid):
         CaseAssets.case_id == caseid
     ).first()
     return asset
+
+
+def search_assets(search_value, accessible_case_ids=None):
+    # Matches the search-helper idiom used by `search_iocs` / `search_notes`
+    # — single SQL with `LIKE`, projects a flat row dict via `_asdict()`,
+    # scopes by the caller's accessible case ids when provided.
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = CaseAssets.case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
+    res = CaseAssets.query.with_entities(
+        CaseAssets.asset_id,
+        CaseAssets.asset_name,
+        CaseAssets.asset_description,
+        CaseAssets.asset_ip,
+        CaseAssets.asset_domain,
+        AssetsType.asset_name.label('asset_type_name'),
+        Cases.name.label('case_name'),
+        Cases.case_id,
+        Client.name.label('customer_name')
+    ).filter(
+        and_(
+            CaseAssets.asset_name.like(f'%{search_value}%'),
+            CaseAssets.case_id == Cases.case_id,
+            Client.client_id == Cases.client_id,
+            scope_filter
+        )
+    ).join(CaseAssets.asset_type).all()
+
+    return [row._asdict() for row in res]

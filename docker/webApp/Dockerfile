@@ -34,7 +34,10 @@ RUN npm run build
 # COMPILE IMAGE #
 #################
 FROM python:3.12 AS compile-image
-RUN apt-get update
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && (apt-get purge -y --auto-remove 'imagemagick*' 'libmagickcore-*' 'libmagickwand-*' || true) \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN python -m venv /opt/venv
 # Make sure we use the virtualenv:
@@ -59,8 +62,11 @@ ENV PATH="/opt/venv/bin:$PATH"
 # Define specific admin password at creation
 #ENV IRIS_ADM_PASSWORD="MySuperFirstPasswordIWant"
 
-RUN apt update
-RUN apt install -y p7zip-full pgp rsync postgresql-client
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends p7zip-full pgp rsync postgresql-client \
+    && (apt-get purge -y --auto-remove 'imagemagick*' 'libmagickcore-*' 'libmagickwand-*' || true) \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir /iriswebapp/
 RUN mkdir -p /home/iris/certificates/web_certificates
@@ -78,10 +84,6 @@ COPY docker/webApp/wait-for-iriswebapp.sh .
 COPY ./source .
 
 COPY --from=compile-js-image /ui/dist/ /iriswebapp/static/
-
-# Add execution right to binaries needed by evtx2splunk for iris_evtx module
-RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/fd
-RUN chmod +x /iriswebapp/dependencies/evtxdump_binaries/linux/x64/evtx_dump
 
 RUN chmod +x iris-entrypoint.sh
 RUN chmod +x wait-for-iriswebapp.sh

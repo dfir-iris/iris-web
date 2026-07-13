@@ -33,9 +33,12 @@ from app.datamgmt.case.case_events_db import delete_event
 from app.iris_engine.utils.tracker import track_activity
 from app.iris_engine.utils.collab import collab_notify
 from app.iris_engine.module_handler.module_handler import call_modules_hook
+from app.business.case_timelines import attach_event_to_default_timeline_if_unset
+from app.business.case_timelines import set_event_timelines
 
 
-def events_create(case_identifier, event: CasesEvent, event_category_id, event_assets, event_iocs, sync_iocs_assets) -> CasesEvent:
+def events_create(case_identifier, event: CasesEvent, event_category_id, event_assets,
+                  event_iocs, sync_iocs_assets, timeline_ids=None) -> CasesEvent:
 
     event.case_id = case_identifier
     event.event_added = datetime.utcnow()
@@ -61,6 +64,13 @@ def events_create(case_identifier, event: CasesEvent, event_category_id, event_a
 
     setattr(event, 'event_category_id', event_category_id)
 
+    if timeline_ids is None:
+        # Caller didn't specify — keep the legacy "all events appear on
+        # the timeline view" behaviour by stamping the default timeline.
+        attach_event_to_default_timeline_if_unset(event.event_id, case_identifier)
+    else:
+        set_event_timelines(event.event_id, case_identifier, timeline_ids)
+
     event = call_modules_hook('on_postload_event_create', event, caseid=case_identifier)
 
     track_activity(f'added event "{event.event_title}"', caseid=case_identifier)
@@ -74,7 +84,8 @@ def events_get(identifier) -> CasesEvent:
     return event
 
 
-def events_update(event: CasesEvent, event_category_id, event_assets, event_iocs, event_sync_iocs_assets) -> CasesEvent:
+def events_update(event: CasesEvent, event_category_id, event_assets, event_iocs,
+                  event_sync_iocs_assets, timeline_ids=None) -> CasesEvent:
     add_obj_history_entry(event, 'updated')
 
     update_timeline_state(event.case_id)
@@ -91,6 +102,9 @@ def events_update(event: CasesEvent, event_category_id, event_assets, event_iocs
     success, log = update_event_iocs(event.event_id, event.case_id, event_iocs)
     if not success:
         raise BusinessProcessingError('Error while saving linked iocs', data=log)
+
+    if timeline_ids is not None:
+        set_event_timelines(event.event_id, event.case_id, timeline_ids)
 
     event = call_modules_hook('on_postload_event_update', event, caseid=event.case_id)
 

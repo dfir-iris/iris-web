@@ -28,6 +28,7 @@ import tempfile
 from flask import current_app
 from marshmallow import EXCLUDE
 from marshmallow import fields
+from marshmallow import post_dump
 from marshmallow import post_load
 from marshmallow import pre_load
 from marshmallow.exceptions import ValidationError
@@ -51,6 +52,7 @@ from app.datamgmt.datastore.datastore_db import datastore_get_standard_path
 from app.datamgmt.manage.manage_attribute_db import merge_custom_attributes
 from app.datamgmt.manage.manage_tags_db import add_db_tag
 from app.datamgmt.case.case_iocs_db import get_ioc_links
+from app.datamgmt.case.case_tasks_db import get_task_assignees
 from app.iris_engine.access_control.utils import ac_mask_from_val_list
 from app.models.models import SavedFilter
 from app.models.models import DataStorePath
@@ -82,6 +84,14 @@ from app.models.alerts import Alert
 from app.models.alerts import Severity
 from app.models.alerts import AlertStatus
 from app.models.alerts import AlertResolutionStatus
+from app.models.alert_clusters import AlertCluster
+from app.models.alert_clusters import AlertClusterStatus
+from app.models.cluster_rules import ClusterRule
+from app.models.cluster_rules import RULE_ACTION_CREATE_CLUSTER
+from app.models.investigation_flows import InvestigationFlow
+from app.models.investigation_flows import InvestigationFlowStep
+from app.models.investigation_flows import AlertInvestigationProgress
+from app.models.investigation_flows import AlertClusterInvestigationProgress
 from app.models.authorization import Group
 from app.models.authorization import Organisation
 from app.models.authorization import User
@@ -253,7 +263,7 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
     user_name: str = auto_field('name', required=True, validate=Length(min=2))
     user_login: str = auto_field('user', required=True, validate=Length(min=2))
     user_email: str = auto_field('email', required=True, validate=Length(min=2))
-    user_password: Optional[str] = auto_field('password', required=False)
+    user_password: Optional[str] = auto_field('password', required=False, load_only=True)
     user_isadmin: bool = fields.Boolean(required=True)
     user_id: Optional[int] = fields.Integer(required=False)
     user_primary_organisation_id: Optional[int] = fields.Integer(required=False)
@@ -263,7 +273,18 @@ class UserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account']
+        # `avatar_blob` is bytes — never serialise it through JSON;
+        # the actual image is fetched lazily from
+        # `/api/v2/users/<id>/avatar`. `avatar_mime` is an
+        # implementation detail, also dropped. `avatar_updated_at`
+        # passes through so the SPA can cache-bust the avatar URL.
+        exclude = ['api_key', 'password', 'ctx_case', 'ctx_human_case', 'user', 'name', 'email',
+                   'is_service_account', 'mfa_secrets', 'webauthn_credentials',
+                   'avatar_blob', 'avatar_mime',
+                   # `preferences` has its own dedicated endpoints — no
+                   # reason to ship a potentially large JSONB blob on
+                   # every user serialisation.
+                   'preferences']
         unknown = EXCLUDE
 
     @pre_load()
@@ -1128,7 +1149,10 @@ class UserFullSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         include_fk = True
-        exclude = ['password', 'ctx_case', 'ctx_human_case']
+        exclude = ['password', 'ctx_case', 'ctx_human_case', 'mfa_secrets', 'webauthn_credentials',
+                   'avatar_blob', 'avatar_mime',
+                   # `preferences` has its own dedicated endpoints.
+                   'preferences']
         unknown = EXCLUDE
 
 
@@ -1317,6 +1341,7 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
     file_original_name: str = auto_field('file_original_name', required=True, validate=Length(min=1), allow_none=False)
     file_description: str = auto_field('file_description', allow_none=False)
     file_content: Optional[bytes] = fields.Raw(required=False)
+    file_local_name: Optional[str] = auto_field('file_local_name', required=False, load_only=True)
 
     class Meta:
         model = DataStoreFile
@@ -1462,19 +1487,67 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
 
 class ServerSettingsSchema(ma.SQLAlchemyAutoSchema):
-    """Schema for serializing and deserializing ServerSettings objects.
+    """Schema for the singleton `ServerSettings` row.
 
-    This schema defines the fields to include when serializing and deserializing ServerSettings objects.
-    It includes fields for the HTTP proxy, HTTPS proxy, and whether to prevent post-modification repush.
+    Every editable column on the model is declared explicitly so the
+    SvelteKit `/settings/server` page can introspect the field list
+    via `Meta.fields` if it ever needs to. Two columns are intentionally
+    excluded from load and load-only respectively:
 
+      * `id` — the row is a singleton anchored at id=1; clients never
+        get to touch it.
+      * `has_updates_available` — written by the periodic update
+        checker, surfaced read-only on the page.
     """
-    http_proxy: Optional[str] = fields.String(required=False, allow_none=False)
-    https_proxy: Optional[str] = fields.String(required=False, allow_none=False)
+    http_proxy: Optional[str] = fields.String(required=False, allow_none=True)
+    https_proxy: Optional[str] = fields.String(required=False, allow_none=True)
     prevent_post_mod_repush: Optional[bool] = fields.Boolean(required=False)
+    prevent_post_objects_repush: Optional[bool] = fields.Boolean(required=False)
+    has_updates_available: Optional[bool] = fields.Boolean(dump_only=True)
+    enable_updates_check: Optional[bool] = fields.Boolean(required=False)
+    password_policy_min_length: Optional[int] = fields.Integer(required=False)
+    password_policy_upper_case: Optional[bool] = fields.Boolean(required=False)
+    password_policy_lower_case: Optional[bool] = fields.Boolean(required=False)
+    password_policy_digit: Optional[bool] = fields.Boolean(required=False)
+    password_policy_special_chars: Optional[str] = fields.String(required=False, allow_none=True)
+    enforce_mfa: Optional[bool] = fields.Boolean(required=False)
+    force_confirmation_before_delete: Optional[bool] = fields.Boolean(required=False)
+
+    # ---- Mail — outbound (SMTP) --------------------------------------
+    # Passwords are load-only: the GET path must never return the
+    # ciphertext (leaking it doesn't leak the plaintext, but it does
+    # reveal that the field is set, and future rotation of SECRET_KEY
+    # would make the exposure worse). Instead the read path returns a
+    # sentinel `_password_set` boolean the SPA uses to render "•••••"
+    # placeholders in the form — see `ServerOperations.read_settings`.
+    mail_smtp_enabled: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_smtp_host: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_smtp_port: Optional[int] = fields.Integer(required=False, allow_none=True)
+    mail_smtp_user: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_smtp_password: Optional[str] = fields.String(required=False, allow_none=True, load_only=True)
+    mail_smtp_use_tls: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_smtp_use_ssl: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_from_address: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_from_name: Optional[str] = fields.String(required=False, allow_none=True)
+
+    # ---- Mail — inbound (IMAP) ---------------------------------------
+    mail_imap_enabled: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_imap_host: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_imap_port: Optional[int] = fields.Integer(required=False, allow_none=True)
+    mail_imap_user: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_imap_password: Optional[str] = fields.String(required=False, allow_none=True, load_only=True)
+    mail_imap_use_ssl: Optional[bool] = fields.Boolean(required=False, allow_none=True)
+    mail_imap_mailbox: Optional[str] = fields.String(required=False, allow_none=True)
+    mail_imap_poll_interval_sec: Optional[int] = fields.Integer(required=False, allow_none=True)
+    mail_imap_max_attachment_mb: Optional[int] = fields.Integer(required=False, allow_none=True)
 
     class Meta:
         model = ServerSettings
         load_instance = True
+        # `id` is excluded because the row is a singleton — there's
+        # only ever id=1 and the API shouldn't expose a way to change
+        # it.
+        exclude = ('id',)
         unknown = EXCLUDE
 
 
@@ -1980,6 +2053,29 @@ class CaseTaskSchema(ma.SQLAlchemyAutoSchema):
 
         return data
 
+    @post_dump(pass_original=True)
+    def populate_assignees(self, data: Dict[str, Any], original: Any, **kwargs: Any) -> Dict[str, Any]:
+        """Inject the assignee list for the task.
+
+        `task_assignees` and `task_assignees_id` are declared as schema
+        fields, but the `CaseTasks` model itself has no relationship to
+        `TaskAssignee` — so without this hook both fields always serialise
+        to `None`, which silently hides the assignees stored in the DB
+        and breaks the frontend assignee picker on re-edit.
+
+        We query `TaskAssignee` once per dumped task and back-fill both
+        fields. When the schema is dumped without a model instance (e.g.
+        from a dict), we leave the data untouched.
+        """
+        task_id = getattr(original, 'id', None) if original is not None else None
+        if task_id is None:
+            return data
+
+        assignees = get_task_assignees(task_id)
+        data['task_assignees'] = assignees
+        data['task_assignees_id'] = [assignee['id'] for assignee in assignees]
+        return data
+
 
 class CaseEvidenceSchema(ma.SQLAlchemyAutoSchema):
     """Schema for serializing and deserializing CaseEvidence objects.
@@ -2088,29 +2184,38 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
 
     @pre_load
     def parse_permissions(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
-        """Parses the group permissions.
+        """Normalise `group_permissions` into an access-control bitmask.
 
-        This method parses the group permissions specified in the data and converts them to an access control mask.
-        If no permissions are specified, it sets the mask to 0.
+        Accepts either an int (already a mask) or a list of ints
+        (OR-folded into a mask). Historically this method injected
+        `group_permissions = 0` when the caller omitted the key, which
+        silently wiped a group's permissions on any partial PATCH that
+        happened to only touch `group_name` / `group_description`.
+        We now leave the key alone when it isn't supplied so `load(...,
+        partial=True)` can preserve the persisted value.
 
         Args:
-            data: The data to load.
-            kwargs: Additional keyword arguments.
+            data: The raw payload to load.
+            kwargs: Marshmallow-supplied context (unused).
 
         Returns:
-            The loaded data with the access control mask.
-
+            The payload with `group_permissions` normalised, or
+            untouched if the caller didn't send it.
         """
-        permissions = data.get('group_permissions')
-        if type(permissions) != list and not isinstance(permissions, type(None)):
+        if 'group_permissions' not in data:
+            return data
+
+        permissions = data['group_permissions']
+        if permissions is None:
+            # Explicit null → treat as "clear all permissions" (0).
+            # Distinct from "key absent", which we skip above.
+            data['group_permissions'] = 0
+            return data
+
+        if not isinstance(permissions, list):
             permissions = [permissions]
 
-        if permissions is not None:
-            data['group_permissions'] = ac_mask_from_val_list(permissions)
-
-        else:
-            data['group_permissions'] = 0
-
+        data['group_permissions'] = ac_mask_from_val_list(permissions)
         return data
 
 
@@ -2180,7 +2285,8 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
         model = User
         load_instance = True
         exclude = ['password', 'api_key', 'ctx_case', 'ctx_human_case', 'active', 'external_id', 'in_dark_mode',
-                   'id', 'name', 'email', 'user', 'uuid']
+                   'id', 'name', 'email', 'user', 'uuid', 'mfa_secrets', 'webauthn_credentials',
+                   'avatar_blob', 'avatar_mime']
         unknown = EXCLUDE
 
 
@@ -2264,6 +2370,8 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
     assets = ma.Nested(CaseAssetsSchema, many=True, exclude=['alerts'])
     resolution_status = ma.Nested(AlertResolutionSchema)
     cases = fields.Pluck(AlertCaseSchema, 'case_id', many=True, required=False)
+    clusters = fields.Method('_cluster_ids', dump_only=True)
+    investigation_flow = fields.Method('_flow_summary', dump_only=True)
 
     class Meta:
         model = Alert
@@ -2271,6 +2379,15 @@ class AlertSchema(ma.SQLAlchemyAutoSchema):
         include_fk = True
         load_instance = True
         unknown = EXCLUDE
+
+    def _cluster_ids(self, alert: Alert):
+        return [c.cluster_id for c in (alert.clusters or [])]
+
+    def _flow_summary(self, alert: Alert):
+        flow = alert.investigation_flow
+        if not flow:
+            return None
+        return {'flow_id': flow.flow_id, 'flow_name': flow.flow_name}
 
     @pre_load
     def verify_data(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
@@ -2515,7 +2632,13 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
         load_instance = True
         include_fk = True
         exclude = ['api_key', 'password', 'ctx_human_case', 'user', 'name', 'email', 'is_service_account', 'mfa_secrets',
-                   'webauthn_credentials', 'mfa_setup_complete', 'external_id', 'active', 'id']
+                   'webauthn_credentials', 'mfa_setup_complete', 'external_id', 'active', 'id',
+                   # See UserSchema above — bytes blob never goes
+                   # through JSON; image bytes are served lazily.
+                   'avatar_blob', 'avatar_mime',
+                   # `preferences` has its own dedicated endpoints —
+                   # kept out of the general user serialiser.
+                   'preferences']
         unknown = EXCLUDE
 
     def get_user_primary_organisation(self, obj):
@@ -2657,3 +2780,199 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
                 raise ValidationError(password_error, field_name='user_password')
 
         return data
+
+
+class AlertClusterStatusSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = AlertClusterStatus
+        load_instance = True
+        unknown = EXCLUDE
+
+
+class AlertClusterSchema(ma.SQLAlchemyAutoSchema):
+    status = ma.Nested(AlertClusterStatusSchema, dump_only=True)
+    severity = ma.Nested(SeveritySchema, dump_only=True)
+    customer = ma.Nested(CustomerSchema, dump_only=True)
+    owner = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login', 'user_email'], dump_only=True)
+    alert_ids = fields.Method('_alert_ids', dump_only=True)
+    investigation_flow = fields.Method('_flow_summary', dump_only=True)
+    source_rule = fields.Method('_source_rule_summary', dump_only=True)
+
+    class Meta:
+        model = AlertCluster
+        include_relationships = True
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+    def _alert_ids(self, cluster: AlertCluster):
+        return [a.alert_id for a in (cluster.alerts or [])]
+
+    def _flow_summary(self, cluster: AlertCluster):
+        flow = cluster.investigation_flow
+        if not flow:
+            return None
+        return {'flow_id': flow.flow_id, 'flow_name': flow.flow_name}
+
+    def _source_rule_summary(self, cluster: AlertCluster):
+        # Surface the rule that created the cluster so the detail page can
+        # link back to /settings/cluster-rules for auditability.
+        rule = cluster.source_rule
+        if not rule:
+            return None
+        return {'rule_id': rule.rule_id, 'rule_name': rule.rule_name}
+
+
+def _validate_condition_node(node, path):
+    """Recursively check that a condition tree is well-formed.
+
+    A node is either:
+      * a leaf `{field, operator[, value]}`
+      * a group `{logic, conditions: [...]}` where each entry is itself a node
+
+    Same shape `apply_custom_conditions` accepts. We stay lenient — the
+    SQL layer will reject unknown fields / operators when the rule
+    fires; the goal here is only to reject obviously malformed rows.
+    """
+    if not isinstance(node, dict):
+        raise ValidationError(f'{path} must be an object')
+    if 'conditions' in node and 'field' not in node:
+        # Group node
+        logic = node.get('logic', 'and')
+        if logic not in ('and', 'or', 'not'):
+            raise ValidationError(f"{path}.logic must be one of 'and'/'or'/'not'")
+        inner = node.get('conditions')
+        if not isinstance(inner, list):
+            raise ValidationError(f'{path}.conditions must be a list')
+        for idx, sub in enumerate(inner):
+            _validate_condition_node(sub, f'{path}.conditions[{idx}]')
+        return
+    # Leaf node
+    if 'field' not in node or 'operator' not in node:
+        raise ValidationError(f'{path} must include field and operator')
+
+
+def _validate_rule_conditions(payload):
+    if not isinstance(payload, dict):
+        raise ValidationError('rule_conditions must be an object')
+    logic = payload.get('logic', 'and')
+    if logic not in ('and', 'or', 'not'):
+        raise ValidationError("rule_conditions.logic must be one of 'and'/'or'/'not'")
+    conditions = payload.get('conditions')
+    if not isinstance(conditions, list) or not conditions:
+        raise ValidationError('rule_conditions.conditions must be a non-empty list')
+    for idx, cond in enumerate(conditions):
+        _validate_condition_node(cond, f'rule_conditions.conditions[{idx}]')
+    time_window = payload.get('time_window_seconds')
+    if time_window is not None and (not isinstance(time_window, int) or time_window < 0):
+        raise ValidationError('rule_conditions.time_window_seconds must be a non-negative integer')
+    group_by = payload.get('group_by')
+    if group_by is not None and (not isinstance(group_by, list)
+                                 or not all(isinstance(g, str) for g in group_by)):
+        raise ValidationError('rule_conditions.group_by must be a list of field names')
+
+
+class ClusterRuleSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = ClusterRule
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+    @pre_load
+    def _validate(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        if 'rule_conditions' in data:
+            _validate_rule_conditions(data['rule_conditions'])
+        action = data.get('rule_action_type')
+        # The historical `attach_flow` action was removed — flows now own
+        # their own conditions (see InvestigationFlow.flow_conditions), so
+        # the only remaining rule action is stacking alerts into clusters.
+        if action is not None and action != RULE_ACTION_CREATE_CLUSTER:
+            raise ValidationError(
+                f'rule_action_type must be {RULE_ACTION_CREATE_CLUSTER}'
+            )
+        scope = data.get('rule_customer_scope')
+        if scope is not None and (not isinstance(scope, list)
+                                  or not all(isinstance(s, int) for s in scope)):
+            raise ValidationError('rule_customer_scope must be null or a list of customer ids')
+        return data
+
+
+class InvestigationFlowStepSchema(ma.SQLAlchemyAutoSchema):
+    # `flow_id` is set by the route from the URL path (see
+    # `flow_step_create` in `app/business/investigation_flows.py`), so the
+    # client must not have to repeat it in the body. Without this override
+    # marshmallow-sqlalchemy makes it required (the column is
+    # `nullable=False`) and the POST 400s with "Missing data for required
+    # field.". `load_default=None` lets `.load()` succeed without it; the
+    # route stamps the correct id before commit.
+    flow_id = auto_field(required=False, load_default=None)
+
+    class Meta:
+        model = InvestigationFlowStep
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+
+class InvestigationFlowSchema(ma.SQLAlchemyAutoSchema):
+    steps = ma.Nested(InvestigationFlowStepSchema, many=True)
+
+    class Meta:
+        model = InvestigationFlow
+        include_relationships = True
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+    @pre_load
+    def _validate(self, data: Dict[str, Any], **kwargs: Any) -> Dict[str, Any]:
+        # Reuse the same conditions validator as cluster rules so the DSL
+        # semantics stay identical across features. `flow_conditions` may
+        # be omitted (an empty condition list is the default), but a
+        # payload that includes it must be well-formed.
+        from app.models.investigation_flows import FLOW_TARGETS
+        conditions = data.get('flow_conditions')
+        if conditions is not None:
+            if not isinstance(conditions, dict):
+                raise ValidationError('flow_conditions must be an object')
+            logic = conditions.get('logic', 'and')
+            if logic not in ('and', 'or', 'not'):
+                raise ValidationError("flow_conditions.logic must be 'and'/'or'/'not'")
+            cond_list = conditions.get('conditions')
+            if not isinstance(cond_list, list):
+                raise ValidationError('flow_conditions.conditions must be a list')
+            # Empty list is allowed here (unlike rules) — a flow with no
+            # conditions simply never auto-attaches; deploy skips it too.
+            for idx, cond in enumerate(cond_list):
+                _validate_condition_node(cond, f'flow_conditions.conditions[{idx}]')
+        target = data.get('flow_target')
+        if target is not None and target not in FLOW_TARGETS:
+            raise ValidationError(
+                f'flow_target must be one of {"/".join(FLOW_TARGETS)}'
+            )
+        scope = data.get('flow_customer_scope')
+        if scope is not None and (not isinstance(scope, list)
+                                  or not all(isinstance(s, int) for s in scope)):
+            raise ValidationError('flow_customer_scope must be null or a list of customer ids')
+        return data
+
+
+class AlertInvestigationProgressSchema(ma.SQLAlchemyAutoSchema):
+    completed_by = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login'], dump_only=True)
+
+    class Meta:
+        model = AlertInvestigationProgress
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE
+
+
+class AlertClusterInvestigationProgressSchema(ma.SQLAlchemyAutoSchema):
+    completed_by = ma.Nested(UserSchema, only=['id', 'user_name', 'user_login'], dump_only=True)
+
+    class Meta:
+        model = AlertClusterInvestigationProgress
+        include_fk = True
+        load_instance = True
+        unknown = EXCLUDE

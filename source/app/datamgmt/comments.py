@@ -46,6 +46,20 @@ def get_filtered_alert_comments(alert_identifier: int, pagination_parameters: Pa
     return query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page())
 
 
+def get_filtered_alert_cluster_comments(cluster_identifier: int, pagination_parameters: PaginationParameters) -> Pagination:
+    query = Comments.query.filter(
+        Comments.comment_cluster_id == cluster_identifier
+    ).order_by(Comments.comment_date.asc())
+    return query.paginate(page=pagination_parameters.get_page(), per_page=pagination_parameters.get_per_page())
+
+
+def get_alert_cluster_comment(cluster_identifier: int, comment_identifier: int) -> Optional[Comments]:
+    return Comments.query.filter(
+        Comments.comment_id == comment_identifier,
+        Comments.comment_cluster_id == cluster_identifier,
+    ).first()
+
+
 def get_filtered_asset_comments(asset_identifier: int, pagination_parameters: PaginationParameters) -> Pagination:
     query = Comments.query.filter(
         AssetComments.comment_asset_id == asset_identifier
@@ -115,12 +129,16 @@ def user_has_comments(user: User):
     return comment is not None
 
 
-def search_comments(search_value):
-    search_condition = and_()
+def search_comments(search_value, accessible_case_ids=None):
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = Cases.case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
     comments = Comments.query.filter(
         Comments.comment_text.like(f'%{search_value}%'),
         Cases.client_id == Client.client_id,
-        search_condition
+        scope_filter
     ).with_entities(
         Comments.comment_id,
         Comments.comment_text,

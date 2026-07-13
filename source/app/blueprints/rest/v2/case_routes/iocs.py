@@ -38,6 +38,9 @@ from app.business.iocs import iocs_get
 from app.business.iocs import iocs_delete
 from app.business.iocs import iocs_update
 from app.business.iocs import iocs_filter
+from app.datamgmt.case.case_iocs_db import get_ioc_links
+from app.iris_engine.access_control.utils import ac_get_fast_user_cases_access
+from app.blueprints.iris_user import iris_current_user
 from app.models.authorization import CaseAccessLevel
 from app.schema.marshables import IocSchemaForAPIV2
 from app.blueprints.access_controls import ac_api_return_access_denied
@@ -191,3 +194,33 @@ def update_ioc(case_identifier, identifier):
 @ac_api_requires()
 def delete_case_ioc(case_identifier, identifier):
     return iocs_operations.delete(case_identifier, identifier)
+
+
+@case_iocs_blueprint.get('/<int:identifier>/links')
+@ac_api_requires()
+def get_ioc_other_case_links(case_identifier, identifier):
+    """Return the list of OTHER cases where the same IOC value+type was seen.
+
+    Mirrors the v2.4.x analyst affordance: when working a new case, surfacing
+    that an IOC has been seen on a previous one (and which one) is one of
+    the highest-signal pivots an analyst gets. The legacy UI lit a small
+    badge on each IOC row and exposed the same data through a tooltip; we
+    keep that semantic and let the SPA decide how to render it.
+
+    The lookup is gated by the same per-user case-access filter the legacy
+    `/case/ioc/list` route used, so analysts only see hits in cases they're
+    already allowed to read — no information leakage across access
+    boundaries.
+    """
+    if not ac_fast_check_current_user_has_case_access(
+            case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_identifier)
+
+    try:
+        ioc = IocsOperations._get_ioc_in_case(identifier, case_identifier)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    user_search_limitations = ac_get_fast_user_cases_access(iris_current_user.id)
+    links = get_ioc_links(ioc.ioc_id, user_search_limitations)
+    return response_api_success([row._asdict() for row in links])

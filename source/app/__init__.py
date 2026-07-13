@@ -155,7 +155,15 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', app.config['IRIS_ALLOW_ORIGIN'])
     response.headers.add('Access-Control-Allow-Credentials', 'true')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    # PATCH was missing — preflight for `PATCH /api/v2/war-rooms/<id>`
+    # (and any other v2 PATCH endpoint we add) failed the CORS check
+    # because this list didn't include the verb. Browsers cache failed
+    # preflights for a few seconds, so a stale tab may keep failing
+    # briefly after this lands.
+    response.headers.add(
+        'Access-Control-Allow-Methods',
+        'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+    )
 
     return response
 
@@ -176,7 +184,11 @@ lm.request_loader(load_user_from_request)
 from app.blueprints.socket_io_event_handlers.case_event_handlers import register_case_event_handlers
 from app.blueprints.socket_io_event_handlers.case_notes_event_handlers import register_notes_event_handlers
 from app.blueprints.socket_io_event_handlers.update_event_handlers import register_update_event_handlers
+from app.blueprints.socket_io_event_handlers.notification_event_handlers import register_notification_socket_handlers
+from app.blueprints.socket_io_event_handlers.collab_event_handlers import register_collab_socket_handlers
 
 register_case_event_handlers()
 register_notes_event_handlers()
 register_update_event_handlers()
+register_notification_socket_handlers()
+register_collab_socket_handlers()

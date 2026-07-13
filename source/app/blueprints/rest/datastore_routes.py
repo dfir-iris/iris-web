@@ -55,6 +55,27 @@ from app.blueprints.responses import response_success
 datastore_rest_blueprint = Blueprint('datastore_rest', __name__)
 
 
+# Allowlist of multipart form fields a caller may write through the file
+# add/update endpoints. Anything else (notably file_id, file_local_name,
+# file_case_id, file_sha256, file_size, added_by_user_id, file_date_added,
+# ...) is dropped before the schema is loaded. Closes the mass-assignment
+# vector reported as GHSA-qhqj-8qw6-wp8v / CWE-915.
+_DS_FILE_WRITABLE_FIELDS = (
+    'file_original_name',
+    'file_description',
+    'file_password',
+    'file_is_ioc',
+    'file_is_evidence',
+    'file_parent_id',
+    'file_tags',
+)
+
+
+def _filter_ds_file_form(form):
+    """Project a flask.request.form dict down to the writable allowlist."""
+    return {field: form.get(field) for field in _DS_FILE_WRITABLE_FIELDS if field in form}
+
+
 @datastore_rest_blueprint.route('/datastore/list/tree', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
@@ -98,7 +119,6 @@ def datastore_info_file(cur_id: int, caseid: int):
 
     file_schema = DSFileSchema()
     file = file_schema.dump(file)
-    del file['file_local_name']
 
     return response_success("", data=file)
 
@@ -114,7 +134,7 @@ def datastore_update_file(cur_id: int, caseid: int):
     dsf_schema = DSFileSchema()
     try:
 
-        dsf_sc = dsf_schema.load(request.form, instance=dsf, partial=True)
+        dsf_sc = dsf_schema.load(_filter_ds_file_form(request.form), instance=dsf, partial=True)
         add_obj_history_entry(dsf_sc, 'updated')
 
         dsf.file_is_ioc = request.form.get('file_is_ioc') is not None or request.form.get('file_is_ioc') is True
@@ -218,7 +238,15 @@ def datastore_view_file(cur_id: int, caseid: int):
         return response_error(f'File {dsf.file_local_name} does not exists on the server. '
                               f'Update or delete virtual entry')
 
-    resp = send_file(dsf.file_local_name, as_attachment=False,
+    # Keep inline display only for file types the browser cannot execute as
+    # script. SVG can embed <script>; HTML/XML execute JS in the application
+    # origin. Force everything else to download so a malicious upload can't
+    # turn the datastore into a stored-XSS sink (SBA-ADV-20260126-03 / CWE-79).
+    safe_inline_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp'}
+    file_extension = Path(destination_name).suffix.lower().lstrip('.')
+    serve_as_attachment = file_extension not in safe_inline_extensions
+
+    resp = send_file(dsf.file_local_name, as_attachment=serve_as_attachment,
                      download_name=destination_name)
 
     track_activity(f"File \"{destination_name}\" downloaded", caseid=caseid, display_in_ui=False)
@@ -236,7 +264,7 @@ def datastore_add_file(cur_id: int, caseid: int):
     dsf_schema = DSFileSchema()
     try:
 
-        dsf_sc = dsf_schema.load(request.form, partial=True)
+        dsf_sc = dsf_schema.load(_filter_ds_file_form(request.form), partial=True)
 
         dsf_sc.file_parent_id = dsp.path_id
         dsf_sc.added_by_user_id = iris_current_user.id

@@ -24,6 +24,7 @@ from app.datamgmt.manage.manage_access_control_db import add_user_case_effective
 from app.datamgmt.manage.manage_access_control_db import check_ua_case_client
 from app.datamgmt.manage.manage_access_control_db import user_has_client_access
 from app.logger import logger
+from app.models.authorization import Permissions
 from app.models.authorization import UserCaseAccess
 from app.models.authorization import ac_has_permission_server_administrator
 from app.models.authorization import CaseAccessLevel
@@ -77,7 +78,23 @@ def ac_fast_check_user_has_case_access(user_id, cid, expected_access_levels: lis
     access_level = get_case_effective_access(user_id, cid)
 
     if not access_level:
-        # The user has no direct access, check if he is part of the client
+        # No direct grant. Before falling through to the client-membership
+        # check, confirm the user actually has app-level permissions —
+        # OIDC-only sessions without standard_user / server_administrator
+        # should not auto-inherit cases via customer membership. Mirrors
+        # the v2.4.29 guard in iris-engine ac_fast_check_user_has_case_access.
+        # Late import: iris_engine.access_control.utils and manage_users_db
+        # both import back into this module, so resolve them at call time.
+        from app.iris_engine.access_control.utils import ac_get_effective_permissions_of_user
+        from app.datamgmt.manage.manage_users_db import get_user
+        user = get_user(user_id)
+        if user is None:
+            return None
+        permissions = ac_get_effective_permissions_of_user(user)
+        if not ac_flag_match_mask(permissions, Permissions.server_administrator.value) \
+                and not ac_flag_match_mask(permissions, Permissions.standard_user.value):
+            return None
+
         access_level = check_ua_case_client(user_id, cid)
         if not access_level:
             return None
@@ -118,3 +135,62 @@ def access_controls_user_has_customer_access(
             return False
 
     return False
+
+
+def access_controls_user_has_customer_scope(
+    user,
+    permissions,
+    customer_scope,
+    fallback_customer_access=None
+):
+    """Verify the caller can act on a resource declared with the given
+    `customer_scope` shape used by cluster rules and investigation flows.
+
+    Semantics — mirror the tenant-safety pattern used elsewhere:
+      * `customer_scope == None` (a null-scope "global" resource) requires
+        `server_administrator`. Non-admins must never be able to create,
+        edit, deploy, or back-fill a resource that would affect every
+        tenant on the box.
+      * A non-empty list requires access to EVERY customer id in it
+        (subset check). Rejecting a partial-access payload is the safe
+        default: acting on the resource touches every customer in the
+        list, so any single unreachable id is a cross-tenant write.
+      * An empty list is treated the same as null-scope — the resource
+        has no meaningful tenant boundary, so admin-only is the right
+        gate rather than silently allowing a global write."""
+    if ac_has_permission_server_administrator(permissions):
+        return True
+
+    if not customer_scope:  # None or []
+        return False
+
+    if not isinstance(customer_scope, (list, tuple)):
+        # Payload shape guard — schema validation should already have
+        # caught this, but a defensive False here means "unknown shape,
+        # deny" rather than "unknown shape, allow".
+        return False
+
+    for customer_id in customer_scope:
+        if not access_controls_user_has_customer_access(
+            user, permissions, customer_id,
+            fallback_customer_access=fallback_customer_access,
+        ):
+            return False
+    return True
+
+
+def access_controls_user_accessible_customers(user, permissions):
+    """Return the set of customer ids the caller can read. `None` marker
+    means "no filter — server_administrator sees all". Used by list
+    endpoints so they don't leak resources scoped to unreachable tenants."""
+    from app.models.authorization import UserClient  # local import — avoid boot-time cycle
+
+    if ac_has_permission_server_administrator(permissions):
+        return None
+    user_id = getattr(user, 'id', None)
+    if user_id is None:
+        return set()
+    rows = UserClient.query.with_entities(UserClient.client_id).filter(
+        UserClient.user_id == user_id
+    ).all()
+    return {r[0] for r in rows}

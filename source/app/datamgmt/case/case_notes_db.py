@@ -475,12 +475,16 @@ def get_directory_with_note_count(directory):
     return directory_dict
 
 
-def search_notes(search_value):
-    search_condition = and_()
+def search_notes(search_value, accessible_case_ids=None):
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = Notes.note_case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
     notes = Notes.query.filter(
         Notes.note_content.like(f'%{search_value}%'),
         Cases.client_id == Client.client_id,
-        search_condition
+        scope_filter
     ).with_entities(
         Notes.note_id,
         Notes.note_title,

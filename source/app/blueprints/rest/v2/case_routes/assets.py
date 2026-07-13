@@ -36,6 +36,9 @@ from app.business.assets import assets_filter
 from app.business.assets import assets_get
 from app.business.assets import assets_update
 from app.business.assets import assets_delete
+from app.datamgmt.case.case_assets_db import get_similar_assets
+from app.datamgmt.case.case_db import get_case_client_id
+from app.datamgmt.manage.manage_users_db import get_user_cases_fast
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
 from app.iris_engine.module_handler.module_handler import call_deprecated_on_preload_modules_hook
@@ -185,3 +188,30 @@ def update_asset(case_identifier, identifier):
 @ac_api_requires()
 def delete_asset(case_identifier, identifier):
     return assets_operations.delete(case_identifier, identifier)
+
+
+@case_assets_blueprint.get('/<int:identifier>/links')
+@ac_api_requires()
+def get_asset_other_case_links(case_identifier, identifier):
+    """Return the list of OTHER cases where the same asset was seen.
+
+    "Same asset" matches the legacy v2.4.x heuristic: same name + same type
+    on a case belonging to the same customer that the current user has at
+    least read access to. The customer-scoping is important — it stops a
+    generic name like `localhost` from lighting up across every tenant on
+    the instance.
+    """
+    if not ac_fast_check_current_user_has_case_access(
+            case_identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]):
+        return ac_api_return_access_denied(caseid=case_identifier)
+
+    try:
+        asset = AssetsOperations._get_asset_in_case(identifier, case_identifier)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+
+    customer_id = get_case_client_id(case_identifier)
+    cases_access = get_user_cases_fast(iris_current_user.id)
+    links = list(get_similar_assets(
+        asset.asset_name, asset.asset_type_id, case_identifier, customer_id, cases_access))
+    return response_api_success(links)

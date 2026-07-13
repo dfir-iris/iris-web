@@ -542,7 +542,15 @@ def _local_authentication_process(incoming_request: Request):
 
 def _token_authentication_process(incoming_request: Request):
     """
-    Process authentication using an Authorization header with Bearer token
+    Process authentication using an Authorization header with Bearer token.
+
+    Refuses to admit a token whose carrier hasn't passed MFA when the server
+    policy requires it. Without this check, an attacker holding valid
+    username+password could call any `ac_api_requires`-decorated endpoint
+    immediately after the initial login (which issues a step-1 token with
+    `mfa_verified=False`) — bypassing the MFA challenge entirely. The flag
+    pair travels in the JWT itself so we don't need to consult the DB on
+    every request.
     """
     auth_header = incoming_request.headers.get('Authorization', '')
     if not auth_header.startswith('Bearer '):
@@ -556,6 +564,13 @@ def _token_authentication_process(incoming_request: Request):
     user_data = validate_auth_token(token)
 
     if not user_data:
+        return False
+
+    if user_data.get('mfa_required') and not user_data.get('mfa_verified'):
+        # Don't populate g.auth_user — falling through to session auth
+        # would defeat the purpose. Returning False here lets the caller
+        # reject the request as unauthenticated, which is the correct
+        # surface for a step-1 token presented to a protected endpoint.
         return False
 
     # Store user data for later use
@@ -589,6 +604,16 @@ def is_authentication_ldap():
 
 def ac_fast_check_current_user_has_case_access(cid, access_level):
     return ac_fast_check_user_has_case_access(iris_current_user.id, cid, access_level)
+
+
+def ac_fast_check_current_user_has_war_room_access(war_room_id, access_level):
+    # Late import: business.war_rooms_access imports several models that
+    # also pull this module transitively. Keeping it lazy avoids the
+    # circular-import trap and matches the pattern used elsewhere.
+    from app.business.war_rooms_access import ac_fast_check_user_has_war_room_access
+    return ac_fast_check_user_has_war_room_access(
+        iris_current_user.id, war_room_id, access_level
+    )
 
 
 def _get_current_permissions_mask():
@@ -627,3 +652,14 @@ def ac_current_user_has_customer_access(customer_identifier):
         _get_current_permissions_mask(),
         customer_identifier
     )
+
+
+def ac_current_user_permissions_mask():
+    """Public accessor for the caller's effective permission mask.
+
+    Route handlers that need to pass the mask into a business-layer
+    helper — e.g. the cluster-rules / investigation-flows scope
+    checks — should use this rather than importing the underscored
+    `_get_current_permissions_mask` directly (linters flag cross-module
+    private imports, and the underscore signals module-internal use)."""
+    return _get_current_permissions_mask()

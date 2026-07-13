@@ -490,6 +490,7 @@ class UserActivity(db.Model):
     id = Column(BigInteger, primary_key=True)
     user_id = Column(ForeignKey('user.id'), nullable=True)
     case_id = Column(ForeignKey('cases.case_id'), nullable=True)
+    war_room_id = Column(BigInteger, ForeignKey('war_room.war_room_id'), nullable=True)
     activity_date = Column(DateTime)
     activity_desc = Column(Text)
     user_input = Column(Boolean, default=False)
@@ -498,6 +499,11 @@ class UserActivity(db.Model):
 
     user = relationship('User')
     case = relationship('Cases')
+    # No ORM `war_room` relationship on purpose: `app.models.war_rooms`
+    # isn't guaranteed to be imported at mapper-config time, and every
+    # consumer of this row joins WarRoom via an explicit Core outerjoin
+    # (see `activities_db.list_activities_paginated`). The FK column
+    # alone is enough for the audit-log use case.
 
 
 class ServerSettings(db.Model):
@@ -517,6 +523,33 @@ class ServerSettings(db.Model):
     password_policy_special_chars = Column(Text)
     enforce_mfa = Column(Boolean)
     force_confirmation_before_delete = Column(Boolean)
+
+    # ---- Mail — outbound (SMTP) --------------------------------------
+    # Split into distinct fields (rather than a JSONB blob) so the
+    # Marshmallow schema can validate each one and the admin UI can
+    # bind checkboxes / inputs directly. `mail_smtp_password` holds
+    # Fernet-encrypted ciphertext when set — the raw password never
+    # touches the DB. See app/iris_engine/mail/secrets.py.
+    mail_smtp_enabled = Column(Boolean, nullable=True, default=False)
+    mail_smtp_host = Column(String(255), nullable=True)
+    mail_smtp_port = Column(Integer, nullable=True)
+    mail_smtp_user = Column(String(255), nullable=True)
+    mail_smtp_password = Column(Text, nullable=True)
+    mail_smtp_use_tls = Column(Boolean, nullable=True, default=True)
+    mail_smtp_use_ssl = Column(Boolean, nullable=True, default=False)
+    mail_from_address = Column(String(255), nullable=True)
+    mail_from_name = Column(String(255), nullable=True)
+
+    # ---- Mail — inbound (IMAP) ---------------------------------------
+    mail_imap_enabled = Column(Boolean, nullable=True, default=False)
+    mail_imap_host = Column(String(255), nullable=True)
+    mail_imap_port = Column(Integer, nullable=True)
+    mail_imap_user = Column(String(255), nullable=True)
+    mail_imap_password = Column(Text, nullable=True)
+    mail_imap_use_ssl = Column(Boolean, nullable=True, default=True)
+    mail_imap_mailbox = Column(String(255), nullable=True, default='INBOX')
+    mail_imap_poll_interval_sec = Column(Integer, nullable=True, default=300)
+    mail_imap_max_attachment_mb = Column(Integer, nullable=True, default=20)
 
 
 class IrisModule(db.Model):

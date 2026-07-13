@@ -39,6 +39,14 @@ IRIS_PERMISSION_ALERTS_WRITE = 0x8
 IRIS_PERMISSION_ALERTS_DELETE = 0x10
 IRIS_PERMISSION_CUSTOMERS_WRITE = 0x80
 
+IRIS_PERMISSION_ALERT_CLUSTERS_READ = 0x40000
+IRIS_PERMISSION_ALERT_CLUSTERS_WRITE = 0x80000
+IRIS_PERMISSION_ALERT_CLUSTERS_DELETE = 0x100000
+IRIS_PERMISSION_CLUSTER_RULES_READ = 0x200000
+IRIS_PERMISSION_CLUSTER_RULES_WRITE = 0x400000
+IRIS_PERMISSION_INVESTIGATION_FLOWS_READ = 0x800000
+IRIS_PERMISSION_INVESTIGATION_FLOWS_WRITE = 0x1000000
+
 IRIS_CASE_ACCESS_LEVEL_READ_ONLY = 0x2
 IRIS_CASE_ACCESS_LEVEL_FULL_ACCESS = 0x4
 
@@ -65,6 +73,9 @@ class Iris:
 
     def update(self, path, body):
         return self._api.put(path, body)
+
+    def patch(self, path, body):
+        return self._api.patch(path, body)
 
     def delete(self, path):
         return self._api.delete(path)
@@ -121,10 +132,14 @@ class Iris:
         response = self._api.post('/api/v2/cases', body).json()
         return response['case_id']
 
-    def execute_graphql_query(self, payload):
-        return self._administrator.execute_graphql_query(payload)
-
     def clear_database(self):
+        # War rooms reference cases via FK; drop them first so the case
+        # delete loop below doesn't trip ON DELETE CASCADE on rows we
+        # then re-list.
+        war_rooms = self.get('/api/v2/war-rooms').json()
+        if isinstance(war_rooms, list):
+            for room in war_rooms:
+                self.delete(f"/api/v2/war-rooms/{room['war_room_id']}")
         cases = self.get('/api/v2/cases', query_parameters={'per_page': 1000000000}).json()
         for case in cases['data']:
             identifier = case['case_id']

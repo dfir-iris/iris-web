@@ -28,6 +28,7 @@ from app.blueprints.rest.endpoints import response_api_success
 from app.blueprints.rest.endpoints import response_api_deleted
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_not_found
+from app.schema.marshables import CaseNoteRevisionSchema
 from app.schema.marshables import CaseNoteSchema
 from app.models.authorization import CaseAccessLevel
 from app.models.models import Notes
@@ -35,6 +36,10 @@ from app.business.notes import notes_create
 from app.business.notes import notes_get
 from app.business.notes import notes_update
 from app.business.notes import notes_delete
+from app.business.notes import notes_delete_revision
+from app.business.notes import notes_get_revision
+from app.business.notes import notes_list_revisions
+from app.business.notes import notes_restore_revision
 from app.business.notes import notes_search
 from app.business.cases import cases_exists
 from app.models.errors import BusinessProcessingError
@@ -202,6 +207,88 @@ class NotesOperations:
         except ObjectNotFoundError:
             return response_api_not_found()
 
+    # ------- Revisions ---------------------------------------------------
+    # Brought back from the legacy `/case/notes/<id>/revisions/...`
+    # surface so the new SPA can show note history again. Read access
+    # only needs `read_only` on the case; restore / delete a revision
+    # require `full_access` because they mutate state visible to
+    # everyone on the case.
+    #
+    # `notes_list_revisions` returns a SQLAlchemy `with_entities` row
+    # set rather than ORM instances — the legacy code dumps that
+    # straight through the schema, so we do the same.
+
+    def list_revisions(self, case_identifier, identifier):
+        try:
+            note = notes_get(identifier)
+            self._check_note_and_case_identifier_match(note, case_identifier)
+            if not ac_fast_check_current_user_has_case_access(
+                note.note_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+            ):
+                return ac_api_return_access_denied(caseid=note.note_case_id)
+
+            revisions = notes_list_revisions(identifier)
+            schema = CaseNoteRevisionSchema(many=True)
+            return response_api_success(schema.dump(revisions))
+
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def get_revision(self, case_identifier, identifier, revision_number):
+        try:
+            note = notes_get(identifier)
+            self._check_note_and_case_identifier_match(note, case_identifier)
+            if not ac_fast_check_current_user_has_case_access(
+                note.note_case_id, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+            ):
+                return ac_api_return_access_denied(caseid=note.note_case_id)
+
+            revision = notes_get_revision(identifier, revision_number)
+            if revision is None:
+                return response_api_not_found()
+            return response_api_success(CaseNoteRevisionSchema().dump(revision))
+
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def delete_revision(self, case_identifier, identifier, revision_number):
+        try:
+            note = notes_get(identifier)
+            self._check_note_and_case_identifier_match(note, case_identifier)
+            if not ac_fast_check_current_user_has_case_access(
+                note.note_case_id, [CaseAccessLevel.full_access]
+            ):
+                return ac_api_return_access_denied(caseid=note.note_case_id)
+
+            notes_delete_revision(identifier, revision_number)
+            return response_api_deleted()
+
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
+    def restore_revision(self, case_identifier, identifier, revision_number):
+        try:
+            note = notes_get(identifier)
+            self._check_note_and_case_identifier_match(note, case_identifier)
+            if not ac_fast_check_current_user_has_case_access(
+                note.note_case_id, [CaseAccessLevel.full_access]
+            ):
+                return ac_api_return_access_denied(caseid=note.note_case_id)
+
+            restored = notes_restore_revision(identifier, revision_number)
+            return response_api_success(self._schema.dump(restored))
+
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), data=e.get_data())
+
 
 notes_operations = NotesOperations()
 case_notes_blueprint = Blueprint('case_notes',
@@ -243,3 +330,29 @@ def update_note(case_identifier, identifier):
 @ac_api_requires()
 def delete_note(case_identifier, identifier):
     return notes_operations.delete(case_identifier, identifier)
+
+
+# ---- Revisions --------------------------------------------------------------
+
+@case_notes_blueprint.get('/<int:identifier>/revisions')
+@ac_api_requires()
+def list_note_revisions(case_identifier, identifier):
+    return notes_operations.list_revisions(case_identifier, identifier)
+
+
+@case_notes_blueprint.get('/<int:identifier>/revisions/<int:revision_number>')
+@ac_api_requires()
+def get_note_revision(case_identifier, identifier, revision_number):
+    return notes_operations.get_revision(case_identifier, identifier, revision_number)
+
+
+@case_notes_blueprint.delete('/<int:identifier>/revisions/<int:revision_number>')
+@ac_api_requires()
+def delete_note_revision(case_identifier, identifier, revision_number):
+    return notes_operations.delete_revision(case_identifier, identifier, revision_number)
+
+
+@case_notes_blueprint.post('/<int:identifier>/revisions/<int:revision_number>/restore')
+@ac_api_requires()
+def restore_note_revision(case_identifier, identifier, revision_number):
+    return notes_operations.restore_revision(case_identifier, identifier, revision_number)

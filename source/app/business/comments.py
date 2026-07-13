@@ -27,6 +27,8 @@ from app.models.errors import ObjectNotFoundError
 from app.models.errors import BusinessProcessingError
 from app.datamgmt.case.case_comments import get_case_comment
 from app.datamgmt.comments import get_filtered_alert_comments
+from app.datamgmt.comments import get_filtered_alert_cluster_comments
+from app.datamgmt.comments import get_alert_cluster_comment
 from app.datamgmt.comments import get_filtered_asset_comments
 from app.datamgmt.comments import get_filtered_evidence_comments
 from app.datamgmt.comments import get_filtered_ioc_comments
@@ -72,6 +74,40 @@ def comments_get_filtered_by_alert(current_user, permissions, alert_identifier: 
         raise ObjectNotFoundError()
 
     return get_filtered_alert_comments(alert_identifier, pagination_parameters)
+
+
+def comments_get_filtered_by_alert_cluster(current_user, permissions, cluster_identifier: int, pagination_parameters: PaginationParameters, fallback_customer_access=None) -> Pagination:
+    # Deferred import — pulling alert_clusters_get at module top would import
+    # app.business.alert_clusters before comments' own callers finish resolving.
+    from app.business.alert_clusters import alert_clusters_get
+    alert_clusters_get(current_user, permissions, cluster_identifier, fallback_customer_access=fallback_customer_access)
+    return get_filtered_alert_cluster_comments(cluster_identifier, pagination_parameters)
+
+
+def comments_create_for_alert_cluster(current_user, permissions, comment: Comments, cluster_identifier: int, fallback_customer_access=None):
+    from app.business.alert_clusters import alert_clusters_get
+    cluster = alert_clusters_get(current_user, permissions, cluster_identifier, fallback_customer_access=fallback_customer_access)
+    comment.comment_cluster_id = cluster_identifier
+    comment.comment_user_id = current_user.id
+    comment.comment_date = datetime.now()
+    comment.comment_update_date = datetime.now()
+
+    db.session.add(comment)
+    db.session.commit()
+
+    track_activity(f'alert cluster "#{cluster.cluster_id}" commented', ctx_less=True)
+
+
+def comments_get_for_alert_cluster(cluster_identifier: int, identifier) -> Comments:
+    comment = get_alert_cluster_comment(cluster_identifier, identifier)
+    if comment is None:
+        raise ObjectNotFoundError()
+    return comment
+
+
+def comments_delete_for_alert_cluster(comment: Comments):
+    delete_comment(comment)
+    track_activity(f'comment {comment.comment_id} on alert cluster {comment.comment_cluster_id} deleted', ctx_less=True)
 
 
 def comments_get_filtered_by_asset(asset: CaseAssets, pagination_parameters: PaginationParameters) -> Pagination:

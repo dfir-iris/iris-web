@@ -16,8 +16,10 @@
 #  along with this program; if not, write to the Free Software Foundation,
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+import time
 from urllib.parse import urlparse
 
+from flask import flash
 from flask import session
 from flask import redirect
 from flask import url_for
@@ -91,12 +93,28 @@ def validate_local_login(username: str, password: str):
 
 
 def _is_safe_url(target):
+    """Return True iff `target` is safe to use in a 302 Location header.
+
+    A safe target is a *relative* path on this application. The previous
+    implementation only checked `parsed.scheme` and `parsed.netloc`, which is
+    bypassed by payloads like `attacker.com?cid=1` — urlparse treats that as a
+    path with an empty netloc, but browsers resolving a `Location: attacker.com`
+    header will route the user to the attacker's host. That's GHSA-vjc3-7jwv-j9qf
+    / SBA-ADV-20260126-02 / CWE-601.
+
+    The strict rules:
+      - non-empty string
+      - no control characters (incl. tab/newline) or backslashes (some browsers
+        normalise `\\` -> `/`, turning `/\\evil.com` into `//evil.com`)
+      - starts with a single `/` (not `//`, which is protocol-relative)
+      - urlparse confirms no scheme and no netloc — defense in depth
     """
-    Check whether the target URL is safe for redirection by ensuring that it is a relative URL
-    (i.e., does not specify a scheme or netloc).
-    """
-    # Remove backslashes to mitigate obfuscation
-    target = target.replace('\\', '')
+    if not target or not isinstance(target, str):
+        return False
+    if any(ord(c) < 0x20 or c == '\\' for c in target):
+        return False
+    if not target.startswith('/') or target.startswith('//'):
+        return False
     parsed = urlparse(target)
     return not parsed.scheme and not parsed.netloc
 
@@ -106,13 +124,9 @@ def _filter_next_url(next_url, context_case):
     Ensures that the URL to which the user is redirected is safe. If the provided URL is not safe or is missing,
     a default URL (typically the index page) is returned.
     """
-    if not next_url:
+    if not _is_safe_url(next_url):
         return url_for('index.index', cid=context_case)
-    # Remove backslashes to mitigate obfuscation
-    next_url = next_url.replace('\\', '')
-    if _is_safe_url(next_url):
-        return next_url
-    return url_for('index.index', cid=context_case)
+    return next_url
 
 
 def wrap_login_user(user, is_oidc=False):
@@ -123,7 +137,27 @@ def wrap_login_user(user, is_oidc=False):
         app.config['SERVER_SETTINGS'] = get_server_settings_as_dict()
 
     if app.config['SERVER_SETTINGS']['enforce_mfa'] is True and is_oidc is False:
-        if "mfa_verified" not in session or session["mfa_verified"] is False:
+        # MFA state must be bound to the specific user who verified — a flat
+        # boolean would let a prior verified session admit a different user on
+        # the same browser (shared device, attacker knows user B's password
+        # and reuses user A's mfa_verified=True). Backport of f596481b.
+        verified_for = session.get('mfa_verified_for_user_id')
+        if verified_for != user.id:
+            # If the session is currently MFA-locked out, do NOT reset state
+            # here — an attacker who re-POSTs /login mustn't be able to zero
+            # out the fail counter and get a fresh burst of tokens.
+            locked_until = session.get('mfa_lockout_until')
+            if locked_until and locked_until > time.time():
+                flash('Too many attempts. Please try again later.', 'danger')
+                return redirect(url_for('login.login'))
+
+            # Mark this browser session as the one that just passed password
+            # auth for this user. mfa_setup / mfa_verify will refuse to run
+            # for any other user id, preventing cross-user MFA handler abuse.
+            session['pre_mfa_user_id'] = user.id
+            session['mfa_fail_count'] = 0
+            session.pop('mfa_lockout_until', None)
+            session.pop('pending_mfa_secret', None)
             return redirect(url_for('mfa_verify'))
 
     login_user(user)
@@ -197,14 +231,19 @@ def generate_auth_tokens(user, mfa_verified: bool = False):
         algorithm='HS256'
     )
 
-    # Generate refresh token
+    # Generate refresh token. The MFA flags travel with the refresh too so
+    # the refresh endpoint can mint new access tokens that preserve the
+    # caller's MFA state without re-prompting — and, crucially, without
+    # silently upgrading a step-1 refresh into a verified access token.
     refresh_token_payload = {
         'user_id': user.id,
         'user_name': user.name,
         'user_email': user.email,
         'user_login': user.user,
         'exp': refresh_token_expiry,
-        'type': 'refresh'
+        'type': 'refresh',
+        'mfa_required': mfa_required,
+        'mfa_verified': effective_mfa_verified,
     }
     refresh_token = jwt.encode(
         refresh_token_payload,

@@ -37,6 +37,23 @@ from app.blueprints.responses import response_success
 manage_assets_type_rest_blueprint = Blueprint('manage_assets_type_rest', __name__)
 
 
+# Allowlist of form fields an administrator may write via the asset-type
+# add/update endpoints. Anything else (notably asset_id, the primary key) is
+# silently dropped before the schema is loaded, closing the mass-assignment
+# vector reported as GHSA-w78h-mx7h-qm3h / SBA-ADV-20260128-01 / CWE-915.
+_ASSET_TYPE_WRITABLE_FIELDS = {
+    'asset_name',
+    'asset_description',
+    'asset_icon_compromised',
+    'asset_icon_not_compromised',
+    'csrf_token',
+}
+
+
+def _filter_asset_type_form(form):
+    return {k: v for k, v in form.items() if k in _ASSET_TYPE_WRITABLE_FIELDS}
+
+
 @manage_assets_type_rest_blueprint.route('/manage/asset-type/list')
 @ac_api_requires()
 def list_assets():
@@ -89,7 +106,7 @@ def view_assets(cur_id):
     asset_schema = AssetTypeSchema()
     try:
 
-        asset_sc = asset_schema.load(request.form, instance=asset_type)
+        asset_sc = asset_schema.load(_filter_asset_type_form(request.form), instance=asset_type)
         fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
                                                 'asset_icon_not_compromised')
 
@@ -116,7 +133,7 @@ def add_assets():
     asset_schema = AssetTypeSchema()
     try:
 
-        asset_sc = asset_schema.load(request.form)
+        asset_sc = asset_schema.load(_filter_asset_type_form(request.form))
         fpath_nc = asset_schema.load_store_icon(request.files.get('asset_icon_not_compromised'),
                                                 'asset_icon_not_compromised')
 

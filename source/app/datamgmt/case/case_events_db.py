@@ -35,6 +35,9 @@ from app.models.iocs import Ioc
 from app.models.models import IocAssetLink
 from app.models.models import IocType
 from app.models.authorization import User
+from app.models.cases import Cases
+from app.models.customers import Client
+from sqlalchemy import or_
 
 
 def get_case_events_assets_graph(caseid):
@@ -420,3 +423,34 @@ def get_events_by_case(case_identifier):
     )).order_by(
         CasesEvent.event_date
     ).all()
+
+
+def search_events(search_value, accessible_case_ids=None):
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = CasesEvent.case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
+    pattern = f'%{search_value}%'
+
+    res = CasesEvent.query.with_entities(
+        CasesEvent.event_id,
+        CasesEvent.event_title,
+        CasesEvent.event_content,
+        CasesEvent.event_date,
+        Cases.name.label("case_name"),
+        Cases.case_id,
+        Client.name.label("customer_name")
+    ).filter(
+        and_(
+            or_(
+                CasesEvent.event_title.ilike(pattern),
+                CasesEvent.event_content.ilike(pattern)
+            ),
+            CasesEvent.case_id == Cases.case_id,
+            Client.client_id == Cases.client_id,
+            scope_filter
+        )
+    ).all()
+
+    return [row._asdict() for row in res]

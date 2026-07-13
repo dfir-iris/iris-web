@@ -22,6 +22,7 @@ import pyotp
 import qrcode
 import random
 import string
+import time
 import json
 from flask import Blueprint, flash
 from flask import redirect
@@ -138,6 +139,11 @@ if app.config.get("AUTHENTICATION_TYPE") in ["local", "ldap", "oidc"]:
     @login_blueprint.route("/login", methods=["GET", "POST"])
     def login():
         if iris_current_user.is_authenticated:
+            # If the old Jinja UI is the one receiving the post-OIDC
+            # redirect, the SPA-only JWT exchange marker never gets
+            # consumed. Drop it here so it can't linger and be
+            # redeemed later by a rogue XHR from the same browser.
+            session.pop("oidc_authenticated", None)
             return redirect(url_for("index.index"))
 
         if (
@@ -351,18 +357,115 @@ if is_authentication_oidc():
             ]
             update_user_groups(user.id, new_user_group)
 
-        return wrap_login_user(user, is_oidc=True)
+        # Mark this session as OIDC-authenticated so the SPA can call
+        # /api/v2/auth/oidc-exchange exactly once to trade the session
+        # cookie for JWT tokens. Single-use: the exchange endpoint
+        # clears both this flag and the session immediately, so a
+        # stolen cookie can't be redeemed twice.
+        session["oidc_authenticated"] = True
+
+        wrap_login_user(user, is_oidc=True)
+
+        # Regardless of `next`, send the browser to the SPA's login
+        # page with an OIDC marker. The SPA's onMount detects the
+        # marker, calls oidc-exchange, populates the JWT store, and
+        # then navigates to `/`. Overriding wrap_login_user's redirect
+        # target here also blocks an open-redirect via ?next=... on
+        # the OIDC callback.
+        return redirect("/login?oidc=1")
+
+
+# MFA hardening constants. Values are deliberately conservative — a legitimate
+# user mistypes their token occasionally; an attacker brute-forcing 10^6 TOTP
+# codes should not be able to linearly grind them. Backport of f596481b.
+_MFA_MAX_ATTEMPTS = 5
+_MFA_LOCKOUT_SECONDS = 15 * 60
+
+
+def _get_pre_mfa_user():
+    """Return the user this session just passed password auth for, or None.
+
+    The pre_mfa_user_id marker is set exclusively by wrap_login_user after a
+    successful password (or LDAP) check. Any MFA handler that runs without it
+    is being hit directly by an attacker and must be refused.
+    """
+    pre_mfa_user_id = session.get("pre_mfa_user_id")
+    if pre_mfa_user_id is None:
+        return None
+    return get_user(pre_mfa_user_id, id_key="id")
+
+
+def _clear_pre_mfa_state(preserve_lockout=False):
+    """Clear the markers that prove this session just passed password auth.
+
+    preserve_lockout: when True, keep the lockout timestamp and fail counter
+    so an attacker cannot wipe a brute-force lockout simply by hitting /login
+    again.
+    """
+    session.pop("pre_mfa_user_id", None)
+    session.pop("pending_mfa_secret", None)
+    if not preserve_lockout:
+        session.pop("mfa_fail_count", None)
+        session.pop("mfa_lockout_until", None)
+
+
+def _mfa_is_locked_out():
+    locked_until = session.get("mfa_lockout_until")
+    if locked_until and locked_until > time.time():
+        return True
+    if locked_until and locked_until <= time.time():
+        session.pop("mfa_lockout_until", None)
+        session["mfa_fail_count"] = 0
+    return False
+
+
+def _register_mfa_failure(user, reason):
+    session["mfa_fail_count"] = session.get("mfa_fail_count", 0) + 1
+    track_activity(
+        f"Failed MFA {reason} for user {user.user} "
+        f"(attempt {session['mfa_fail_count']}/{_MFA_MAX_ATTEMPTS})",
+        ctx_less=True, display_in_ui=False,
+    )
+    if session["mfa_fail_count"] >= _MFA_MAX_ATTEMPTS:
+        session["mfa_lockout_until"] = time.time() + _MFA_LOCKOUT_SECONDS
+        # Drop the pending-MFA marker so the attacker has to go back through
+        # password auth before they get another burst of attempts. Preserve
+        # the lockout timestamp so a fresh /login cannot wipe it.
+        _clear_pre_mfa_state(preserve_lockout=True)
+        session.pop("username", None)
 
 
 @app.route("/auth/mfa-setup", methods=["GET", "POST"])
 def mfa_setup():
-    user = retrieve_user_by_username(username=session["username"])
+    user = _get_pre_mfa_user()
+    if user is None:
+        return redirect(url_for("login.login"))
+
+    # mfa_setup is only for users who haven't completed MFA yet (fresh
+    # accounts, or admin-reset accounts where mfa_setup_complete was cleared).
+    # A user who already has MFA enrolled must go through mfa_verify — this
+    # prevents the "I know the password, let me overwrite the enrolled secret
+    # with one I control" bypass.
+    if user.mfa_setup_complete and user.mfa_secrets:
+        return redirect(url_for("mfa_verify"))
+
+    if _mfa_is_locked_out():
+        flash("Too many attempts. Please try again later.", "danger")
+        return redirect(url_for("login.login"))
+
     form = MFASetupForm()
 
     if form.submit() and form.validate():
         token = form.token.data
-        mfa_secret = form.mfa_secret.data
         user_password = form.user_password.data
+        # The secret MUST come from the server-side session, never from the
+        # submitted form. Trusting form.mfa_secret let an attacker enrol a
+        # secret of their choosing and immediately log in.
+        mfa_secret = session.get("pending_mfa_secret")
+        if not mfa_secret:
+            flash("MFA setup expired. Please restart the login flow.", "danger")
+            return redirect(url_for("login.login"))
+
         totp = pyotp.TOTP(mfa_secret)
 
         if totp.verify(token):
@@ -379,36 +482,35 @@ def mfa_setup():
                 has_valid_password = True
 
             if not has_valid_password:
-                track_activity(
-                    f"Failed MFA setup for user {user.user}. Invalid password.",
-                    ctx_less=True,
-                    display_in_ui=False,
-                )
+                _register_mfa_failure(user, "setup (invalid password)")
                 flash("Invalid password. Please try again.", "danger")
                 return render_template("mfa_setup.html", form=form)
 
             user.mfa_secrets = mfa_secret
             user.mfa_setup_complete = True
             db.session.commit()
-            session["mfa_verified"] = False
             track_activity(
                 f"MFA setup successful for user {user.user}",
-                ctx_less=True,
-                display_in_ui=False,
+                ctx_less=True, display_in_ui=False,
             )
+
+            # Setup succeeded — promote this session to MFA-verified for this
+            # user and clear the pre-MFA markers. Without this, wrap_login_user
+            # would loop straight back to mfa_verify.
+            session["mfa_verified_for_user_id"] = user.id
+            _clear_pre_mfa_state()
             return wrap_login_user(user)
-        track_activity(
-            f"Failed MFA setup for user {user.user}. Invalid token.",
-            ctx_less=True,
-            display_in_ui=False,
-        )
+        _register_mfa_failure(user, "setup (invalid token)")
         flash("Invalid token or password. Please try again.", "danger")
 
+    # Generate a fresh secret on every GET and stash it in the session. The
+    # client only sees the QR code and the base32 key for manual entry; it
+    # never sends the secret back.
     temp_otp_secret = pyotp.random_base32()
+    session["pending_mfa_secret"] = temp_otp_secret
     otp_uri = pyotp.TOTP(temp_otp_secret).provisioning_uri(
         user.email, issuer_name="IRIS"
     )
-    form.mfa_secret.data = temp_otp_secret
     img = qrcode.make(otp_uri)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -421,19 +523,21 @@ def mfa_setup():
 
 @app.route("/auth/mfa-verify", methods=["GET", "POST"])
 def mfa_verify():
-    if "username" not in session:
+    user = _get_pre_mfa_user()
+    if user is None:
         return redirect(url_for("login.login"))
-
-    user = retrieve_user_by_username(username=session["username"])
 
     # Redirect user to MFA setup if MFA is not fully set up
     if not user.mfa_secrets or not user.mfa_setup_complete:
         track_activity(
             f"MFA setup required for user {user.user}",
-            ctx_less=True,
-            display_in_ui=False,
+            ctx_less=True, display_in_ui=False,
         )
         return redirect(url_for("mfa_setup"))
+
+    if _mfa_is_locked_out():
+        flash("Too many attempts. Please try again later.", "danger")
+        return redirect(url_for("login.login"))
 
     form = MFASetupForm()
     form.user_password.data = "not required for verification"
@@ -446,19 +550,17 @@ def mfa_verify():
 
         totp = pyotp.TOTP(user.mfa_secrets)
         if totp.verify(token):
-            session.pop("username", None)
-            session["mfa_verified"] = True
             track_activity(
                 f"MFA verification successful for user {user.user}",
-                ctx_less=True,
-                display_in_ui=False,
+                ctx_less=True, display_in_ui=False,
             )
+            # Bind the MFA-verified marker to this specific user id so that a
+            # later login attempt for a different user on the same browser
+            # session cannot reuse it.
+            session["mfa_verified_for_user_id"] = user.id
+            _clear_pre_mfa_state()
             return wrap_login_user(user)
-        track_activity(
-            f"Failed MFA verification for user {user.user}. Invalid token.",
-            ctx_less=True,
-            display_in_ui=False,
-        )
+        _register_mfa_failure(user, "verification (invalid token)")
         flash("Invalid token. Please try again.", "danger")
 
     return render_template("mfa_verify.html", form=form)

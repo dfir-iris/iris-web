@@ -173,3 +173,41 @@ def notes_delete_revision(identifier: int, revision_number: int):
 
     except Exception as e:
         raise UnhandledBusinessError('Unexpected error server-side', str(e))
+
+
+def notes_restore_revision(identifier: int, revision_number: int):
+    """Restore a note's title + content to the named revision.
+
+    Snapshots the current note as a *new* revision first (via
+    `notes_update`'s usual versioning path), so the user can flip back
+    to the version they're about to overwrite without losing it. The
+    return value is the now-updated note row.
+    """
+    try:
+        note = get_note(identifier)
+        if not note:
+            raise BusinessProcessingError('Invalid note ID for this case')
+
+        target = NoteRevisions.query.filter(
+            NoteRevisions.note_id == identifier,
+            NoteRevisions.revision_number == revision_number
+        ).first()
+
+        if not target:
+            raise BusinessProcessingError('Invalid note revision number')
+
+        note.note_title = target.note_title
+        note.note_content = target.note_content
+        notes_update(iris_current_user, note)
+
+        track_activity(
+            f'restored note "{note.note_title}" to revision {revision_number}',
+            caseid=note.note_case_id
+        )
+
+        return note
+
+    except BusinessProcessingError:
+        raise
+    except Exception as e:
+        raise UnhandledBusinessError('Unexpected error server-side', str(e))

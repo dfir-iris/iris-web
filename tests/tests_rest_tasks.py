@@ -125,6 +125,56 @@ class TestsRestTasks(TestCase):
         response = self._subject.get('/case/tasks/list', query_parameters={'cid': case_identifier}).json()
         self.assertEqual(user.get_identifier(), response['data']['tasks'][0]['task_assignees'][0]['id'])
 
+    def test_create_task_with_assignees_response_should_include_task_assignees_id(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'task_assignees_id': [user.get_identifier()], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        self.assertEqual([user.get_identifier()], response['task_assignees_id'])
+
+    def test_create_task_with_assignees_response_should_include_task_assignees(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'task_assignees_id': [user.get_identifier()], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        self.assertEqual(user.get_identifier(), response['task_assignees'][0]['id'])
+
+    def test_update_task_response_should_include_assignees(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        response = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()
+        identifier = response['id']
+        response = self._subject.update(
+            f'/api/v2/cases/{case_identifier}/tasks/{identifier}',
+            {'task_title': 'dummy title', 'task_status_id': 1, 'task_assignees_id': [user.get_identifier()]}
+        ).json()
+        self.assertEqual([user.get_identifier()], response['task_assignees_id'])
+
+    def test_get_task_should_return_assignees(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'task_assignees_id': [user.get_identifier()], 'task_status_id': 1, 'task_title': 'dummy title'}
+        identifier = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()['id']
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks/{identifier}').json()
+        self.assertEqual([user.get_identifier()], response['task_assignees_id'])
+
+    def test_get_tasks_list_should_return_assignees(self):
+        case_identifier = self._subject.create_dummy_case()
+        user = self._subject.create_dummy_user()
+        body = {'task_assignees_id': [user.get_identifier()], 'task_status_id': 1, 'task_title': 'dummy title'}
+        self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body)
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks').json()
+        self.assertEqual([user.get_identifier()], response['data'][0]['task_assignees_id'])
+
+    def test_get_task_without_assignees_should_return_empty_assignees_list(self):
+        case_identifier = self._subject.create_dummy_case()
+        body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}
+        identifier = self._subject.create(f'/api/v2/cases/{case_identifier}/tasks', body).json()['id']
+        response = self._subject.get(f'/api/v2/cases/{case_identifier}/tasks/{identifier}').json()
+        self.assertEqual([], response['task_assignees_id'])
+        self.assertEqual([], response['task_assignees'])
+
     def test_update_task_without_task_status_id_should_return_400(self):
         case_identifier = self._subject.create_dummy_case()
         body = {'task_assignees_id': [], 'task_status_id': 1, 'task_title': 'dummy title'}

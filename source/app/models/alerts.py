@@ -67,6 +67,7 @@ class Alert(db.Model):
     alert_customer_id = Column(ForeignKey('client.client_id'), nullable=False)
     alert_classification_id = Column(ForeignKey('case_classification.id'))
     alert_resolution_status_id = Column(ForeignKey('alert_resolution_status.resolution_status_id'), nullable=True)
+    alert_investigation_flow_id = Column(ForeignKey('investigation_flows.flow_id'), nullable=True)
 
     owner = relationship('User', foreign_keys=[alert_owner_id])
     severity = relationship('Severity')
@@ -74,8 +75,10 @@ class Alert(db.Model):
     customer = relationship('Client')
     classification = relationship('CaseClassification')
     resolution_status = relationship('AlertResolutionStatus')
+    investigation_flow = relationship('InvestigationFlow', foreign_keys=[alert_investigation_flow_id])
 
     cases = relationship('Cases', secondary="alert_case_association", back_populates='alerts')
+    clusters = relationship('AlertCluster', secondary='alert_cluster_association', back_populates='alerts')
     comments = relationship('Comments', back_populates='alert', cascade='all, delete-orphan')
 
     assets = relationship('CaseAssets', secondary=alert_assets_association, back_populates='alerts')

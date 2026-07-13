@@ -182,6 +182,32 @@ def user_list_cases_view(user_id):
     return [r.case_id for r in res]
 
 
+def search_case_summaries(search_value, accessible_case_ids=None):
+    # Same shape as the per-type search helpers in datamgmt/case/*_db.py:
+    # accept a `%`-wildcarded value + optional access-scope list, return a
+    # list of `_asdict()` row dicts the global search endpoint annotates
+    # with a `type` discriminator.
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = Cases.case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
+    rows = Cases.query.with_entities(
+        Cases.case_id,
+        Cases.name.label('case_name'),
+        Cases.description.label('summary_excerpt'),
+        Client.name.label('customer_name')
+    ).filter(
+        and_(
+            Cases.description.ilike(f'%{search_value}%'),
+            Cases.client_id == Client.client_id,
+            scope_filter
+        )
+    ).order_by(Client.name, Cases.case_id).all()
+
+    return [row._asdict() for row in rows]
+
+
 def close_case(case_id):
     res = Cases.query.filter(
         Cases.case_id == case_id
@@ -318,24 +344,62 @@ def get_case_details_rt(case_id):
 
 
 def _delete_iocs(case_identifier):
-    # TODO should do this with the 2.0 SQLAlchemy API
-    # TODO maybe this can be performed automatically with cascades
-    com_ids = IocComments.query.with_entities(
-        IocComments.comment_id
-    ).join(
-        Ioc
-    ).filter(
-        IocComments.comment_ioc_id == Ioc.ioc_id,
-        Ioc.case_id == case_identifier
-    ).all()
+    # IoCs are shared between cases and alerts via `alert_iocs_association`.
+    # If we bulk-delete every IoC with `case_id = X` we hit the FK
+    # constraint as soon as one of them is still referenced from an
+    # alert (legitimate state: the IoC came in via an alert that wasn't
+    # merged into this case, or the case is being deleted but the alert
+    # survives). Mirror the partitioning `_delete_assets` already does:
+    #   - IoCs not referenced by any alert  → fully delete (with their
+    #     comments and link tables);
+    #   - IoCs still referenced by an alert → detach by clearing
+    #     `case_id` so the case-level FK no longer pins them, but the
+    #     alert-side association stays intact.
+    from app.models.iocs import alert_iocs_association
 
-    com_ids = [c.comment_id for c in com_ids]
-    IocComments.query.filter(IocComments.comment_id.in_(com_ids)).delete()
+    referenced_subq = db.session.query(alert_iocs_association.c.ioc_id).filter(
+        alert_iocs_association.c.ioc_id == Ioc.ioc_id
+    ).exists()
 
-    Comments.query.filter(
-        Comments.comment_id.in_(com_ids)
-    ).delete()
-    Ioc.query.filter(Ioc.case_id == case_identifier).delete()
+    deletable_ids = [
+        row.ioc_id
+        for row in db.session.query(Ioc.ioc_id).filter(
+            Ioc.case_id == case_identifier,
+            ~referenced_subq,
+        ).all()
+    ]
+
+    if deletable_ids:
+        com_ids = [
+            c.comment_id
+            for c in IocComments.query.with_entities(IocComments.comment_id).filter(
+                IocComments.comment_ioc_id.in_(deletable_ids)
+            ).all()
+        ]
+        if com_ids:
+            IocComments.query.filter(IocComments.comment_id.in_(com_ids)).delete(
+                synchronize_session=False)
+            Comments.query.filter(Comments.comment_id.in_(com_ids)).delete(
+                synchronize_session=False)
+
+        # IocAssetLink + CaseEventsIoc rows for these IoCs are scoped to
+        # this case (link tables don't survive the case anyway), but
+        # CaseEventsIoc filtering at the caller level only covers the
+        # `case_id` column. Belt-and-braces: clear them by ioc_id too so
+        # we never hit an "ioc still referenced" FK from a stray link.
+        IocAssetLink.query.filter(IocAssetLink.ioc_id.in_(deletable_ids)).delete(
+            synchronize_session=False)
+        CaseEventsIoc.query.filter(CaseEventsIoc.ioc_id.in_(deletable_ids)).delete(
+            synchronize_session=False)
+
+        Ioc.query.filter(Ioc.ioc_id.in_(deletable_ids)).delete(
+            synchronize_session=False)
+
+    # Anything left behind belonged to alerts too — detach from the case
+    # so the next `Cases.query.filter(...).delete()` doesn't fail on
+    # `ioc.case_id → cases.case_id`.
+    Ioc.query.filter(Ioc.case_id == case_identifier).update(
+        {Ioc.case_id: None}, synchronize_session=False)
 
 
 def _delete_assets(case_identifier):
@@ -479,14 +543,33 @@ def build_filter_case_query(current_user_id,
                             search_value=None,
                             sort_by=None,
                             sort_dir='asc',
-                            is_open: bool=None
+                            is_open: bool=None,
+                            quick_search: str=None,
+                            start_close_date: str = None,
+                            end_close_date: str = None,
                             ):
     """
     Get a list of cases from the database, filtered by the given parameters
     """
     conditions = []
-    if start_open_date is not None and end_open_date is not None:
-        conditions.append(Cases.open_date.between(start_open_date, end_open_date))
+    # Open-date window. We accept each bound independently — the legacy
+    # behaviour required both to be set together, which forced callers
+    # to fake one end of the range when they only had one side. With
+    # `>=` / `<=` you can give just "opened since 2026-01-01" without
+    # also having to pick a closing bound.
+    if start_open_date is not None:
+        conditions.append(Cases.open_date >= start_open_date)
+    if end_open_date is not None:
+        conditions.append(Cases.open_date <= end_open_date)
+
+    # Close-date window — same independent-bound semantics. Rows with
+    # `close_date IS NULL` (still-open cases) drop out naturally on any
+    # bound because NULL comparisons fail; that's the right behaviour
+    # for a "filter by close date" use case.
+    if start_close_date is not None:
+        conditions.append(Cases.close_date >= start_close_date)
+    if end_close_date is not None:
+        conditions.append(Cases.close_date <= end_close_date)
 
     if case_customer_id is not None:
         conditions.append(Cases.client_id == case_customer_id)
@@ -521,6 +604,15 @@ def build_filter_case_query(current_user_id,
     if search_value is not None:
         conditions.append(Cases.name.like(f"%{search_value}%"))
 
+    quick_search_term = quick_search.strip() if isinstance(quick_search, str) else None
+    if quick_search_term:
+        # Case IDs are prefixed into the title at creation time (e.g. "#42 - Foo"),
+        # so an ILIKE on Cases.name already catches numeric matches via the prefix.
+        conditions.append(or_(
+            Cases.name.ilike(f"%{quick_search_term}%"),
+            Client.name.ilike(f"%{quick_search_term}%")
+        ))
+
     if case_open_since is not None:
         result = date.today() - timedelta(case_open_since)
         conditions.append(Cases.open_date == result)
@@ -535,7 +627,13 @@ def build_filter_case_query(current_user_id,
     if len(conditions) > 1:
         conditions = [reduce(and_, conditions)]
     conditions.append(Cases.case_id.in_(user_list_cases_view(current_user_id)))
-    query = Cases.query.filter(*conditions)
+    base_query = Cases.query
+    # quick_search references Client.name, so make sure the table is joined
+    # before the filter is applied. Use an outer join so cases without a
+    # customer are still considered for the name/id match.
+    if quick_search_term:
+        base_query = base_query.outerjoin(Client, Cases.client_id == Client.client_id)
+    query = base_query.filter(*conditions)
 
     if case_tags is not None:
         return query.join(Tags, Tags.tag_title.ilike(f'%{case_tags}%')).filter(CaseTags.case_id == Cases.case_id)
@@ -550,7 +648,11 @@ def build_filter_case_query(current_user_id,
             query = query.join(User, Cases.user_id == User.id).order_by(order_func(User.name))
 
         elif sort_by == 'customer_name':
-            query = query.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
+            if quick_search_term:
+                # Client is already joined via the quick_search outer join; just order by it.
+                query = query.order_by(order_func(Client.name))
+            else:
+                query = query.join(Client, Cases.client_id == Client.client_id).order_by(order_func(Client.name))
 
         elif sort_by == 'state':
             query = query.join(CaseState, Cases.state_id == CaseState.state_id).order_by(order_func(CaseState.state_name))
@@ -578,7 +680,10 @@ def get_filtered_cases(current_user_id,
                        search_value: str | None = None,
                        is_open: bool | None = None,
                        advanced_filters: list[dict[str, Any]] | None = None,
-                       advanced_logic: str = 'and'
+                       advanced_logic: str = 'and',
+                       quick_search: str | None = None,
+                       start_close_date: str | None = None,
+                       end_close_date: str | None = None,
                        ):
     kwargs: dict[str, Any] = {
         'current_user_id': current_user_id,
@@ -590,6 +695,11 @@ def get_filtered_cases(current_user_id,
         kwargs['start_open_date'] = start_open_date
     if end_open_date is not None:
         kwargs['end_open_date'] = end_open_date
+
+    if start_close_date is not None:
+        kwargs['start_close_date'] = start_close_date
+    if end_close_date is not None:
+        kwargs['end_close_date'] = end_close_date
 
     if case_customer_id is not None:
         kwargs['case_customer_id'] = case_customer_id
@@ -627,87 +737,177 @@ def get_filtered_cases(current_user_id,
     if search_value is not None:
         kwargs['search_value'] = search_value
 
+    if quick_search is not None:
+        kwargs['quick_search'] = quick_search
+
     if is_open is not None:
         kwargs['is_open'] = is_open
 
     query = build_filter_case_query(**kwargs)
 
     if advanced_filters:
-        adv_conditions = []
-        joined_client = False
-        joined_state = False
-        joined_owner = False
+        # Caller may pass either:
+        #   * a list of condition dicts (legacy) — wrap into a single
+        #     root group whose logic is `advanced_logic`;
+        #   * a group dict `{ logic, items: [<cond>|<group>] }` —
+        #     walked recursively. Items can be arbitrarily nested
+        #     groups so the UI can express `(A and B) or (C and D)`
+        #     style queries.
+        join_state = {
+            'client': False,
+            'state': False,
+            'owner': False,
+            'severity': False,
+        }
 
-        for f in advanced_filters:
-            field_id = f.get('fieldId')
-            operation = f.get('operation')
-            value = f.get('value', '')
-
-            if not isinstance(field_id, str) or not isinstance(operation, str) or not isinstance(value, str):
-                continue
-
-            field_expr: Any = None
-
+        def _field_expr_for(field_id: str):
+            nonlocal query
             if field_id == 'title':
-                field_expr = Cases.name
-            elif field_id == 'case_id':
-                field_expr = cast(Cases.case_id, String)
-            elif field_id == 'outcome':
-                field_expr = Cases.closing_note
-            elif field_id == 'open_date':
-                field_expr = cast(Cases.open_date, String)
-            elif field_id == 'classification':
-                field_expr = cast(Cases.classification_id, String)
-            elif field_id == 'customer':
-                if not joined_client:
+                return Cases.name
+            if field_id == 'case_id':
+                return cast(Cases.case_id, String)
+            if field_id == 'outcome':
+                return Cases.closing_note
+            if field_id == 'open_date':
+                return cast(Cases.open_date, String)
+            if field_id == 'classification':
+                return cast(Cases.classification_id, String)
+            if field_id == 'customer':
+                if not join_state['client']:
                     query = query.join(Client, Cases.client_id == Client.client_id)
-                    joined_client = True
-                field_expr = Client.name
-            elif field_id == 'state':
-                if not joined_state:
+                    join_state['client'] = True
+                return Client.name
+            if field_id == 'state':
+                if not join_state['state']:
                     query = query.join(CaseState, Cases.state_id == CaseState.state_id)
-                    joined_state = True
-                field_expr = CaseState.state_name
-            elif field_id == 'owner':
-                if not joined_owner:
+                    join_state['state'] = True
+                return CaseState.state_name
+            if field_id == 'owner':
+                if not join_state['owner']:
                     query = query.join(User, Cases.owner_id == User.id)
-                    joined_owner = True
-                field_expr = User.user
+                    join_state['owner'] = True
+                return User.user
+            if field_id == 'severity':
+                # Joined separately from the simple `severity_identifier`
+                # path above. `outerjoin` so cases without a severity
+                # still pass through.
+                if not join_state['severity']:
+                    from app.models.alerts import Severity
+                    query = query.outerjoin(Severity, Cases.severity_id == Severity.severity_id)
+                    join_state['severity'] = True
+                from app.models.alerts import Severity
+                return Severity.severity_name
+            return None
 
-            if field_expr is None:
-                continue
+        def _tag_condition(op: str, value: str):
+            # Tags are many-to-many (Cases → CaseTags → Tags), so a plain
+            # join would multiply case rows in the result set. Use
+            # EXISTS/NOT EXISTS against the tag title instead — one row
+            # per case regardless of how many tags match, and the
+            # semantics of `not_contains` / `empty` come out clean.
+            base = db.session.query(CaseTags.case_id).join(
+                Tags, Tags.id == CaseTags.tag_id
+            ).filter(CaseTags.case_id == Cases.case_id)
 
-            op = operation.lower()
+            def has(pattern: str):
+                return base.filter(Tags.tag_title.ilike(pattern)).exists()
+
+            def eq(exact: str):
+                return base.filter(Tags.tag_title == exact).exists()
 
             if op == 'empty':
-                adv_conditions.append(or_(field_expr.is_(None), field_expr == ''))
-                continue
+                # No tags at all attached to the case.
+                return ~db.session.query(CaseTags.case_id).filter(
+                    CaseTags.case_id == Cases.case_id
+                ).exists()
             if op == 'not_empty':
-                adv_conditions.append(and_(field_expr.is_not(None), field_expr != ''))
-                continue
-
+                return db.session.query(CaseTags.case_id).filter(
+                    CaseTags.case_id == Cases.case_id
+                ).exists()
             if op == 'equals':
-                adv_conditions.append(field_expr == value)
-            elif op == 'not':
-                adv_conditions.append(field_expr != value)
-            elif op == 'starts_with':
-                adv_conditions.append(field_expr.ilike(f'{value}%'))
-            elif op == 'not_starts_with':
-                adv_conditions.append(~field_expr.ilike(f'{value}%'))
-            elif op == 'contains':
-                adv_conditions.append(field_expr.ilike(f'%{value}%'))
-            elif op == 'not_contains':
-                adv_conditions.append(~field_expr.ilike(f'%{value}%'))
-            elif op == 'ends_with':
-                adv_conditions.append(field_expr.ilike(f'%{value}'))
-            elif op == 'not_ends_with':
-                adv_conditions.append(~field_expr.ilike(f'%{value}'))
+                return eq(value)
+            if op == 'not':
+                return ~eq(value)
+            if op == 'starts_with':
+                return has(f'{value}%')
+            if op == 'not_starts_with':
+                return ~has(f'{value}%')
+            if op == 'contains':
+                return has(f'%{value}%')
+            if op == 'not_contains':
+                return ~has(f'%{value}%')
+            if op == 'ends_with':
+                return has(f'%{value}')
+            if op == 'not_ends_with':
+                return ~has(f'%{value}')
+            return None
 
-        if adv_conditions:
-            if (advanced_logic or 'and').lower() == 'or':
-                query = query.filter(or_(*adv_conditions))
-            else:
-                query = query.filter(and_(*adv_conditions))
+        def _condition_sql(field_id: str, op: str, value: str):
+            op = (op or '').lower()
+            # Tags are multi-valued so they don't fit the scalar
+            # `field_expr op value` shape the other fields use — hand off
+            # to the EXISTS-based builder before falling through.
+            if field_id == 'tags':
+                return _tag_condition(op, value)
+            field_expr = _field_expr_for(field_id)
+            if field_expr is None:
+                return None
+            if op == 'empty':
+                return or_(field_expr.is_(None), field_expr == '')
+            if op == 'not_empty':
+                return and_(field_expr.is_not(None), field_expr != '')
+            if op == 'equals':
+                return field_expr == value
+            if op == 'not':
+                return field_expr != value
+            if op == 'starts_with':
+                return field_expr.ilike(f'{value}%')
+            if op == 'not_starts_with':
+                return ~field_expr.ilike(f'{value}%')
+            if op == 'contains':
+                return field_expr.ilike(f'%{value}%')
+            if op == 'not_contains':
+                return ~field_expr.ilike(f'%{value}%')
+            if op == 'ends_with':
+                return field_expr.ilike(f'%{value}')
+            if op == 'not_ends_with':
+                return ~field_expr.ilike(f'%{value}')
+            return None
+
+        def _walk_group(node: dict) -> Any:
+            items = node.get('items') or []
+            group_logic = (node.get('logic') or 'and').lower()
+            parts: list[Any] = []
+            for item in items:
+                if not isinstance(item, dict):
+                    continue
+                if 'items' in item:
+                    sub = _walk_group(item)
+                    if sub is not None:
+                        parts.append(sub)
+                else:
+                    cond = _condition_sql(
+                        item.get('fieldId') or '',
+                        item.get('operation') or '',
+                        item.get('value', '') if isinstance(item.get('value'), str) else ''
+                    )
+                    if cond is not None:
+                        parts.append(cond)
+            if not parts:
+                return None
+            return or_(*parts) if group_logic == 'or' else and_(*parts)
+
+        if isinstance(advanced_filters, list):
+            root_group = {'logic': (advanced_logic or 'and').lower(), 'items': advanced_filters}
+        elif isinstance(advanced_filters, dict):
+            root_group = advanced_filters
+        else:
+            root_group = None
+
+        if root_group is not None:
+            sql = _walk_group(root_group)
+            if sql is not None:
+                query = query.filter(sql)
 
     return query.paginate(page=pagination_parameters.get_page(),
                           per_page=pagination_parameters.get_per_page(),

@@ -34,6 +34,7 @@ from app.blueprints.rest.endpoints import response_api_created
 from app.blueprints.rest.endpoints import response_api_error
 from app.blueprints.rest.endpoints import response_api_paginated
 from app.blueprints.rest.parsing import parse_pagination_parameters
+from app.business.activity import activity_search_in_case
 from app.blueprints.rest.v2.case_routes.assets import case_assets_blueprint
 from app.blueprints.rest.v2.case_routes.iocs import case_iocs_blueprint
 from app.blueprints.rest.v2.case_routes.notes import case_notes_blueprint
@@ -41,12 +42,20 @@ from app.blueprints.rest.v2.case_routes.notes_directories import case_notes_dire
 from app.blueprints.rest.v2.case_routes.tasks import case_tasks_blueprint
 from app.blueprints.rest.v2.case_routes.evidences import case_evidences_blueprint
 from app.blueprints.rest.v2.case_routes.events import case_events_blueprint
+from app.blueprints.rest.v2.case_routes.timelines import case_timelines_blueprint
 from app.blueprints.rest.v2.case_routes.datastore import case_datastore_blueprint
 from app.blueprints.iris_user import iris_current_user
+from app.business.cases import case_unlink_alert
+from app.business.cases import case_unlink_alert_cluster
 from app.business.cases import cases_create
+from app.business.cases import cases_close
 from app.business.cases import cases_delete
+from app.business.cases import cases_exists
 from app.business.cases import cases_get_by_identifier
+from app.business.cases import cases_reopen
 from app.business.cases import cases_update
+from app.datamgmt.manage.manage_users_db import get_users_list_restricted_from_case
+from app.datamgmt.manage.manage_access_control_db import get_case_effective_access
 from app.models.errors import BusinessProcessingError, ObjectNotFoundError
 from app.business.cases import cases_filter
 from app.schema.marshables import CaseSchemaForAPIV2
@@ -84,7 +93,12 @@ class CasesOperations:
         case_soc_id = request.args.get('case_soc_id', None, type=str)
         start_open_date = request.args.get('start_open_date', None, type=str)
         end_open_date = request.args.get('end_open_date', None, type=str)
+        start_close_date = request.args.get('start_close_date', None, type=str)
+        end_close_date = request.args.get('end_close_date', None, type=str)
         is_open = request.args.get('is_open', None, type=parse_boolean)
+        # Free-text search across case name, customer name, and (numeric) case id.
+        # Powers the context switcher's search box; an empty / whitespace value is ignored.
+        quick_search = request.args.get('quick_search', None, type=str)
 
         filtered_cases = cases_filter(
             iris_current_user,
@@ -101,7 +115,10 @@ class CasesOperations:
             case_soc_id,
             start_open_date,
             end_open_date,
-            is_open
+            is_open,
+            quick_search=quick_search,
+            start_close_date=start_close_date,
+            end_close_date=end_close_date,
         )
 
         return response_api_paginated(self._schema, filtered_cases)
@@ -115,7 +132,7 @@ class CasesOperations:
             return response_api_error("Invalid logic (expected 'and' or 'or')")
 
         raw_filters = request.args.get('filters', None, type=str)
-        advanced_filters: list[dict[str, Any]] | None = None
+        advanced_filters: Any = None
 
         if raw_filters:
             try:
@@ -124,52 +141,82 @@ class CasesOperations:
             except Exception:
                 return response_api_error('Invalid filters JSON')
 
-            if not isinstance(parsed, list):
-                return response_api_error('Invalid filters (expected a JSON array)')
+            # Accept either:
+            #   * Legacy flat list of conditions combined by the
+            #     top-level `logic` query param (`?logic=and`).
+            #   * Nested group object: `{ logic, items: [<cond>|<group>] }`
+            #     where groups can recurse arbitrarily deep.
+            # The validator below normalises both into the nested form
+            # so the SQL builder downstream only has to handle one
+            # shape.
+            ALLOWED_OPS = {
+                'equals', 'not',
+                'starts_with', 'not_starts_with',
+                'contains', 'not_contains',
+                'ends_with', 'not_ends_with',
+                'empty', 'not_empty'
+            }
+            MAX_DEPTH = 8  # safety cap on recursion depth
 
-            advanced_filters = []
-            for i, f in enumerate(parsed):
+            def _validate_condition(f: Any, path: str) -> dict[str, Any]:
                 if not isinstance(f, dict):
-                    return response_api_error(f'Invalid filter at index {i} (expected object)')
-
+                    raise ValueError(f'Invalid condition at {path} (expected object)')
                 field_id = f.get('fieldId')
                 operation = f.get('operation')
                 value = f.get('value', '')
 
                 if not isinstance(field_id, str) or not field_id:
-                    return response_api_error(f'Invalid fieldId at index {i}')
+                    raise ValueError(f'Invalid fieldId at {path}')
                 if not isinstance(operation, str) or not operation:
-                    return response_api_error(f'Invalid operation at index {i}')
+                    raise ValueError(f'Invalid operation at {path}')
                 if not isinstance(value, str):
-                    return response_api_error(f'Invalid value at index {i}')
+                    raise ValueError(f'Invalid value at {path}')
 
-                operation = operation.lower()
-
-                allowed_ops = {
-                    'equals',
-                    'not',
-                    'starts_with',
-                    'not_starts_with',
-                    'contains',
-                    'not_contains',
-                    'ends_with',
-                    'not_ends_with',
-                    'empty',
-                    'not_empty'
-                }
-                if operation not in allowed_ops:
-                    return response_api_error(f'Invalid operation at index {i}')
-
-                if operation in ('empty', 'not_empty'):
+                op = operation.lower()
+                if op not in ALLOWED_OPS:
+                    raise ValueError(f'Invalid operation at {path}')
+                if op in ('empty', 'not_empty'):
                     value = ''
 
-                advanced_filters.append(
-                    {
-                        'fieldId': field_id,
-                        'operation': operation,
-                        'value': value
-                    }
-                )
+                return {'fieldId': field_id, 'operation': op, 'value': value}
+
+            def _validate_group(node: Any, depth: int, path: str) -> dict[str, Any]:
+                if depth > MAX_DEPTH:
+                    raise ValueError(f'Filter group too deeply nested at {path}')
+                if not isinstance(node, dict):
+                    raise ValueError(f'Invalid group at {path} (expected object)')
+                group_logic = str(node.get('logic', 'and')).lower()
+                if group_logic not in ('and', 'or'):
+                    raise ValueError(f"Invalid logic at {path} (expected 'and' or 'or')")
+                items = node.get('items')
+                if not isinstance(items, list):
+                    raise ValueError(f'Invalid items at {path} (expected list)')
+
+                normalised: list[dict[str, Any]] = []
+                for i, item in enumerate(items):
+                    sub_path = f'{path}.items[{i}]'
+                    if isinstance(item, dict) and (
+                        'items' in item or 'logic' in item and 'fieldId' not in item
+                    ):
+                        normalised.append(_validate_group(item, depth + 1, sub_path))
+                    else:
+                        normalised.append(_validate_condition(item, sub_path))
+
+                return {'logic': group_logic, 'items': normalised}
+
+            try:
+                if isinstance(parsed, list):
+                    # Legacy shape: wrap in a single root group whose
+                    # logic is the page-level `logic` query param.
+                    advanced_filters = _validate_group(
+                        {'logic': logic, 'items': parsed}, 0, 'filters'
+                    )
+                elif isinstance(parsed, dict):
+                    advanced_filters = _validate_group(parsed, 0, 'filters')
+                else:
+                    return response_api_error('Invalid filters (expected array or object)')
+            except ValueError as e:
+                return response_api_error(str(e))
 
         case_ids_str = request.args.get('case_ids', None, type=str)
         if case_ids_str:
@@ -314,6 +361,30 @@ class CasesOperations:
         except BusinessProcessingError as e:
             return response_api_error(e.get_message(), e.get_data())
 
+    def close(self, identifier):
+        if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=identifier)
+
+        try:
+            case = cases_close(identifier)
+            return response_api_success(CaseDetailsSchema().dump(case))
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), e.get_data())
+
+    def reopen(self, identifier):
+        if not ac_fast_check_current_user_has_case_access(identifier, [CaseAccessLevel.full_access]):
+            return ac_api_return_access_denied(caseid=identifier)
+
+        try:
+            case = cases_reopen(identifier)
+            return response_api_success(CaseDetailsSchema().dump(case))
+        except ObjectNotFoundError:
+            return response_api_not_found()
+        except BusinessProcessingError as e:
+            return response_api_error(e.get_message(), e.get_data())
+
 
 # Create blueprint & import child blueprints
 cases_blueprint = Blueprint('cases',
@@ -326,6 +397,7 @@ cases_blueprint.register_blueprint(case_notes_blueprint)
 cases_blueprint.register_blueprint(case_tasks_blueprint)
 cases_blueprint.register_blueprint(case_evidences_blueprint)
 cases_blueprint.register_blueprint(case_events_blueprint)
+cases_blueprint.register_blueprint(case_timelines_blueprint)
 cases_blueprint.register_blueprint(case_datastore_blueprint)
 
 cases_operations = CasesOperations()
@@ -365,3 +437,226 @@ def rest_v2_cases_update(identifier):
 @ac_api_requires(Permissions.standard_user)
 def case_routes_delete(identifier):
     return cases_operations.delete(identifier)
+
+
+@cases_blueprint.post('/<int:identifier>/close')
+@ac_api_requires(Permissions.standard_user)
+def case_routes_close(identifier):
+    return cases_operations.close(identifier)
+
+
+@cases_blueprint.post('/<int:identifier>/reopen')
+@ac_api_requires(Permissions.standard_user)
+def case_routes_reopen(identifier):
+    return cases_operations.reopen(identifier)
+
+
+@cases_blueprint.get('/<int:identifier>/access/users')
+@ac_api_requires()
+def list_case_access_users(identifier):
+    """Return every user with effective access to this case along with
+    their access level. Used by the frontend to populate task-assignee
+    pickers and to surface who can see a given case.
+
+    Access level is the integer enum from `CaseAccessLevel` (1 = deny,
+    2 = read_only, 4 = full_access). Callers that need only assignable
+    users typically filter on full_access (4) client-side, matching the
+    legacy iris-web behaviour.
+    """
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    users = get_users_list_restricted_from_case(identifier)
+    return response_api_success(users)
+
+
+@cases_blueprint.get('/<int:identifier>/access/me')
+@ac_api_requires()
+def get_case_access_me(identifier):
+    """Return the current user's effective access level for this case.
+
+    The SPA reads this once per case load to gate edit/delete affordances
+    before the user can attempt a 403. The integer matches `CaseAccessLevel`
+    (1 = deny_all, 2 = read_only, 4 = full_access). A user with no row in
+    `UserCaseEffectiveAccess` is treated as deny_all so the frontend can
+    still render a coherent "no access" state.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+
+    level = get_case_effective_access(iris_current_user.id, identifier)
+    if level is None:
+        level = CaseAccessLevel.deny_all.value
+    return response_api_success({'access_level': int(level)})
+
+
+@cases_blueprint.get('/<int:identifier>/followers')
+@ac_api_requires()
+def list_case_followers(identifier):
+    """Return the users following this case.
+
+    Each entry is `{user_id, user_name, user_login}`. The dashboard
+    "Follow" toggle on the case header reads this list to render the
+    current follower count and to highlight whether *you* are
+    following.
+    """
+    from app.models.authorization import User
+    from app.models.authorization import UserFollowedCase
+
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    rows = (
+        db.session.query(User.id, User.user, User.name)
+        .join(UserFollowedCase, UserFollowedCase.user_id == User.id)
+        .filter(UserFollowedCase.case_id == identifier)
+        .order_by(User.name.asc())
+        .all()
+    )
+    return response_api_success(data=[
+        {'user_id': r.id, 'user_login': r.user, 'user_name': r.name}
+        for r in rows
+    ])
+
+
+@cases_blueprint.get('/<int:identifier>/source-alert-cluster')
+@ac_api_requires()
+def get_case_source_alert_cluster(identifier):
+    """Return the alert cluster this case was created from, if any.
+
+    Mirrors the "linked alerts" chip in the case topbar: an analyst who
+    can read the case can see which cluster it was escalated / merged
+    from. Read-only, gated by case read access — the cluster row is
+    already visible to anyone with customer access, so exposing the
+    lookup by case id doesn't broaden the surface.
+
+    Returns 200 with `null` when the case has no source cluster so the
+    frontend can conditionally render the chip without a 404.
+    """
+    from app.business.alert_clusters import alert_clusters_get_by_case
+
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    cluster = alert_clusters_get_by_case(identifier)
+    if cluster is None:
+        return response_api_success(data=None)
+
+    return response_api_success(data={
+        'cluster_id': cluster.cluster_id,
+        'cluster_title': cluster.cluster_title,
+        'cluster_status': cluster.status.status_name if cluster.status else None,
+    })
+
+
+@cases_blueprint.delete('/<int:identifier>/alerts/<int:alert_id>')
+@ac_api_requires(Permissions.standard_user)
+def rest_v2_case_unlink_alert(identifier, alert_id):
+    """Detach one alert from this case and reset its status.
+
+    Case-scoped ACL: the caller must have full access to the case, which
+    is the object being mutated (alert.cases). We don't recheck alert
+    permissions — the case-membership relationship is symmetric, so
+    write on the case is enough to prune its own list.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    case = cases_get_by_identifier(identifier)
+    try:
+        case_unlink_alert(case, alert_id)
+    except ObjectNotFoundError:
+        return response_api_not_found()
+    except BusinessProcessingError as exc:
+        return response_api_error(exc.get_message(), data=exc.get_data())
+    return response_api_deleted()
+
+
+@cases_blueprint.delete('/<int:identifier>/source-alert-cluster')
+@ac_api_requires(Permissions.standard_user)
+def rest_v2_case_unlink_alert_cluster(identifier):
+    """Unlink the alert cluster that produced this case.
+
+    Clears the cluster's back-reference, moves it back to Investigating,
+    and detaches every member alert from the case. Alerts get their
+    status rolled back to Assigned so they re-appear in the analyst
+    queue. No-op (200 with `{unlinked: false}`) when the case wasn't
+    sourced from a cluster.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    case = cases_get_by_identifier(identifier)
+    try:
+        cluster = case_unlink_alert_cluster(case)
+    except BusinessProcessingError as exc:
+        return response_api_error(exc.get_message(), data=exc.get_data())
+
+    if cluster is None:
+        return response_api_success(data={'unlinked': False})
+    return response_api_success(data={
+        'unlinked': True,
+        'cluster_id': cluster.cluster_id,
+    })
+
+
+@cases_blueprint.get('/<int:identifier>/war-rooms')
+@ac_api_requires()
+def list_case_war_rooms(identifier):
+    """Return war rooms this case is attached to.
+
+    Used by the case detail topbar to render the "in war room" badge +
+    quick-jump menu. Read-only — gated by case read access.
+    """
+    from app.business.war_rooms import war_rooms_for_case
+    from app.blueprints.rest.v2.war_rooms.serializers import serialize_case_war_room_summary
+
+    if not cases_exists(identifier):
+        return response_api_not_found()
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    rows = war_rooms_for_case(identifier)
+    return response_api_success(data=[serialize_case_war_room_summary(r) for r in rows])
+
+
+@cases_blueprint.get('/<int:identifier>/activities')
+@ac_api_requires()
+def list_case_activities(identifier):
+    """Return the recent user activity log for this case.
+
+    Mirrors the legacy `/case/activities/list` endpoint, which the frontend
+    uses to surface "people involved" on a case. Each row carries the user
+    name, the activity date, the description and whether the entry was
+    produced by an API caller.
+    """
+    if not cases_exists(identifier):
+        return response_api_not_found()
+
+    if not ac_fast_check_current_user_has_case_access(
+        identifier, [CaseAccessLevel.read_only, CaseAccessLevel.full_access]
+    ):
+        return ac_api_return_access_denied(caseid=identifier)
+
+    activities = activity_search_in_case(identifier)
+    return response_api_success(activities)

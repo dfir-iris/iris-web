@@ -300,9 +300,18 @@ def get_filtered_iocs(
     return get_filtered_data(Ioc, base_filter, pagination_parameters, request_parameters, relationship_model_map)
 
 
-def search_iocs(search_value):
-    search_condition = and_()
+def search_iocs(search_value, accessible_case_ids=None):
+    # Scope the result set to cases the caller can see when
+    # `accessible_case_ids` is supplied. Empty list means "no access" → no
+    # results (rather than "no filter"), so we short-circuit to avoid a
+    # huge IN () query.
+    if accessible_case_ids is not None and not accessible_case_ids:
+        return []
+
+    scope_filter = Ioc.case_id.in_(accessible_case_ids) if accessible_case_ids is not None else and_()
+
     res = Ioc.query.with_entities(
+        Ioc.ioc_id,
         Ioc.ioc_value.label('ioc_name'),
         Ioc.ioc_description.label('ioc_description'),
         Ioc.ioc_misp,
@@ -318,7 +327,7 @@ def search_iocs(search_value):
             Ioc.case_id == Cases.case_id,
             Client.client_id == Cases.client_id,
             Ioc.ioc_tlp_id == Tlp.tlp_id,
-            search_condition
+            scope_filter
         )
     ).join(Ioc.ioc_type).all()
 

@@ -43,7 +43,8 @@ from app.models.errors import ObjectNotFoundError
 
 def alerts_search(start_date, end_date, source_start_date, source_end_date, title, description,
                   status, severity, owner, source, tags, case_identifier, customer_identifier, classification, alert_identifiers,
-                  assets, iocs, resolution_status, source_reference, custom_conditions, user_identifier_filter, page, per_page, sort):
+                  assets, iocs, resolution_status, source_reference, custom_conditions, user_identifier_filter, page, per_page, sort,
+                  cluster_identifier=None):
 
     return get_filtered_alerts(
         start_date,
@@ -69,7 +70,8 @@ def alerts_search(start_date, end_date, source_start_date, source_end_date, titl
         sort,
         user_identifier_filter,
         source_reference,
-        custom_conditions
+        custom_conditions,
+        cluster_id=cluster_identifier,
     )
 
 
@@ -95,7 +97,23 @@ def alerts_create(alert: Alert, iocs: list[Ioc], assets: list[CaseAssets]) -> Al
         'alert_id': alert.alert_id
     }), namespace='/alerts')
 
+    _enqueue_rule_evaluation(alert.alert_id)
+
     return alert
+
+
+def _enqueue_rule_evaluation(alert_id: int) -> None:
+    """Fire the async rule evaluator. Import is deferred so a broken/
+    unregistered Celery worker doesn't crash the request path — the
+    ImportError branch logs and swallows so alert ingestion still
+    succeeds even if the cluster-rules feature is disabled or the
+    worker module fails to load."""
+    try:
+        from app.iris_engine.cluster_rules.tasks import evaluate_alert_rules
+        evaluate_alert_rules.delay(alert_id)
+    except Exception:  # noqa: BLE001 — rule evaluation must never block alert ingestion
+        from app.logger import logger
+        logger.exception('Failed to enqueue rule evaluation for alert #%s', alert_id)
 
 
 def _get(user, permissions, identifier, fallback_customer_access=None) -> Optional[Alert]:
@@ -334,6 +352,7 @@ def alerts_update(alert: Alert, updated_alert: Alert, activity_data) -> Alert:
         add_obj_history_entry(updated_alert, 'updated alert')
 
     db.session.commit()
+    _enqueue_rule_evaluation(updated_alert.alert_id)
     return updated_alert
 
 

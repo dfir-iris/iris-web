@@ -35,6 +35,25 @@ from app.blueprints.responses import response_success
 manage_ioc_type_rest_blueprint = Blueprint('manage_ioc_types_rest', __name__)
 
 
+# Allowlist of fields administrators may write when adding or updating an
+# IOC type. Blocks mass-assignment of type_id (GHSA-w78h-mx7h-qm3h /
+# CWE-915, SBA-ADV-20260128-01).
+_IOC_TYPE_WRITABLE_FIELDS = {
+    'csrf_token',
+    'type_name',
+    'type_description',
+    'type_taxonomy',
+    'type_validation_regex',
+    'type_validation_expect',
+}
+
+
+def _filter_ioc_type_payload(jsdata):
+    if not isinstance(jsdata, dict):
+        return {}
+    return {k: v for k, v in jsdata.items() if k in _IOC_TYPE_WRITABLE_FIELDS}
+
+
 @manage_ioc_type_rest_blueprint.route('/manage/ioc-types/list', methods=['GET'])
 @ac_api_requires()
 def list_ioc_types():
@@ -64,7 +83,7 @@ def add_ioc_type_api():
 
     try:
 
-        ioct_sc = ioct_schema.load(request.get_json())
+        ioct_sc = ioct_schema.load(_filter_ioc_type_payload(request.get_json()))
         db.session.add(ioct_sc)
         db.session.commit()
 
@@ -111,7 +130,7 @@ def update_ioc(cur_id):
 
     try:
 
-        ioct_sc = ioct_schema.load(request.get_json(), instance=ioc_type)
+        ioct_sc = ioct_schema.load(_filter_ioc_type_payload(request.get_json()), instance=ioc_type)
 
         if ioct_sc:
             track_activity(f"updated ioc type type {ioct_sc.type_name}")

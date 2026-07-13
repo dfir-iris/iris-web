@@ -60,6 +60,13 @@ class RestApi:
         print(f'PUT {url} {payload} => {response_as_string}')
         return response
 
+    def patch(self, path, payload):
+        url = self._build_url(path)
+        response = requests.patch(url, headers=self._headers, json=payload)
+        response_as_string = self._convert_response_to_string(response)
+        print(f'PATCH {url} {payload} => {response_as_string}')
+        return response
+
     def delete(self, path, query_parameters=None):
         url = self._build_url(path)
         response = requests.delete(url, headers=self._headers, params=query_parameters)
