@@ -2,7 +2,7 @@
 <p align="center">
   Incident Response Investigation System
   <br>
-  <i>Current Version v2.5.0-beta.1</i>
+  <i>Current Version v3.0.0-beta.1</i>
   <br>
   <a href="https://v200.beta.dfir-iris.org">Online Demonstration</a>
 </p>
@@ -46,7 +46,7 @@ git clone --recursive https://github.com/dfir-iris/iris-web.git
 cd iris-web
 
 # Optional: pin to the last tagged version
-git checkout v2.5.0-beta.1
+git checkout v3.0.0-beta.1
 
 # Copy and edit the environment template — set POSTGRES_PASSWORD,
 # POSTGRES_ADMIN_PASSWORD, IRIS_SECRET_KEY, IRIS_SECURITY_PASSWORD_SALT,

@@ -21,7 +21,7 @@ services:
     restart: always
 
   db:
-    image: ghcr.io/dfir-iris/iris-db:${IRIS_VERSION:-v2.5.0-beta.1}
+    image: ghcr.io/dfir-iris/iris-db:${IRIS_VERSION:-v3.0.0-beta.1}
     container_name: iris_db
     environment:
       - POSTGRES_USER
@@ -45,7 +45,7 @@ services:
     restart: always
 
   app:
-    image: ghcr.io/dfir-iris/iris-backend:${IRIS_VERSION:-v2.5.0-beta.1}
+    image: ghcr.io/dfir-iris/iris-backend:${IRIS_VERSION:-v3.0.0-beta.1}
     container_name: iris_app
     command: ["./iris-entrypoint.sh", "iriswebapp"]
     depends_on:
@@ -86,7 +86,7 @@ services:
     restart: always
 
   worker:
-    image: ghcr.io/dfir-iris/iris-backend:${IRIS_VERSION:-v2.5.0-beta.1}
+    image: ghcr.io/dfir-iris/iris-backend:${IRIS_VERSION:-v3.0.0-beta.1}
     container_name: iris_worker
     command:
       [
@@ -138,7 +138,7 @@ services:
     restart: always
 
   nginx:
-    image: ghcr.io/dfir-iris/iris-nginx:${IRIS_VERSION:-v2.5.0-beta.1}
+    image: ghcr.io/dfir-iris/iris-nginx:${IRIS_VERSION:-v3.0.0-beta.1}
     container_name: iris_nginx
     # nginx only proxies to app + frontend; worker is async-only (Celery)
     # and its slow startup shouldn't gate the public interface coming up.
@@ -170,7 +170,7 @@ services:
     restart: always
 
   frontend:
-    image: ghcr.io/dfir-iris/iris-frontend:${IRIS_VERSION:-v2.5.0-beta.1}
+    image: ghcr.io/dfir-iris/iris-frontend:${IRIS_VERSION:-v3.0.0-beta.1}
     container_name: iris_frontend
     environment:
       - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-https://${IRIS_HOSTNAME:-127.0.0.1}}
