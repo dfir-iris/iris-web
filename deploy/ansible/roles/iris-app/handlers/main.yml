@@ -1,0 +1,21 @@
+#SPDX-License-Identifier: MIT-0
+---
+# IRIS application service handlers
+
+- name: restart iris services
+  command: docker-compose -f docker-compose.dev.yml restart
+  args:
+    chdir: "{{ iris_project_path }}"
+  become_user: "{{ iris_user }}"
+  listen: "restart iris services"
+
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+  listen: "reload systemd"
+
+- name: enable iris service
+  systemd:
+    name: iris
+    enabled: true
+  listen: "enable iris service"

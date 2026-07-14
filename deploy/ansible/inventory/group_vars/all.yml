@@ -1,0 +1,38 @@
+---
+# Global Variables for DFIR-IRIS Deployment
+
+# Project Configuration
+project_name: "dfir-iris-web"
+project_version: "v2.4.20"
+
+# Deployment Paths
+iris_base_path: "/opt/iris"
+iris_project_path: "{{ iris_base_path }}/iris-web"
+iris_backup_path: "{{ iris_base_path }}/backups"
+
+# Docker Configuration
+docker_compose_version: "2.20.0"
+docker_compose_cmd: "docker compose"
+docker_service_restart_policy: "always"
+
+# System Configuration
+system_timezone: "UTC"
+system_locale: "en_US.UTF-8"
+
+# Network Configuration
+iris_https_port: 443
+iris_http_port: 80
+postgres_port: 5432
+
+# User Configuration
+iris_user: "iris"
+iris_group: "iris"
+
+# Security Configuration
+generate_ssl_certificates: true
+ssl_cert_days: 365
+ssl_key_size: 2048
+
+# Backup Configuration
+enable_backups: true
+backup_retention_days: 30

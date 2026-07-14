@@ -31,3 +31,9 @@ run_nv_test.py
 certificates/web_certificates/*.pem
 certificates/web_certificates/*.key
 !certificates/web_certificates/iris_dev_*
+
+# Ansible sensitive files
+deploy/ansible/vars/secrets.yml
+deploy/ansible/ansible.log
+*.retry
+*.vault

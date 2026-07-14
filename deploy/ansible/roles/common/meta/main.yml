@@ -1,0 +1,52 @@
+#SPDX-License-Identifier: MIT
+galaxy_info:
+  author: Mohammed Ahmed
+  description: Common system setup tasks including package management, user creation, and basic system configuration for IRIS deployment
+  company: NISIR
+  role_name: common
+  namespace: nisir
+
+  # If the issue tracker for your role is not on github, uncomment the
+  # next line and provide a value
+  # issue_tracker_url: http://example.com/issue/tracker
+
+  # Choose a valid license ID from https://spdx.org - some suggested licenses:
+  # - BSD-3-Clause (default)
+  # - MIT
+  # - GPL-2.0-or-later
+  # - GPL-3.0-only
+  # - Apache-2.0
+  # - CC-BY-4.0
+  license: MIT
+
+  min_ansible_version: "2.9"
+
+  # Supported platforms
+  platforms:
+    - name: Ubuntu
+      versions:
+        - "20.04"
+        - "22.04"
+        - "24.04"
+    - name: Debian
+      versions:
+        - "10"
+        - "11"
+        - "12"
+
+  # If this a Container Enabled role, provide the minimum Ansible Container version.
+  # min_ansible_container_version:
+
+  galaxy_tags:
+    - system
+    - common
+    - setup
+    - users
+    - packages
+    - iris
+    - security
+    - infrastructure
+
+dependencies: []
+  # List your role dependencies here, one per line. Be sure to remove the '[]' above,
+  # if you add dependencies to this list.
