@@ -102,7 +102,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: node:23-alpine
+    image: node:24-alpine
     profiles: ["new-ui"]
     container_name: iris_sveltekit_frontend
     working_dir: /app

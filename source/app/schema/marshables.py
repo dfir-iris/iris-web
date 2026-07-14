@@ -19,7 +19,7 @@
 import datetime
 import dateutil.parser
 import os
-import pyminizip
+import pyzipper
 import random
 import re
 import shutil
@@ -817,16 +817,16 @@ class CaseTemplateSchema(ma.Schema):
     created_at: datetime = fields.DateTime(dump_only=True)
     updated_at: datetime = fields.DateTime(dump_only=True)
     name: str = fields.String(required=True)
-    display_name: Optional[str] = fields.String(allow_none=True, missing="")
-    description: Optional[str] = fields.String(allow_none=True, missing="")
-    author: Optional[str] = fields.String(allow_none=True, validate=Length(max=128), missing="")
-    title_prefix: Optional[str] = fields.String(allow_none=True, validate=Length(max=32), missing="")
-    summary: Optional[str] = fields.String(allow_none=True, missing="")
-    tags: Optional[List[str]] = fields.List(fields.String(), allow_none=True, missing=[])
-    classification: Optional[str] = fields.String(allow_none=True, missing="")
+    display_name: Optional[str] = fields.String(allow_none=True, load_default="")
+    description: Optional[str] = fields.String(allow_none=True, load_default="")
+    author: Optional[str] = fields.String(allow_none=True, validate=Length(max=128), load_default="")
+    title_prefix: Optional[str] = fields.String(allow_none=True, validate=Length(max=32), load_default="")
+    summary: Optional[str] = fields.String(allow_none=True, load_default="")
+    tags: Optional[List[str]] = fields.List(fields.String(), allow_none=True, load_default=[])
+    classification: Optional[str] = fields.String(allow_none=True, load_default="")
     note_directories: Optional[List[Dict[str, Union[str, List[Dict[str, str]]]]]] = fields.List(fields.Dict(),
                                                                                                 allow_none=True,
-                                                                                                missing=[])
+                                                                                                load_default=[])
 
     @staticmethod
     def validate_string_or_list(value: Union[str, List[str]]) -> Union[str, List[str]]:
@@ -884,7 +884,7 @@ class CaseTemplateSchema(ma.Schema):
     tasks: Optional[List[Dict[str, Union[str, List[str]]]]] = fields.List(
         fields.Dict(keys=fields.Str(), values=fields.Raw(validate=[validate_string_or_list])),
         allow_none=True,
-        missing=[]
+        load_default=[]
     )
 
 
@@ -1172,7 +1172,7 @@ class EventSchema(ma.SQLAlchemyAutoSchema):
     event_tz: str = fields.String(required=True, allow_none=False)
     event_category_id: int = ma.Method('get_event_category_id')
     event_date_wtz: datetime = fields.DateTime("%Y-%m-%dT%H:%M:%S.%f", required=False, allow_none=False)
-    modification_history: str = auto_field('modification_history', required=False, readonly=True)
+    modification_history: str = auto_field('modification_history', required=False, dump_only=True)
     event_comments_map: List[int] = fields.List(fields.Integer, required=False, allow_none=True)
     event_sync_iocs_assets: bool = fields.Boolean(required=False)
     children = fields.Nested('EventSchema', many=True, required=False)
@@ -1460,7 +1460,10 @@ class DSFileSchema(ma.SQLAlchemyAutoSchema):
 
                     shutil.copyfile(fn.name, Path(fn.name).parent / file_hash)
 
-                    pyminizip.compress((Path(fn.name).parent / file_hash).as_posix(), None, file_path, passwd, 0)
+                    with pyzipper.AESZipFile(file_path, 'w', compression=pyzipper.ZIP_STORED,
+                                              encryption=pyzipper.WZ_AES) as zf:
+                        zf.setpassword(passwd.encode())
+                        zf.write((Path(fn.name).parent / file_hash).as_posix(), arcname=file_hash)
                     os.unlink(Path(tmp.name).parent / file_hash)
                     os.unlink(fn.name)
 
@@ -2138,7 +2141,7 @@ class AuthorizationGroupSchema(ma.SQLAlchemyAutoSchema):
     group_name: str = auto_field('group_name', required=True, validate=Length(min=2), allow_none=False)
     group_description: str = auto_field('group_description', required=True, validate=Length(min=2))
     group_auto_follow_access_level: Optional[bool] = auto_field('group_auto_follow_access_level', required=False,
-                                                                default=False)
+                                                                dump_default=False)
     group_permissions: int = fields.Integer(required=False)
     group_members: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
     group_permissions_list: Optional[List[Dict[str, Any]]] = fields.List(fields.Dict, required=False, allow_none=True)
@@ -2279,7 +2282,7 @@ class BasicUserSchema(ma.SQLAlchemyAutoSchema):
     user_name: str = auto_field('name', required=True, validate=Length(min=2))
     user_login: str = auto_field('user', required=True, validate=Length(min=2))
     user_email: str = auto_field('email', required=True, validate=Length(min=2))
-    has_deletion_confirmation: Optional[bool] = auto_field('has_deletion_confirmation', required=False, default=False)
+    has_deletion_confirmation: Optional[bool] = auto_field('has_deletion_confirmation', required=False, dump_default=False)
 
     class Meta:
         model = User
@@ -2409,12 +2412,13 @@ class SavedFilterSchema(ma.SQLAlchemyAutoSchema):
     This schema defines the fields to include when serializing and deserializing SavedFilter objects.
 
     """
+    user = ma.Nested(lambda: UserSchema(only=['id', 'user_name', 'user_login', 'user_email']), dump_only=True)
 
     class Meta:
         model = SavedFilter
         load_instance = True
         include_fk = True
-        include_relationships = True
+        include_relationships = False
         unknown = EXCLUDE
 
 
@@ -2624,8 +2628,8 @@ class UserSchemaForAPIV2(ma.SQLAlchemyAutoSchema):
     user_permissions = ma.Nested(AuthorizationGroupSchema, many=True, attribute='permissions', only=['group_name', 'group_permissions'])
     user_customers = ma.Nested(CustomerSchema, many=True, attribute='customers', only=['customer_name', 'customer_id'])
     user_cases_access = ma.Nested(CaseSchemaForAPIV2, many=True, attribute='cases_access', only=['access_level', 'case_id', 'case_name'])
-    user_organisations = fields.Method('get_user_organisations', only=['org_name', 'org_id', 'org_uuid', 'is_primary_org'])
-    user_primary_organisation_id = fields.Method('get_user_primary_organisation', only=['id'])
+    user_organisations = fields.Method('get_user_organisations')
+    user_primary_organisation_id = fields.Method('get_user_primary_organisation')
 
     class Meta:
         model = User

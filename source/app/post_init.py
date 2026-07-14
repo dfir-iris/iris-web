@@ -1328,6 +1328,8 @@ class PostInit:
                 filename = store_fullpath.split(os.path.sep)[-1]
                 show_fullpath = os.path.join(self._configuration['APP_PATH'], 'app',
                                              self._configuration['ASSET_SHOW_PATH'].strip(os.path.sep), filename)
+                show_dir = os.path.dirname(show_fullpath)
+                os.makedirs(show_dir, exist_ok=True)
                 if not os.path.islink(show_fullpath):
                     os.symlink(store_fullpath, show_fullpath)
                     self._logger.info(f"Created assets img symlink {store_fullpath} -> {show_fullpath}")
