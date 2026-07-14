@@ -31,6 +31,8 @@ from app.iris_engine.module_handler.module_handler import call_modules_hook
 from app.iris_engine.utils.tracker import track_activity
 from app.models.errors import BusinessProcessingError
 from app.models.errors import ObjectNotFoundError
+from app.models.authorization import User
+from app.models.comments import Comments, IocComments
 from app.datamgmt.case.case_iocs_db import get_ioc
 from app.util import add_obj_history_entry
 from app.datamgmt.case.case_iocs_db import get_filtered_iocs
@@ -106,8 +108,33 @@ def iocs_delete(ioc: Ioc):
 
 def iocs_exports_to_json(case_id):
     iocs = get_iocs(case_id)
+    serialized_iocs = IocSchema().dump(iocs, many=True)
 
-    return IocSchema().dump(iocs, many=True)
+    for ioc in serialized_iocs:
+        ioc['comments'] = _ioc_comments_export_to_json(ioc['ioc_id'])
+
+    return serialized_iocs
+
+
+def _ioc_comments_export_to_json(ioc_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        IocComments.comment_ioc_id == ioc_id
+    ).join(
+        IocComments,
+        Comments.comment_id == IocComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def iocs_build_filter_query(ioc_id: int = None,
