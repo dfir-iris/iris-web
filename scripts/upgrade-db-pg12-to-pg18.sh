@@ -122,13 +122,67 @@ ensure_no_iris_db_running() {
 # state the backup/dump/swap steps are no-ops.
 RESUME_FROM_RESTORE=0
 
-# Read the PG_VERSION of a volume's pgdata/ sub-path, or empty string if no
-# such file exists. The IRIS compose file runs postgres with PGDATA pointing
-# at the pgdata/ sub-path, so PG_VERSION lives one level below the mountpoint.
-read_pg_version() {
+# Where does the PG12 cluster live on this volume?
+#
+# Two layouts are in the wild:
+#   * "root" — PGDATA was the mountpoint itself. This is what pre-V3 IRIS
+#              deployments used (docker-compose.yml did NOT set PGDATA, so
+#              postgres defaulted to /var/lib/postgresql/data).
+#   * "pgdata" — PGDATA is a /pgdata sub-path under the mountpoint. This
+#                is what the V3 meta compose uses to satisfy PG18's
+#                "PGDATA must not equal the mountpoint" check.
+#
+# A stack that boots V3 against a v2 volume will end up with the ORIGINAL
+# PG12 cluster still at the root and a FRESHLY INITIALISED empty PG18
+# cluster in the /pgdata sub-path (postgres silently init'd it when it saw
+# the PGDATA env var pointed at an empty dir). We need to find the real
+# PG12 data wherever it landed.
+#
+# Prefers the pgdata/ layout when both exist and both look valid, because
+# that's the V3 target. Falls back to root when only that has PG_VERSION.
+# Returns "layout:version" like "root:12" or "pgdata:12", empty when
+# nothing found.
+read_pg_layout() {
     local vol="$1"
-    docker run --rm -v "${vol}:/var/lib/postgresql/data" "${OLD_IMAGE}" \
-        sh -c 'cat /var/lib/postgresql/data/pgdata/PG_VERSION 2>/dev/null || true'
+    docker run --rm -v "${vol}:/var/lib/postgresql/data" "${OLD_IMAGE}" sh -c '
+        pgdata_ver=""
+        root_ver=""
+        [[ -f /var/lib/postgresql/data/pgdata/PG_VERSION ]] && \
+            pgdata_ver="$(cat /var/lib/postgresql/data/pgdata/PG_VERSION)"
+        [[ -f /var/lib/postgresql/data/PG_VERSION ]] && \
+            root_ver="$(cat /var/lib/postgresql/data/PG_VERSION)"
+        if [[ -n "$pgdata_ver" && "$pgdata_ver" == "12" ]]; then
+            echo "pgdata:$pgdata_ver"
+        elif [[ -n "$root_ver" && "$root_ver" == "12" ]]; then
+            echo "root:$root_ver"
+        elif [[ -n "$pgdata_ver" ]]; then
+            echo "pgdata:$pgdata_ver"
+        elif [[ -n "$root_ver" ]]; then
+            echo "root:$root_ver"
+        fi
+    ' 2>/dev/null
+}
+
+# Back-compat wrapper — returns just the version (or empty). Prefers the
+# real PG12 cluster if one exists.
+read_pg_version() {
+    local out
+    out="$(read_pg_layout "$1")"
+    [[ -z "$out" ]] && return
+    echo "${out#*:}"
+}
+
+# Where does the PG12 cluster's PGDATA actually point? Returns the docker
+# path to use for -e PGDATA=... in the temporary PG12 container.
+pg12_pgdata_path() {
+    local vol="$1"
+    local layout
+    layout="$(read_pg_layout "${vol}")"
+    case "${layout%:*}" in
+        pgdata) echo "/var/lib/postgresql/data/pgdata" ;;
+        root)   echo "/var/lib/postgresql/data" ;;
+        *)      echo "" ;;
+    esac
 }
 
 # Is the volume mount empty (aside from the mount metadata)? Used to
@@ -179,7 +233,7 @@ step_preflight() {
     local pgver
     pgver="$(read_pg_version "${OLD_VOLUME}")"
     if [[ -z "${pgver}" ]]; then
-        die "Volume ${OLD_VOLUME} does not look like a Postgres data directory (no PG_VERSION file at pgdata/)."
+        die "Volume ${OLD_VOLUME} does not look like a Postgres data directory (no PG_VERSION at mountpoint root or pgdata/)."
     fi
     if [[ "${pgver}" != "12" ]]; then
         die "Volume ${OLD_VOLUME} reports PG_VERSION=${pgver}, expected 12. Aborting — this script is only for the 12 → 18 jump."
@@ -216,15 +270,22 @@ step_dump_logical() {
         return
     fi
     log "Starting temporary PG12 container to take a logical dump"
-    # PGDATA must match the compose service (pgdata/ sub-path); otherwise
-    # postgres would try to init a fresh cluster at the mountpoint root
-    # instead of picking up the existing one.
+    # PGDATA must point at wherever the PG12 cluster actually lives on
+    # this volume. Pre-V3 stacks put it at the mountpoint root; V3-boot-
+    # against-old-volume mishaps can create a sibling pgdata/ cluster.
+    # pg12_pgdata_path() resolves the correct one.
+    local pgdata_path
+    pgdata_path="$(pg12_pgdata_path "${OLD_VOLUME}")"
+    if [[ -z "${pgdata_path}" ]]; then
+        die "Could not determine PGDATA location on ${OLD_VOLUME} (no PG_VERSION at root or pgdata/)"
+    fi
+    log "Using PGDATA=${pgdata_path}"
     docker run -d --rm \
         --name "${TMP_OLD_CTR}" \
         -v "${OLD_VOLUME}:/var/lib/postgresql/data" \
         -e POSTGRES_USER="${POSTGRES_USER}" \
         -e POSTGRES_PASSWORD="${POSTGRES_PASSWORD}" \
-        -e PGDATA=/var/lib/postgresql/data/pgdata \
+        -e PGDATA="${pgdata_path}" \
         "${OLD_IMAGE}" >/dev/null
 
     log "Waiting for PG12 to accept connections"
