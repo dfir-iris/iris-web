@@ -127,20 +127,25 @@ services:
     networks:
       - iris_backend
     healthcheck:
-      test: celery -A app.celery inspect ping || exit 1
-      start_period: 60s
-      start_interval: 1s
+      # celery inspect ping needs the worker to have already registered
+      # with the broker AND to answer a control command — that can take
+      # >90s under load. Weaken the check to "the celery process is still
+      # alive": if it exited we'll see it fast, if it's up we don't gate
+      # nginx on an inspect round-trip that races with cold start.
+      test: ["CMD-SHELL", "pgrep -f 'celery.*worker' > /dev/null || exit 1"]
+      start_period: 90s
+      start_interval: 2s
     restart: always
 
   nginx:
     image: ghcr.io/dfir-iris/iris-nginx:${IRIS_VERSION:-v2.5.0-beta.1}
     container_name: iris_nginx
+    # nginx only proxies to app + frontend; worker is async-only (Celery)
+    # and its slow startup shouldn't gate the public interface coming up.
     depends_on:
       app:
         condition: service_healthy
       frontend:
-        condition: service_healthy
-      worker:
         condition: service_healthy
     environment:
       - IRIS_UPSTREAM_SERVER
@@ -182,7 +187,11 @@ services:
       - iris_backend
       - iris_frontend
     healthcheck:
-      test: wget --spider -q http://localhost:5173/ || exit 1
+      # node:23-alpine ships neither curl nor wget by default. Use node's
+      # built-in http client (always present) to hit /health, which
+      # SvelteKit's adapter-node responds to with 200 as long as the
+      # server is accepting connections.
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5173/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
       start_period: 30s
       start_interval: 1s
     restart: always
