@@ -93,6 +93,22 @@ git submodule update --init --recursive
 There are three different options for configuring the settings and credentials: Azure Key Vault, Environment Variables and Configuration Files. This is also the order of priority, if a settings is not set it will fall back on the next option.
 For all available configuration options see [configuration](https://docs.dfir-iris.org/operations/configuration/).
 
+### Repository layout
+
+Starting with v3, contributor-facing docs live inside the submodules
+alongside the code they describe:
+
+- [`iris-backend/CODESTYLE.md`](./iris-backend/CODESTYLE.md) — Python
+  and Flask conventions for the backend.
+- [`iris-backend/CONFIGURATION.md`](./iris-backend/CONFIGURATION.md) —
+  full backend env var reference (superset of the online docs).
+- [`iris-backend/architecture.md`](./iris-backend/architecture.md) —
+  backend service architecture and data flow.
+- [`iris-backend/deploy/`](./iris-backend/deploy/) — Helm chart and
+  EKS manifests for Kubernetes deployments.
+- [`docs/upgrade-to-3.0.0.md`](./docs/upgrade-to-3.0.0.md) — v2.4.x →
+  v3 upgrade procedure (docker-compose and k8s paths).
+
 ## Versioning
 Starting from version 2.0.0, Iris is following the [Semantic Versioning 2.0](https://semver.org/) guidelines.   
 The code ready for production is always tagged with a version number. 

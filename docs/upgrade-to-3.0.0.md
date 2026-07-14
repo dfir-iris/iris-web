@@ -33,6 +33,10 @@ point until you choose to reclaim the backup.
 - **Confirm your `.env`** still has the original `POSTGRES_USER` and
   `POSTGRES_PASSWORD`. The migration script reads them to authenticate
   against both the PG12 dump and the PG18 restore.
+- **Plan for `.env` changes.** V3 introduces several new required
+  variables and expects a self-signed TLS cert in a specific path — see
+  §3.2b below. Do not skip that step, or the stack will fail to boot
+  even after the DB migration succeeds.
 - **Update the IRIS source tree** to the v3.0.0-beta tag before running
   the migration — the script lives at
   `scripts/upgrade-db-pg12-to-pg18.sh`.
@@ -46,10 +50,42 @@ point until you choose to reclaim the backup.
 | Registry image names | `ghcr.io/dfir-iris/iriswebapp_{app,db,nginx}` | `ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend}` |
 | Container names | `iriswebapp_*` | `iris_*` |
 | `iris-backend/deploy/eks_manifest/psql/deployment.yml` image tag | `v2.2.2` | `v3.0.0-beta` |
+| Services in `docker-compose.yml` | 5 (`app`, `worker`, `db`, `rabbitmq`, `nginx`) | 6 — adds `frontend` (SvelteKit SSR) |
+| UI stack | jQuery-based, served by `app` | SvelteKit SSR from `frontend`; nginx proxies `/api/*` to `app`, everything else to `frontend` |
+| PG client auth method | `md5` (PG12 default) | `scram-sha-256` (PG18 default) — the migration script re-hashes existing roles automatically |
 
 The IRIS application schema is unchanged by this jump itself — Alembic
 migrations are applied as normal on first boot of the new app container.
 Only the underlying PostgreSQL major version changes.
+
+### 2.1 About the new `frontend` service
+
+V3 ships a rewritten UI as a separate SvelteKit SSR service (image
+`ghcr.io/dfir-iris/iris-frontend`). It runs on the same host network as
+the app and worker containers, listens on port 5173 internally, and is
+proxied by nginx for everything that isn't `/api/*`. Operators do not
+interact with it directly; the compose file wires it up, sets sensible
+defaults for its env vars (`PUBLIC_EXTERNAL_API_URL`, `ORIGIN`,
+`BODY_SIZE_LIMIT`), and its healthcheck gates nginx startup along
+with the app healthcheck.
+
+### 2.2 Build-from-source deployments
+
+V3 introduces the submodule layout for operators who build their own
+images. If you were building v2 from source, the equivalent v3
+workflow is:
+
+```bash
+git clone --recursive https://github.com/dfir-iris/iris-web.git
+cd iris-web
+git checkout v3.0.0-beta.1
+./scripts/dev-up.sh
+```
+
+`scripts/dev-up.sh` composes `docker-compose.yml` + `docker-compose.build.yml`
+(which points build contexts at the `iris-backend/` and `iris-frontend/`
+submodules) and passes `--build` to compose. Pull-only operators do not
+need to initialise submodules.
 
 ## 3. Migration procedure (docker-compose deployments)
 
@@ -82,6 +118,76 @@ git submodule update --init --recursive
 
 At this point `docker-compose.yml` references the new PG18-based DB image,
 but your `db_data` volume still holds a PG12 cluster.
+
+### 3.2b Migrate your `.env`
+
+V3 introduces new env vars, renames a few, and drops the legacy
+`.env.model` file in favour of `.env.example` at the meta root. Your
+v2 `.env` will not boot v3 as-is.
+
+Diff your existing `.env` against the new template:
+
+```bash
+diff -u .env .env.example | less   # visual diff — merge new keys manually
+```
+
+The variables you **must** add or verify (with brief purpose):
+
+| Variable | v2 default | v3 default | Required for |
+| --- | --- | --- | --- |
+| `IRIS_VERSION` | *not set* | `v3.0.0-beta.1` | pins all four service image tags together — do not omit |
+| `IRIS_HOSTNAME` | *not set* | `localhost` | derives `SERVER_NAME`, `PUBLIC_EXTERNAL_API_URL`, `ORIGIN` (SvelteKit CSRF gate) when they are empty |
+| `POSTGRES_SERVER` | *not set* | `db` | app + worker DB connection |
+| `POSTGRES_PORT` | *not set* | `5432` | app + worker DB connection |
+| `POSTGRES_ADMIN_USER` | *not set* | `postgres` | schema/role management on first boot |
+| `POSTGRES_ADMIN_PASSWORD` | *not set* | *unset — must set* | schema/role management |
+| `IRIS_SECURITY_PASSWORD_SALT` | *sometimes set* | *unset — must set* | Flask-Security session hashing |
+| `KEY_FILENAME` / `CERT_FILENAME` | *not set* | `iris_dev_key.pem` / `iris_dev_cert.pem` | nginx TLS material lookup under `certificates/web_certificates/` |
+| `IRIS_CERT_RELOAD_INTERVAL` | n/a | `60` | nginx polls the cert mtime; set `0` to disable |
+| `INTERFACE_HTTPS_PORT` | `443` | `443` | host-side HTTPS port |
+| `PUBLIC_EXTERNAL_API_URL` | n/a | derived from `IRIS_HOSTNAME` | SvelteKit SSR — external URL the browser will use |
+| `ORIGIN` | n/a | derived from `IRIS_HOSTNAME` | SvelteKit CSRF gate — must match the URL the browser uses |
+| `BODY_SIZE_LIMIT` | n/a | `Infinity` | SvelteKit body cap — per-endpoint limits live in nginx |
+| `LOG_LEVEL` | n/a | `info` | app + worker log verbosity |
+
+Vars that **behaved differently** in v2 and may need tuning:
+
+- `SERVER_NAME` — nginx now strips scheme/path so you can drop a full URL
+  in `.env` (e.g. `https://iris.lab`) without breaking the `server_name`
+  directive. Bare hostnames still work.
+
+### 3.2c Provide a TLS cert
+
+V3's nginx expects
+`certificates/web_certificates/iris_dev_cert.pem` and
+`certificates/web_certificates/iris_dev_key.pem` to exist before the
+stack comes up (or whatever `CERT_FILENAME` / `KEY_FILENAME` in `.env`
+point at). If you were serving TLS from v2's nginx, **the file names
+and expected mount path have not changed** — but the directory may not
+yet exist in a fresh v3 checkout, since the cert files are now
+`.gitignore`d.
+
+- **Reusing v2 certs:** copy them into
+  `certificates/web_certificates/` with the filenames named above (or
+  update `.env`).
+- **Generating a fresh self-signed pair (dev only):**
+  ```bash
+  mkdir -p certificates/web_certificates
+  openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
+      -keyout certificates/web_certificates/iris_dev_key.pem \
+      -out certificates/web_certificates/iris_dev_cert.pem \
+      -subj "/CN=iris.local" \
+      -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+  chmod 600 certificates/web_certificates/iris_dev_key.pem
+  ```
+  Build-from-source operators can skip this step — `scripts/dev-up.sh`
+  mints the pair automatically on first run.
+- **Let's Encrypt / certbot:** unset both `CERT_FILENAME` and
+  `KEY_FILENAME` in `.env`. The nginx entrypoint autodetects
+  `fullchain.pem` + `privkey.pem` if they exist under
+  `certificates/web_certificates/`. See
+  `iris-backend/scripts/certbot-deploy-hook.sh` for the renewal
+  wiring.
 
 ### 3.3 Run the migration script
 
@@ -238,5 +344,27 @@ migrating.
 **Can I jump straight from a much older IRIS version?** This document
 only covers the v2.4.x → v3.0.0-beta jump. If you are on something
 older, upgrade to v2.4.29 first using
-[`upgrades/upgrade_to_2.0.0.py`](upgrade_to_2.0.0.py) and the regular
-release notes, then come back here.
+[`iris-backend/upgrades/upgrade_to_2.0.0.py`](../iris-backend/upgrades/upgrade_to_2.0.0.py)
+and the regular release notes, then come back here.
+
+**Why is my role's password no longer accepted after the migration?**
+PG18 defaults to `scram-sha-256` client authentication, where PG12
+used `md5`. The migration script silently re-hashes the `POSTGRES_USER`
+and `POSTGRES_ADMIN_USER` roles' stored passwords to the new scheme
+using the values in your `.env`, so the app + worker containers
+authenticate normally. If you provisioned additional roles outside
+the app (custom read-only reporting user, etc.), you must re-hash them
+manually:
+```bash
+docker compose exec db psql -U "$POSTGRES_ADMIN_USER" -d iris_db \
+    -c "ALTER USER myuser WITH PASSWORD 'their-existing-password';"
+```
+The `ALTER USER ... WITH PASSWORD` re-encodes using PG18's active
+`password_encryption` setting, which is `scram-sha-256`.
+
+**The migration script failed halfway through — do I need to start
+over?** No. The script is restartable: each step detects prior
+completion and skips it. Rerun the same command and it will pick up
+from where it left off. If step 5 (restore) failed and you want to
+force a full replay of just the restore against the fresh PG18 volume,
+export `RESUME_FROM_RESTORE=1` before rerunning.

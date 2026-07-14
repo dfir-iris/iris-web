@@ -12,7 +12,7 @@ but not fit perfectly with what you have in mind, you can add comments to it, an
 If you want to report a security issue, please read the [security page](./SECURITY.md).   
 
 ## Pull requests 
-Please make sure to follow the [code guideline](./CODESTYLE.md) when writing your code.  
+Please make sure to follow the [code guideline](./iris-backend/CODESTYLE.md) when writing your code.  
 The pull requests must be submitted on the `develop` branch of the project. Ensure that before submitting you are 
 up-to-date with it.  
 
