@@ -34,8 +34,8 @@ function add_case_template() {
                 {value: 'summary', score: 1, meta: 'summary of the case'},
                 {value: 'tags', score: 1, meta: 'tags of the case or the tasks'},
                 {value: 'tasks', score: 1, meta: 'tasks of the case'},
-                {value: 'note_groups', score: 1, meta: 'groups of notes'},
-                {value: 'title', score: 1, meta: 'title of the task or the note group or the note'},
+                {value: 'note_directories', score: 1, meta: 'note directories (supports nested note_directories)'},
+                {value: 'title', score: 1, meta: 'title of the task, note directory, or note'},
                 {value: 'content', score: 1, meta: 'content of the note'},
               ]);
             },
@@ -198,8 +198,8 @@ function case_template_detail(ctempl_id) {
                 {value: 'summary', score: 1, meta: 'summary of the case'},
                 {value: 'tags', score: 1, meta: 'tags of the case or the tasks'},
                 {value: 'tasks', score: 1, meta: 'tasks of the case'},
-                {value: 'note_groups', score: 1, meta: 'groups of notes'},
-                {value: 'title', score: 1, meta: 'title of the task or the note group or the note'},
+                {value: 'note_directories', score: 1, meta: 'note directories (supports nested note_directories)'},
+                {value: 'title', score: 1, meta: 'title of the task, note directory, or note'},
                 {value: 'content', score: 1, meta: 'content of the note'},
               ]);
             },

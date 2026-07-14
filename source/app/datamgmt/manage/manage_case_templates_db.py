@@ -82,6 +82,37 @@ def delete_case_template_by_id(case_template_id: int):
     CaseTemplate.query.filter_by(id=case_template_id).delete()
 
 
+def _validate_note_dir_entry(note_dir: dict) -> Optional[str]:
+    """Recursively validate a note directory entry from a case template.
+
+    Args:
+        note_dir (dict): The note directory entry to validate.
+
+    Returns:
+        Optional[str]: An error message if validation fails, or None if successful.
+    """
+    if not isinstance(note_dir, dict):
+        return "Each note directory must be a dictionary."
+    if "title" not in note_dir:
+        return "Each note directory must have a 'title' field."
+    if "notes" in note_dir:
+        if not isinstance(note_dir["notes"], list):
+            return "Notes must be a list."
+        for note in note_dir["notes"]:
+            if not isinstance(note, dict):
+                return "Each note must be a dictionary."
+            if "title" not in note:
+                return "Each note must have a 'title' field."
+    if "note_directories" in note_dir:
+        if not isinstance(note_dir["note_directories"], list):
+            return "Nested note_directories must be a list."
+        for sub_dir in note_dir["note_directories"]:
+            error = _validate_note_dir_entry(sub_dir)
+            if error:
+                return error
+    return None
+
+
 def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
     try:
         if not update:
@@ -139,18 +170,9 @@ def validate_case_template(data: dict, update: bool = False) -> Optional[str]:
             if not isinstance(data["note_directories"], list):
                 return "Note directories must be a list."
             for note_dir in data["note_directories"]:
-                if not isinstance(note_dir, dict):
-                    return "Each note directory must be a dictionary."
-                if "title" not in note_dir:
-                    return "Each note directory must have a 'title' field."
-                if "notes" in note_dir:
-                    if not isinstance(note_dir["notes"], list):
-                        return "Notes must be a list."
-                    for note in note_dir["notes"]:
-                        if not isinstance(note, dict):
-                            return "Each note must be a dictionary."
-                        if "title" not in note:
-                            return "Each note must have a 'title' field."
+                error = _validate_note_dir_entry(note_dir)
+                if error:
+                    return error
 
         # If all checks succeeded, we return None to indicate everything is has been validated
         return None
@@ -243,36 +265,52 @@ def case_template_populate_notes(case: Cases, note_dir_template: dict, ng: NoteD
     return logs
 
 
+def _create_note_directory_recursive(case: Cases, note_dir_template: dict, parent_id: Optional[int]) -> list:
+    """Recursively create a note directory and its children from a template entry.
+
+    Args:
+        case (Cases): The target case.
+        note_dir_template (dict): The template entry for this directory.
+        parent_id (Optional[int]): The DB id of the parent directory, or None for root.
+
+    Returns:
+        list: Any error messages encountered during creation.
+    """
+    logs = []
+    try:
+        note_dir_schema = CaseNoteDirectorySchema()
+
+        mapped_note_dir_template = {
+            "name": note_dir_template['title'],
+            "parent_id": parent_id,
+            "case_id": case.case_id
+        }
+
+        note_dir = note_dir_schema.load(mapped_note_dir_template)
+        db_create(note_dir)
+
+        if not note_dir:
+            logs.append("Unable to add note directory for internal reasons")
+            return logs
+
+        logs += case_template_populate_notes(case, note_dir_template, note_dir)
+
+        for sub_dir_template in note_dir_template.get("note_directories", []):
+            logs += _create_note_directory_recursive(case, sub_dir_template, note_dir.id)
+
+    except marshmallow.exceptions.ValidationError as e:
+        logs.append(e.messages)
+
+    return logs
+
+
 def case_template_populate_note_groups(case: Cases, case_template: CaseTemplate):
     logs = []
-    # Update case tasks
     if case_template.note_directories:
         case_template.note_directories = case_template.note_directories
 
     for note_dir_template in case_template.note_directories:
-        try:
-            # validate before saving
-            note_dir_schema = CaseNoteDirectorySchema()
-
-            # Remap case task template fields
-            # Set status to "To Do" which is ID 1
-            mapped_note_dir_template = {
-                "name": note_dir_template['title'],
-                "parent_id": None,
-                "case_id": case.case_id
-            }
-
-            note_dir = note_dir_schema.load(mapped_note_dir_template)
-            db_create(note_dir)
-
-            if not note_dir:
-                logs.append("Unable to add note group for internal reasons")
-                break
-
-            logs = case_template_populate_notes(case, note_dir_template, note_dir)
-
-        except marshmallow.exceptions.ValidationError as e:
-            logs.append(e.messages)
+        logs += _create_note_directory_recursive(case, note_dir_template, None)
 
     return logs
 

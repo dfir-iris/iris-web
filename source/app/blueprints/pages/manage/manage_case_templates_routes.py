@@ -116,6 +116,17 @@ def add_template_modal(caseid, url_redir):
                         "title": "Note 1",
                         "content": "Note 1 content"
                     }
+                ],
+                "note_directories": [
+                    {
+                        "title": "Sub directory 1",
+                        "notes": [
+                            {
+                                "title": "Sub note 1",
+                                "content": "Sub note 1 content"
+                            }
+                        ]
+                    }
                 ]
             }
         ]
