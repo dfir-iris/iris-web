@@ -21,7 +21,6 @@ import re
 from sqlalchemy import desc
 
 from app.datamgmt.case.case_notes_db import get_notes_from_group
-from app.datamgmt.case.case_notes_db import get_case_note_comments
 from app.models.assets import CompromiseStatus, AssetsType, CaseAssets, AnalysisStatus
 from app.models.models import TaskAssignee
 from app.models.models import CaseEventsAssets
@@ -30,7 +29,7 @@ from app.models.evidences import CaseReceivedFile
 from app.models.models import CaseTasks
 from app.models.cases import Cases
 from app.models.cases import CasesEvent
-from app.models.comments import Comments
+from app.models.comments import Comments, TaskComments, AssetComments, EventComments, NotesComments, EvidencesComments
 from app.models.models import EventCategory
 from app.models.iocs import Ioc
 from app.models.models import IocAssetLink
@@ -41,7 +40,6 @@ from app.models.models import TaskStatus
 from app.models.iocs import Tlp
 from app.models.authorization import User
 from app.schema.marshables import CaseDetailsSchema
-from app.schema.marshables import CommentSchema
 from app.schema.marshables import CaseNoteSchema
 
 
@@ -173,10 +171,36 @@ def export_case_evidences_json(case_id):
     ).all()
 
     if evidences:
+        serialized_evidences = []
+        for row in evidences:
+            serialized_evidence = row._asdict()
+            serialized_evidence['comments'] = export_case_evidence_comments_json(serialized_evidence['id'])
+            serialized_evidences.append(serialized_evidence)
 
-        return [row._asdict() for row in evidences]
+        return serialized_evidences
 
     return []
+
+
+def export_case_evidence_comments_json(evidence_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        EvidencesComments.comment_evidence_id == evidence_id
+    ).join(
+        EvidencesComments,
+        Comments.comment_id == EvidencesComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_notes_json(case_id):
@@ -185,21 +209,40 @@ def export_case_notes_json(case_id):
         Notes.note_case_id == case_id
     ).all()
 
-    # Initialize the schemas
+    # Initialize the schema
     note_schema = CaseNoteSchema()
-    comments_schema = CommentSchema(many=True)
 
     # Serialize the notes and their comments
     serialized_notes = []
     for note in notes:
-        note_comments = get_case_note_comments(note.note_id)
         serialized_note = note_schema.dump(note)
-        serialized_note['comments'] = comments_schema.dump(note_comments)
+        serialized_note['comments'] = export_case_note_comments_json(note.note_id)
         serialized_note['note_content'] = process_md_images_links_for_report(serialized_note['note_content'])
 
         serialized_notes.append(serialized_note)
 
     return serialized_notes
+
+
+def export_case_note_comments_json(note_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        NotesComments.comment_note_id == note_id
+    ).join(
+        NotesComments,
+        Comments.comment_id == NotesComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_tm_json(case_id):
@@ -272,6 +315,7 @@ def export_case_tm_json(case_id):
         ).all()
 
         ras['iocs'] = [ioc._asdict() for ioc in iocs_list]
+        ras['comments'] = export_case_event_comments_json(row.event_id)
 
         tim.append(ras)
 
@@ -328,9 +372,52 @@ def export_case_tasks_json(case_id):
                     'id': member.id
                 })
         task['task_assignees'] = assignee_list.get(task['id'], [])
+        task['comments'] = export_case_task_comments_json(task_id)
         task_with_assignees.append(task)
 
     return task_with_assignees
+
+
+def export_case_task_comments_json(task_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        TaskComments.comment_task_id == task_id
+    ).join(
+        TaskComments,
+        Comments.comment_id == TaskComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
+
+
+def export_case_event_comments_json(event_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        EventComments.comment_event_id == event_id
+    ).join(
+        EventComments,
+        Comments.comment_id == EventComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_assets_json(case_id):
@@ -379,6 +466,8 @@ def export_case_assets_json(case_id):
         else:
             row['asset_ioc'] = []
 
+        row['comments'] = export_case_asset_comments_json(row['asset_id'])
+
         if row['asset_compromise_status_id'] is None:
             row['asset_compromise_status_id'] = CompromiseStatus.unknown.value
             status_text = CompromiseStatus.unknown.name.replace('_', ' ').title()
@@ -390,6 +479,27 @@ def export_case_assets_json(case_id):
         ret.append(row)
 
     return ret
+
+
+def export_case_asset_comments_json(asset_id):
+    comments = Comments.query.with_entities(
+        Comments.comment_id,
+        Comments.comment_uuid,
+        Comments.comment_text,
+        User.name.label('comment_by'),
+        Comments.comment_date
+    ).filter(
+        AssetComments.comment_asset_id == asset_id
+    ).join(
+        AssetComments,
+        Comments.comment_id == AssetComments.comment_id
+    ).join(
+        Comments.user
+    ).order_by(
+        Comments.comment_date.asc()
+    ).all()
+
+    return [row._asdict() for row in comments]
 
 
 def export_case_comments_json(case_id):
