@@ -359,17 +359,12 @@ $(document).ready(function(){
             }
           },
           {
-            "data": "task_status_id",
+            "data": "status_name",
             "render": function(data, type, row) {
                if (type === 'display') {
                   data = sanitizeHTML(data);
-                  data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + row['status_name'] + '</span>';
+                  data = '<span class="badge ml-2 badge-'+ row['status_bscolor'] +'">' + data + '</span>';
                }
-               else if (type === 'filter' || type === 'sort'){
-                  data = row['status_name']
-               } else if (type === 'export') {
-                   data = row['status_name']
-                }
               return data;
             }
           },
