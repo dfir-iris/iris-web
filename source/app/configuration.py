@@ -31,6 +31,9 @@ from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
 
 
+SECRET_MIN_LENGTH = os.environ.get('SECRET_MIN_LENGTH', 30)
+
+
 class IrisConfigException(Exception):
     pass
 
@@ -49,12 +52,21 @@ class IrisConfig(configparser.ConfigParser):
                                           credential=self.az_credential)
             logging.getLogger('azure.core.pipeline.policies.http_logging_policy').setLevel(logging.WARNING)
 
-    def validate_config(self):
-        required_values = ['POSTGRES', 'IRIS', 'CELERY', 'DEVELOPMENT']
+        self.validate_config()
 
-        for section, in required_values.items():
-            if section not in self:
-                raise IrisConfigException(f'Missing section {section} in the configuration file')
+    def validate_config(self):
+        secrets = [
+            ('POSTGRES', 'PASSWORD'),
+            ('POSTGRES', 'ADMIN_PASSWORD'),
+            ('IRIS', 'SECRET_KEY'),
+            ('IRIS', 'SECURITY_PASSWORD_SALT'),
+        ]
+
+        for (section, option) in secrets:
+            secret = self.load(section, option)
+            if not secret.isalnum() or len(secret) < SECRET_MIN_LENGTH:
+                errmsg = f"'{section}_{option}' must contain only alphanumeric characters and be longer than {SECRET_MIN_LENGTH} characters"
+                raise IrisConfigException(errmsg)
 
     def config_key_vault(self):
         """
