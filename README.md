@@ -53,6 +53,15 @@ git checkout v3.0.0-beta.1
 # and IRIS_HOSTNAME at minimum.
 cp .env.example .env
 
+# Provide a TLS cert + key at certificates/web_certificates/iris_dev_cert.pem
+# and iris_dev_key.pem (or set CERT_FILENAME/KEY_FILENAME in .env). For a
+# quick self-signed pair:
+openssl req -x509 -newkey rsa:2048 -sha256 -days 365 -nodes \
+    -keyout certificates/web_certificates/iris_dev_key.pem \
+    -out certificates/web_certificates/iris_dev_cert.pem \
+    -subj "/CN=iris.local" \
+    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1"
+
 # Pull images from ghcr.io and start
 docker compose up -d
 ```

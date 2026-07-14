@@ -15,3 +15,12 @@ iris-frontend/*
 backups/
 venv/
 node_modules/
+
+# TLS material — never commit private keys or certs; scripts/dev-up.sh
+# generates a self-signed pair on first run for local dev.
+certificates/web_certificates/*
+!certificates/web_certificates/.gitkeep
+certificates/ca-bundle/*
+!certificates/ca-bundle/.gitkeep
+certificates/ldap/*
+!certificates/ldap/.gitkeep
