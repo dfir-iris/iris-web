@@ -1609,6 +1609,35 @@ function random_filename(length) {
    return filename;
 }
 
+function get_extension_from_mime(mimeType) {
+    if (!mimeType || typeof mimeType !== 'string') return 'bin';
+
+    // Strip parameters (e.g., "image/png; charset=utf-8" -> "image/png") and normalize case
+    const cleanMime = mimeType.split(';')[0].trim().toLowerCase();
+
+    const mimeMap = {
+        'image/png': 'png',
+        'image/jpeg': 'jpg',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/avif': 'avif',
+        'image/svg+xml': 'svg',
+        'image/bmp': 'bmp',
+        'image/tiff': 'tiff',
+        'image/x-icon': 'ico',
+        'image/vnd.microsoft.icon': 'ico'
+    };
+    
+    let ext = mimeMap[cleanMime];
+    if (!ext) {
+        // Fallback: extract substring after "/" and before any "+", e.g., "application/pdf" -> "pdf"
+        ext = (cleanMime.split('/')[1] || 'bin').split('+')[0];
+    }
+    
+    // Ensure the extension only contains safe alphanumeric characters
+    return ext.replace(/[^a-z0-9]/g, '');
+}
+
 function createPagination(currentPage, totalPages, per_page, callback, paginationContainersNodes) {
   const maxPagesToShow = 5;
   const paginationContainers = $(paginationContainersNodes);

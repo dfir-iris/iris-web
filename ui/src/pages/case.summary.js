@@ -94,7 +94,8 @@ function handle_ed_paste(event) {
                 notify_success('The file is uploading in background. Don\'t leave the page');
 
                 if (filename === null) {
-                    filename = random_filename(25);
+                    let ext = get_extension_from_mime(blob.type);
+                    filename = random_filename(25) + '.' + ext;
                 }
 
                 upload_interactive_data(e.target.result, filename, function(data){
