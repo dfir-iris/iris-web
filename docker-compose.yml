@@ -148,10 +148,13 @@ services:
       frontend:
         condition: service_healthy
     environment:
-      - IRIS_UPSTREAM_SERVER
-      - IRIS_UPSTREAM_PORT
-      - IRIS_FRONTEND_SERVER
-      - IRIS_FRONTEND_PORT
+      # Defaults so a bare `docker compose up` works without the operator
+      # having to remember these — nginx's config template blows up with
+      # "invalid port in upstream" when either side is empty.
+      - IRIS_UPSTREAM_SERVER=${IRIS_UPSTREAM_SERVER:-app}
+      - IRIS_UPSTREAM_PORT=${IRIS_UPSTREAM_PORT:-8000}
+      - IRIS_FRONTEND_SERVER=${IRIS_FRONTEND_SERVER:-frontend}
+      - IRIS_FRONTEND_PORT=${IRIS_FRONTEND_PORT:-5173}
       - INTERFACE_HTTPS_PORT
       - SERVER_NAME=${SERVER_NAME:-${IRIS_HOSTNAME:-}}
       - CERT_FILENAME
