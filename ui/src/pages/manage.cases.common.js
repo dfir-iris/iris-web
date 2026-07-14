@@ -8,6 +8,162 @@ function refresh_case_table() {
     return true;
 }
 
+function _extract_request_payload(request_data) {
+    if (Array.isArray(request_data)) {
+        return request_data[0];
+    }
+    return request_data;
+}
+
+function _pluralize(count, singular, plural) {
+    if (count === 1) {
+        return singular;
+    }
+    return plural;
+}
+
+function _get_case_close_failed_checks(case_data, tasks_data, assets_data) {
+    let failed_checks = [];
+
+    let tasks = [];
+    if (tasks_data && tasks_data.data && tasks_data.data.tasks) {
+        tasks = tasks_data.data.tasks;
+    }
+    let open_tasks = tasks.filter((task) => {
+        let status_name = '';
+        if (task && task.status_name) {
+            status_name = task.status_name;
+        }
+        return status_name !== 'Done' && status_name !== 'Canceled';
+    }).length;
+    if (open_tasks > 0) {
+        failed_checks.push(`${open_tasks} ${_pluralize(open_tasks, 'task remains', 'tasks remain')} open`);
+    }
+
+    let assets = [];
+    if (assets_data && assets_data.data && assets_data.data.assets) {
+        assets = assets_data.data.assets;
+    }
+    let analysis_status_counts = {};
+    for (let i = 0; i < assets.length; i++) {
+        let analysis_status = 'Unknown';
+        if (assets[i] && assets[i].analysis_status && assets[i].analysis_status.name) {
+            analysis_status = assets[i].analysis_status.name;
+        }
+        if (analysis_status === 'Done' || analysis_status === 'Unspecified') {
+            continue;
+        }
+        if (!(analysis_status in analysis_status_counts)) {
+            analysis_status_counts[analysis_status] = 0;
+        }
+        analysis_status_counts[analysis_status] += 1;
+    }
+    let pending_analysis_assets = Object.values(analysis_status_counts).reduce((acc, cur) => acc + cur, 0);
+    if (pending_analysis_assets > 0) {
+        let status_details = Object.keys(analysis_status_counts)
+            .sort()
+            .map((status) => `${analysis_status_counts[status]} ${status}`)
+            .join(', ');
+        failed_checks.push(
+            `${pending_analysis_assets} ${_pluralize(pending_analysis_assets, 'asset remains', 'assets remain')} pending analysis (${status_details})`
+        );
+    }
+
+    let compromise_review_assets = assets.filter((asset) => Number(asset && asset.asset_compromise_status_id) === 0).length;
+    if (compromise_review_assets > 0) {
+        failed_checks.push(
+            `${compromise_review_assets} ${_pluralize(compromise_review_assets, 'asset remains', 'assets remain')} in compromise review status (TBD)`
+        );
+    }
+
+    if (!case_data || !case_data.data || !case_data.data.classification_id) {
+        failed_checks.push('Case classification is not set');
+    }
+
+    if (case_data && case_data.data && Number(case_data.data.status_id) === 0) {
+        failed_checks.push('Case outcome is still set to Unknown');
+    }
+
+    return failed_checks;
+}
+
+function _get_case_close_confirmation_content(id, failed_checks) {
+    let wrapper = document.createElement('div');
+    wrapper.style.maxWidth = '440px';
+
+    let question = document.createElement('p');
+    question.style.textAlign = 'center';
+    question.style.margin = '0 0 8px 0';
+    question.style.fontSize = '28px';
+    question.style.lineHeight = '1.2';
+    question.innerHTML = '<strong>Are you sure?</strong>';
+    wrapper.appendChild(question);
+
+    let details = document.createElement('p');
+    details.style.textAlign = 'center';
+    details.style.margin = '0';
+    details.style.color = '#5f6368';
+    details.textContent = `Case ID ${id} will be closed and will not appear in contexts anymore`;
+    wrapper.appendChild(details);
+
+    if (failed_checks.length > 0) {
+        let reminder_block = document.createElement('div');
+        reminder_block.style.marginTop = '16px';
+        reminder_block.style.padding = '12px 14px';
+        reminder_block.style.backgroundColor = '#fff7f2';
+        reminder_block.style.border = '1px solid #f6dccb';
+        reminder_block.style.borderRadius = '8px';
+        reminder_block.style.textAlign = 'left';
+
+        let reminder = document.createElement('p');
+        reminder.style.margin = '0 0 8px 0';
+        reminder.style.fontWeight = '600';
+        reminder.style.color = '#7a4a2f';
+        reminder.textContent = 'The following items are oustanding:';
+        reminder_block.appendChild(reminder);
+
+        let failed_checks_list = document.createElement('ul');
+        failed_checks_list.style.margin = '0 0 0 20px';
+        failed_checks_list.style.padding = '0';
+        failed_checks_list.style.color = '#4a4a4a';
+        failed_checks_list.style.lineHeight = '1.4';
+        for (let i = 0; i < failed_checks.length; i++) {
+            let item = document.createElement('li');
+            item.style.marginBottom = '6px';
+            item.style.fontSize = '14px';
+            item.textContent = failed_checks[i];
+            failed_checks_list.appendChild(item);
+        }
+        reminder_block.appendChild(failed_checks_list);
+        wrapper.appendChild(reminder_block);
+    }
+
+    return wrapper;
+}
+
+function _confirm_close_case(id, failed_checks) {
+    swal({
+        icon: "warning",
+        content: _get_case_close_confirmation_content(id, failed_checks),
+        buttons: true,
+        dangerMode: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, close it!'
+    })
+    .then((willClose) => {
+        if (willClose) {
+            post_request_api(`/manage/cases/close/${id}`)
+            .done((data) => {
+                if (!refresh_case_table()) {
+                    window.location.reload();
+                }
+                $('#modal_case_detail').modal('hide');
+            });
+        }
+    });
+}
+
 /* Create detail modal function */
 function case_detail(id) {
     url = 'cases/details/' + id + case_param();
@@ -25,26 +181,26 @@ function case_detail(id) {
 
 /* Close case function */
 function close_case(id) {
-    swal({
-        title: "Are you sure?",
-        text: "Case ID " + id + " will be closed and will not appear in contexts anymore",
-        icon: "warning",
-        buttons: true,
-        dangerMode: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, close it!'
-    })
-    .then((willClose) => {
-        if (willClose) {
-            post_request_api(`/manage/cases/close/${id}`)
-            .done((data) => {
-                if (!refresh_case_table()) {
-                    window.location.reload();
-                }
-                $('#modal_case_detail').modal('hide');
-            });
+    $.when(
+        get_raw_request_api(`/manage/cases/${id}`),
+        get_request_api('/case/tasks/list', false, null, id),
+        get_request_api('/case/assets/filter', false, null, id)
+    )
+    .done((case_data_request, tasks_data_request, assets_data_request) => {
+        let case_data = _extract_request_payload(case_data_request);
+        let tasks_data = _extract_request_payload(tasks_data_request);
+        let assets_data = _extract_request_payload(assets_data_request);
+
+        if (api_request_failed(case_data) || api_request_failed(tasks_data) || api_request_failed(assets_data)) {
+            _confirm_close_case(id, []);
+            return;
         }
+
+        let failed_checks = _get_case_close_failed_checks(case_data, tasks_data, assets_data);
+        _confirm_close_case(id, failed_checks);
+    })
+    .fail(() => {
+        _confirm_close_case(id, []);
     });
 }
 
