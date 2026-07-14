@@ -175,25 +175,129 @@ def case_get_timeline_state(caseid):
     return response_error('No timeline state for this case. Add an event to begin')
 
 
+def _get_visualization_event(row, group_name):
+    content = row.event_content.replace('\n', '<br/>') if row.event_content else ''
+    styles = []
+
+    if row.event_color:
+        styles.append(f'background-color: {row.event_color};')
+
+    # Highlight child events in visualization with a dashed outline.
+    if row.parent_event_id is not None:
+        styles.append('border: 1px dashed #6c757d;')
+        styles.append('box-sizing: border-box;')
+
+    visualized_event = {
+        'date': row.event_date,
+        'group': group_name,
+        'content': row.event_title,
+        'title': f"<small>{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')}</small><br/>{content}",
+        'unique_id': row.event_id
+    }
+
+    if styles:
+        visualized_event['style'] = ' '.join(styles)
+
+    return visualized_event
+
+
+def _expand_timeline_by_group(timeline, events_groups, fallback_group):
+    tim = []
+    for row in timeline:
+        grouped_values = events_groups.get(row.event_id, []) or [fallback_group]
+        for group_name in grouped_values:
+            tim.append(_get_visualization_event(row, group_name))
+
+    return tim
+
+
+def _build_events_groups(rows, value_key):
+    events_groups = {}
+    for row in rows:
+        event_id = row.event_id
+        group_value = getattr(row, value_key, None)
+        if not group_value:
+            continue
+
+        events_groups.setdefault(event_id, [])
+        if group_value not in events_groups[event_id]:
+            events_groups[event_id].append(group_value)
+
+    return events_groups
+
+
+def _get_event_color_group_name(event_color):
+    event_color_map = {
+        '#fff': 'White',
+        '#1572e899': 'Blue',
+        '#6861ce99': 'Purple',
+        '#48abf799': 'Light blue',
+        '#31ce3699': 'Green',
+        '#f2596199': 'Red',
+        '#ffad4699': 'Orange'
+    }
+
+    if not event_color:
+        return 'No color'
+
+    return event_color_map.get(event_color.lower(), event_color)
+
+
+def _is_include_children():
+    include_children = request.args.get('include-children')
+    if include_children is None:
+        return True
+
+    normalized_value = str(include_children).strip().lower()
+    if '?' in normalized_value:
+        normalized_value = normalized_value.split('?', maxsplit=1)[0]
+    if '&' in normalized_value:
+        normalized_value = normalized_value.split('&', maxsplit=1)[0]
+
+    return normalized_value in ('1', 'true', 'yes', 'on')
+
+
+def _get_visualization_timeline(caseid):
+    timeline = get_events_by_case(caseid)
+    if _is_include_children():
+        return timeline
+
+    return [row for row in timeline if row.parent_event_id is None]
+
+
 @case_timeline_rest_blueprint.route('/case/timeline/visualize/data/by-asset', methods=['GET'])
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_getgraph_assets(caseid):
+    timeline = _get_visualization_timeline(caseid)
     assets_cache = get_assets_by_case(caseid)
-    timeline = get_events_by_case(caseid)
+    events_assets = _build_events_groups(assets_cache, 'asset_name')
 
-    tim = []
-    for row in timeline:
-        for asset in assets_cache:
-            if asset.event_id == row.event_id:
-                tmp = {'date': row.event_date, 'group': asset.asset_name, 'content': row.event_title,
-                       'title': f"{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')} - {row.event_content}"}
+    tim = _expand_timeline_by_group(timeline, events_assets, 'No linked assets')
 
-                if row.event_color:
-                    tmp['style'] = f'background-color: {row.event_color};'
+    res = {
+        "events": tim
+    }
 
-                tmp['unique_id'] = row.event_id
-                tim.append(tmp)
+    return response_success("", data=res)
+
+
+@case_timeline_rest_blueprint.route('/case/timeline/visualize/data/by-ioc', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def case_getgraph_iocs(caseid):
+    timeline = _get_visualization_timeline(caseid)
+    iocs_cache = CaseEventsIoc.query.with_entities(
+        CaseEventsIoc.event_id,
+        Ioc.ioc_value
+    ).join(
+        CaseEventsIoc.ioc
+    ).filter(
+        CaseEventsIoc.case_id == caseid
+    ).all()
+    events_iocs = _build_events_groups(iocs_cache, 'ioc_value')
+
+    tim = _expand_timeline_by_group(timeline, events_iocs, 'No linked IOCs')
 
     res = {
         "events": tim
@@ -206,25 +310,51 @@ def case_getgraph_assets(caseid):
 @ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
 @ac_api_requires()
 def case_getgraph(caseid):
-    timeline = get_events_by_case(caseid)
-
-    tim = []
+    timeline = _get_visualization_timeline(caseid)
+    events_categories = {}
     for row in timeline:
+        group_name = row.category[0].name if row.category else 'Uncategorized'
+        events_categories[row.event_id] = [group_name]
 
-        tmp = {'date': row.event_date, 'group': row.category[0].name if row.category else 'Uncategorized', 'content': row.event_title}
+    tim = _expand_timeline_by_group(timeline, events_categories, 'Uncategorized')
 
-        if row.event_content:
-            content = row.event_content.replace('\n', '<br/>')
-        else:
-            content = ''
+    res = {
+        "events": tim
+    }
 
-        tmp['title'] = f"<small>{row.event_date.strftime('%Y-%m-%dT%H:%M:%S')}</small><br/>{content}"
+    return response_success("", data=res)
 
-        if row.event_color:
-            tmp['style'] = f'background-color: {row.event_color};'
 
-        tmp['unique_id'] = row.event_id
-        tim.append(tmp)
+@case_timeline_rest_blueprint.route('/case/timeline/visualize/data/by-tag', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def case_getgraph_tags(caseid):
+    timeline = _get_visualization_timeline(caseid)
+    events_tags = {}
+    for row in timeline:
+        tags = [tag.strip() for tag in (row.event_tags or '').split(',') if tag.strip()]
+        events_tags[row.event_id] = list(dict.fromkeys(tags))
+
+    tim = _expand_timeline_by_group(timeline, events_tags, 'No tags')
+
+    res = {
+        "events": tim
+    }
+
+    return response_success("", data=res)
+
+
+@case_timeline_rest_blueprint.route('/case/timeline/visualize/data/by-color', methods=['GET'])
+@ac_requires_case_identifier(CaseAccessLevel.read_only, CaseAccessLevel.full_access)
+@ac_api_requires()
+def case_getgraph_colors(caseid):
+    timeline = _get_visualization_timeline(caseid)
+    events_colors = {}
+    for row in timeline:
+        color_name = _get_event_color_group_name(row.event_color)
+        events_colors[row.event_id] = [color_name]
+
+    tim = _expand_timeline_by_group(timeline, events_colors, 'No color')
 
     res = {
         "events": tim
