@@ -1393,7 +1393,7 @@ def get_alert_comments(alert_id: int) -> List[Comments]:
     returns:
         list: The list of comments
     """
-    return Comments.query.filter(Comments.comment_alert_id == alert_id).all()
+    return Comments.query.filter(Comments.comment_alert_id == alert_id).order_by(Comments.comment_date.asc()).all()
 
 
 def get_alert_comment(alert_id: int, comment_id: int) -> Comments:
