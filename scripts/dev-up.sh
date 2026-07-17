@@ -5,7 +5,10 @@
 
 set -euo pipefail
 
-cd "$(git rev-parse --show-toplevel)"
+# Anchor to the repo top-level. `git rev-parse` would work in a checkout
+# but this script also runs on deploy targets that were rsync'd without
+# a `.git` directory — resolve the parent of scripts/ directly.
+cd "$(cd "$(dirname "$0")/.." && pwd)"
 
 # Generate a self-signed cert on first run so nginx can start without
 # operator setup. Real deployments should replace these with a proper

@@ -4,6 +4,6 @@
 
 set -euo pipefail
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(cd "$(dirname "$0")/.." && pwd)"
 
 exec docker compose logs -f "$@"
