@@ -272,6 +272,7 @@ class AlertsOperations:
             # customer the caller cannot see hides it from the rightful
             # owner and plants it under another tenant's view.
             request_data = _strip_readonly_alert_fields(request.get_json())
+            iocs_list = request_data.pop('alert_iocs', None)
             updated_alert = self._schema.load(request_data, instance=alert, partial=True)
             activity_data = []
 
@@ -293,6 +294,12 @@ class AlertsOperations:
 
             if request_data.get('alert_owner_id') == "-1" or request_data.get('alert_owner_id') == -1:
                 updated_alert.alert_owner_id = None
+
+            if iocs_list is not None:
+                ioc_schema = IocSchema()
+                updated_alert.iocs = ioc_schema.load(iocs_list, many=True, partial=True)
+                activity_data.append('"alert_iocs"')
+
             result = alerts_update(alert, updated_alert, activity_data)
             return response_api_success(self._schema.dump(result))
 
