@@ -361,6 +361,7 @@ def alerts_update_route(alert_id) -> Response:
         # any other processing so these values never reach the activity log
         # or the ORM.
         data = _strip_readonly_update_fields(request.get_json())
+        iocs_list = data.pop('alert_iocs', None)
 
         activity_data = []
         for key, value in data.items():
@@ -390,6 +391,11 @@ def alerts_update_route(alert_id) -> Response:
 
         if data.get('alert_owner_id') == "-1" or data.get('alert_owner_id') == -1:
             updated_alert.alert_owner_id = None
+
+        if iocs_list is not None:
+            ioc_schema = IocSchema()
+            updated_alert.iocs = ioc_schema.load(iocs_list, many=True, partial=True)
+            activity_data.append('"alert_iocs"')
 
         # Save the changes
         db.session.commit()
