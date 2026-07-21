@@ -473,7 +473,7 @@ def alerts_batch_update_route() -> Response:
             if not ac_current_user_has_customer_access(alert.alert_customer_id):
                 return response_error('User not entitled to update alerts for the client', status=403)
 
-            if alert.alert_owner_id is None:
+            if alert.alert_owner_id is None and 'alert_owner_id' not in updates:
                 updates['alert_owner_id'] = iris_current_user.id
 
             if data.get('alert_owner_id') == "-1" or data.get('alert_owner_id') == -1:
