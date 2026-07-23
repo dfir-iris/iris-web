@@ -176,9 +176,24 @@ services:
       - PUBLIC_EXTERNAL_API_URL=${PUBLIC_EXTERNAL_API_URL:-https://${IRIS_HOSTNAME:-127.0.0.1}}
       - PUBLIC_INTERNAL_API_URL=http://${IRIS_UPSTREAM_SERVER:-app}:${IRIS_UPSTREAM_PORT:-8000}
       - PUBLIC_USE_MOCK_API_DATA=false
-      # ORIGIN gates SvelteKit's CSRF check in production. Must match
-      # the external URL the user hits.
-      - ORIGIN=${ORIGIN:-https://${IRIS_HOSTNAME:-127.0.0.1}}
+      # SvelteKit's adapter-node reads PROTOCOL_HEADER + HOST_HEADER to
+      # reconstruct ``event.url.origin`` per request. Its built-in CSRF
+      # check then compares the incoming ``Origin`` header against that
+      # per-request origin (see @sveltejs/kit respond.js — POST is
+      # forbidden when ``request_origin !== url.origin``).
+      #
+      # ORIGIN is intentionally NOT set: adapter-node treats it as an
+      # override that WINS over HOST_HEADER (``base: origin ||
+      # get_origin(req.headers)`` in handler.js), pinning event.url.origin
+      # to one value and breaking any deployment that serves the app
+      # under more than one hostname. The browser's Origin header then
+      # never matches the frozen event.url.origin and every POST 403s
+      # with "Cross-site POST form submissions are forbidden".
+      #
+      # With ORIGIN unset and the two HEADER vars in place, adapter-node
+      # reads the reverse-proxy-supplied host on every request and CSRF
+      # matches whichever hostname the browser is on. Nginx forwards
+      # both headers already (see docker/nginx/nginx-newui.conf).
       - PROTOCOL_HEADER=x-forwarded-proto
       - HOST_HEADER=x-forwarded-host
       - NODE_ENV=production
