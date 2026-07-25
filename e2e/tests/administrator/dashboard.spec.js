@@ -13,9 +13,14 @@ test('create case with empty name should present error', async ({ page }) => {
     await expect(page.getByText('Invalid data type')).toBeVisible();
 });
 
-test('logout should go back to login page', async ({ page }) => {
+test('logout should clear cached user identity and go back to login page', async ({ page }) => {
+    await page.evaluate(() => {
+        sessionStorage.setItem('userWhoami', JSON.stringify({ user_id: 1234 }));
+    });
+
     await page.getByRole('link', { name: 'administrator' }).click();
     await page.getByRole('link', { name: 'Logout' }).click();
 
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
-})
+    expect(await page.evaluate(() => sessionStorage.getItem('userWhoami'))).toBeNull();
+});
