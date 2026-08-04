@@ -41,6 +41,8 @@ from app.blueprints.responses import response_error
 from app.business.auth import validate_ldap_login, _retrieve_user_by_username, wrap_login_user
 from app.datamgmt.manage.manage_users_db import create_user
 from app.datamgmt.manage.manage_users_db import get_user
+from app.datamgmt.manage.manage_users_db import add_user_to_group
+from app.datamgmt.manage.manage_groups_db import get_group_by_name
 from app.forms import LoginForm, MFASetupForm
 from app.iris_engine.utils.tracker import track_activity
 
@@ -214,6 +216,10 @@ if is_authentication_oidc():
                         user_active=True,
                         user_is_service_account=False
                 )
+
+            initial_group = get_group_by_name(app.config.get('IRIS_NEW_USERS_DEFAULT_GROUP'))
+            add_user_to_group(user.id, initial_group.group_id)
+            log.info(f"Adding new user {user_name} to default initial group {initial_group}.")
 
         if user and not user.active:
             return response_error("User not active in IRIS", 403)
