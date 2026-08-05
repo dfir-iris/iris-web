@@ -469,6 +469,7 @@ class Config:
         OIDC_CLIENT_SECRET = config.load('OIDC', 'CLIENT_SECRET')
         OIDC_AUTH_ENDPOINT = config.load('OIDC', 'AUTH_ENDPOINT', fallback=None)
         OIDC_TOKEN_ENDPOINT = config.load('OIDC', 'TOKEN_ENDPOINT', fallback=None)
+        OIDC_JWKS_URL = config.load('OIDC', 'JWKS_URL', fallback=None)
         OIDC_END_SESSION_ENDPOINT = config.load('OIDC', 'END_SESSION_ENDPOINT', fallback=None)
         OIDC_SCOPES = config.load('OIDC', 'SCOPES', fallback="openid email profile")
         OIDC_MAPPING_USERNAME = config.load('OIDC', 'MAPPING_USERNAME', fallback='preferred_username')
