@@ -36,6 +36,7 @@ def get_oidc_client(app) -> Client:
             authorization_endpoint=app.config.get("OIDC_AUTH_ENDPOINT"),
             token_endpoint=app.config.get("OIDC_TOKEN_ENDPOINT"),
             end_session_endpoint=app.config.get("OIDC_END_SESSION_ENDPOINT"),
+            jwks_uri=app.config.get("OIDC_JWKS_URL"),
         )
 
         client.handle_provider_config(op_info, op_info['issuer'])
