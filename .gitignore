@@ -24,3 +24,5 @@ certificates/ca-bundle/*
 !certificates/ca-bundle/.gitkeep
 certificates/ldap/*
 !certificates/ldap/.gitkeep
+.claude/*
+docs/superpowers/*
