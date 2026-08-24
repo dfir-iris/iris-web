@@ -196,6 +196,13 @@ services:
       # both headers already (see docker/nginx/nginx-newui.conf).
       - PROTOCOL_HEADER=x-forwarded-proto
       - HOST_HEADER=x-forwarded-host
+      # The same list the app reads (see app/cors.py). The frontend
+      # needs it for its own origin guard: a deployment answering on
+      # several hostnames must accept a POST from each of them, and
+      # `event.url` alone can't establish that when ORIGIN is pinned or
+      # the proxy doesn't forward x-forwarded-host. Unset means
+      # same-origin only, which is the historical behaviour.
+      - IRIS_ALLOW_ORIGIN
       - NODE_ENV=production
       # Disable adapter-node's 512K default so avatar (multi-MB) and
       # datastore (multi-GB) uploads aren't truncated mid-stream — the
