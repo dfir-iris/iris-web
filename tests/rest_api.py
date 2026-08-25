@@ -37,6 +37,12 @@ class RestApi:
         print(f'GET {url} => {response.status_code} {body}')
         return body
 
+    def get_raw(self, path, query_parameters=None):
+        url = self._build_url(path)
+        response = requests.get(url, headers=self._headers, params=query_parameters)
+        print(f'GET {url} => {response.status_code} ({len(response.text)} bytes, non-JSON)')
+        return response.status_code, response.text
+
     def post(self, path, payload, query_parameters=None):
         url = self._build_url(path)
         response = requests.post(url, headers=self._headers, params=query_parameters, json=payload)

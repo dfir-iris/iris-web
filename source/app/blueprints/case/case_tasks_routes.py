@@ -59,6 +59,7 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 
 case_tasks_blueprint = Blueprint('case_tasks',
                                  __name__,
@@ -138,7 +139,7 @@ def case_add_task_modal(caseid):
     form.task_assignees_id.choices = []
 
     return render_template("modal_add_case_task.html", form=form, task=task, uid=current_user.id, user_name=None,
-                           attributes=task.custom_attributes)
+                           attributes=task.custom_attributes, page_uid=generate_page_uid())
 
 
 @case_tasks_blueprint.route('/case/tasks/add', methods=['POST'])
@@ -207,7 +208,7 @@ def case_task_view_modal(cur_id, caseid, url_redir):
     comments_map = get_case_tasks_comments_count([task.id])
 
     return render_template("modal_add_case_task.html", form=form, task=task, user_name=user_name,
-                           comments_map=comments_map, attributes=task.custom_attributes)
+                           comments_map=comments_map, attributes=task.custom_attributes, page_uid=generate_page_uid())
 
 
 @case_tasks_blueprint.route('/case/tasks/update/<int:cur_id>', methods=['POST'])

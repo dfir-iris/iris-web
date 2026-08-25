@@ -58,6 +58,7 @@ from app.util import ac_requires
 from app.util import page_not_found
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 
 manage_customers_blueprint = Blueprint(
     'manage_customers',
@@ -312,7 +313,7 @@ def view_customer_modal(client_id, caseid, url_redir):
     form.customer_sla.data = customer.sla
 
     return render_template("modal_add_customer.html", form=form, customer=customer,
-                           attributes=customer.custom_attributes)
+                           attributes=customer.custom_attributes, page_uid=generate_page_uid())
 
 
 @manage_customers_blueprint.route('/manage/customers/update/<int:client_id>', methods=['POST'])
@@ -346,7 +347,8 @@ def add_customers_modal(caseid, url_redir):
         return redirect(url_for('manage_customers.manage_customers', cid=caseid))
     form = AddCustomerForm()
     attributes = get_default_custom_attributes('client')
-    return render_template("modal_add_customer.html", form=form, customer=None, attributes=attributes)
+    return render_template("modal_add_customer.html", form=form, customer=None, attributes=attributes,
+                           page_uid=generate_page_uid())
 
 
 @manage_customers_blueprint.route('/manage/customers/add', methods=['POST'])
