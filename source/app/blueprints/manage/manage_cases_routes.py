@@ -67,6 +67,7 @@ from app.util import ac_api_return_access_denied
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 from app.business.cases import delete
 from app.business.cases import update
 from app.business.cases import create
@@ -124,7 +125,7 @@ def details_case(cur_id: int, caseid: int, url_redir: bool) -> Union[str, Respon
         print(res.get('status_name'))
         return render_template("modal_case_info_from_case.html", data=res, form=form, protagonists=protagonists,
                                case_classifications=case_classifications, case_states=case_states, customers=customers,
-                               severities=severities)
+                               severities=severities, page_uid=generate_page_uid())
 
     else:
         return response_error("Unknown case")
@@ -340,7 +341,7 @@ def add_case_modal():
 
     attributes = get_default_custom_attributes('case')
 
-    return render_template('modal_add_case.html', form=form, attributes=attributes)
+    return render_template('modal_add_case.html', form=form, attributes=attributes, page_uid=generate_page_uid())
 
 
 @manage_cases_blueprint.route('/manage/cases/add', methods=['POST'])

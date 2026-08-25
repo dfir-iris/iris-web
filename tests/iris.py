@@ -17,16 +17,24 @@
 #  Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 from pathlib import Path
+import re
 import shutil
 import time
+import requests
 from docker_compose import DockerCompose
 from rest_api import RestApi
 from server_timeout_error import ServerTimeoutError
 
 API_URL = 'http://127.0.0.1:8000'
+# Cookie-session routes need this, not API_URL: SESSION_COOKIE_SECURE=True (source/app/configuration.py)
+# means Flask's session cookie is never sent back over plain HTTP, only through nginx/HTTPS.
+HTTPS_URL = 'https://127.0.0.1'
 _API_KEY = 'B8BA5D730210B50F41C06941582D7965D57319D5685440587F98DFDC45A01594'
 _IRIS_PATH = Path('..')
 _TEST_DATA_PATH = Path('./data')
+# Matches IRIS_ADM_USERNAME (default) / IRIS_ADM_PASSWORD in tests/data/basic.env.
+_ADMIN_USERNAME = 'administrator'
+_ADMIN_PASSWORD = 'MySuperAdminPassword!'
 
 
 class Iris:
@@ -102,3 +110,26 @@ class Iris:
 
     def get_cases_filter(self):
         return self._api.get('/manage/cases/filter')
+
+    def get_authenticated_session(self):
+        """Log in with a real cookie session (not the API key) for routes gated by @ac_requires(),
+        which read session['permissions'] directly and 500 if authenticated via API key only.
+        Must go through nginx/HTTPS (HTTPS_URL) -- SESSION_COOKIE_SECURE=True means the session
+        cookie is dropped by the client on a plain-HTTP round trip against API_URL."""
+        session = requests.Session()
+        session.verify = False
+        login_page = session.get(f'{HTTPS_URL}/login').text
+        csrf_match = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', login_page)
+        if not csrf_match:
+            raise ServerTimeoutError('Could not find CSRF token on login page')
+        session.post(f'{HTTPS_URL}/login', data={
+            'csrf_token': csrf_match.group(1),
+            'username': _ADMIN_USERNAME,
+            'password': _ADMIN_PASSWORD,
+        })
+        return session
+
+    def get_html(self, session, path, case_id=None):
+        params = {'cid': case_id} if case_id is not None else None
+        response = session.get(f'{HTTPS_URL}{path}', params=params)
+        return response.status_code, response.text

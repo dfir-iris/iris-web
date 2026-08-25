@@ -34,6 +34,7 @@ from app.util import ac_api_requires
 from app.util import ac_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 
 manage_attributes_blueprint = Blueprint('manage_attributes', __name__, template_folder='templates')
 
@@ -104,7 +105,7 @@ def attributes_preview(caseid, url_redir):
     except Exception as e:
         return response_error("Invalid JSON", data=str(e))
 
-    templated = render_template("modal_preview_attribute.html", attributes=attribute)
+    templated = render_template("modal_preview_attribute.html", attributes=attribute, page_uid=generate_page_uid())
 
     return response_success(data=templated)
 

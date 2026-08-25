@@ -52,6 +52,7 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 
 case_rfiles_blueprint = Blueprint(
     'case_rfiles',
@@ -149,14 +150,15 @@ def case_edit_rfile_modal(cur_id, caseid, url_redir):
     comments_map = get_case_evidence_comments_count([cur_id])
 
     return render_template("modal_add_case_rfile.html", rfile=crf, attributes=crf.custom_attributes,
-                           comments_map=comments_map)
+                           comments_map=comments_map, page_uid=generate_page_uid())
 
 
 @case_rfiles_blueprint.route('/case/evidences/add/modal', methods=['GET'])
 @ac_api_case_requires(CaseAccessLevel.full_access)
 def case_add_rfile_modal(caseid):
 
-    return render_template("modal_add_case_rfile.html", rfile=None, attributes=get_default_custom_attributes('evidence'))
+    return render_template("modal_add_case_rfile.html", rfile=None, attributes=get_default_custom_attributes('evidence'),
+                           page_uid=generate_page_uid())
 
 
 @case_rfiles_blueprint.route('/case/evidences/update/<int:cur_id>', methods=['POST'])

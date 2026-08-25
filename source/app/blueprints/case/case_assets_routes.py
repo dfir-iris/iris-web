@@ -68,6 +68,7 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 
 case_assets_blueprint = Blueprint('case_assets',
                                   __name__,
@@ -203,7 +204,8 @@ def add_asset_modal(caseid):
     ioc = get_iocs(caseid)
     attributes = get_default_custom_attributes('asset')
 
-    return render_template("modal_add_case_multi_asset.html", form=form, asset=None, ioc=ioc, attributes=attributes)
+    return render_template("modal_add_case_multi_asset.html", form=form, asset=None, ioc=ioc, attributes=attributes,
+                           page_uid=generate_page_uid())
 
 
 @case_assets_blueprint.route('/case/assets/add', methods=['POST'])
@@ -390,7 +392,8 @@ def asset_view_modal(cur_id, caseid, url_redir):
     comments_map = get_case_assets_comments_count([cur_id])
 
     return render_template("modal_add_case_asset.html", form=form, asset=asset, map={}, ioc=case_iocs,
-                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes, comments_map=comments_map)
+                           ioc_prefill=ioc_prefill, attributes=asset.custom_attributes, comments_map=comments_map,
+                           page_uid=generate_page_uid())
 
 
 @case_assets_blueprint.route('/case/assets/update/<int:cur_id>', methods=['POST'])

@@ -504,6 +504,19 @@ def regenerate_session():
     session.modified = True
 
 
+def generate_page_uid() -> str:
+    """Generate a short, DOM-safe, per-render-unique id prefix.
+
+    Namespaces the ids `modal_attributes_tabs.html` / `modal_attributes_nav.html` generate for
+    custom-attribute tabs and fields (see dfir-iris/iris-web#1111). Bootstrap 4's `data-toggle="pill"`
+    resolves its target pane via a document-global CSS id lookup on the link's `href`, not scoped to
+    the surrounding `.tab-content` — so every render must get its own unique prefix or two
+    simultaneously-rendered attribute-tab blocks collide and tab-switching breaks.
+    """
+    return f'pu{uuid.uuid4().hex[:8]}_'
+
+
+
 def api_login_required(f):
     @wraps(f)
     def wrap(*args, **kwargs):

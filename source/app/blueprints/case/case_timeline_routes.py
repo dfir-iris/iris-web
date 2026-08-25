@@ -81,6 +81,7 @@ from app.util import ac_case_requires
 from app.util import add_obj_history_entry
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 
 
 event_tags = ["Network", "Server", "ActiveDirectory", "Computer", "Malware", "User Interaction"]
@@ -759,7 +760,8 @@ def event_view_modal(cur_id, caseid, url_redir):
     return render_template("modal_add_case_event.html", form=form, event=event, user_name=usr_name, tags=event_tags,
                            assets=assets, iocs=iocs, comments_map=comments_map,
                            assets_prefill=assets_prefill, iocs_prefill=iocs_prefill,
-                           category=event.category, attributes=event.custom_attributes)
+                           category=event.category, attributes=event.custom_attributes,
+                           page_uid=generate_page_uid())
 
 
 @case_timeline_blueprint.route('/case/timeline/events/update/<int:cur_id>', methods=["POST"])
@@ -837,7 +839,7 @@ def case_add_event_modal(caseid):
 
     return render_template("modal_add_case_event.html", form=form, event=event,
                            tags=event_tags, assets=assets, iocs=iocs, assets_prefill=None, category=def_cat,
-                           attributes=event.custom_attributes)
+                           attributes=event.custom_attributes, page_uid=generate_page_uid())
 
 
 @case_timeline_blueprint.route('/case/timeline/filter-help/modal', methods=['GET'])

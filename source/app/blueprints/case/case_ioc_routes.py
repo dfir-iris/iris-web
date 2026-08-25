@@ -61,6 +61,7 @@ from app.util import ac_api_case_requires
 from app.util import ac_case_requires
 from app.util import response_error
 from app.util import response_success
+from app.util import generate_page_uid
 from app.business.iocs import create
 from app.business.iocs import update
 from app.business.iocs import delete
@@ -241,7 +242,8 @@ def case_add_ioc_modal(caseid):
 
     attributes = get_default_custom_attributes('ioc')
 
-    return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc(), attributes=attributes)
+    return render_template("modal_add_case_ioc.html", form=form, ioc=Ioc(), attributes=attributes,
+                           page_uid=generate_page_uid())
 
 
 @case_ioc_blueprint.route('/case/ioc/delete/<int:cur_id>', methods=['POST'])
@@ -277,7 +279,7 @@ def case_view_ioc_modal(cur_id, caseid, url_redir):
     comments_map = get_case_iocs_comments_count([cur_id])
 
     return render_template("modal_add_case_ioc.html", form=form, ioc=ioc, attributes=ioc.custom_attributes,
-                           comments_map=comments_map)
+                           comments_map=comments_map, page_uid=generate_page_uid())
 
 
 @case_ioc_blueprint.route('/case/ioc/<int:cur_id>', methods=['GET'])
