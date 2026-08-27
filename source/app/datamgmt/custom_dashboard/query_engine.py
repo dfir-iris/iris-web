@@ -720,16 +720,31 @@ class WidgetQueryExecutor:
         }
     }
 
+    # Tables reachable directly from `cases` without needing `alerts` at all. A widget whose
+    # fields/group_by/filters touch only these can be rooted at `cases` instead of `alerts`
+    # (see _is_case_scoped) so a case's child rows are looked up independently of how many
+    # alerts happen to be merged into it - fixes both halves of the alerts-as-universal-base
+    # bug: cases with 0 merged alerts were invisible, cases with 2+ produced duplicate rows.
+    _CASE_ROOTED_TABLES = frozenset({
+        'cases', 'case_owner', 'case_creator', 'case_reviewer', 'case_tags', 'tags',
+        'case_assets', 'case_asset_types', 'case_iocs', 'case_ioc_types',
+        'case_events', 'case_notes', 'case_tasks', 'review_status', 'case_state',
+    })
+
     def __init__(self, definition: Dict[str, Any]):
         self.definition = definition or {}
         self.builder = _WidgetQueryBuilder()
+        self._projection_tables: Set[str] = self._collect_projection_tables()
+        referenced_tables = self._collect_all_referenced_tables()
+        self._is_case_scoped = bool(referenced_tables) and referenced_tables <= self._CASE_ROOTED_TABLES
+        self._effective_base_table = 'cases' if self._is_case_scoped else self._BASE_TABLE
         options = self.definition.get('options') or {}
-        self.time_column_spec = options.get('time_column') or 'alerts.alert_creation_time'
+        default_time_column = 'cases.open_date' if self._is_case_scoped else 'alerts.alert_creation_time'
+        self.time_column_spec = options.get('time_column') or default_time_column
         self._normalized_time_column_spec = self._normalize_table_column_value(self.time_column_spec)
         raw_time_bucket = self.definition.get('time_bucket')
         self.time_bucket = raw_time_bucket.strip().lower() if isinstance(raw_time_bucket, str) else ''
         self._time_bucket_label = ''
-        self._projection_tables: Set[str] = self._collect_projection_tables()
 
     def execute(self, timeframe: Tuple[Optional[datetime], Optional[datetime]]) -> WidgetQueryResult:
         widgets_fields = self.definition.get('fields') or []
@@ -782,7 +797,7 @@ class WidgetQueryExecutor:
         column = columns.get(column_name)
         if column is None:
             raise QueryExecutionError(f"Column '{column_name}' is not allowed for table '{table_name}'.")
-        if table_name in {'case_owner', 'case_creator', 'case_reviewer', 'case_tags', 'tags', 'case_assets', 'case_asset_types', 'case_iocs', 'case_ioc_types', 'case_events', 'case_notes', 'case_tasks', 'review_status', 'case_state'}:
+        if table_name in self._CASE_ROOTED_TABLES and table_name != 'cases' and not self._is_case_scoped:
             self.builder.add_join('cases')
         if table_name == 'tags':
             self.builder.add_join('case_tags')
@@ -794,7 +809,7 @@ class WidgetQueryExecutor:
             self.builder.add_join('alert_assets')
         if table_name == 'alert_ioc_types':
             self.builder.add_join('alert_iocs')
-        if table_name != self._BASE_TABLE:
+        if table_name != self._effective_base_table:
             self.builder.add_join(table_name)
         return column
 
@@ -853,6 +868,26 @@ class WidgetQueryExecutor:
                 tables.add(group_entry.split('.', 1)[0].strip())
         return tables
 
+    def _collect_all_referenced_tables(self) -> Set[str]:
+        # Widening of _collect_projection_tables() to decide whether a widget can be rooted
+        # at `cases` instead of `alerts` (see _is_case_scoped in __init__) - also has to see
+        # per-field filters, top-level filters, and an explicit time_column override, since
+        # any of those touching an alert-only table forces the alert-rooted query path.
+        tables: Set[str] = set(self._projection_tables)
+        for field in self.definition.get('fields') or []:
+            if isinstance(field, dict):
+                field_filter = field.get('filter')
+                if isinstance(field_filter, dict) and field_filter.get('table'):
+                    tables.add(field_filter['table'])
+        for filter_entry in self.definition.get('filters') or []:
+            if isinstance(filter_entry, dict) and filter_entry.get('table'):
+                tables.add(filter_entry['table'])
+        options = self.definition.get('options') or {}
+        explicit_time_column = options.get('time_column')
+        if isinstance(explicit_time_column, str) and '.' in explicit_time_column:
+            tables.add(explicit_time_column.split('.', 1)[0].strip())
+        return tables
+
     def _build_case_scoped_tag_filter(self, filter_definition: Dict[str, Any]):
         # Many-to-many joins on tags inflate counts; route tag-only filters through
         # a Cases.case_id IN (subquery) so the main query stays flat.
@@ -889,7 +924,8 @@ class WidgetQueryExecutor:
         else:
             subquery = select(CaseTags.case_id).where(condition)
 
-        self.builder.add_join('cases')
+        if not self._is_case_scoped:
+            self.builder.add_join('cases')
         return Cases.case_id.in_(subquery)
 
     def _apply_timeframe(self, start: Optional[datetime], end: Optional[datetime]):
@@ -918,10 +954,12 @@ class WidgetQueryExecutor:
         if ac_current_user_has_permission(Permissions.server_administrator):
             return
 
+        deny_all = (Cases.case_id == -1) if self._is_case_scoped else (Alert.alert_id == -1)
+
         user_id = getattr(current_user, 'id', None)
         if not user_id:
             # Without a logged-in user we cannot determine scope; deny by default.
-            self.builder.filters.append(Alert.alert_id == -1)
+            self.builder.filters.append(deny_all)
             return
 
         client_ids = get_user_clients_id(user_id) or []
@@ -929,18 +967,23 @@ class WidgetQueryExecutor:
 
         access_conditions = []
 
-        if client_ids:
-            access_conditions.append(Alert.alert_customer_id.in_(client_ids))
-
-        if case_ids:
-            case_alerts_subquery = select(AlertCaseAssociation.alert_id).where(
-                AlertCaseAssociation.case_id.in_(case_ids)
-            )
-            access_conditions.append(Alert.alert_id.in_(case_alerts_subquery))
+        if self._is_case_scoped:
+            if client_ids:
+                access_conditions.append(Cases.client_id.in_(client_ids))
+            if case_ids:
+                access_conditions.append(Cases.case_id.in_(case_ids))
+        else:
+            if client_ids:
+                access_conditions.append(Alert.alert_customer_id.in_(client_ids))
+            if case_ids:
+                case_alerts_subquery = select(AlertCaseAssociation.alert_id).where(
+                    AlertCaseAssociation.case_id.in_(case_ids)
+                )
+                access_conditions.append(Alert.alert_id.in_(case_alerts_subquery))
 
         if not access_conditions:
             # User has no accessible scope -> no data should be returned.
-            self.builder.filters.append(Alert.alert_id == -1)
+            self.builder.filters.append(deny_all)
             return
 
         if len(access_conditions) == 1:
@@ -954,7 +997,7 @@ class WidgetQueryExecutor:
                 raise QueryExecutionError('Widgets must contain at least one aggregated field or grouping column.')
 
         query = db.session.query(*self.builder.selects)
-        query = query.select_from(Alert)
+        query = query.select_from(Cases if self._is_case_scoped else Alert)
         for join_table in self.builder.joins:
             table = self._get_table(join_table)
             join_callable = table.get('join')
