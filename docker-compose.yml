@@ -80,8 +80,18 @@ services:
       - iris_backend
       - iris_frontend
     healthcheck:
+      # The entrypoint runs database initialisation to completion
+      # before gunicorn binds :8000, so nothing answers until
+      # post_init finishes. A cold boot creates the schema, runs every
+      # alembic migration and seeds base data — and with DEMO_MODE
+      # enabled, ~30 fully populated cases on top. `start_period`
+      # covers that window: probe failures inside it don't count
+      # towards the unhealthy verdict, and `start_interval` still
+      # flips the service to healthy the second it responds, so a
+      # generous value costs nothing on a warm boot. Both `worker` and
+      # `nginx` gate on this service being healthy.
       test: curl --head --fail http://localhost:8000 || exit 1
-      start_period: 60s
+      start_period: 240s
       start_interval: 1s
     restart: always
 
