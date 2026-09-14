@@ -24,5 +24,7 @@ certificates/ca-bundle/*
 !certificates/ca-bundle/.gitkeep
 certificates/ldap/*
 !certificates/ldap/.gitkeep
+# Agent scratch — local to whoever is running one, not part of the repo.
 .claude/*
+CLAUDE.md
 docs/superpowers/*
