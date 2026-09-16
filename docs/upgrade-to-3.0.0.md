@@ -2,7 +2,7 @@
 
 > **Audience:** operators currently running IRIS **v2.4.29** (or any v2.4.x)
 > against the bundled `iriswebapp_db` image, which ships PostgreSQL **12**.
-> **Target:** v3.0.0-beta, which ships PostgreSQL **18** in the same image.
+> **Target:** v3.0.0-beta.1, which ships PostgreSQL **18** in the same image.
 
 This release upgrades the bundled database from PostgreSQL 12 to PostgreSQL
 18. A PG18 server **cannot read a PG12 data directory** — simply pulling the
@@ -37,19 +37,19 @@ point until you choose to reclaim the backup.
   variables and expects a self-signed TLS cert in a specific path — see
   §3.2b below. Do not skip that step, or the stack will fail to boot
   even after the DB migration succeeds.
-- **Update the IRIS source tree** to the v3.0.0-beta tag before running
+- **Update the IRIS source tree** to the v3.0.0-beta.1 tag before running
   the migration — the script lives at
   `scripts/upgrade-db-pg12-to-pg18.sh`.
 
 ## 2. What changes
 
-| Component | v2.4.x | v3.0.0-beta |
+| Component | v2.4.x | v3.0.0-beta.1 |
 | --- | --- | --- |
 | `iris-backend/docker/db/Dockerfile` base image | `postgres:12-alpine` | `postgres:18-alpine` |
-| Meta `.env` — `IRIS_VERSION` (pins all ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend} tags) | `v2.4.20` | `v3.0.0-beta` |
+| Meta `.env` — `IRIS_VERSION` (pins all ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend} tags) | `v2.4.20` | `v3.0.0-beta.1` |
 | Registry image names | `ghcr.io/dfir-iris/iriswebapp_{app,db,nginx}` | `ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend}` |
 | Container names | `iriswebapp_*` | `iris_*` |
-| `iris-backend/deploy/eks_manifest/psql/deployment.yml` image tag | `v2.2.2` | `v3.0.0-beta` |
+| `iris-backend/deploy/eks_manifest/psql/deployment.yml` image tag | `v2.2.2` | `v3.0.0-beta.1` |
 | Services in `docker-compose.yml` | 5 (`app`, `worker`, `db`, `rabbitmq`, `nginx`) | 6 — adds `frontend` (SvelteKit SSR) |
 | UI stack | jQuery-based, served by `app` | SvelteKit SSR from `frontend`; nginx proxies `/api/*` to `app`, everything else to `frontend` |
 | PG client auth method | `md5` (PG12 default) | `scram-sha-256` (PG18 default) — the migration script re-hashes existing roles automatically |
@@ -104,7 +104,7 @@ docker compose down
 Do **not** pass `-v` — that would delete the very volume we're about to
 migrate.
 
-### 3.2 Pull the v3.0.0-beta source
+### 3.2 Pull the v3.0.0-beta.1 source
 
 V3 introduces the submodule layout — `iris-web` becomes the meta-repo
 with `iris-backend` and `iris-frontend` submodules. When checking out
@@ -112,7 +112,7 @@ the tag, update submodules too.
 
 ```bash
 git fetch --tags
-git checkout v3.0.0-beta
+git checkout v3.0.0-beta.1
 git submodule update --init --recursive
 ```
 
@@ -218,7 +218,7 @@ The script:
 The script is idempotent: each step detects prior completion and skips.
 If it dies halfway through you can simply rerun it.
 
-### 3.4 Bring up v3.0.0-beta
+### 3.4 Bring up v3.0.0-beta.1
 
 ```bash
 docker compose up -d
@@ -314,7 +314,7 @@ release. Recommended approach:
 3. Take a volume snapshot of the PVC (cloud-provider feature) as a
    belt-and-braces backup.
 4. Delete the PG12 StatefulSet/Deployment and its PVC.
-5. Apply the v3.0.0-beta manifests so PG18 initialises a fresh PVC.
+5. Apply the v3.0.0-beta.1 manifests so PG18 initialises a fresh PVC.
 6. `kubectl cp` the dump into the new PG18 pod and `psql -v
    ON_ERROR_STOP=1 -f dump.sql`.
 7. Scale the app/worker back up.
@@ -342,7 +342,7 @@ restartable. If disk is a hard constraint, contact us before
 migrating.
 
 **Can I jump straight from a much older IRIS version?** This document
-only covers the v2.4.x → v3.0.0-beta jump. If you are on something
+only covers the v2.4.x → v3.0.0-beta.1 jump. If you are on something
 older, upgrade to v2.4.29 first using
 [`iris-backend/upgrades/upgrade_to_2.0.0.py`](../iris-backend/upgrades/upgrade_to_2.0.0.py)
 and the regular release notes, then come back here.
