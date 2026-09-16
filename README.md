@@ -104,10 +104,13 @@ alongside the code they describe:
   full backend env var reference (superset of the online docs).
 - [`iris-backend/architecture.md`](./iris-backend/architecture.md) —
   backend service architecture and data flow.
-- [`iris-backend/deploy/`](./iris-backend/deploy/) — Helm chart and
-  EKS manifests for Kubernetes deployments.
+- [`iris-backend/deploy/`](./iris-backend/deploy/) — Helm chart and EKS
+  manifests. **v2-era, and not usable for v3.0.0-beta.1**: Docker Compose
+  is the only supported deployment path for the beta. See
+  [`docs/upgrade-to-3.0.0.md`](./docs/upgrade-to-3.0.0.md) §5.
 - [`docs/upgrade-to-3.0.0.md`](./docs/upgrade-to-3.0.0.md) — v2.4.x →
-  v3 upgrade procedure (docker-compose and k8s paths).
+  v3 upgrade procedure (docker-compose; §5 covers what Kubernetes
+  operators should do instead).
 
 ## Versioning
 Starting from version 2.0.0, Iris is following the [Semantic Versioning 2.0](https://semver.org/) guidelines.   

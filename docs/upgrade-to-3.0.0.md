@@ -49,7 +49,7 @@ point until you choose to reclaim the backup.
 | Meta `.env` — `IRIS_VERSION` (pins all ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend} tags) | `v2.4.20` | `v3.0.0-beta.1` |
 | Registry image names | `ghcr.io/dfir-iris/iriswebapp_{app,db,nginx}` | `ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend}` |
 | Container names | `iriswebapp_*` | `iris_*` |
-| `iris-backend/deploy/eks_manifest/psql/deployment.yml` image tag | `v2.2.2` | `v3.0.0-beta.1` |
+| Kubernetes (`iris-backend/deploy/` Helm chart + EKS manifests) | supported, v2 images | **unsupported** — the chart and manifests are still v2-era, see §5 |
 | Services in `docker-compose.yml` | 5 (`app`, `worker`, `db`, `rabbitmq`, `nginx`) | 6 — adds `frontend` (SvelteKit SSR) |
 | UI stack | jQuery-based, served by `app` | SvelteKit SSR from `frontend`; nginx proxies `/api/*` to `app`, everything else to `frontend` |
 | PG client auth method | `md5` (PG12 default) | `scram-sha-256` (PG18 default) — the migration script re-hashes existing roles automatically |
@@ -301,26 +301,77 @@ then `psql -f iris_pg12_dump_<timestamp>.sql`.
 
 ## 5. Kubernetes deployments
 
-The bundled Helm chart and EKS manifest both reference the
-`iriswebapp_db` image. The same major-version jump applies — a PG18 pod
-will refuse to start against a PG12 `PersistentVolumeClaim`.
+**Kubernetes is not a supported deployment path for v3.0.0-beta.1.**
+Docker Compose is the only one. The Helm chart and the EKS manifests
+under `iris-backend/deploy/` are v2-era artefacts that were never
+updated for v3 — there are no v3.0.0-beta.1 manifests to apply, and
+applying the ones in the tree gets you a v2 stack or a broken one.
+Kubernetes support is intended to return before v3.0.0 stable; no date
+is promised.
 
-We **do not** ship an automated migration for Kubernetes in this
-release. Recommended approach:
+What is actually wrong, so you can verify it yourself:
 
-1. Scale the IRIS app/worker deployments to 0.
-2. Exec into the running PG12 pod and `pg_dumpall` to a file on the PVC
-   (or stream out via `kubectl exec ... > dump.sql`).
-3. Take a volume snapshot of the PVC (cloud-provider feature) as a
-   belt-and-braces backup.
-4. Delete the PG12 StatefulSet/Deployment and its PVC.
-5. Apply the v3.0.0-beta.1 manifests so PG18 initialises a fresh PVC.
-6. `kubectl cp` the dump into the new PG18 pod and `psql -v
-   ON_ERROR_STOP=1 -f dump.sql`.
-7. Scale the app/worker back up.
+| Artefact | State |
+| --- | --- |
+| `deploy/eks_manifest/app/deployment.yml:22`, `deploy/eks_manifest/worker/deployment.yml:22` | `image: iriswebapp_app:v2.2.2` — v2 image name, v2 tag. V3 publishes `ghcr.io/dfir-iris/iris-backend`; no `iriswebapp_app:v3.0.0-beta.1` exists to bump to. |
+| `deploy/eks_manifest/psql/deployment.yml:22` | `image: iriswebapp_db:v2.2.2` — PostgreSQL 12, not 18 |
+| `deploy/kubernetes/charts/templates/` | `iris_app`, `iris_worker`, `postgres`, `rabbitmq`, `ingress` — **no frontend template**. V3's UI is a separate SvelteKit service (§2.1) that the chart cannot run, and the ingress routes straight to the Flask app on port 8000. A Helm deploy therefore serves no v3 UI. |
+| `deploy/kubernetes/charts/values.yaml`, `Chart.yaml` | still `iriswebapp-app` / `iriswebapp-worker` naming; `appVersion: "2.4.5"` |
+| `iris-backend/.github/workflows/chart-releaser.yml` | triggers on `branches: [main]`, and `iris-backend` has no `main` branch — the chart has never been published to a Helm repository |
 
-If you need a scripted version, open an issue — we will prioritise it
-based on demand.
+### 5.1 What to do for the beta
+
+Pick one:
+
+- **Stay on v2.4.x.** Your current Kubernetes deployment keeps working
+  on PG12. Do nothing. Wait for Kubernetes support to land before
+  v3.0.0 stable.
+- **Move to Docker Compose.** Follow §3 for the target stack, and §5.2
+  below to get your data from the PVC into the compose volume.
+
+Do not try to hand-roll v3 manifests off the chart for a production
+instance during the beta — the missing frontend service, the nginx
+routing split between `/api/*` and the SvelteKit app (§2.1), and the
+new required env vars (§3.2b) are not modelled anywhere in
+`deploy/`.
+
+### 5.2 Moving a Kubernetes deployment to Docker Compose
+
+The PG12 → PG18 jump still applies: a PG18 server will not start
+against a PG12 data directory, so the move is a dump and restore.
+`scripts/upgrade-db-pg12-to-pg18.sh` only knows about Docker volumes,
+so do it by hand.
+
+1. Scale the app and worker Deployments to 0. Leave PG12 running.
+2. Snapshot the PVC (cloud-provider feature). Keep the whole cluster in
+   place until the compose stack is verified — that is your rollback.
+3. Dump roles and data out to the host:
+   ```bash
+   kubectl exec <pg12-pod> -- \
+       pg_dumpall -U "$POSTGRES_USER" --clean --if-exists > iris_pg12_dump.sql
+   ```
+4. Prepare the compose stack per §3.2 through §3.2c on the target host,
+   then bring up the database alone:
+   ```bash
+   docker compose up -d db
+   ```
+5. Replay the dump into the fresh PG18 cluster:
+   ```bash
+   docker compose exec -T db \
+       psql -v ON_ERROR_STOP=1 -U "$POSTGRES_ADMIN_USER" -d postgres < iris_pg12_dump.sql
+   ```
+6. Re-hash the role passwords. `pg_dumpall` exports the stored md5
+   hashes verbatim and PG18's `pg_hba.conf` expects `scram-sha-256`, so
+   the app will fail to authenticate until you do:
+   ```bash
+   docker compose exec db psql -U "$POSTGRES_ADMIN_USER" -d postgres \
+       -c "SET password_encryption = 'scram-sha-256';
+           ALTER USER \"$POSTGRES_USER\" WITH PASSWORD '$POSTGRES_PASSWORD';
+           ALTER USER \"$POSTGRES_ADMIN_USER\" WITH PASSWORD '$POSTGRES_ADMIN_PASSWORD';"
+   ```
+   Repeat for any role you provisioned yourself (see §6).
+7. `docker compose up -d`, then verify per §3.5. Only then tear down
+   the Kubernetes deployment.
 
 ## 6. FAQ
 
