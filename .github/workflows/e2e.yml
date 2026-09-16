@@ -6,7 +6,8 @@ name: End-to-end tests
 # Triggers:
 #   - Manual (workflow_dispatch)
 #   - Nightly at 03:00 UTC (flake detection against latest pinned tags)
-#   - Push to the meta-repo's default branch
+#   - Push to develop or master (master is the default branch — there is no
+#     `main` here, so releases merged to master must trigger this too)
 #   - repository_dispatch (sub-repo-published) — fired by iris-backend or
 #     iris-frontend after they publish a new image; the payload names the
 #     branch and SHA of the sub-repo that triggered the fan-in.
@@ -18,7 +19,7 @@ on:
   repository_dispatch:
     types: [sub-repo-published]
   push:
-    branches: [develop, main]
+    branches: [develop, master]
 
 jobs:
   e2e:
