@@ -51,7 +51,8 @@ point until you choose to reclaim the backup.
 | Container names | `iriswebapp_*` | `iris_*` |
 | Kubernetes (`iris-backend/deploy/` Helm chart + EKS manifests) | supported, v2 images | **unsupported** — the chart and manifests are still v2-era, see §5 |
 | Services in `docker-compose.yml` | 5 (`app`, `worker`, `db`, `rabbitmq`, `nginx`) | 6 — adds `frontend` (SvelteKit SSR) |
-| UI stack | jQuery-based, served by `app` | SvelteKit SSR from `frontend`; nginx proxies `/api/*` to `app`, everything else to `frontend` |
+| UI stack | jQuery-based, served by `app` | SvelteKit SSR from `frontend`; nginx sends everything to `frontend`, which proxies `/api/v2/*`, `/auth/*` and `/static/*` on to `app` |
+| REST API surface reachable from outside | v1 (`/case/…`, `/manage/…`) and `/api/v2/…` | `/api/v2/…` only — see §2.3 |
 | PG client auth method | `md5` (PG12 default) | `scram-sha-256` (PG18 default) — the migration script re-hashes existing roles automatically |
 
 The IRIS application schema is unchanged by this jump itself — Alembic
@@ -62,8 +63,10 @@ Only the underlying PostgreSQL major version changes.
 
 V3 ships a rewritten UI as a separate SvelteKit SSR service (image
 `ghcr.io/dfir-iris/iris-frontend`). It runs on the same host network as
-the app and worker containers, listens on port 5173 internally, and is
-proxied by nginx for everything that isn't `/api/*`. Operators do not
+the app and worker containers, listens on port 5173 internally, and
+receives *all* inbound HTTP from nginx — including API traffic, which its
+SSR proxy forwards to `app`. (The one exception is `/socket.io`, which
+nginx sends straight to `app`.) Operators do not
 interact with it directly; the compose file wires it up, sets sensible
 defaults for its env vars (`PUBLIC_EXTERNAL_API_URL`, `ORIGIN`,
 `BODY_SIZE_LIMIT`), and its healthcheck gates nginx startup along
@@ -86,6 +89,36 @@ git checkout v3.0.0-beta.1
 (which points build contexts at the `iris-backend/` and `iris-frontend/`
 submodules) and passes `--build` to compose. Pull-only operators do not
 need to initialise submodules.
+
+### 2.3 The legacy v1 API is no longer reachable
+
+**This is the change most likely to break external automation.** Check it
+before you upgrade.
+
+In v2.4.x, scripts could call the v1 REST routes directly — `POST /case/ioc/add`,
+`GET /manage/users/list`, `POST /manage/cases/add`, and so on. In
+v3.0.0-beta.1 those routes are still *registered* inside the `app`
+container, but nothing outside can reach them: nginx hands every request
+to the `frontend` service, whose SSR proxy only forwards three prefixes
+to `app` — `/api/v2/*`, `/auth/*` and `/static/*`. A v1 path now returns
+the frontend's 404 page rather than a JSON API response.
+
+What to do:
+
+- **Audit your integrations before upgrading.** Anything calling a path
+  that does not start with `/api/v2/` needs to move. Grep your automation
+  for the IRIS hostname and check the paths.
+- **Port to `/api/v2/…`.** Most v1 routes have a v2 counterpart —
+  `POST /api/v2/cases/{case_id}/iocs`, `GET /api/v2/manage/users`, and so
+  on. Browse the full surface at `https://<IRIS_HOSTNAME>/api-docs`, or
+  read `iris-backend/source/app/blueprints/rest/openapi.generated.yaml`.
+- **A few v1 capabilities have no v2 counterpart yet**, notably bulk
+  CSV import of IOCs / assets / timeline events, and the case task log.
+  If you depend on one of these, please open an issue so it can be
+  prioritised before v3.0.0 final.
+
+Nothing in the IRIS UI itself uses v1, so this affects external API
+consumers only.
 
 ## 3. Migration procedure (docker-compose deployments)
 
