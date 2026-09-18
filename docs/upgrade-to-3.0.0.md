@@ -112,8 +112,19 @@ What to do:
   `POST /api/v2/cases/{case_id}/iocs`, `GET /api/v2/manage/users`, and so
   on. Browse the full surface at `https://<IRIS_HOSTNAME>/api-docs`, or
   read `iris-backend/source/app/blueprints/rest/openapi.generated.yaml`.
-- **A few v1 capabilities have no v2 counterpart yet**, notably bulk
-  CSV import of IOCs / assets / timeline events, and the case task log.
+- **A few v1 capabilities have no v2 counterpart yet.** The two worth
+  knowing about:
+  - *Bulk CSV import* (`POST /case/ioc/upload`, `/case/assets/upload`,
+    `/case/timeline/events/csv_upload`). The feature itself is still in
+    the UI — v3 parses the CSV in the browser and creates one object per
+    row over v2 — but there is no single-call bulk endpoint for scripts.
+    Automation that posted a CSV blob has to loop over
+    `POST /api/v2/cases/{case_id}/{iocs,assets,events}` instead.
+  - *The case task log* (`POST /case/tasklog/add`), which appended a
+    free-text entry to a case's activity feed.
+    `GET /api/v2/cases/{case_id}/activities` reads the feed, but nothing
+    in v2 writes to it.
+
   If you depend on one of these, please open an issue so it can be
   prioritised before v3.0.0 final.
 
