@@ -54,6 +54,7 @@ point until you choose to reclaim the backup.
 | UI stack | jQuery-based, served by `app` | SvelteKit SSR from `frontend`; nginx sends everything to `frontend`, which proxies `/api/v2/*`, `/auth/*` and `/static/*` on to `app` |
 | REST API surface reachable from outside | v1 (`/case/…`, `/manage/…`) and `/api/v2/…` | `/api/v2/…` only — see §2.3 |
 | PG client auth method | `md5` (PG12 default) | `scram-sha-256` (PG18 default) — the migration script re-hashes existing roles automatically |
+| Existing logins | carried over | **all sessions closed** — everyone signs in once after the upgrade, see §2.4 |
 
 The IRIS application schema is unchanged by this jump itself — Alembic
 migrations are applied as normal on first boot of the new app container.
@@ -130,6 +131,32 @@ What to do:
 
 Nothing in the IRIS UI itself uses v1, so this affects external API
 consumers only.
+
+### 2.4 Everyone is signed out once
+
+The upgrade closes every authentication session that is currently open.
+Anyone using IRIS when you upgrade is signed out and signs in again; API
+clients holding an access or refresh token get `401` until they
+re-authenticate against `POST /api/v2/auth/login`.
+
+This is deliberate. Sessions are now tracked server-side so they can be
+revoked, and a session opened by an older version does not carry the
+state the new authentication path needs — in particular, whether the
+second factor was ever actually presented. Rather than assume, the
+upgrade asks everyone once.
+
+What to do about it:
+
+- **Pick a maintenance window as if it were a restart.** It is one
+  sign-in, not a reset: nobody's password, MFA enrolment or API key
+  changes.
+- **API keys are unaffected.** Integrations that authenticate with an
+  IRIS API key rather than a token keep working across the upgrade.
+- **If `enforce_mfa` is on**, users who have not yet enrolled an
+  authenticator are sent to the enrolment screen on their next sign-in.
+  That was already the intent of the setting; before this release, a
+  session that predated the setting being turned on could keep going
+  without being challenged.
 
 ## 3. Migration procedure (docker-compose deployments)
 
