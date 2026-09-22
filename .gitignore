@@ -28,3 +28,15 @@ certificates/ldap/*
 .claude/*
 CLAUDE.md
 docs/superpowers/*
+
+# Internal working documents. Everything else in docs/ ships to the public repo
+# as user-facing documentation, so anything written for the team only — CI
+# failure triage, release-readiness reviews, security advisories, session
+# write-ups — must be kept out by pattern. Keep the live copies outside every
+# repo, not merely untracked: an untracked file in docs/ is one `git add` away
+# from being published, and `git add -f` defeats this list entirely.
+docs/*-triage.md
+docs/ci-*.md
+docs/release-readiness-*.md
+docs/security-advisory-*.md
+docs/*-review-*.md
