@@ -5,7 +5,7 @@ name: End-to-end tests
 #
 # Triggers:
 #   - Manual (workflow_dispatch)
-#   - Nightly at 03:00 UTC (flake detection against latest pinned tags)
+#   - Nightly at 03:00 UTC (flake detection against the current branch tags)
 #   - Push to develop or master (master is the default branch — there is no
 #     `main` here, so releases merged to master must trigger this too)
 #   - repository_dispatch (sub-repo-published) — fired by iris-backend or
@@ -50,7 +50,9 @@ jobs:
           cache: npm
           cache-dependency-path: iris-frontend/package-lock.json
 
-      - name: Log into GHCR (packages are private)
+      # The four packages are public, so an anonymous pull works. Logging in
+      # anyway, because authenticated pulls get the higher GHCR rate limit.
+      - name: Log into GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -80,8 +82,82 @@ jobs:
             echo "IRIS_HOSTNAME=localhost"
           } >> .env
 
-      - name: Pull stack images
-        run: docker compose pull
+      # Replaces a plain `docker compose pull`, which could only ever pull the
+      # IRIS_VERSION default in docker-compose.yml — a release tag that does
+      # not exist until a release is cut. e2e would then be gated on the
+      # release and the release gated on e2e. Test the images under test.
+      - name: Resolve and pull the images under test
+        env:
+          EVENT: ${{ github.event_name }}
+          SRC_WORKFLOW: ${{ github.event.client_payload.workflow }}
+          SRC_SHA: ${{ github.event.client_payload.sha }}
+        run: |
+          set -euo pipefail
+
+          # The only multi-arch tags the build workflows publish come from
+          # metadata-action's `type=ref,event=branch` and `type=semver`
+          # (build-app.yml:136-139 and build.yml:101-104). There is no
+          # `type=sha` pattern, so ghcr.io/dfir-iris/<pkg>:<sha> does not
+          # exist. iris-frontend builds from master and the other three from
+          # develop, so no single tag covers all four packages — verified
+          # against the registry, not assumed.
+          declare -A TAG=(
+            [iris-backend]=develop
+            [iris-db]=develop
+            [iris-nginx]=develop
+            [iris-frontend]=master
+          )
+
+          # Dispatched right after a sub-repo published: pin that one package
+          # to the exact commit rather than trusting the branch tag, which a
+          # later push may already have moved. Only the per-architecture
+          # scratch tag is sha-addressable and the runner is amd64, so that is
+          # what gets used. iris-backend builds three of the four packages, so
+          # it is the workflow name in the payload that says which image was
+          # rebuilt — the repo name cannot.
+          if [ "$EVENT" = repository_dispatch ] && [ -n "${SRC_SHA:-}" ]; then
+            case "${SRC_WORKFLOW:-}" in
+              *'backend app image'*) pkg=iris-backend  ;;
+              *'DB image'*)          pkg=iris-db       ;;
+              *'Nginx image'*)       pkg=iris-nginx    ;;
+              *'frontend image'*)    pkg=iris-frontend ;;
+              *)
+                pkg=''
+                echo "::warning::Unrecognised dispatch workflow" \
+                     "'${SRC_WORKFLOW:-}' — falling back to branch tags."
+                ;;
+            esac
+            if [ -n "$pkg" ]; then
+              sha_tag="ci-$SRC_SHA-amd64"
+              if docker manifest inspect \
+                   "ghcr.io/dfir-iris/$pkg:$sha_tag" >/dev/null 2>&1; then
+                TAG[$pkg]=$sha_tag
+              else
+                echo "::warning::ghcr.io/dfir-iris/$pkg:$sha_tag is not in the" \
+                     "registry — falling back to ${TAG[$pkg]}."
+              fi
+            fi
+          fi
+
+          # docker-compose.yml drives all five image references off a single
+          # ${IRIS_VERSION}, and bump-my-version rewrites that default in
+          # place (.bumpversion.toml:17-19), so it must not be reshaped into
+          # one variable per service. Re-tag locally and point IRIS_VERSION at
+          # that instead. Nothing pushes these tags, and `docker compose pull`
+          # is deliberately not run afterwards — they exist only on this
+          # runner, and compose's default pull policy leaves present images
+          # alone.
+          local_tag=e2e-under-test
+          for pkg in "${!TAG[@]}"; do
+            echo "$pkg -> ${TAG[$pkg]}"
+            docker pull "ghcr.io/dfir-iris/$pkg:${TAG[$pkg]}"
+            docker tag  "ghcr.io/dfir-iris/$pkg:${TAG[$pkg]}" \
+                        "ghcr.io/dfir-iris/$pkg:$local_tag"
+          done
+
+          # Last assignment wins in an env file, which is the same mechanism
+          # the Compose .env step above relies on for the secrets.
+          echo "IRIS_VERSION=$local_tag" >> .env
 
       - name: Bring stack up
         run: docker compose up -d --wait
