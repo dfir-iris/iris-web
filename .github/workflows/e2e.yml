@@ -159,6 +159,14 @@ jobs:
           # the Compose .env step above relies on for the secrets.
           echo "IRIS_VERSION=$local_tag" >> .env
 
+      # Only .gitkeep is tracked under certificates/web_certificates/, so a
+      # fresh checkout has no TLS cert and nginx exits with "cannot load
+      # certificate" before its healthcheck can pass, failing `up --wait`.
+      # Same script dev-up.sh uses. Playwright sets ignoreHTTPSErrors, so a
+      # self-signed cert is fine here.
+      - name: Generate the dev TLS certificate
+        run: ./scripts/gen-dev-cert.sh
+
       - name: Bring stack up
         run: docker compose up -d --wait
 
