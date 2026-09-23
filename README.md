@@ -4,7 +4,7 @@
   <br>
   <i>Current Version v3.0.0-beta.1</i>
   <br>
-  <a href="https://v200.beta.dfir-iris.org">Online Demonstration</a>
+  <a href="https://preview.dfir-iris.org">Online Demonstration</a>
 </p>
 
 # IRIS
@@ -12,7 +12,9 @@
 [![License: LGPL v3](https://img.shields.io/badge/License-LGPL_v3-blue.svg)](./LICENSE.txt)   
 Iris is a web collaborative platform aiming to help incident responders sharing technical details during investigations. 
 
-![demo_timeline](img/timeline_speed.gif)
+
+
+![IRIS](img/image.png)
 
 ## Table of contents
 - [Getting Started](#getting-started)
@@ -37,6 +39,8 @@ Starting with v3, IRIS ships as three coordinated repos:
 - **[iris-frontend](https://github.com/dfir-iris/iris-frontend)** — SvelteKit UI.
 
 The backend and frontend are wired into iris-web as git submodules. `docker compose up` pulls pre-built images from `ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend}` — no build step, no submodule init required for pull-only deployments.
+
+⚠️ **v3.0.0-beta.1 is a beta release. Not recommended for production use. For production, use the latest stable release, v2.4.29.**
 
 ### Running Iris
 
