@@ -40,3 +40,9 @@ docs/ci-*.md
 docs/release-readiness-*.md
 docs/security-advisory-*.md
 docs/*-review-*.md
+.ci-artifact-prev/
+.ci-artifact/
+.ci-testapi-prev.log
+.ci-testapi-prev.log.fails
+.ci-testapi.log
+.ci-testapi.log.fails
