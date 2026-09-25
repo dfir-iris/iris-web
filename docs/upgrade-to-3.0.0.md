@@ -2,7 +2,7 @@
 
 > **Audience:** operators currently running IRIS **v2.4.29** (or any v2.4.x)
 > against the bundled `iriswebapp_db` image, which ships PostgreSQL **12**.
-> **Target:** v3.0.0-beta.1, which ships PostgreSQL **18** in the same image.
+> **Target:** v3.0.0-beta.2, which ships PostgreSQL **18** in the same image.
 
 This release upgrades the bundled database from PostgreSQL 12 to PostgreSQL
 18. A PG18 server **cannot read a PG12 data directory** — simply pulling the
@@ -37,16 +37,16 @@ point until you choose to reclaim the backup.
   variables and expects a self-signed TLS cert in a specific path — see
   §3.2b below. Do not skip that step, or the stack will fail to boot
   even after the DB migration succeeds.
-- **Update the IRIS source tree** to the v3.0.0-beta.1 tag before running
+- **Update the IRIS source tree** to the v3.0.0-beta.2 tag before running
   the migration — the script lives at
   `scripts/upgrade-db-pg12-to-pg18.sh`.
 
 ## 2. What changes
 
-| Component | v2.4.x | v3.0.0-beta.1 |
+| Component | v2.4.x | v3.0.0-beta.2 |
 | --- | --- | --- |
 | `iris-backend/docker/db/Dockerfile` base image | `postgres:12-alpine` | `postgres:18-alpine` |
-| Meta `.env` — `IRIS_VERSION` (pins all ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend} tags) | `v2.4.20` | `v3.0.0-beta.1` |
+| Meta `.env` — `IRIS_VERSION` (pins all ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend} tags) | `v2.4.20` | `v3.0.0-beta.2` |
 | Registry image names | `ghcr.io/dfir-iris/iriswebapp_{app,db,nginx}` | `ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend}` |
 | Container names | `iriswebapp_*` | `iris_*` |
 | Kubernetes (`iris-backend/deploy/` Helm chart + EKS manifests) | supported, v2 images | **unsupported** — the chart and manifests are still v2-era, see §5 |
@@ -82,7 +82,7 @@ workflow is:
 ```bash
 git clone --recursive https://github.com/dfir-iris/iris-web.git
 cd iris-web
-git checkout v3.0.0-beta.1
+git checkout v3.0.0-beta.2
 ./scripts/dev-up.sh
 ```
 
@@ -98,7 +98,7 @@ before you upgrade.
 
 In v2.4.x, scripts could call the v1 REST routes directly — `POST /case/ioc/add`,
 `GET /manage/users/list`, `POST /manage/cases/add`, and so on. In
-v3.0.0-beta.1 those routes are still *registered* inside the `app`
+v3.0.0-beta.2 those routes are still *registered* inside the `app`
 container, but nothing outside can reach them: nginx hands every request
 to the `frontend` service, whose SSR proxy only forwards three prefixes
 to `app` — `/api/v2/*`, `/auth/*` and `/static/*`. A v1 path now returns
@@ -175,7 +175,7 @@ docker compose down
 Do **not** pass `-v` — that would delete the very volume we're about to
 migrate.
 
-### 3.2 Pull the v3.0.0-beta.1 source
+### 3.2 Pull the v3.0.0-beta.2 source
 
 V3 introduces the submodule layout — `iris-web` becomes the meta-repo
 with `iris-backend` and `iris-frontend` submodules. When checking out
@@ -183,7 +183,7 @@ the tag, update submodules too.
 
 ```bash
 git fetch --tags
-git checkout v3.0.0-beta.1
+git checkout v3.0.0-beta.2
 git submodule update --init --recursive
 ```
 
@@ -206,7 +206,7 @@ The variables you **must** add or verify (with brief purpose):
 
 | Variable | v2 default | v3 default | Required for |
 | --- | --- | --- | --- |
-| `IRIS_VERSION` | *not set* | `v3.0.0-beta.1` | pins all four service image tags together — do not omit |
+| `IRIS_VERSION` | *not set* | `v3.0.0-beta.2` | pins all four service image tags together — do not omit |
 | `IRIS_HOSTNAME` | *not set* | `localhost` | derives `SERVER_NAME`, `PUBLIC_EXTERNAL_API_URL`, `ORIGIN` (SvelteKit CSRF gate) when they are empty |
 | `POSTGRES_SERVER` | *not set* | `db` | app + worker DB connection |
 | `POSTGRES_PORT` | *not set* | `5432` | app + worker DB connection |
@@ -289,7 +289,7 @@ The script:
 The script is idempotent: each step detects prior completion and skips.
 If it dies halfway through you can simply rerun it.
 
-### 3.4 Bring up v3.0.0-beta.1
+### 3.4 Bring up v3.0.0-beta.2
 
 ```bash
 docker compose up -d
@@ -372,10 +372,10 @@ then `psql -f iris_pg12_dump_<timestamp>.sql`.
 
 ## 5. Kubernetes deployments
 
-**Kubernetes is not a supported deployment path for v3.0.0-beta.1.**
+**Kubernetes is not a supported deployment path for v3.0.0-beta.2.**
 Docker Compose is the only one. The Helm chart and the EKS manifests
 under `iris-backend/deploy/` are v2-era artefacts that were never
-updated for v3 — there are no v3.0.0-beta.1 manifests to apply, and
+updated for v3 — there are no v3.0.0-beta.2 manifests to apply, and
 applying the ones in the tree gets you a v2 stack or a broken one.
 Kubernetes support is intended to return before v3.0.0 stable; no date
 is promised.
@@ -384,7 +384,7 @@ What is actually wrong, so you can verify it yourself:
 
 | Artefact | State |
 | --- | --- |
-| `deploy/eks_manifest/app/deployment.yml:22`, `deploy/eks_manifest/worker/deployment.yml:22` | `image: iriswebapp_app:v2.2.2` — v2 image name, v2 tag. V3 publishes `ghcr.io/dfir-iris/iris-backend`; no `iriswebapp_app:v3.0.0-beta.1` exists to bump to. |
+| `deploy/eks_manifest/app/deployment.yml:22`, `deploy/eks_manifest/worker/deployment.yml:22` | `image: iriswebapp_app:v2.2.2` — v2 image name, v2 tag. V3 publishes `ghcr.io/dfir-iris/iris-backend`; no `iriswebapp_app:v3.0.0-beta.2` exists to bump to. |
 | `deploy/eks_manifest/psql/deployment.yml:22` | `image: iriswebapp_db:v2.2.2` — PostgreSQL 12, not 18 |
 | `deploy/kubernetes/charts/templates/` | `iris_app`, `iris_worker`, `postgres`, `rabbitmq`, `ingress` — **no frontend template**. V3's UI is a separate SvelteKit service (§2.1) that the chart cannot run, and the ingress routes straight to the Flask app on port 8000. A Helm deploy therefore serves no v3 UI. |
 | `deploy/kubernetes/charts/values.yaml`, `Chart.yaml` | still `iriswebapp-app` / `iriswebapp-worker` naming; `appVersion: "2.4.5"` |
@@ -464,7 +464,7 @@ restartable. If disk is a hard constraint, contact us before
 migrating.
 
 **Can I jump straight from a much older IRIS version?** This document
-only covers the v2.4.x → v3.0.0-beta.1 jump. If you are on something
+only covers the v2.4.x → v3.0.0-beta.2 jump. If you are on something
 older, upgrade to v2.4.29 first using
 [`iris-backend/upgrades/upgrade_to_2.0.0.py`](../iris-backend/upgrades/upgrade_to_2.0.0.py)
 and the regular release notes, then come back here.

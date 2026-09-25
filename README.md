@@ -2,7 +2,7 @@
 <p align="center">
   Incident Response Investigation System
   <br>
-  <i>Current Version v3.0.0-beta.1</i>
+  <i>Current Version v3.0.0-beta.2</i>
   <br>
   <a href="https://preview.dfir-iris.org">Online Demonstration</a>
 </p>
@@ -40,7 +40,7 @@ Starting with v3, IRIS ships as three coordinated repos:
 
 The backend and frontend are wired into iris-web as git submodules. `docker compose up` pulls pre-built images from `ghcr.io/dfir-iris/iris-{backend,db,nginx,frontend}` — no build step, no submodule init required for pull-only deployments.
 
-⚠️ **v3.0.0-beta.1 is a beta release. Not recommended for production use. For production, use the latest stable release, v2.4.29.**
+⚠️ **v3.0.0-beta.2 is a beta release. Not recommended for production use. For production, use the latest stable release, v2.4.29.**
 
 ### Running Iris
 
@@ -50,7 +50,7 @@ git clone --recursive https://github.com/dfir-iris/iris-web.git
 cd iris-web
 
 # Optional: pin to the last tagged version
-git checkout v3.0.0-beta.1
+git checkout v3.0.0-beta.2
 
 # Copy and edit the environment template — set POSTGRES_PASSWORD,
 # POSTGRES_ADMIN_PASSWORD, IRIS_SECRET_KEY, IRIS_SECURITY_PASSWORD_SALT,
@@ -109,7 +109,7 @@ alongside the code they describe:
 - [`iris-backend/architecture.md`](./iris-backend/architecture.md) —
   backend service architecture and data flow.
 - [`iris-backend/deploy/`](./iris-backend/deploy/) — Helm chart and EKS
-  manifests. **v2-era, and not usable for v3.0.0-beta.1**: Docker Compose
+  manifests. **v2-era, and not usable for v3.0.0-beta.2**: Docker Compose
   is the only supported deployment path for the beta. See
   [`docs/upgrade-to-3.0.0.md`](./docs/upgrade-to-3.0.0.md) §5.
 - [`docs/upgrade-to-3.0.0.md`](./docs/upgrade-to-3.0.0.md) — v2.4.x →
