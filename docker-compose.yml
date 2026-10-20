@@ -223,10 +223,15 @@ services:
       - iris_frontend
     healthcheck:
       # node:23-alpine ships neither curl nor wget by default. Use node's
-      # built-in http client (always present) to hit /health, which
-      # SvelteKit's adapter-node responds to with 200 as long as the
+      # built-in http client (always present) to hit /, which
+      # SvelteKit's adapter-node answers below 500 as long as the
       # server is accepting connections.
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5173/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      #
+      # `maxHeaderSize`: SvelteKit sends one `Link: rel=modulepreload`
+      # entry per JS/CSS chunk of the page, and on / that header alone
+      # is past Node's 16 KB default. Without it the probe fails with
+      # HPE_HEADER_OVERFLOW on a healthy server, and nginx never starts.
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5173/', { maxHeaderSize: 131072 }, r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
       start_period: 30s
       start_interval: 1s
     restart: always
