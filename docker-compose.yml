@@ -222,7 +222,7 @@ services:
       - iris_backend
       - iris_frontend
     healthcheck:
-      # node:23-alpine ships neither curl nor wget by default. Use node's
+      # node:22-alpine ships neither curl nor wget by default. Use node's
       # built-in http client (always present) to hit /, which
       # SvelteKit's adapter-node answers below 500 as long as the
       # server is accepting connections.
